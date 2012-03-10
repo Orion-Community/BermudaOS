@@ -1,0 +1,31 @@
+#
+# Makefile definitions
+# Created by Michel Megens on 9th of March 2012
+#
+
+MCU			= atmega328p
+F_CPU			= 16000000
+ARDUINO_PORT		= /dev/ttyACM0
+AVRDUDE_ARD_BAUDRATE	= 115200
+AVRDUDE_ARD_PROGRAMMER	= arduino
+
+
+CC		= avr-gcc
+CPP		= avr-g++
+LD		= avr-ld
+MAKE		= make
+
+AVR_LIBC=$(AVRLIB)
+LOCAL_INC=$(LOCAL_LIB)
+
+CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
+		 -std=gnu89 -D F_CPU=$(F_CPU)
+LDFLAGS		= -r -Os
+CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
+		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU)
+ASFLAGS		= -mmcu=$(MCU) -I. -x assembler-with-cpp
+
+CPPOBJS		= $(CPPSRCS:.cpp=.o)
+COBJS		= $(CSRCS:.c=.o)
+OBJS		= $(COBJS)
+OBJS		+= $(CPPOBJS)

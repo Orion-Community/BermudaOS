@@ -3,13 +3,6 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-MCU			= atmega328p
-F_CPU			= 16000000
-ARDUINO_PORT		= /dev/ttyACM0
-AVRDUDE_ARD_BAUDRATE	= 115200
-AVRDUDE_ARD_PROGRAMMER	= arduino
-
-
 CC		= avr-gcc
 CPP		= avr-g++
 LD		= avr-ld

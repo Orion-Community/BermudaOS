@@ -3,17 +3,15 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-LOCAL_LIB		= ../../../include
-TARGET			= avr.o
+LOCAL_LIB		= ../../../../include
+TARGET			= chip.o
 ARDUINO_LIBS		=
 
-CSRCS			= signal.c
-CPPSRCS			= serial.cpp
+CSRCS			= adc.c uart.c
+CPPSRCS			=
 
-include ../../../make/Makefile.linux
-include ../../../make/Makefile.defs
-
-OBJS			+= arduino.o chip.o
+include ../../../../make/Makefile.linux
+include ../../../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)
 all: $(TARGET)
@@ -21,12 +19,6 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
-
-arduino.o:
-	$(MAKE) -C arduino/
-
-chip.o:
-	$(MAKE) -C chip/
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
@@ -36,4 +28,3 @@ chip.o:
 
 clean:
 	-rm -vf $(OBJS) $(TARGET)
-	$(MAKE) -C arduino/ clean

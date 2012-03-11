@@ -18,6 +18,8 @@ typedef enum
 
 static int setup();
 static int loop();
+int BermFreeMemory();
+int BermFreeListSize();
 
 #define ArduinoAnalogRead(x) analogRead(x)
 #define ArduinoWait(x) delay(x)

@@ -27,7 +27,6 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -60,6 +59,7 @@ extern "C"{
 #endif
 
 typedef void (*voidFuncPtr)(void);
+// typedef void (*signal_t)(void);
 
 #ifdef __cplusplus
 } // extern "C"

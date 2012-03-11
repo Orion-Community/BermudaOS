@@ -3,7 +3,6 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-AVRLIB			= /usr/lib/avr/include
 LOCAL_LIB		= ../../../../include
 TARGET			= arduino.o
 ARDUINO_LIBS		=
@@ -11,6 +10,7 @@ ARDUINO_LIBS		=
 CSRCS			= pins.c
 CPPSRCS			=
 
+include ../../../../make/Makefile.linux
 include ../../../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)

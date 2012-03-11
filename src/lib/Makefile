@@ -3,7 +3,6 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-AVRLIB			= /usr/lib/avr/include
 LOCAL_LIB		= ../../include
 TARGET			= lib.o
 ARDUINO_LIBS		=

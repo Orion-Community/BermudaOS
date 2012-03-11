@@ -3,7 +3,6 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-AVRLIB			= /usr/lib/avr/include
 LOCAL_LIB		= ../../../include
 TARGET			= raw.elf
 ARDUINO_LIBS		=
@@ -13,6 +12,7 @@ CPPSRCS			=
 ARCH			= avr
 DEPS			= arch.o lib.o
 
+include ../make/Makefile.linux
 include ../make/Makefile.defs
 
 

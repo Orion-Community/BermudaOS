@@ -59,7 +59,7 @@ extern "C"{
 #endif
 
 typedef void (*voidFuncPtr)(void);
-// typedef void (*signal_t)(void);
+typedef void (*signal_t)(void);
 
 #ifdef __cplusplus
 } // extern "C"

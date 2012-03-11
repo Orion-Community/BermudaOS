@@ -37,3 +37,4 @@ chip.o:
 clean:
 	-rm -vf $(OBJS) $(TARGET)
 	$(MAKE) -C arduino/ clean
+	$(MAKE) -C chip/ clean

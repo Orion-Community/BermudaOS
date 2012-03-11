@@ -58,7 +58,7 @@ static void vec (void)
 #define USART_RX        _VECTOR(18)  /* USART Rx Complete */
 #define USART_UDRE      _VECTOR(19)  /* USART, Data Register Empty */
 #define USART_TX        _VECTOR(20)  /* USART Tx Complete */
-#define ADC             _VECTOR(21)  /* ADC Conversion Complete */
+#define ADC_READY       _VECTOR(21)  /* ADC Conversion Complete */
 #define EE_READY        _VECTOR(22)  /* EEPROM Ready */
 #define ANALOG_COMP     _VECTOR(23)  /* Analog Comparator */
 #define TWI             _VECTOR(24)  /* Two-wire Serial Interface */

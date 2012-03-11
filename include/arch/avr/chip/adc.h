@@ -16,24 +16,40 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __ADC_H
+#define __ADC_H
+
 #include <avr/io.h>
-#include <arch/avr/chip/adc.h>
 
-static struct adc *BermADC;
+struct adc;
 
-static inline struct adc *BermGetADC()
+/*
+ * functions / variables
+ */
+extern void BermInitBaseADC();
+extern void BermInitADC(struct adc*);
+
+/*
+ * private functions
+ */
+// static void BermADCWrite(struct adc*, unsigned short);
+// static unsigned short BermADCRead(struct adc*);
+static void BermADCUpdate(struct adc*);
+
+typedef unsigned short (*adc_read_t)(struct adc*);
+typedef void (*adc_write_t)(struct adc*, unsigned short);
+
+struct adc
 {
-        return BermADC;
-}
+        uint8_t id;
 
-static void BermADCUpdate(adc)
-struct adc* adc;
-{
-        adc->adcl = ADCL;
-        adc->adch = ADCH;
-        adc->admux = ADMUX;
-        adc->adcsra = ADCSRA;
-        adc->adcsrb = ADCSRB;
-        adc->didr0 = DIDR0;
-        return;
-}
+        adc_read_t read;
+        adc_write_t write;
+        void (*update)(struct adc*);
+        
+        uint8_t adcl, adch,
+                admux, adcsra, adcsrb,
+                didr0;
+} __attribute__((packed));
+
+#endif

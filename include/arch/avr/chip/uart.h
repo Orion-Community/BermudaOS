@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Analog Digital Converter
+ *  BermudaOS - UART
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -15,25 +15,3 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <avr/io.h>
-#include <arch/avr/chip/adc.h>
-
-static struct adc *BermADC;
-
-static inline struct adc *BermGetADC()
-{
-        return BermADC;
-}
-
-static void BermADCUpdate(adc)
-struct adc* adc;
-{
-        adc->adcl = ADCL;
-        adc->adch = ADCH;
-        adc->admux = ADMUX;
-        adc->adcsra = ADCSRA;
-        adc->adcsrb = ADCSRB;
-        adc->didr0 = DIDR0;
-        return;
-}

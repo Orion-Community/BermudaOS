@@ -10,7 +10,7 @@ ARDUINO_LIBS		=
 CSRCS			=
 CPPSRCS			=
 ARCH			= avr
-DEPS			= arch.o lib.o
+DEPS			= arch.o lib.o sys.o
 BUILDSYS		= windows
 
 include ../make/Makefile.$(BUILDSYS)
@@ -36,7 +36,11 @@ arch.o:
 lib.o:
 	$(MAKE) -C lib/ BUILDSYS=$(BUILDSYS)
 
+sys.o:
+	$(MAKE) -C sys/ BUILDSYS=$(BUILDSYS)
+
 clean:
 	-rm -fv $(TARGET) $(DEPS)
 	$(MAKE) -C arch/ clean ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C lib/ clean BUILDSYS=$(BUILDSYS)
+	$(MAKE) -C sys/ clean BUILDSYS=$(BUILDSYS)

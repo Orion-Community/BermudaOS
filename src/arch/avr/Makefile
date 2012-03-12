@@ -9,6 +9,7 @@ ARDUINO_LIBS		=
 
 CSRCS			= signal.c io.c
 CPPSRCS			= serial.cpp
+ASMSRCS			= task_switch.S
 
 include ../../../make/Makefile.$(BUILDSYS)
 include ../../../make/Makefile.defs
@@ -33,6 +34,9 @@ chip.o:
 
 %o: %cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<
+
+%o: %S
+	$(AS) $(ASFLAGS) -o $@ $<
 
 clean:
 	-rm -vf $(OBJS) $(TARGET)

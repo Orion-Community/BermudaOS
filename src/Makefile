@@ -11,8 +11,9 @@ CSRCS			=
 CPPSRCS			=
 ARCH			= avr
 DEPS			= arch.o lib.o
+BUILDSYS		= windows
 
-include ../make/Makefile.linux
+include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs
 
 
@@ -30,12 +31,12 @@ $(TARGET): $(DEPS) $(OBJS)
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 arch.o:
-	$(MAKE) -C arch/ ARCH=$(ARCH)
+	$(MAKE) -C arch/ ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
 
 lib.o:
-	$(MAKE) -C lib/
+	$(MAKE) -C lib/ BUILDSYS=$(BUILDSYS)
 
 clean:
 	-rm -fv $(TARGET) $(DEPS)
-	$(MAKE) -C arch/ ARCH=$(ARCH) clean
-	$(MAKE) -C lib/ clean
+	$(MAKE) -C arch/ ARCH=$(ARCH) BUILDSYS=$(BUILDSYS) clean
+	$(MAKE) -C lib/ cleanBUILDSYS=$(BUILDSYS)

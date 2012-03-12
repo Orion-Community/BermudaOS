@@ -10,7 +10,7 @@ ARDUINO_LIBS		=
 CSRCS			= adc.c uart.c
 CPPSRCS			=
 
-include ../../../../make/Makefile.linux
+include ../../../../make/Makefile.$(BUILDSYS)
 include ../../../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)

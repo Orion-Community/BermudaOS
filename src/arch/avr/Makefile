@@ -10,7 +10,7 @@ ARDUINO_LIBS		=
 CSRCS			= signal.c
 CPPSRCS			= serial.cpp
 
-include ../../../make/Makefile.linux
+include ../../../make/Makefile.$(BUILDSYS)
 include ../../../make/Makefile.defs
 
 OBJS			+= arduino.o chip.o
@@ -23,10 +23,10 @@ $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
 
 arduino.o:
-	$(MAKE) -C arduino/
+	$(MAKE) -C arduino/ BUILDSYS=$(BUILDSYS)
 
 chip.o:
-	$(MAKE) -C chip/
+	$(MAKE) -C chip/ BUILDSYS=$(BUILDSYS)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
@@ -36,5 +36,5 @@ chip.o:
 
 clean:
 	-rm -vf $(OBJS) $(TARGET)
-	$(MAKE) -C arduino/ clean
-	$(MAKE) -C chip/ clean
+	$(MAKE) -C arduino/ clean BUILDSYS=$(BUILDSYS)
+	$(MAKE) -C chip/ clean BUILDSYS=$(BUILDSYS)

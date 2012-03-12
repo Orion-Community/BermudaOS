@@ -10,7 +10,7 @@ ARDUINO_LIBS		=
 CSRCS			= xorlist.c
 CPPSRCS			= out.cpp
 
-include ../../make/Makefile.linux
+include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)

@@ -10,7 +10,7 @@ ARDUINO_LIBS		=
 CSRCS			=
 CPPSRCS			=
 
-include ../../make/Makefile.linux
+include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
 
 
@@ -28,8 +28,8 @@ $(TARGET): $(ARCH).o $(OBJS)
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 $(ARCH).o:
-	$(MAKE) -C $(ARCH)/
+	$(MAKE) -C $(ARCH)/ BUILDSYS=$(BUILDSYS)
 
 clean:
 	-rm -fv $(ARCH).o $(OBJS)
-	$(MAKE) -C $(ARCH)/ clean
+	$(MAKE) -C $(ARCH)/ clean BUILDSYS=$(BUILDSYS)

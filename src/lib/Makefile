@@ -27,5 +27,5 @@ $(TARGET): $(OBJS)
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 clean:
-	@echo $(OBJS)
+	-rm -vf $(OBJS)
 

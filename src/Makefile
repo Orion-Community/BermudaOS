@@ -38,5 +38,5 @@ lib.o:
 
 clean:
 	-rm -fv $(TARGET) $(DEPS)
-	$(MAKE) -C arch/ ARCH=$(ARCH) BUILDSYS=$(BUILDSYS) clean
-	$(MAKE) -C lib/ cleanBUILDSYS=$(BUILDSYS)
+	$(MAKE) -C arch/ clean ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
+	$(MAKE) -C lib/ clean BUILDSYS=$(BUILDSYS)

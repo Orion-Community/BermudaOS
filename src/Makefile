@@ -11,7 +11,7 @@ CSRCS			=
 CPPSRCS			=
 ARCH			= avr
 DEPS			= arch.o lib.o sys.o
-BUILDSYS		= windows
+BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs

@@ -3,10 +3,10 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-CC		= $(AVRBIN)\avr-gcc
-CPP		= $(AVRBIN)\avr-g++
-LD		= $(AVRBIN)\avr-ld
-AS		= $(AVRBIN)\avr-gcc
+CC		= $(AVRBIN)/avr-gcc
+CPP		= $(AVRBIN)/avr-g++
+LD		= $(AVRBIN)/avr-ld
+AS		= $(AVRBIN)/avr-gcc
 MAKE		= make
 
 AVR_LIBC=$(AVRLIB)

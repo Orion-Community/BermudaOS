@@ -23,7 +23,7 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
-#include <sys/thread.H>
+#include <sys/thread.h>
 
 
 #define RUNNABLE(t) (((t)->flags & (AVRTH_RUNNABLE|AVRTH_VALID)) == (AVRTH_RUNNABLE|AVRTH_VALID))

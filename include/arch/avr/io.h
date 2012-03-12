@@ -23,7 +23,9 @@
 extern "C" {
 #endif
 
-#define ROM __attribute__((progmem))
+#define ROM __attribute__((__progmem__))
+
+extern const unsigned char ROM *port_to_output;
 
 #ifdef __cplusplus
 }

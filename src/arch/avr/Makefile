@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../../include
 TARGET			= avr.o
 ARDUINO_LIBS		=
 
-CSRCS			= signal.c
+CSRCS			= signal.c io.c
 CPPSRCS			= serial.cpp
 
 include ../../../make/Makefile.$(BUILDSYS)

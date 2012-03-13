@@ -15,8 +15,9 @@ CSRCS			=
 CPPSRCS			=
 ARCH			= avr
 DEPS			= arch.o lib.o
+BUILDSYS		= linux
 
-include ../make/Makefile.linux
+include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs
 
 
@@ -25,7 +26,7 @@ all: $(TARGET)
 
 
 $(RAW_TARGET): $(DEPS) $(OBJS)
-	$(LD) -Os -o $(RAW_TARGET) $(DEPS)
+	$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o $(RAW_TARGET) $(DEPS)
 
 $(TARGET): $(RAW_TARGET)
 	$(OBJCOPY) -R .eeprom -O ihex $(RAW_TARGET) $(TARGET)
@@ -37,15 +38,21 @@ $(TARGET): $(RAW_TARGET)
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 arch.o:
-	$(MAKE) -C arch/ ARCH=$(ARCH)
+	$(MAKE) -C arch/ ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
 
 lib.o:
-	$(MAKE) -C lib/
+	$(MAKE) -C lib/ BUILDSYS=$(BUILDSYS)
+
+sys.o:
+	$(MAKE) -C sys/ BUILDSYS=$(BUILDSYS)
 
 upload: $(TARGET)
 	$(AVRDUDE) $(AVRDUDE_COM_OPTS) -U flash:w:$(TARGET):i
 
 clean:
+
 	-rm -fv $(TARGET) $(DEPS) $(RAW_TARGET)
-	$(MAKE) -C arch/ ARCH=$(ARCH) clean
-	$(MAKE) -C lib/ clean
+	$(MAKE) -C arch/ clean ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
+	$(MAKE) -C lib/ clean BUILDSYS=$(BUILDSYS)
+	$(MAKE) -C sys/ clean BUILDSYS=$(BUILDSYS)
+

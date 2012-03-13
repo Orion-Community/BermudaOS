@@ -3,9 +3,10 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-CC		= avr-gcc
-CPP		= avr-g++
-LD		= avr-ld
+CC		= $(AVRBIN)/avr-gcc
+CPP		= $(AVRBIN)/avr-g++
+LD		= $(AVRBIN)/avr-ld
+AS		= $(AVRBIN)/avr-gcc
 MAKE		= make
 OBJCOPY		= avr-objcopy
 AVRDUDE		= avrdude
@@ -20,10 +21,12 @@ CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
 		 -std=gnu89 -D F_CPU=$(F_CPU)
 LDFLAGS		= -r -Os
 CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
-		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU)
-ASFLAGS		= -mmcu=$(MCU) -I. -x assembler-with-cpp
+		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU) -ffunction-sections \
+		  -fdata-sections -w
+ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall -c
 
 CPPOBJS		= $(CPPSRCS:.cpp=.o)
 COBJS		= $(CSRCS:.c=.o)
+ASMOBJS		= $(ASMSRCS:.S=.o)
 OBJS		= $(COBJS)
-OBJS		+= $(CPPOBJS)
+OBJS		+= $(CPPOBJS) $(ASMOBJS)

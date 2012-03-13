@@ -1,5 +1,5 @@
 /*
- *  HomeWeather system - Sensor subsystem
+ *  BermudaOS - Sensor subsystem
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify

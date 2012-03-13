@@ -1,0 +1,11 @@
+#
+# Makefile linux includer
+#
+
+MCU			= atmega328p
+F_CPU			= 16000000
+ARDUINO_PORT		= /dev/ttyACM0
+AVRDUDE_ARD_BAUDRATE	= 115200
+AVRDUDE_ARD_PROGRAMMER	= arduino
+AVRLIB			= C:\WinAVR-20100110\include
+AVRBIN			= C:\WinAVR-20100110\bin

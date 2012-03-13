@@ -8,9 +8,9 @@ TARGET			= lib.o
 ARDUINO_LIBS		=
 
 CSRCS			= xorlist.c
-CPPSRCS			= out.cpp
+CPPSRCS			=
 
-include ../../make/Makefile.linux
+include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)
@@ -27,5 +27,5 @@ $(TARGET): $(OBJS)
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 clean:
-	@echo $(OBJS)
+	-rm -vf $(OBJS)
 

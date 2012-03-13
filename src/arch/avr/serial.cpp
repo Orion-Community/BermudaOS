@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <cplusplus.h>
 #include <arch/avr/wiring.h>
 #include "wiring_private.h"
 

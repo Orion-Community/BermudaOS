@@ -7,10 +7,10 @@ LOCAL_LIB		= ../../../../include
 TARGET			= arduino.o
 ARDUINO_LIBS		=
 
-CSRCS			= pins.c
-CPPSRCS			= init.cpp
+CSRCS			= pins.c init.c
+CPPSRCS			=
 
-include ../../../../make/Makefile.linux
+include ../../../../make/Makefile.$(BUILDSYS)
 include ../../../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)

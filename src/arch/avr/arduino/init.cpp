@@ -21,6 +21,6 @@
 
 int main(void)
 {
-        cli();
+        sei();
         while(1);
 }

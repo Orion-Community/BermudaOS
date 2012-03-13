@@ -4,10 +4,22 @@
  */
 
 #include <WProgram.h>
+#include <inttypes.h>
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
+#include <avr/wdt.h>
+#include <util/delay.h>
+
+
 #include "main.h"
 
 unsigned char DIGITAL_PINS[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13 };
 
+#define LED_DDR DDRB
+#define LED_PORT PORTB
+#define LED_PIN  PINB
+#define LED      PINB5
 
 extern unsigned int __heap_start;
 extern void *__brkval;
@@ -20,14 +32,25 @@ struct __freelist {
 /* The head of the free list structure */
 extern struct __freelist *__flp;
 
+void flash_led(uint8_t count)
+{
+	while (count--) {
+		LED_PORT |= _BV(LED);
+		_delay_ms(100);
+		LED_PORT &= ~_BV(LED);
+		_delay_ms(500);
+	}
+}
+
 int main(void)
 {
+	LED_DDR = 0xff;
+        flash_led(3);
         /*
          * initialise the arduino framework
          */
         init();
-
-
+        
         /*
          * initialise our own framework
          */
@@ -85,10 +108,11 @@ setup()
 {
         pinMode(DIGITAL_PINS[13], OUTPUT);
         ArduinoWait(50);
-        ArduinoDigitalWrite(DIGITAL_PINS[13], HIGH);
+        ArduinoDigitalWrite(DIGITAL_PINS[13], LOW);
         pinMode(A0, INPUT);
         Serial.begin(9600);
         Serial.println("test");
+        LED_DDR |= _BV(LED);
         return E_SUCCESS;
 }
 

@@ -14,7 +14,7 @@ AVRDUDE_ARD_PROGRAMMER = arduino
 CSRCS			=
 CPPSRCS			=
 ARCH			= avr
-DEPS			= arch.o lib.o
+DEPS			= arch.o lib.o sys.o
 BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)

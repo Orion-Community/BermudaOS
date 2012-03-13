@@ -8,7 +8,7 @@ TARGET			= arduino.o
 ARDUINO_LIBS		=
 
 CSRCS			= pins.c
-CPPSRCS			=
+CPPSRCS			= init.cpp
 
 include ../../../../make/Makefile.linux
 include ../../../../make/Makefile.defs

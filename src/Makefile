@@ -4,8 +4,12 @@
 #
 
 LOCAL_LIB		= ../../../include
-TARGET			= raw.elf
+RAW_TARGET		= raw.elf
+TARGET			= bermuda.hex
 ARDUINO_LIBS		=
+ARD_PORT		= /dev/ttyACM0
+AVRDUDE_ARD_BAUDRATE   = 115200
+AVRDUDE_ARD_PROGRAMMER = arduino
 
 CSRCS			=
 CPPSRCS			=
@@ -16,12 +20,15 @@ include ../make/Makefile.linux
 include ../make/Makefile.defs
 
 
-.PHONY: all clean $(TARGET)
+.PHONY: all clean $(TARGET) upload
 all: $(TARGET)
 
 
-$(TARGET): $(DEPS) $(OBJS)
-	$(LD) $(LDFLAGS) -o $(TARGET) $(DEPS)
+$(RAW_TARGET): $(DEPS) $(OBJS)
+	$(LD) -Os -o $(RAW_TARGET) $(DEPS)
+
+$(TARGET): $(RAW_TARGET)
+	$(OBJCOPY) -R .eeprom -O ihex $(RAW_TARGET) $(TARGET)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
@@ -35,7 +42,10 @@ arch.o:
 lib.o:
 	$(MAKE) -C lib/
 
+upload: $(TARGET)
+	$(AVRDUDE) $(AVRDUDE_COM_OPTS) -U flash:w:$(TARGET):i
+
 clean:
-	-rm -fv $(TARGET) $(DEPS)
+	-rm -fv $(TARGET) $(DEPS) $(RAW_TARGET)
 	$(MAKE) -C arch/ ARCH=$(ARCH) clean
 	$(MAKE) -C lib/ clean

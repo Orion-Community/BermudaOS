@@ -7,6 +7,11 @@ CC		= avr-gcc
 CPP		= avr-g++
 LD		= avr-ld
 MAKE		= make
+OBJCOPY		= avr-objcopy
+AVRDUDE		= avrdude
+AVRDUDE_COM_OPTS = -q -V -p $(MCU) -c $(AVRDUDE_ARD_PROGRAMMER) -b \
+	$(AVRDUDE_ARD_BAUDRATE) -P $(ARD_PORT) $(AVRDUDE_ARD_EXTRAOPTS) \
+	-C /etc/avrdude.conf
 
 AVR_LIBC=$(AVRLIB)
 LOCAL_INC=$(LOCAL_LIB)

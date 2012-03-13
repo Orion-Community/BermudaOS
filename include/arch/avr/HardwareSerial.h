@@ -23,6 +23,7 @@
 #define HardwareSerial_h
 
 #include <inttypes.h>
+#include <avr/io.h>
 
 #include <arch/avr/arduino/stream.h>
 

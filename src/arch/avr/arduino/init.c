@@ -16,10 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+
 #include <avr/interrupt.h>
 #include <avr/io.h>
 
 #include <util/delay.h>
+
+#include <arch/avr/chip/uart.h>
 
 #define LED_DDR  DDRB
 #define LED_PORT PORTB
@@ -32,17 +36,35 @@ void flash_led(uint8_t count)
                 LED_PORT |= _BV(LED);
                 _delay_ms(100);
                 LED_PORT &= ~_BV(LED);
-                _delay_ms(500);
+                _delay_ms(100);
+        }
+}
+
+void println(char *s)
+{
+        while(*s)
+        {
+                if(*s == '\n')
+                {
+                        BermudaUARTPutChar('\r', NULL);
+                        _delay_ms(1);
+                }
+                BermudaUARTPutChar(*s, NULL);
+                _delay_ms(1);
+                s++;
         }
 }
 
 int main(void)
 {
-        LED_DDR = 0xff;
-        
+        BermudaInitUART();
+        char x[128];
+        LED_DDR = 0x0;
+        sprintf(x, "Dit is de meester test: %c\n", 'a');
+        println(x);
         while(1)
         {
-                flash_led(3);
+//                 flash_led(3);
         }
         return 0;
 }

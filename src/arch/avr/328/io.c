@@ -18,3 +18,19 @@
 
 #include <avr/io.h>
 #include <arch/avr/io.h>
+
+const unsigned short ROM BermudaPortToOutput[] =
+{
+        PIN_NOT_AVAILABLE,
+        (unsigned short)&BERMUDA_PORTB,
+        (unsigned short)&BERMUDA_PORTC,
+        (unsigned short)&BERMUDA_PORTD,
+};
+
+const unsigned short ROM BermudaPortToInput[] =
+{
+        PIN_NOT_AVAILABLE,
+        (unsigned short)&BERMUDA_PINB,
+        (unsigned short)&BERMUDA_PINC,
+        (unsigned short)&BERMUDA_PIND,
+};

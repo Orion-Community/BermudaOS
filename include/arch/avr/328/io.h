@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Analog Digital Converter
+ *  BermudaOS - I/O
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,29 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __IO328_H
+#define __IO328_H
+
+#include <arch/avr/io.h>
 #include <avr/io.h>
-#include <arch/avr/chip/adc.h>
 
-static struct adc *BermADC;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-static inline struct adc *BermGetADC()
-{
-        return BermADC;
+#define BERMUDA_PORTB SFR_IO8(0x5)
+#define BERMUDA_DDRB  SFR_IO8(0x4)
+#define BERMUDA_PINB  SFR_IO8(0x3)
+
+#define BERMUDA_PORTC SFR_IO8(0x8)
+#define BERMUDA_DDRC  SFR_IO8(0x7)
+#define BERMUDA_PINC  SFR_IO8(0x6)
+
+#define BERMUDA_PORTD  SFR_IO8(0xB)
+#define BERMUDA_DDRD   SFR_IO8(0xA)
+#define BERMUDA_PIND   SFR_IO8(0x9)
+
+#ifdef __cplusplus
 }
-
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void BermADCUpdate(adc)
-struct adc* adc;
-{
-        adc->adcl = ADCL;
-        adc->adch = ADCH;
-        adc->admux = ADMUX;
-        adc->adcsra = ADCSRA;
-        adc->adcsrb = ADCSRB;
-        adc->didr0 = DIDR0;
-        return;
-}
+#endif
+#endif /* __IO328_H */

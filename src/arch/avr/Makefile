@@ -7,14 +7,14 @@ LOCAL_LIB		= ../../../include
 TARGET			= avr.o
 ARDUINO_LIBS		=
 
-CSRCS			= signal.c
+CSRCS			= signal.c io.c
 CPPSRCS			=
 ASMSRCS			= task_switch.S
 
 include ../../../make/Makefile.$(BUILDSYS)
 include ../../../make/Makefile.defs
 
-OBJS			+= arduino.o chip.o
+OBJS			+= arduino.o chip.o 328.o
 
 .PHONY: all clean $(TARGET)
 all: $(TARGET)
@@ -29,6 +29,9 @@ arduino.o:
 chip.o:
 	$(MAKE) -C chip/ BUILDSYS=$(BUILDSYS)
 
+328.o:
+	$(MAKE) -C 328/ BUILDSYS=$(BUILDSYS)
+
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
 
@@ -42,3 +45,4 @@ clean:
 	-rm -vf $(OBJS) $(TARGET)
 	$(MAKE) -C arduino/ clean BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C chip/ clean BUILDSYS=$(BUILDSYS)
+	$(MAKE) -C 328/ clean BUILDSYS=$(BUILDSYS)

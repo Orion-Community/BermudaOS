@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Analog Digital Converter
+ *  BermudaOS - I/O
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <arch/avr/io.h>
 #include <avr/io.h>
-#include <arch/avr/chip/adc.h>
 
-static struct adc *BermADC;
-
-static inline struct adc *BermGetADC()
+inline unsigned char BermudaReadPGMByte(unsigned short addr)
 {
-        return BermADC;
-}
-
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void BermADCUpdate(adc)
-struct adc* adc;
-{
-        adc->adcl = ADCL;
-        adc->adch = ADCH;
-        adc->admux = ADMUX;
-        adc->adcsra = ADCSRA;
-        adc->adcsrb = ADCSRB;
-        adc->didr0 = DIDR0;
-        return;
+        unsigned char result;
+        __asm__ __volatile__("\n\t"
+                             "lpm %0, z\n\t"
+                             : "=r" (result)
+                             : "z"  (addr)
+                     );
+        return result;
 }

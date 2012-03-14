@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Digital I/O
+ *  BermudaOS - I/O
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,10 +19,36 @@
 #ifndef __PORT_IO_H
 #define __PORT_IO_H
 
+#include <avr/io.h>
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/328/io.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define spb(port, bit) (port |= (1<<bit))
+#define cpb(port, bit) (port &= ~(1<<bit))
+
+#define ROM __attribute__((progmem))
+
+/* memory io functions */
+#define MEM_IO8(addr) (*(volatile unsigned char*)(addr))
+#define MEM_IO16(addr) (*(volatile unsigned short*)(addr))
+
+#define IO_OFFSET 0x20
+#define SFR_IO8(addr) MEM_IO8((addr)+IO_OFFSET)
+
+/* pin defs */
+#define PIN_NOT_AVAILABLE 0
+
+extern const unsigned short ROM BermudaPortToOutput[];
+extern const unsigned short ROM BermudaPortToInput[];
+extern const unsigned short ROM BermudaPortToMode[];
+
+extern inline unsigned char BermudaReadPGMByte(unsigned short);
 
 #ifdef __cplusplus
 }

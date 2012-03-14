@@ -60,8 +60,9 @@ int main(void)
         BermudaInitUART();
         char x[128];
         LED_DDR = 0x0;
-        sprintf(x, "Dit is de meester test: %c\n", 'a');
-        println(x);
+        unsigned char y = UCSR0A;
+        sprintf(x, "Dit is de meester test: %x\n", y);
+        printf(x);
         while(1)
         {
 //                 flash_led(3);

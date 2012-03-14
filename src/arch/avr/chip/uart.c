@@ -45,6 +45,7 @@ int BermudaInitUART()
 
 int BermudaUARTPutChar(char c, FILE *stream)
 {
+        while((UCSR0A & _BV(UDRE0)) == 0);
         UDR0 = c;
         return 0;
 }

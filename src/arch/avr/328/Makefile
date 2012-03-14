@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../../../include
 TARGET			= 328.o
 ARDUINO_LIBS		=
 
-CSRCS			= io.c
+CSRCS			= io.c timer.c
 CPPSRCS			=
 
 include ../../../../make/Makefile.$(BUILDSYS)

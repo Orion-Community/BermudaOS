@@ -16,18 +16,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __DIGITAL_IO_H
-#define __DIGITAL_IO_H
+#ifndef __PORT_IO_H
+#define __PORT_IO_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define ROM __attribute__((__progmem__))
-
-extern const unsigned char ROM *port_to_output;
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-#endif /* __DIGITAL_IO_H */
+#endif /* __PORT_IO_H */

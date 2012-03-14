@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - External signals
+ *  BermudaOS - Pin I/O
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,5 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/interrupt.h>
-#include <arch/avr/HardwareSerial.h>
-
-int main(void)
-{
-        sei();
-        while(1);
-}
+#include <avr/io.h>
+#include <arch/avr/io.h>

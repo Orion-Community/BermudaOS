@@ -32,7 +32,7 @@ void flash_led(uint8_t count)
                 LED_PORT |= _BV(LED);
                 _delay_ms(100);
                 LED_PORT &= ~_BV(LED);
-                _delay_ms(500);
+                _delay_ms(50);
         }
 }
 

@@ -19,9 +19,13 @@
 #ifndef __TIMER328_H
 #define __TIMER328_H
 
+#include <arch/avr/io.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define BermudaGetTCCR0A() SFR_IO8(0x24)
 
 extern void BermudaInitTimer0();
 

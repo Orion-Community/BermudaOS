@@ -20,15 +20,45 @@
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
 
+/**
+ * \fn BermudaInitTimer0()
+ * \brief Initialize timer 0.
+ * 
+ * This function initializes timer 0 with the following properties:
+ * 
+ * * ISR type:                  Overflow
+ * * Prescaler:                 64
+ * * TOP:                       244
+ * * Generated frequency:       1024Hz
+ * 
+ * The main function of this timer is to provide sleep support and generate a
+ * timer feed to the scheduler.
+ */
 void BermudaInitTimer0()
 {
         cli();
-        /* fast pwm - TOP 0xff */
+        
+        /* mode: fast pwm, BOTTOM (0x0) to OCR0A */
         spb(TCCR0A, WGM00);
         spb(TCCR0A, WGM01);
+        spb(TCCR0B, WGM02);
 
         /* set prescaler */
-
+        spb(TCCR0B, CS00);
+        spb(TCCR0B, CS01);
+        
+        /* Set the top to 244 */
+        OCR0A = 244;
+        
+        /* Enable the overflow interrupt */
+        spb(TIMSK0, TOIE0);
+        
         /* re-enable interrupts */
         sei();
+}
+
+static unsigned long timer_count = 0;
+SIGNAL(TIMER0_OVF_vect)
+{
+        timer_count++;
 }

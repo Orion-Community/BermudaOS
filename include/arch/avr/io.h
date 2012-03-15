@@ -47,8 +47,12 @@ extern "C" {
 extern const unsigned short ROM BermudaPortToOutput[];
 extern const unsigned short ROM BermudaPortToInput[];
 extern const unsigned short ROM BermudaPortToMode[];
+extern const unsigned char ROM  BermudaPinToPort[];
 
 extern inline unsigned char BermudaReadPGMByte(unsigned short);
+extern inline unsigned short BermudaReadPGMWord(unsigned short);
+
+#define BermudaGetIOPort(pin) BermudaReadPGMByte(BermudaPinToPort+(pin))
 
 #ifdef __cplusplus
 }

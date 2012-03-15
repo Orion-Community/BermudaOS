@@ -26,17 +26,26 @@
 extern "C" {
 #endif
 
-#define BERMUDA_PORTB SFR_IO8(0x5)
-#define BERMUDA_DDRB  SFR_IO8(0x4)
-#define BERMUDA_PINB  SFR_IO8(0x3)
+#define BermudaGetPORTB() SFR_IO8(0x5)
+#define BermudaGetAddressPORTB() ((volatile unsigned char*)&BermudaGetPORTB())
+#define BermudaGetDDRB() SFR_IO8(0x4)
+#define BermudaGetAddressDDRB() ((volatile unsigned char*)&BermudaGetDDRB())
+#define BermudaGetPINB() SFR_IO8(0x3)
+#define BermudaGetAddressPINB() ((volatile unsigned char*)&BermudaGetPINB())
 
-#define BERMUDA_PORTC SFR_IO8(0x8)
-#define BERMUDA_DDRC  SFR_IO8(0x7)
-#define BERMUDA_PINC  SFR_IO8(0x6)
+#define BermudaGetPORTC() SFR_IO8(0x8)
+#define BermudaGetAddressPORTC() ((volatile unsigned char*)&BermudaGetPORTC())
+#define BermudaGetDDRC() SFR_IO8(0x7)
+#define BermudaGetAddressDDRC() ((volatile unsigned char*)&BermudaGetDDRC())
+#define BermudaGetPINC() SFR_IO8(0x6)
+#define BermudaGetAddressPINC() ((volatile unsigned char*)&BermudaGetPINC())
 
-#define BERMUDA_PORTD  SFR_IO8(0xB)
-#define BERMUDA_DDRD   SFR_IO8(0xA)
-#define BERMUDA_PIND   SFR_IO8(0x9)
+#define BermudaGetPORTD() SFR_IO8(0xB)
+#define BermudaGetAddressPORTD() ((volatile unsigned char*)&BermudaGetPORTD())
+#define BermudaGetDDRD() SFR_IO8(0xA)
+#define BermudaGetAddressDDRD() ((volatile unsigned char*)&BermudaGetDDRD())
+#define BermudaGetPIND() SFR_IO8(0x9)
+#define BermudaGetAddressPIND() ((volatile unsigned char*)&BermudaGetPIND())
 
 #ifdef __cplusplus
 }

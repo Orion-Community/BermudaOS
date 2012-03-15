@@ -22,15 +22,23 @@
 const unsigned short ROM BermudaPortToOutput[] =
 {
         PIN_NOT_AVAILABLE,
-        (unsigned short)&BERMUDA_PORTB,
-        (unsigned short)&BERMUDA_PORTC,
-        (unsigned short)&BERMUDA_PORTD,
+        (unsigned short)BermudaGetAddressPORTB(),
+        (unsigned short)BermudaGetAddressPORTC(),
+        (unsigned short)BermudaGetAddressPORTD(),
 };
 
 const unsigned short ROM BermudaPortToInput[] =
 {
         PIN_NOT_AVAILABLE,
-        (unsigned short)&BERMUDA_PINB,
-        (unsigned short)&BERMUDA_PINC,
-        (unsigned short)&BERMUDA_PIND,
+        (unsigned short)BermudaGetAddressPINB(),
+        (unsigned short)BermudaGetAddressPINC(),
+        (unsigned short)BermudaGetAddressPIND(),
+};
+
+const unsigned short ROM BermudaPortToMode[] =
+{
+        PIN_NOT_AVAILABLE,
+        (unsigned short)BermudaGetAddressDDRB(),
+        (unsigned short)BermudaGetAddressDDRC(),
+        (unsigned short)BermudaGetAddressDDRD(),
 };

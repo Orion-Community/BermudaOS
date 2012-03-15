@@ -20,15 +20,16 @@
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 
 #include <util/delay.h>
 
 #include <arch/avr/chip/uart.h>
 #include <arch/avr/io.h>
 
-#define LED_DDR  BERMUDA_DDRB
-#define LED_PORT BERMUDA_PORTB
-#define LED_PIN  BERMUDA_PINB
+#define LED_DDR  BermudaGetDDRB()
+#define LED_PORT BermudaGetPORTB()
+#define LED_PIN  BermudaGetPINB()
 #define LED      PINB5
 
 void flash_led(uint8_t count)
@@ -47,9 +48,11 @@ int main(void)
         BermudaInitUART();
         char x[128];
         LED_DDR = 0xFF;
-        sprintf(x, "Address of PORTB: %x\n",
-                BermudaReadPGMByte((unsigned short)(BermudaPortToOutput+1)));
+        PORTB = 0xff;
+        volatile unsigned char* portb = BermudaGetAddressPORTB();
+        sprintf(x, "Value of PORTB: %x\n", BermudaGetPORTB());
         printf(x);
+        printf("Address of PORTB: %p", portb);
         while(1)
         {
                 flash_led(3);

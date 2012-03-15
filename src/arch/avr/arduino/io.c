@@ -16,5 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
 #include <arch/avr/io.h>
+#include <arch/avr/arduino/io.h>
 
+const unsigned char ROM BermudaPinToPort[] =
+{
+        PD, PD, PD, PD, PD, PD, PD, PD, /* pin 0-7  */
+        PB, PB, PB, PB, PB, PB,         /* pin 8-13 */
+        PC, PC, PC, PC, PC,             /* ADC 0-5  */
+};

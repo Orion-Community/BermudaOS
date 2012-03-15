@@ -49,11 +49,10 @@ int main(void)
         BermudaInitUART();
         char x[128];
         LED_DDR = 0xFF;
-        PORTB = 0xff;
-        volatile unsigned char* portb = BermudaGetAddressPORTB();
+        spb(LED_PORT, LED);
         sprintf(x, "Value of PORTB: %x\n", BermudaGetPORTB());
         printf(x);
-        printf("Address of PORTB: %p\n", portb);
+        printf("Address of PORTB: %p\n", BermudaGetAddressPORTB());
         BermudaInitTimer0();
         sei();
         while(1)

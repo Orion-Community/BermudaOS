@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Analog Digital Converter
+ *  BermudaOS - Arduino specific I/O module
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/io.h>
-#include <arch/avr/chip/adc.h>
+#ifndef __UNO_IO_H
+#define __UNO_IO_H
 
-static struct adc *BermADC;
+#include <arch/avr/io.h>
 
-static inline struct adc *BermGetADC()
-{
-        return BermADC;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define PA 0
+#define PB 1
+#define PC 2
+#define PD 3
+
+#ifdef __cplusplus
 }
-
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void BermADCUpdate(adc)
-struct adc* adc;
-{
-        adc->adcl = BermudaGetADCL();
-        adc->adch = BermudaGetADCH();
-        adc->admux = BermudaGetADMUX();
-        adc->adcsra = BermudaGetADCSRA();
-        adc->adcsrb = BermudaGetADCSRB();
-        adc->didr0 = BermudaGetDIDR0();
-        return;
-}
+#endif
+#endif /* __UNO_IO_H */

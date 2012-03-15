@@ -19,7 +19,15 @@
 #ifndef __ADC_H
 #define __ADC_H
 
-#include <avr/io.h>
+#include <stdlib.h>
+#include <arch/avr/io.h>
+
+#define BermudaGetADMUX()   MEM_IO8(0x7C)
+#define BermudaGetADCSRA()  MEM_IO8(0x7A)
+#define BermudaGetADCL()    MEM_IO8(0x78)
+#define BermudaGetADCH()    MEM_IO8(0x79)
+#define BermudaGetADCSRB()  MEM_IO8(0x7B)
+#define BermudaGetDIDR0()   MEM_IO8(0x7E)
 
 struct adc;
 

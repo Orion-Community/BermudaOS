@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Timers
+ *  BermudaOS - Timer
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __TIMER328_H
-#define __TIMER328_H
-
-#include <arch/avr/io.h>
+#ifndef __TIMER_H
+#define __TIMER_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define BermudaGetTCCR0A() SFR_IO8(0x24)
-#define BermudaGetTCCR0B() SFR_IO8(0x25)
-
-#define BermudaGetTCNT0() SFR_IO8(0x26)
-
-#define BermudaGetOCR0A() SFR_IO8(0x27)
-#define BermudaGetOCR0B() SFR_IO8(0x28)
-
-#define BermudaGetTIMSK0() MEM_IO8(0x6E)
-#define BermudaGetTIFR0()  SFR_IO8(0x15)
-
-extern void BermudaInitTimer0();
-extern inline unsigned long BermudaGetTimerCount();
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/328/timer.h>
+#endif
 
 #ifdef __cplusplus
 }
-#endif
-#endif /* __TIMER328_H */
+#endif /* __cplusplus */
+#endif /* __TIMER_H */

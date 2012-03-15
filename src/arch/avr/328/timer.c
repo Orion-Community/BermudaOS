@@ -19,6 +19,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
+#include <arch/avr/timer.h>
 
 /**
  * \fn BermudaInitTimer0()
@@ -39,19 +40,19 @@ void BermudaInitTimer0()
         cli();
         
         /* mode: fast pwm, BOTTOM (0x0) to OCR0A */
-        spb(TCCR0A, WGM00);
-        spb(TCCR0A, WGM01);
-        spb(TCCR0B, WGM02);
+        spb(BermudaGetTCCR0A(), WGM00);
+        spb(BermudaGetTCCR0A(), WGM01);
+        spb(BermudaGetTCCR0B(), WGM02);
 
         /* set prescaler */
-        spb(TCCR0B, CS00);
-        spb(TCCR0B, CS01);
+        spb(BermudaGetTCCR0B(), CS00);
+        spb(BermudaGetTCCR0B(), CS01);
         
         /* Set the top to 244 */
-        OCR0A = 244;
+        BermudaGetOCR0A() = 244;
         
         /* Enable the overflow interrupt */
-        spb(TIMSK0, TOIE0);
+        spb(BermudaGetTIMSK0(), TOIE0);
         
         /* re-enable interrupts */
         sei();
@@ -61,4 +62,9 @@ static unsigned long timer_count = 0;
 SIGNAL(TIMER0_OVF_vect)
 {
         timer_count++;
+}
+
+inline unsigned long BermudaGetTimerCount()
+{
+        return timer_count;
 }

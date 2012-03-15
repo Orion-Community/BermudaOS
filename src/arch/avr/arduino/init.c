@@ -26,6 +26,7 @@
 
 #include <arch/avr/chip/uart.h>
 #include <arch/avr/io.h>
+#include <arch/avr/timer.h>
 
 #define LED_DDR  BermudaGetDDRB()
 #define LED_PORT BermudaGetPORTB()
@@ -52,10 +53,13 @@ int main(void)
         volatile unsigned char* portb = BermudaGetAddressPORTB();
         sprintf(x, "Value of PORTB: %x\n", BermudaGetPORTB());
         printf(x);
-        printf("Address of PORTB: %p", portb);
+        printf("Address of PORTB: %p\n", portb);
+        BermudaInitTimer0();
+        sei();
         while(1)
         {
-                flash_led(3);
+                printf("Timer count: %x\n", (uint16_t)BermudaGetTimerCount());
+                _delay_ms(1000);
         }
         return 0;
 }

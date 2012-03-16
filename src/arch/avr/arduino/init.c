@@ -16,33 +16,49 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 
 #include <util/delay.h>
 
-#define LED_DDR  DDRB
-#define LED_PORT PORTB
-#define LED_PIN  PINB
+#include <arch/avr/chip/uart.h>
+#include <arch/avr/io.h>
+#include <arch/avr/timer.h>
+
+#define LED_DDR  BermudaGetDDRB()
+#define LED_PORT BermudaGetPORTB()
+#define LED_PIN  BermudaGetPINB()
 #define LED      PINB5
 
 void flash_led(uint8_t count)
 {
-        while (count--) {
+        while (count--)
+        {
                 LED_PORT |= _BV(LED);
                 _delay_ms(100);
                 LED_PORT &= ~_BV(LED);
-                _delay_ms(500);
+                _delay_ms(100);
         }
 }
 
 int main(void)
 {
-        LED_DDR = 0xff;
-        
+        BermudaInitUART();
+        char x[128];
+        LED_DDR = 0xFF;
+        spb(LED_PORT, LED);
+        sprintf(x, "Value of PORTB: %x\n", BermudaGetPORTB());
+        printf(x);
+        printf("Address of PORTB: %p\n", BermudaGetAddressPORTB());
+        BermudaInitTimer0();
+        sei();
         while(1)
         {
-                flash_led(3);
+                printf("Timer count: %x\n", (uint16_t)BermudaGetTimerCount());
+                _delay_ms(1000);
         }
         return 0;
 }

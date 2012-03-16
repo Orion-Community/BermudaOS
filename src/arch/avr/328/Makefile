@@ -1,13 +1,13 @@
 #
 # Makefile definitions
-# Created by Michel Megens on 9th of March 2012
+# Created by Michel Megens on 14th of March 2012
 #
 
 LOCAL_LIB		= ../../../../include
-TARGET			= arduino.o
+TARGET			= 328.o
 ARDUINO_LIBS		=
 
-CSRCS			= init.c io.c
+CSRCS			= io.c timer.c
 CPPSRCS			=
 
 include ../../../../make/Makefile.$(BUILDSYS)

@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - External signals
+ *  BermudaOS - Arduino specific I/O module
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/interrupt.h>
-#include <arch/avr/HardwareSerial.h>
+#include <stdlib.h>
+#include <arch/avr/io.h>
+#include <arch/avr/arduino/io.h>
 
-int main(void)
+const unsigned char ROM BermudaPinToPort[] =
 {
-        sei();
-        while(1);
-}
+        PD, PD, PD, PD, PD, PD, PD, PD, /* pin 0-7  */
+        PB, PB, PB, PB, PB, PB,         /* pin 8-13 */
+        PC, PC, PC, PC, PC,             /* ADC 0-5  */
+};

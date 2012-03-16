@@ -14,11 +14,13 @@ AVRDUDE_COM_OPTS = -q -V -p $(MCU) -c $(AVRDUDE_ARD_PROGRAMMER) -b \
 	$(AVRDUDE_ARD_BAUDRATE) -P $(ARD_PORT) $(AVRDUDE_ARD_EXTRAOPTS) \
 	-C /etc/avrdude.conf
 
+STDDEFS		= -D BAUD=9600
+
 AVR_LIBC=$(AVRLIB)
 LOCAL_INC=$(LOCAL_LIB)
 
 CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
-		 -std=gnu89 -D F_CPU=$(F_CPU)
+		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS)
 LDFLAGS		= -r -Os -m avr5
 CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
 		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU) -ffunction-sections \
@@ -30,3 +32,5 @@ COBJS		= $(CSRCS:.c=.o)
 ASMOBJS		= $(ASMSRCS:.S=.o)
 OBJS		= $(COBJS)
 OBJS		+= $(CPPOBJS) $(ASMOBJS)
+
+

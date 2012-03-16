@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Analog Digital Converter
+ *  BermudaOS - Timer
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/io.h>
-#include <arch/avr/chip/adc.h>
+#ifndef __TIMER_H
+#define __TIMER_H
 
-static struct adc *BermADC;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-static inline struct adc *BermGetADC()
-{
-        return BermADC;
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/328/timer.h>
+#endif
+
+#ifdef __cplusplus
 }
-
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void BermADCUpdate(adc)
-struct adc* adc;
-{
-        adc->adcl = BermudaGetADCL();
-        adc->adch = BermudaGetADCH();
-        adc->admux = BermudaGetADMUX();
-        adc->adcsra = BermudaGetADCSRA();
-        adc->adcsrb = BermudaGetADCSRB();
-        adc->didr0 = BermudaGetDIDR0();
-        return;
-}
+#endif /* __cplusplus */
+#endif /* __TIMER_H */

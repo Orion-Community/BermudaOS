@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - I/O
+ *  BermudaOS - Pin I/O
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,29 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <arch/avr/io.h>
 #include <avr/io.h>
+#include <arch/avr/io.h>
 
-inline unsigned char BermudaReadPGMByte(unsigned short addr)
+const unsigned short ROM BermudaPortToOutput[] =
 {
-        unsigned char result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %0, z\n\t"
-                             : "=r" (result)
-                             : "z"  (addr)
-                     );
-        return result;
-}
+        PIN_NOT_AVAILABLE,
+        (unsigned short)BermudaGetAddressPORTB(),
+        (unsigned short)BermudaGetAddressPORTC(),
+        (unsigned short)BermudaGetAddressPORTD(),
+};
 
-inline unsigned short BermudaReadPGMWord(unsigned short addr)
+const unsigned short ROM BermudaPortToInput[] =
 {
-        unsigned short result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %A0, Z+\n\t"
-                             "lpm %B0, Z"
-                             : "=r" (result)
-                             : "z" (addr)
-        );
-        return result;
-}
+        PIN_NOT_AVAILABLE,
+        (unsigned short)BermudaGetAddressPINB(),
+        (unsigned short)BermudaGetAddressPINC(),
+        (unsigned short)BermudaGetAddressPIND(),
+};
+
+const unsigned short ROM BermudaPortToMode[] =
+{
+        PIN_NOT_AVAILABLE,
+        (unsigned short)BermudaGetAddressDDRB(),
+        (unsigned short)BermudaGetAddressDDRC(),
+        (unsigned short)BermudaGetAddressDDRD(),
+};

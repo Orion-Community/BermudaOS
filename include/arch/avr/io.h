@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Digital I/O
+ *  BermudaOS - I/O
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,45 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __DIGITAL_IO_H
-#define __DIGITAL_IO_H
+#ifndef __PORT_IO_H
+#define __PORT_IO_H
+
+#include <avr/io.h>
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/328/io.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define ROM __attribute__((__progmem__))
+#define spb(port, bit) (port |= (1<<bit))
+#define cpb(port, bit) (port &= ~(1<<bit))
 
-extern const unsigned char ROM *port_to_output;
+#define ROM __attribute__((progmem))
+
+/* memory io functions */
+#define MEM_IO8(addr) (*(volatile unsigned char*)(addr))
+#define MEM_IO16(addr) (*(volatile unsigned short*)(addr))
+
+#define IO_OFFSET 0x20
+#define SFR_IO8(addr) MEM_IO8((addr)+IO_OFFSET)
+
+/* pin defs */
+#define PIN_NOT_AVAILABLE 0
+
+extern const unsigned short ROM BermudaPortToOutput[];
+extern const unsigned short ROM BermudaPortToInput[];
+extern const unsigned short ROM BermudaPortToMode[];
+extern const unsigned char ROM  BermudaPinToPort[];
+
+extern inline unsigned char BermudaReadPGMByte(unsigned short);
+extern inline unsigned short BermudaReadPGMWord(unsigned short);
+
+#define BermudaGetIOPort(pin) BermudaReadPGMByte(BermudaPinToPort+(pin))
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-#endif /* __DIGITAL_IO_H */
+#endif /* __PORT_IO_H */

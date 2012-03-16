@@ -15,3 +15,29 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#ifndef __UART_H
+#define __UART_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef BAUD
+#define BAUD 9600
+#warning "Serial baudrate has not been defined, defaulting to 9600."
+#endif
+
+extern int BermudaInitUART();
+extern int BermudaUARTPutChar(char, FILE *);
+extern int BermudaUARTGettChar(FILE *);
+extern inline FILE *BermudaGetUARTOutput();
+extern inline FILE *BermudaGetUARTInput();
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* __UART_H */

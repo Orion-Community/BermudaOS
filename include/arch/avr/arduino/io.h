@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - I/O
+ *  BermudaOS - Arduino specific I/O module
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __UNO_IO_H
+#define __UNO_IO_H
+
 #include <arch/avr/io.h>
-#include <avr/io.h>
 
-inline unsigned char BermudaReadPGMByte(unsigned short addr)
-{
-        unsigned char result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %0, z\n\t"
-                             : "=r" (result)
-                             : "z"  (addr)
-                     );
-        return result;
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-inline unsigned short BermudaReadPGMWord(unsigned short addr)
-{
-        unsigned short result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %A0, Z+\n\t"
-                             "lpm %B0, Z"
-                             : "=r" (result)
-                             : "z" (addr)
-        );
-        return result;
+#define PA 0
+#define PB 1
+#define PC 2
+#define PD 3
+
+#ifdef __cplusplus
 }
+#endif
+#endif /* __UNO_IO_H */

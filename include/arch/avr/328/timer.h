@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - I/O
+ *  BermudaOS - Timers
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,28 +16,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __TIMER328_H
+#define __TIMER328_H
+
 #include <arch/avr/io.h>
-#include <avr/io.h>
 
-inline unsigned char BermudaReadPGMByte(unsigned short addr)
-{
-        unsigned char result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %0, z\n\t"
-                             : "=r" (result)
-                             : "z"  (addr)
-                     );
-        return result;
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-inline unsigned short BermudaReadPGMWord(unsigned short addr)
-{
-        unsigned short result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %A0, Z+\n\t"
-                             "lpm %B0, Z"
-                             : "=r" (result)
-                             : "z" (addr)
-        );
-        return result;
+#define BermudaGetTCCR0A() SFR_IO8(0x24)
+#define BermudaGetTCCR0B() SFR_IO8(0x25)
+
+#define BermudaGetTCNT0() SFR_IO8(0x26)
+
+#define BermudaGetOCR0A() SFR_IO8(0x27)
+#define BermudaGetOCR0B() SFR_IO8(0x28)
+
+#define BermudaGetTIMSK0() MEM_IO8(0x6E)
+#define BermudaGetTIFR0()  SFR_IO8(0x15)
+
+extern void BermudaInitTimer0();
+extern inline unsigned long BermudaGetTimerCount();
+
+#ifdef __cplusplus
 }
+#endif
+#endif /* __TIMER328_H */

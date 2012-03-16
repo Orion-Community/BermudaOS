@@ -33,12 +33,12 @@ static struct adc BermADC;
 void BermudaInitBaseADC()
 {
         struct adc* adc = &BermADC;
+        adc->id = 0;
         BermudaInitADC(adc);
         spb(*adc->adcsra, ADEN);
         spb(*adc->adcsra, ADIE);
         spb(*adc->adcsra, ADPS1);
         spb(*adc->adcsra, ADPS2);
-        printf("Address of the main ADC %p\n", adc);
         return;
 }
 

@@ -92,6 +92,7 @@ int main(void)
 
         BermudaInitTimer0();
         printf("Total free memory: %x\n", BermudaFreeMemory());
+//         printf("CPU frequency high: %x\n", F_CPU >> 16);
         BermudaInitBaseADC();
         sei();
         while(1)

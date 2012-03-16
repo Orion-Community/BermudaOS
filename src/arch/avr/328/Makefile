@@ -13,12 +13,17 @@ CPPSRCS			=
 include ../../../../make/Makefile.$(BUILDSYS)
 include ../../../../make/Makefile.defs
 
+OBJS                    += chip.o
+
 .PHONY: all clean $(TARGET)
 all: $(TARGET)
 	-mv -vf $(TARGET) ../
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
+
+chip.o:
+	$(MAKE) -C chip/ BUILDSYS=$(BUILDSYS)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
@@ -28,3 +33,4 @@ $(TARGET): $(OBJS)
 
 clean:
 	-rm -vf $(OBJS) $(TARGET)
+	$(MAKE) -C chip/

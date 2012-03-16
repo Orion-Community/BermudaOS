@@ -24,7 +24,6 @@
 
 #include <util/delay.h>
 
-#include <arch/avr/chip/uart.h>
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 
@@ -32,6 +31,47 @@
 #define LED_PORT BermudaGetPORTB()
 #define LED_PIN  BermudaGetPINB()
 #define LED      PINB5
+
+extern unsigned int __heap_start;
+extern void *__brkval;
+
+struct __freelist {
+  size_t sz;
+  struct __freelist *nx;
+};
+
+/* The head of the free list structure */
+extern struct __freelist *__flp;
+
+/* Calculates the size of the free list */
+int BermudaFreeListSize() {
+        struct __freelist* current;
+        int total = 0;
+
+        for (current = __flp; current; current = current->nx) 
+        {
+                total += 2; /* Add two bytes for the memory block's header  */
+                total += (int) current->sz;
+        }
+
+        return total;
+}
+
+int BermudaFreeMemory() 
+{
+        int free_memory;
+
+        if ((int)__brkval == 0) 
+        {
+                free_memory = ((int)&free_memory) - ((int)&__heap_start);
+        } 
+        else 
+        {
+                free_memory = ((int)&free_memory) - ((int)__brkval);
+                free_memory += BermudaFreeListSize();
+        }
+        return free_memory;
+}
 
 void flash_led(uint8_t count)
 {
@@ -47,17 +87,16 @@ void flash_led(uint8_t count)
 int main(void)
 {
         BermudaInitUART();
-        char x[128];
         LED_DDR = 0xFF;
         spb(LED_PORT, LED);
-        sprintf(x, "Value of PORTB: %x\n", BermudaGetPORTB());
-        printf(x);
-        printf("Address of PORTB: %p\n", BermudaGetAddressPORTB());
+
         BermudaInitTimer0();
+        printf("Total free memory: %x\n", BermudaFreeMemory());
+        BermudaInitBaseADC();
         sei();
         while(1)
         {
-                printf("Timer count: %x\n", (uint16_t)BermudaGetTimerCount());
+                flash_led(3);
                 _delay_ms(1000);
         }
         return 0;

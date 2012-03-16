@@ -16,48 +16,45 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ADC_H
-#define __ADC_H
-
 #include <stdlib.h>
+#include <stdio.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
 #include <arch/avr/io.h>
-
-#define BermudaGetADMUX()   MEM_IO8(0x7C)
-#define BermudaGetADCSRA()  MEM_IO8(0x7A)
-#define BermudaGetADCL()    MEM_IO8(0x78)
-#define BermudaGetADCH()    MEM_IO8(0x79)
-#define BermudaGetADCSRB()  MEM_IO8(0x7B)
-#define BermudaGetDIDR0()   MEM_IO8(0x7E)
-
-struct adc;
-
-/*
- * functions / variables
- */
-extern void BermInitBaseADC();
-extern void BermInitADC(struct adc*);
 
 /*
  * private functions
  */
 // static void BermADCWrite(struct adc*, unsigned short);
 // static unsigned short BermADCRead(struct adc*);
-static void BermADCUpdate(struct adc*);
 
-typedef unsigned short (*adc_read_t)(struct adc*);
-typedef void (*adc_write_t)(struct adc*, unsigned short);
+static struct adc BermADC;
 
-struct adc
+void BermudaInitBaseADC()
 {
-        uint8_t id;
+        struct adc* adc = &BermADC;
+        BermudaInitADC(adc);
+        spb(*adc->adcsra, ADEN);
+        spb(*adc->adcsra, ADIE);
+        spb(*adc->adcsra, ADPS1);
+        spb(*adc->adcsra, ADPS2);
+        printf("Address of the main ADC %p\n", adc);
+        return;
+}
 
-        adc_read_t read;
-        adc_write_t write;
-        void (*update)(struct adc*);
-        
-        uint8_t adcl, adch,
-                admux, adcsra, adcsrb,
-                didr0;
-} __attribute__((packed));
+void BermudaInitADC(adc)
+struct adc* adc;
+{
+        adc->adcl = &BermudaGetADCL();
+        adc->adch = &BermudaGetADCH();
+        adc->admux = &BermudaGetADMUX();
+        adc->adcsra = &BermudaGetADCSRA();
+        adc->adcsrb = &BermudaGetADCSRB();
+        adc->didr0 = &BermudaGetDIDR0();
+        return;
+}
 
-#endif
+SIGNAL(ADC_vect)
+{
+        return;
+}

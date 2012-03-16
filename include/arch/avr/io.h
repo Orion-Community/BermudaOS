@@ -23,6 +23,8 @@
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>
+        #include <arch/avr/328/chip/adc.h>
+        #include <arch/avr/328/chip/uart.h>
 #endif
 
 #ifdef __cplusplus

@@ -7,6 +7,7 @@ CC		= $(AVRBIN)/avr-gcc
 CPP		= $(AVRBIN)/avr-g++
 LD		= $(AVRBIN)/avr-ld
 AS		= $(AVRBIN)/avr-gcc
+STRIP		= $(AVRBIN)/avr-strip
 MAKE		= make
 OBJCOPY		= avr-objcopy
 AVRDUDE		= avrdude

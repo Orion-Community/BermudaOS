@@ -3,15 +3,15 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-LOCAL_LIB		= ../../../../include
+LOCAL_LIB		= ../../../../../include
 TARGET			= chip.o
 ARDUINO_LIBS		=
 
 CSRCS			= adc.c uart.c
 CPPSRCS			=
 
-include ../../../../make/Makefile.$(BUILDSYS)
-include ../../../../make/Makefile.defs
+include ../../../../../make/Makefile.$(BUILDSYS)
+include ../../../../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)
 all: $(TARGET)

@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <arch/avr/chip/uart.h>
+#include <arch/avr/io.h>
 #include <util/setbaud.h>
 #include <avr/io.h>
 

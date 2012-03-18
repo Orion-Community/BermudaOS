@@ -92,9 +92,9 @@ int main(void)
         spb(LED_PORT, LED);
 
         BermudaInitTimer0();
-//         printf("CPU frequency high: %x\n", F_CPU >> 16);
         BermudaInitBaseADC();
         sei();
+        
         struct adc *adc = BermudaGetADC();
         BermudaSetPinMode(14, INPUT); /* pin A0 */
         

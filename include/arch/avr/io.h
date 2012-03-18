@@ -53,14 +53,19 @@ extern const unsigned short ROM BermudaPortToOutput[];
 extern const unsigned short ROM BermudaPortToInput[];
 extern const unsigned short ROM BermudaPortToMode[];
 extern const unsigned char ROM  BermudaPinToPort[];
+extern const unsigned char ROM BermudaPinToMask[];
 
 extern inline unsigned char BermudaReadPGMByte(unsigned short);
 extern inline unsigned short BermudaReadPGMWord(unsigned short);
 
 extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
 
-#define BermudaGetIOPort(pin) BermudaReadPGMByte(BermudaPinToPort+(pin))
-#define BermudaGetIOMask(pin) BermudaReadPGMByte(BermudaPinToMask+(pin))
+#define BermudaGetIOPort(pin) BermudaReadPGMByte((unsigned short) \
+                                BermudaPinToPort+(pin))
+#define BermudaGetIOMask(pin) BermudaReadPGMByte((unsigned short) \
+                                BermudaPinToMask+(pin))
+#define BermudaGetIOMode(port)  ((volatile unsigned char*)BermudaReadPGMWord( \
+                                (unsigned short)BermudaPortToMode+(port)))
 
 #ifdef __cplusplus
 }

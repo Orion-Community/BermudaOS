@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
+#include <lib/binary.h>
 
 const unsigned char ROM BermudaPinToPort[] =
 {
@@ -27,11 +28,22 @@ const unsigned char ROM BermudaPinToPort[] =
         PC, PC, PC, PC, PC,             /* ADC 0-5  */
 };
 
-void BermudaSetPortMode(pin, mode)
+const unsigned char ROM BermudaPinToMask[] =
+{
+        BIT(0), BIT(1), BIT(2), BIT(3), BIT(4), BIT(5),
+        BIT(6), BIT(7), /* PD0 - PD7 */
+        BIT(0), BIT(1),BIT(2), BIT(3),BIT(4), BIT(5), /* PB0 - PB5 */
+        BIT(0), BIT(1),BIT(2), BIT(3),BIT(4), BIT(5), /* PC0 - PC5 */
+};
+
+void BermudaSetPinMode(pin, mode)
 unsigned char pin, mode;
 {
         if(pin <= 14)
                 pin -= ANALOG_BASE;
         
-        unsigned char port = BermudaGetIOPort(pin);
+        unsigned char mask = BermudaGetIOMask((unsigned short)pin);
+        unsigned char port = BermudaGetIOPort((unsigned short)pin);
+        volatile unsigned char *modeReg = BermudaGetIOMode(port);
+        printf("Port mode address, mode: %p, %x\n", modeReg, *modeReg);
 }

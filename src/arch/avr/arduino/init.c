@@ -91,10 +91,11 @@ int main(void)
         spb(LED_PORT, LED);
 
         BermudaInitTimer0();
-        printf("Total free memory: %x\n", BermudaFreeMemory());
 //         printf("CPU frequency high: %x\n", F_CPU >> 16);
         BermudaInitBaseADC();
         sei();
+        struct adc *adc = BermudaGetADC();
+        adc->read(0);
         while(1)
         {
                 flash_led(3);

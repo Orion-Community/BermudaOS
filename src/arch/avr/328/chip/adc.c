@@ -21,15 +21,22 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
+#include <lib/binary.h>
 
 /*
  * private functions
  */
 // static void BermADCWrite(struct adc*, unsigned short);
-// static unsigned short BermADCRead(struct adc*);
+static unsigned short BermudaADCConvert(unsigned char);
 
-static struct adc BermADC;
+const struct adc BermADC;
 
+/**
+ * \fn BermudaInitBaseADC()
+ * \brief Initialise the main ADC.
+ * 
+ * This function initializes the main ADC and fills up a struct adc (BermADC).
+ */
 void BermudaInitBaseADC()
 {
         struct adc* adc = &BermADC;
@@ -42,6 +49,13 @@ void BermudaInitBaseADC()
         return;
 }
 
+/**
+ * \fn BermudaInitADC(struct adc*)
+ * \brief Fill up a struct adc.
+ * \param adc The ADC structure to initialize.
+ * 
+ * Initializes an adc struct.
+ */
 void BermudaInitADC(adc)
 struct adc* adc;
 {
@@ -51,9 +65,24 @@ struct adc* adc;
         adc->adcsra = &BermudaGetADCSRA();
         adc->adcsrb = &BermudaGetADCSRB();
         adc->didr0 = &BermudaGetDIDR0();
+        adc->read = &BermudaADCConvert;
         return;
 }
 
+static unsigned short BermudaADCConvert(pin)
+unsigned char pin;
+{
+        struct adc *adc = &BermADC;
+        while((*adc->adcsra & BIT(ADSC)) != 0);
+        return 0;
+}
+
+/**
+ * \fn
+ * \brief ADC ISR
+ * 
+ * This ISR is called by hardware when an ADC conversion is complete.
+ */
 SIGNAL(ADC_vect)
 {
         return;

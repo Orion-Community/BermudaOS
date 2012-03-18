@@ -29,7 +29,7 @@ $(RAW_TARGET): $(DEPS) $(OBJS)
 	$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o $(RAW_TARGET) $(DEPS)
 
 $(TARGET): $(RAW_TARGET)
-# 	$(STRIP) --strip-all $(RAW_TARGET)
+	$(STRIP) --strip-all $(RAW_TARGET)
 	$(OBJCOPY) -R .eeprom -O ihex $(RAW_TARGET) $(TARGET)
 
 %o: %c

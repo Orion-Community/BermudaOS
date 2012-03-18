@@ -19,6 +19,21 @@
 #include <avr/io.h>
 #include <arch/avr/io.h>
 
+const struct avr_io io =
+{
+        .portb          = BermudaGetAddressPORTB(),
+        .portc          = BermudaGetAddressPORTC(),
+        .portd          = BermudaGetAddressPORTD(),
+        
+        .pinb           = BermudaGetAddressPINB(),
+        .pinc           = BermudaGetAddressPINC(),
+        .pind           = BermudaGetAddressPIND(),
+        
+        .ddrb           = BermudaGetAddressDDRB(),
+        .ddrc           = BermudaGetAddressDDRC(),
+        .ddrd           = BermudaGetAddressDDRD(),
+};
+
 const unsigned short ROM BermudaPortToOutput[] =
 {
         PIN_NOT_AVAILABLE,

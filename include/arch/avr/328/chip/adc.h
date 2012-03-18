@@ -37,7 +37,7 @@ struct adc;
 extern void BermudaInitBaseADC();
 extern void BermudaInitADC(struct adc*);
 
-typedef unsigned short (*adc_read_t)(struct adc*);
+typedef unsigned short (*adc_read_t)(unsigned char);
 typedef void (*adc_write_t)(struct adc*, unsigned short);
 
 struct adc
@@ -52,5 +52,11 @@ struct adc
                 *admux, *adcsra, *adcsrb,
                 *didr0;
 } __attribute__((packed));
+
+extern struct adc BermADC;
+static inline struct adc* BermudaGetADC()
+{
+        return &BermADC;
+}
 
 #endif

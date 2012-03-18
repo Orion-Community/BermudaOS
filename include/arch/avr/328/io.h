@@ -47,6 +47,15 @@ extern "C" {
 #define BermudaGetPIND() SFR_IO8(0x9)
 #define BermudaGetAddressPIND() ((volatile unsigned char*)&BermudaGetPIND())
 
+struct avr_io
+{
+        volatile unsigned char *portb, *portc, *portd;
+        volatile unsigned char *pinb,  *pinc,  *pind;
+        volatile unsigned char *ddrb,  *ddrc,  *ddrd;
+} __attribute__((packed));
+
+extern const struct avr_io io;
+#define BermudaGetAvrIO() (&io)
 #ifdef __cplusplus
 }
 #endif

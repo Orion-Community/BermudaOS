@@ -29,7 +29,8 @@
 // static void BermADCWrite(struct adc*, unsigned short);
 static unsigned short BermudaADCConvert(unsigned char);
 
-const struct adc BermADC;
+struct adc BermADC;
+static unsigned char adc_ref = 1; /* default analog reference */
 
 /**
  * \fn BermudaInitBaseADC()
@@ -72,9 +73,28 @@ struct adc* adc;
 static unsigned short BermudaADCConvert(pin)
 unsigned char pin;
 {
+        if((BermudaGetADCSRA() & BIT(ADEN)) == 0)
+                return 0;
+        
         struct adc *adc = &BermADC;
         while((*adc->adcsra & BIT(ADSC)) != 0);
-        return 0;
+        
+        /* select input channel */
+        *adc->admux |= ((pin & 0x7) | (adc_ref << 6));
+        
+        /* start conversion */
+        spb(*adc->adcsra, ADSC);
+
+        /* wait for it to finish */
+#ifdef THREADS
+        BermudaThreadSleep();
+#else
+        while((*adc->adcsra & BIT(ADSC)) != 0);
+#endif
+        /* finished, get results and return them */
+        unsigned char low = *adc->adcl;
+        unsigned char high = *adc->adch;
+        return low | (high << 8);
 }
 
 /**
@@ -85,5 +105,6 @@ unsigned char pin;
  */
 SIGNAL(ADC_vect)
 {
+        printf("test\n");
         return;
 }

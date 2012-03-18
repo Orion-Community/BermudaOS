@@ -26,3 +26,12 @@ const unsigned char ROM BermudaPinToPort[] =
         PB, PB, PB, PB, PB, PB,         /* pin 8-13 */
         PC, PC, PC, PC, PC,             /* ADC 0-5  */
 };
+
+void BermudaSetPortMode(pin, mode)
+unsigned char pin, mode;
+{
+        if(pin <= 14)
+                pin -= ANALOG_BASE;
+        
+        unsigned char port = BermudaGetIOPort(pin);
+}

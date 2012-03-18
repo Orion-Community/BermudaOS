@@ -46,6 +46,9 @@ extern "C" {
 /* pin defs */
 #define PIN_NOT_AVAILABLE 0
 
+#define INPUT 0x0
+#define OUTPUT 0x1
+
 extern const unsigned short ROM BermudaPortToOutput[];
 extern const unsigned short ROM BermudaPortToInput[];
 extern const unsigned short ROM BermudaPortToMode[];
@@ -54,7 +57,10 @@ extern const unsigned char ROM  BermudaPinToPort[];
 extern inline unsigned char BermudaReadPGMByte(unsigned short);
 extern inline unsigned short BermudaReadPGMWord(unsigned short);
 
+extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
+
 #define BermudaGetIOPort(pin) BermudaReadPGMByte(BermudaPinToPort+(pin))
+#define BermudaGetIOMask(pin) BermudaReadPGMByte(BermudaPinToMask+(pin))
 
 #ifdef __cplusplus
 }

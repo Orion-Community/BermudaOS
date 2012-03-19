@@ -77,10 +77,12 @@ extern void BermudaSetSlaveSpi(SPI *spi);
 
 PRIVATE void BermudaSetupSpiRegs(SPI *spi);
 PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
-PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned int mode);
-PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned int mode);
+PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode);
+PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
 PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
-PRIVATE inline void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+PRIVATE inline void BermudaSpiEnable(SPI *spi);
+PRIVATE inline void BermudaSpiDisable(SPI *spi);
 
 #ifdef THREADS
 PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi);

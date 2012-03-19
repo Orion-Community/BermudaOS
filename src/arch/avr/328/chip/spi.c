@@ -16,15 +16,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file spi.c */
+
 #include <bermuda.h>
 #include <lib/binary.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <arch/avr/io.h>
 
+/**
+ * \var BermudaSPI
+ * \brief Global SPI structure.
+ * 
+ * Global definition of the SPI. Initialised to NULL by default
+ */
 static SPI *BermudaSPI = NULL;
 
 #ifdef THREADS
+/**
+ * \var BermudaSpiThread
+ * \brief Global SPI thread definition
+ * 
+ * Global structure for the SPI thread. Only used when compiled with multithreading
+ * enabled.
+ */
 static THREAD *BermudaSpiThread = NULL;
 #endif
 
@@ -51,6 +66,7 @@ int BermudaSpiInit(SPI *spi)
         BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
         
 #ifdef THREADS
+        BermudaAttatchSpiIRQ(spi);
         BermudaThreadCreate("BermudaSpiThread", &BermudaSpiThread, BermudaSPI,
                                 128);
 #endif
@@ -58,16 +74,63 @@ int BermudaSpiInit(SPI *spi)
         return 0;
 }
 
+/**
+ * \fn BermudaSetMasterSpi(SPI *spi)
+ * \brief Enable master mode.
+ * \param spi The SPI structure to enable master mode on.
+ * 
+ * This function puts the SPI interface in master mode
+ */
 void BermudaSetMasterSpi(SPI *spi)
 {
         BermudaSetSpiMode(spi, SPI_MASTER);
 }
 
+/**
+ * \fn BermudaSetSlaveSpi(SPI *spi)
+ * \brief Enable slave mode.
+ * \param spi The SPI structure to enable slave mode on.
+ * 
+ * This function puts the SPI interface in slave mode
+ */
 void BermudaSetSlaveSpi(SPI *spi)
 {
         BermudaSetSpiMode(spi, SPI_SLAVE);
 }
 
+/**
+ * \fn BermudaSpiEnable(SPI *spi)
+ * \brief Enable the SPI.
+ * \param spi The SPI to enable.
+ * 
+ * This function enables the given SPI interface.
+ */
+PRIVATE inline void BermudaSpiEnable(SPI *spi)
+{
+        spb(*spi->spcr, SPE);
+        spi->flags |= (1<<SPI_INIT);
+}
+
+/**
+ * \fn BermudaSpiDisable(SPI *spi)
+ * \brief Enable the SPI.
+ * \param spi The SPI to disable.
+ * 
+ * This function disables the given SPI interface.
+ */
+PRIVATE inline void BermudaSpiDisable(SPI *spi)
+{
+        cpb(*spi->spcr, SPE);
+        spi->flags &= ~(1<<SPI_INIT);
+}
+
+/**
+ * \fn BermudaSetupSpiRegs(SPI *spi)
+ * \brief Setup I/O registers.
+ * \param spi The SPI to setup registers for.
+ * 
+ * This function links the SPI structure to the register addresses.
+ */
 PRIVATE void BermudaSetupSpiRegs(SPI *spi)
 {
         spi->spcr = &BermudaGetSPCR();
@@ -75,8 +138,21 @@ PRIVATE void BermudaSetupSpiRegs(SPI *spi)
         spi->spdr = &BermudaGetSPDR();
 }
 
-PRIVATE inline void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
+/**
+ * \fn BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
+ * \brief Setup the desired socket prescaler.
+ * \param spi The SPI to set the prescaler for.
+ * \param prescaler The desired prescaler. It must be a power of 2 (<= 128).
+ * \return 0 on success, else otherwise.
+ * 
+ * This will configure the SCK prescaler. If the prescaler is not a power of two,
+ * -1 will be returned.
+ */
+PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
 {
+        if(!BermudaIsPowerOfTwo(prescaler))
+                return -1;
+        
         spi->prescaler = prescaler;
         
         switch(prescaler)
@@ -87,7 +163,19 @@ PRIVATE inline void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
         }
 }
 
-PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned int mode)
+/**
+ * \fn BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
+ * \brief Set a clock mode.
+ * \param spi SPI to set the mode for.
+ * \param mode The mode to set.
+ * \return -1 if the mode is not a power of two.
+ * 
+ * BIT 0 : When bit 0 is a logical 1 the leading edge will be falling and the
+ *         SCK pin will be high on idle.
+ * 
+ * BIT 1 : When bit 1 is logical 1 the data will be sampled on the leading edge.
+ */
+PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
 {
         if(!BermudaIsPowerOfTwo(mode))
         {
@@ -109,7 +197,19 @@ PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned int mode)
         
 }
 
-PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned int mode)
+/**
+ * \fn BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode)
+ * \brief Unset a clock mode.
+ * \param spi SPI to clear the mode for.
+ * \param mode The mode to clear.
+ * \return -1 if the mode is not a power of two.
+ * 
+ * BIT 0 : When bit 0 is a logical 1 the leading edge will be rising and the
+ *         SCK pin will be high on idle.
+ * 
+ * BIT 1 : When bit 1 is logical 1 the data will be sampled on the trailing edge.
+ */
+PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode)
 {
         if(!BermudaIsPowerOfTwo(mode))
         {
@@ -130,6 +230,15 @@ PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned int mode)
                 return -1;
 }
 
+/**
+ * \fn BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
+ * \brief Set the SPI operation mode.
+ * \param spi The SPI to set the operation mode for.
+ * \param mode Operation mode to set.
+ * 
+ * This function will put the SPI in either master or slave mode, depending on
+ * the value of mode.
+ */
 PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
 {
         if(SPI_MASTER == mode)
@@ -145,17 +254,43 @@ PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
 }
 
 #ifdef THREADS
+/**
+ * \fn BermudaAttatchSpiIRQ(SPI *spi)
+ * \brief Setup the SPI ISR.
+ * \param spi The ISR will be attatched to this SPI descriptor.
+ * 
+ * This function enables this SPI interrupt flag. If the interrupts are enabled
+ * globally, then the SPI ISR will be called when a SPI transfer is complete.
+ */
 PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi)
 {
         spb(*spi->spcr, SPIE);
+        spi->flags |= (1<<SPI_IRQ);
 }
 
+/**
+ * \fn BermudaDetachSpiIRQ(SPI *spi)
+ * \brief Disable the SPI ISR.
+ * \param spi The ISR will be dettatched from this SPI descriptor.
+ * 
+ * This function disables the SPI interrupt flag. After calling, the SPI ISR will
+ * not be called again by the SPI.
+ */
 PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi)
 {
         cpb(*spi->spcr, SPIE);
+        spi->flags &= ~(1<<SPI_IRQ);
 }
 #endif
 
+/**
+ * \fn BermudaSetSpiBitOrder(SPI *spi, unsigned char order)
+ * \brief The bit order can be configured using this function.
+ * \param spi SPI descriptor.
+ * \param order The bit order.
+ * 
+ * When order is not 0 the bit order will be LSB first, otherwise MSB first.
+ */
 PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order)
 {
         if(order)

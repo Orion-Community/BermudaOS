@@ -15,7 +15,7 @@ CSRCS			=
 CPPSRCS			=
 ARCH			= avr
 DEPS			= arch.o lib.o sys.o
-BUILDSYS		= windows
+BUILDSYS		= linux 
 
 include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs
@@ -53,6 +53,7 @@ upload: $(TARGET)
 clean:
 
 	-rm -fv $(TARGET) $(DEPS) $(RAW_TARGET)
+	-rm -Rfv ../doc/html/
 	$(MAKE) -C arch/ clean ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C lib/ clean BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C sys/ clean BUILDSYS=$(BUILDSYS)

@@ -161,6 +161,8 @@ PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
                         spi->prescaler = 0;
                         break;
         }
+        
+        return 0;
 }
 
 /**

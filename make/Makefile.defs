@@ -8,6 +8,7 @@ CPP		= $(AVRBIN)/avr-g++
 LD		= $(AVRBIN)/avr-ld
 AS		= $(AVRBIN)/avr-gcc
 STRIP		= $(AVRBIN)/avr-strip
+DOXY		= $(BIN)/doxygen
 MAKE		= make
 OBJCOPY		= avr-objcopy
 AVRDUDE		= avrdude

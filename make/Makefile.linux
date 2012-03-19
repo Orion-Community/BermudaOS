@@ -9,3 +9,4 @@ AVRDUDE_ARD_BAUDRATE    = 115200
 AVRDUDE_ARD_PROGRAMMER  = arduino
 AVRLIB                  = /usr/lib/avr/include
 AVRBIN                  = /usr/bin
+BIN			= /usr/bin

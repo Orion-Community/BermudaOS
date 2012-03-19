@@ -22,6 +22,17 @@
 #include <arch/avr/io.h>
 #include <bermuda.h>
 
+#define SPI_INIT  0
+#define SPI_IRQ   1
+#define SPI_SLEEP 2
+#define SPI_MODE  3
+
+#define SPI_POLARITY_RISING 0
+#define SPI_POLARITY_FALLING 1
+
+#define SPI_CLOCK_PHASE_SAMPLE 0
+#define SPI_CLOCK_PHASE_SETUP  1
+
 typedef struct spi SPI;
 
 struct spi
@@ -31,14 +42,21 @@ struct spi
         
         unsigned char (*read) (SPI*);
         void          (*write)(SPI*, unsigned char);
-        unsigned char flags : 3; /*
+        unsigned char flags; /*
                               * 0   -> set to one when initialized
                               * 1   -> ISR enabled
                               * 2   -> Sleep when waiting for transfer
+                              * 3   -> SPI is in master mode when 1
                               */
         unsigned char prescaler;
         volatile unsigned char *spcr, *spsr, *spdr;
 } __PACK__;
+
+typedef enum
+{
+        SPI_MASTER,
+        SPI_SLAVE,
+} spi_mode_t;
 
 #define BermudaGetSPCR() SFR_IO8(0x2C)
 #define BermudaGetSPSR() SFR_IO8(0x2D)
@@ -54,9 +72,20 @@ extern unsigned char BermudaSpiRead(SPI *spi);
 extern void BermudaSpiWrite(SPI *spi, unsigned char data);
 extern int BermudaSpiInit(SPI *spi);
 extern int BermudaSpiDestroy(SPI *spi);
+extern void BermudaSetMasterSpi(SPI *spi);
+extern void BermudaSetSlaveSpi(SPI *spi);
 
 PRIVATE void BermudaSetupSpiRegs(SPI *spi);
+PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
+PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned int mode);
+PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned int mode);
+PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
 PRIVATE inline void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+
+#ifdef THREADS
+PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi);
+PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi);
+#endif
 __DECL_END
 
 #endif /* __SPI_H */

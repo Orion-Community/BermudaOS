@@ -33,4 +33,4 @@ chip.o:
 
 clean:
 	-rm -vf $(OBJS) $(TARGET)
-	$(MAKE) -C chip/
+	$(MAKE) -C chip/ clean

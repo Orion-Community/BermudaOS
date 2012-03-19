@@ -32,6 +32,10 @@ static unsigned short BermudaADCConvert(unsigned char);
 struct adc BermADC;
 static unsigned char adc_ref = 1; /* default analog reference */
 
+#ifdef THREADS
+static THREAD *BermudaADCThread;
+#endif
+
 /**
  * \fn BermudaInitBaseADC()
  * \brief Initialise the main ADC.

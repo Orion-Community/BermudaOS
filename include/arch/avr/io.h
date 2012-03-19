@@ -26,6 +26,7 @@
         #include <arch/avr/328/io.h>
         #include <arch/avr/328/chip/adc.h>
         #include <arch/avr/328/chip/uart.h>
+        #include <arch/avr/328/chip/spi.h>
 #endif
 
 #ifdef __cplusplus

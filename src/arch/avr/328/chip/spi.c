@@ -23,6 +23,10 @@
 
 static SPI *BermudaSPI = NULL;
 
+#ifdef THREADS
+static THREAD *BermudaSpiThread = NULL;
+#endif
+
 /**
  * \fn BermudaSpiInit(SPI *spi)
  * \brief Initialise the Serial Peripheral Interface.
@@ -43,6 +47,12 @@ int BermudaSpiInit(SPI *spi)
                 BermudaSPI = spi;
         
         BermudaSetupSpiRegs(spi);
+        BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
+        
+#ifdef THREADS
+        BermudaThreadCreate("BermudaSpiThread", &BermudaSpiThread, BermudaSPI,
+                                128);
+#endif
         sei();
         return 0;
 }
@@ -66,7 +76,14 @@ PRIVATE inline void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
         }
 }
 
+#ifdef THREADS
 SIGNAL(SPI_STC_vect)
 {
         return;
 }
+
+THREAD(BermudaSpiThread, data)
+{
+        while(1);
+}
+#endif

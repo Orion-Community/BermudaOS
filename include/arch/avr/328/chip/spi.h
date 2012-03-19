@@ -44,11 +44,19 @@ struct spi
 #define BermudaGetSPSR() SFR_IO8(0x2D)
 #define BermudaGetSPDR() SFR_IO8(0x2E)
 
+/*
+ * SPI defaults
+ */
+#define SPI_PRESCALER_DEFAULT 128
+
+__DECL
 extern unsigned char BermudaSpiRead(SPI *spi);
 extern void BermudaSpiWrite(SPI *spi, unsigned char data);
 extern int BermudaSpiInit(SPI *spi);
 extern int BermudaSpiDestroy(SPI *spi);
 
 PRIVATE void BermudaSetupSpiRegs(SPI *spi);
+PRIVATE inline void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+__DECL_END
 
 #endif /* __SPI_H */

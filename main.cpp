@@ -123,7 +123,7 @@ loop()
         float temp = raw_temp / 1024 * 5000;
  
         Serial.print("Temperature: ");
-        Serial.println(temp/10);
+        Serial.println(raw_temp);
         ArduinoWait(1000);
         return E_SUCCESS;
 }

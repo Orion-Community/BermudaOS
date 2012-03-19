@@ -105,6 +105,5 @@ unsigned char pin;
  */
 SIGNAL(ADC_vect)
 {
-        printf("test\n");
         return;
 }

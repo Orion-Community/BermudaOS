@@ -101,9 +101,9 @@ int main(void)
         while(1)
         {
                 float raw_temp = adc->read(0) ;
-                float temperature = raw_temp / 1024 * 500;
-                printf("Analog pin 0 value: %f\n", temperature);
-                flash_led(3);
+                int temperature = raw_temp / 1024 * 5000;
+                temperature /= 10;
+                printf("Analog pin 0 value: %d\n", temperature);
                 _delay_ms(1000);
         }
         return 0;

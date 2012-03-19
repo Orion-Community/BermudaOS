@@ -52,7 +52,7 @@ const unsigned short ROM BermudaPortToInput[] =
 
 const unsigned short ROM BermudaPortToMode[] =
 {
-        PIN_NOT_AVAILABLE,
+        (unsigned short)PIN_NOT_AVAILABLE,
         (unsigned short)BermudaGetAddressDDRB(),
         (unsigned short)BermudaGetAddressDDRC(),
         (unsigned short)BermudaGetAddressDDRD(),

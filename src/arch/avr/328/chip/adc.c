@@ -80,7 +80,7 @@ unsigned char pin;
         while((*adc->adcsra & BIT(ADSC)) != 0);
         
         /* select input channel */
-        *adc->admux |= ((pin & 0x7) | (adc_ref << 6));
+        *adc->admux = ((pin & 0x7) | (adc_ref << 6));
         
         /* start conversion */
         spb(*adc->adcsra, ADSC);

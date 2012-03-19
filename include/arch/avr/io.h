@@ -20,6 +20,7 @@
 #define __PORT_IO_H
 
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>
@@ -64,8 +65,8 @@ extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
                                 BermudaPinToPort+(pin))
 #define BermudaGetIOMask(pin) BermudaReadPGMByte((unsigned short) \
                                 BermudaPinToMask+(pin))
-#define BermudaGetIOMode(port)  ((volatile unsigned char*)BermudaReadPGMWord( \
-                                (unsigned short)BermudaPortToMode+(port)))
+#define BermudaGetIOMode(port)  ((volatile unsigned char*)pgm_read_word( \
+                                BermudaPortToMode+(port)))
 
 #ifdef __cplusplus
 }

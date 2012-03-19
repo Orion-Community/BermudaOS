@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <avr/interrupt.h>
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
 #include <lib/binary.h>
@@ -39,11 +40,22 @@ const unsigned char ROM BermudaPinToMask[] =
 void BermudaSetPinMode(pin, mode)
 unsigned char pin, mode;
 {
-        if(pin <= 14)
-                pin -= ANALOG_BASE;
-        
         unsigned char mask = BermudaGetIOMask((unsigned short)pin);
         unsigned char port = BermudaGetIOPort((unsigned short)pin);
         volatile unsigned char *modeReg = BermudaGetIOMode(port);
-        printf("Port mode address, mode: %p, %x\n", modeReg, *modeReg);
+        
+        if(mode == INPUT)
+        {
+                cli();
+                cpb(*modeReg, mask);
+                sei();
+                return;
+        }
+        else
+        {
+                cli();
+                spb(*modeReg, mask);
+                sei();
+                return;
+        }
 }

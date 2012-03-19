@@ -116,11 +116,15 @@ setup()
         return E_SUCCESS;
 }
 
-static unsigned char flip = 0;
 static int
 loop()
 {
-        Serial.println("[0] Main thread");
+        float raw_temp = ArduinoAnalogRead(A0);
+        float temp = raw_temp / 1024 * 5000;
+ 
+        Serial.print("Temperature: ");
+        Serial.println(temp/10);
+        ArduinoWait(1000);
         return E_SUCCESS;
 }
 

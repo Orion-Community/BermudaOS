@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <avr/interrupt.h>
 #include <avr/io.h>
@@ -97,12 +98,11 @@ int main(void)
         
         struct adc *adc = BermudaGetADC();
         BermudaSetPinMode(14, INPUT); /* pin A0 */
-        
         while(1)
         {
-                int raw_temp = adc->read(0) ;
-                int temperature = raw_temp * 5000 / 1024;
-                printf("Analog pin 0 value: %d\n", temperature);
+                float raw_temp = adc->read(0) ;
+                float temperature = raw_temp / 1024 * 500;
+                printf("Analog pin 0 value: %f\n", temperature);
                 flash_led(3);
                 _delay_ms(1000);
         }

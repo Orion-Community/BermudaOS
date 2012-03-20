@@ -18,6 +18,8 @@
 
 /** \file spi.c */
 
+#ifdef __SPI
+
 #include <bermuda.h>
 #include <lib/binary.h>
 #include <avr/interrupt.h>
@@ -372,4 +374,6 @@ THREAD(BermudaSpiThread, data)
 {
         while(1);
 }
-#endif
+#endif /* THREADS */
+
+#endif /* __SPI */

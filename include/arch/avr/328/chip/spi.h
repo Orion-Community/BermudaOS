@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __SPI
 #ifndef __SPI_H
 #define __SPI_H
 
@@ -92,3 +93,4 @@ PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi);
 __DECL_END
 
 #endif /* __SPI_H */
+#endif /* __SPI   */

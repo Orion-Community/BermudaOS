@@ -47,6 +47,7 @@ struct spi
                               * 1   -> ISR enabled
                               * 2   -> Sleep when waiting for transfer
                               * 3   -> SPI is in master mode when 1
+                              * 4   -> SPI 2X
                               */
         unsigned char prescaler;
         volatile unsigned char *spcr, *spsr, *spdr;

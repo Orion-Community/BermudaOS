@@ -64,12 +64,20 @@ int BermudaSpiInit(SPI *spi)
         
         BermudaSetupSpiRegs(spi);
         BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
+        BermudaSetMasterSpi(spi);
         
+        BermudaUnsetSpiClockMode(spi, 1); /* LOW when idle */
+        BermudaSetSpiClockMode(spi, 1); /* sample on trailing edge */
+        BermudaSetSpiBitOrder(spi, 1); /* LSB first */
+        spi->name = "spi0";
+        spi->id = 0;
 #ifdef THREADS
         BermudaAttatchSpiIRQ(spi);
         BermudaThreadCreate("BermudaSpiThread", &BermudaSpiThread, BermudaSPI,
                                 128);
 #endif
+        BermudaSpiEnable(spi);
+        
         sei();
         return 0;
 }
@@ -147,9 +155,15 @@ PRIVATE void BermudaSetupSpiRegs(SPI *spi)
  * 
  * This will configure the SCK prescaler. If the prescaler is not a power of two,
  * -1 will be returned.
+ * 
+ * Bit 0 of <i>prescaler</i> indicates of the SPI should operate in double speed
+ * mode.
  */
 PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
 {
+        unsigned char X2 = (prescaler & 0x1);
+        prescaler &= ~(0x1);
+        
         if(!BermudaIsPowerOfTwo(prescaler))
                 return -1;
         
@@ -157,10 +171,59 @@ PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
         
         switch(prescaler)
         {
+                case 2:
+                        spb(*spi->spsr, SPI2X);
+                        cpb(*spi->spcr, SPR0);
+                        cpb(*spi->spcr, SPR1);
+                        break;
+                        
+                case 4:
+                        cpb(*spi->spsr, SPI2X);
+                        cpb(*spi->spcr, SPR0);
+                        cpb(*spi->spcr, SPR1);
+                        break;
+                        
+                case 8:
+                        spb(*spi->spsr, SPI2X);
+                        spb(*spi->spcr, SPR0);
+                        cpb(*spi->spcr, SPR1);
+                        break;
+                        
+                case 16:
+                        cpb(*spi->spsr, SPI2X);
+                        spb(*spi->spcr, SPR0);
+                        cpb(*spi->spcr, SPR1);
+                        break;
+                        
+                case 32:
+                        spb(*spi->spsr, SPI2X);
+                        cpb(*spi->spcr, SPR0);
+                        spb(*spi->spcr, SPR1);
+                        break;
+                        
+                case 64:
+                        if(X2)
+                        {
+                                spb(*spi->spsr, SPI2X);
+                                spb(*spi->spcr, SPR0);
+                        }
+                        
+                        spb(*spi->spcr, SPR1);
+                        break;
+                        
+                case 128:
+                        cpb(*spi->spsr, SPI2X);
+                        spb(*spi->spcr, SPR0);
+                        spb(*spi->spcr, SPR1);
+                        break;
+                        
                 default:
                         spi->prescaler = 0;
                         break;
         }
+        
+        spi->flags |= (X2 << 4);
+        return 0;
 }
 
 /**
@@ -205,7 +268,7 @@ PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
  * \return -1 if the mode is not a power of two.
  * 
  * BIT 0 : When bit 0 is a logical 1 the leading edge will be rising and the
- *         SCK pin will be high on idle.
+ *         SCK pin will be low on idle.
  * 
  * BIT 1 : When bit 1 is logical 1 the data will be sampled on the trailing edge.
  */

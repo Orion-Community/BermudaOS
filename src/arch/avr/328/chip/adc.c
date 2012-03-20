@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <avr/io.h>
+#include <lib/binary.h>
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
 #include <lib/binary.h>
@@ -99,6 +100,22 @@ unsigned char pin;
         unsigned char low = *adc->adcl;
         unsigned char high = *adc->adch;
         return low | (high << 8);
+}
+
+/**
+ * \fn BermudaAdcSetPrescaler(ADC *adc)
+ * \brief Set the CLK prescaler.
+ * \param adc ADC to configure.
+ * \param prescaler Prescaler to set.
+ *
+ * Set ADC clock prescaler. The prescaler must be a power of two. The minimal
+ * prescaler is two, when a value of 0 is given the prescaler is set to two.
+ */
+PRIVATE inline int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescaler)
+{
+        if(!BermudaIsPowerOfTwo(prescaler))
+                return -1;
+        return 0;
 }
 
 /**

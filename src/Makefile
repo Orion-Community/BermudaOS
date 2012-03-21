@@ -50,6 +50,9 @@ sys.o:
 upload: $(TARGET)
 	$(AVRDUDE) $(AVRDUDE_COM_OPTS) -U flash:w:$(TARGET):i
 
+doc:
+	$(DOXY) -DSx ../doc/Doxy
+
 clean:
 
 	-rm -fv $(TARGET) $(DEPS) $(RAW_TARGET)

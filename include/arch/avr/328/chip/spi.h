@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __SPI__
 #ifndef __SPI_H
 #define __SPI_H
 
@@ -47,6 +48,7 @@ struct spi
                               * 1   -> ISR enabled
                               * 2   -> Sleep when waiting for transfer
                               * 3   -> SPI is in master mode when 1
+                              * 4   -> SPI 2X
                               */
         unsigned char prescaler;
         volatile unsigned char *spcr, *spsr, *spdr;
@@ -75,19 +77,20 @@ extern int BermudaSpiDestroy(SPI *spi);
 extern void BermudaSetMasterSpi(SPI *spi);
 extern void BermudaSetSlaveSpi(SPI *spi);
 
-PRIVATE void BermudaSetupSpiRegs(SPI *spi);
-PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
-PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode);
-PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
+PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);
+PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
+PRIVATE WEAK int BermudaSetSpiClockMode(SPI *spi, unsigned char mode);
+PRIVATE WEAK int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
 PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
-PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
 PRIVATE inline void BermudaSpiEnable(SPI *spi);
 PRIVATE inline void BermudaSpiDisable(SPI *spi);
 
 #ifdef THREADS
-PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi);
-PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi);
+PRIVATE WEAK void BermudaAttatchSpiIRQ(SPI *spi);
+PRIVATE WEAK void BermudaDetachSpiIRQ(SPI *spi);
 #endif
 __DECL_END
 
 #endif /* __SPI_H */
+#endif /* __SPI   */

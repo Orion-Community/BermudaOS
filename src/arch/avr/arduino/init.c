@@ -95,6 +95,10 @@ int main(void)
         BermudaInitTimer0();
         BermudaInitBaseADC();
         sei();
+
+#ifdef __SPI__
+        BermudaSpiInit(malloc(sizeof(SPI)));
+#endif
         
         struct adc *adc = BermudaGetADC();
         BermudaSetPinMode(14, INPUT); /* pin A0 */

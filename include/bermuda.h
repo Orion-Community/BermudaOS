@@ -30,5 +30,6 @@
 #define __PACK__ __attribute__((packed))
 
 #define PRIVATE __attribute__ ((visibility ("hidden")))
+#define WEAK    __attribute__((weak))
 
 #endif

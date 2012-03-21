@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <arch/avr/io.h>
+#include <bermuda.h>
 
 #define BermudaGetADMUX()   MEM_IO8(0x7C)
 #define BermudaGetADCSRA()  MEM_IO8(0x7A)
@@ -29,16 +30,13 @@
 #define BermudaGetADCSRB()  MEM_IO8(0x7B)
 #define BermudaGetDIDR0()   MEM_IO8(0x7E)
 
-struct adc;
+#define ADC_DEFAULT_CLK         64
 
-/*
- * functions / variables
- */
-extern void BermudaInitBaseADC();
-extern void BermudaInitADC(struct adc*);
+struct adc;
 
 typedef unsigned short (*adc_read_t)(unsigned char);
 typedef void (*adc_write_t)(struct adc*, unsigned short);
+
 
 struct adc
 {
@@ -47,6 +45,8 @@ struct adc
         adc_read_t read;
         adc_write_t write;
         void (*update)(struct adc*);
+
+        unsigned char prescaler, aref;
         
         volatile uint8_t *adcl, *adch,
                 *admux, *adcsra, *adcsrb,
@@ -54,9 +54,28 @@ struct adc
 } __attribute__((packed));
 
 extern struct adc BermADC;
+
+/*
+ * functions / variables
+ */
+__DECL
+extern void BermudaInitBaseADC();
+extern void BermudaInitADC(struct adc* adc);
+
+PRIVATE WEAK int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescaler);
+PRIVATE inline void BermudaAdcEnable(struct adc *adc);
+PRIVATE inline void BermudaAdcDisable(struct adc *adc);
+PRIVATE WEAK unsigned short BermudaADCConvert(unsigned char pin);
+
+#ifdef THREADS
+PRIVATE void BermudaAdcIrqAttatch(struct adc *adc);
+PRIVATE void BermudaAdcIrqDetatch(struct adc *adc);
+#endif
+
 static inline struct adc* BermudaGetADC()
 {
         return &BermADC;
 }
+__DECL_END
 
 #endif

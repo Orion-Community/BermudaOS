@@ -26,7 +26,7 @@
 __DECL
 static inline unsigned char BermudaIsPowerOfTwo(unsigned int x)
 {
-        return (x & (x-1));
+        return !(x & (x-1));
 }
 __DECL_END
 

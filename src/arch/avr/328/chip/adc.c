@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file adc.c */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <avr/io.h>
@@ -115,6 +117,57 @@ PRIVATE inline int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescal
 {
         if(!BermudaIsPowerOfTwo(prescaler))
                 return -1;
+        else
+                adc->prescaler = (prescaler) ? prescaler : 2;
+
+        switch(prescaler)
+        {
+                case 2:
+                        cpb(*adc->adcsra, ADPS0);
+                        cpb(*adc->adcsra, ADPS1);
+                        cpb(*adc->adcsra, ADPS2);
+                        break;
+
+                case 4:
+                        spb(*adc->adcsra, ADPS0);
+                        cpb(*adc->adcsra, ADPS1);
+                        cpb(*adc->adcsra, ADPS2);
+                        break;
+
+                case 8:
+                        spb(*adc->adcsra, ADPS0);
+                        spb(*adc->adcsra, ADPS1);
+                        cpb(*adc->adcsra, ADPS2);
+                        break;
+
+                case 16:
+                        cpb(*adc->adcsra, ADPS0);
+                        cpb(*adc->adcsra, ADPS1);
+                        spb(*adc->adcsra, ADPS2);
+                        break;
+
+                case 32:
+                        spb(*adc->adcsra, ADPS0);
+                        cpb(*adc->adcsra, ADPS1);
+                        spb(*adc->adcsra, ADPS2);
+                        break;
+
+                case 64:
+                        cpb(*adc->adcsra, ADPS0);
+                        spb(*adc->adcsra, ADPS1);
+                        spb(*adc->adcsra, ADPS2);
+                        break;
+
+                case 128:
+                        spb(*adc->adcsra, ADPS0);
+                        spb(*adc->adcsra, ADPS1);
+                        spb(*adc->adcsra, ADPS2);
+                        break;
+
+                default:
+                        BermudaAdcSetPrescaler(adc, ADC_DEFAULT_CLK);
+                        break;
+        }
         return 0;
 }
 

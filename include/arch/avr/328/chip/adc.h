@@ -30,6 +30,8 @@
 #define BermudaGetADCSRB()  MEM_IO8(0x7B)
 #define BermudaGetDIDR0()   MEM_IO8(0x7E)
 
+#define ADC_DEFAULT_CLK         64
+
 struct adc;
 
 typedef unsigned short (*adc_read_t)(unsigned char);

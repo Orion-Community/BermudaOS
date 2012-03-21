@@ -63,6 +63,14 @@ extern void BermudaInitBaseADC();
 extern void BermudaInitADC(struct adc* adc);
 
 PRIVATE inline int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescaler);
+PRIVATE inline void BermudaAdcEnable(struct adc *adc);
+PRIVATE inline void BermudaAdcDisable(struct adc *adc);
+PRIVATE unsigned short BermudaADCConvert(unsigned char pin);
+
+#ifdef THREADS
+PRIVATE void BermudaAdcIrqAttatch(struct adc *adc);
+PRIVATE void BermudaAdcIrqDetatch(struct adc *adc);
+#endif
 
 static inline struct adc* BermudaGetADC()
 {

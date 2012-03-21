@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file spi.c */
+/** \file */
 
 #ifdef __SPI
 
@@ -115,7 +115,7 @@ void BermudaSetSlaveSpi(SPI *spi)
  * 
  * This function enables the given SPI interface.
  */
-PRIVATE inline void BermudaSpiEnable(SPI *spi)
+PRIVATE WEAK inline void BermudaSpiEnable(SPI *spi)
 {
         spb(*spi->spcr, SPE);
         spi->flags |= (1<<SPI_INIT);
@@ -128,7 +128,7 @@ PRIVATE inline void BermudaSpiEnable(SPI *spi)
  * 
  * This function disables the given SPI interface.
  */
-PRIVATE inline void BermudaSpiDisable(SPI *spi)
+PRIVATE WEAK inline void BermudaSpiDisable(SPI *spi)
 {
         cpb(*spi->spcr, SPE);
         spi->flags &= ~(1<<SPI_INIT);
@@ -141,7 +141,7 @@ PRIVATE inline void BermudaSpiDisable(SPI *spi)
  * 
  * This function links the SPI structure to the register addresses.
  */
-PRIVATE void BermudaSetupSpiRegs(SPI *spi)
+PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi)
 {
         spi->spcr = &BermudaGetSPCR();
         spi->spsr = &BermudaGetSPSR();
@@ -161,12 +161,12 @@ PRIVATE void BermudaSetupSpiRegs(SPI *spi)
  * Bit 0 of <i>prescaler</i> indicates of the SPI should operate in double speed
  * mode.
  */
-PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
+PRIVATE WEAK inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
 {
         unsigned char X2 = (prescaler & 0x1);
         prescaler &= ~(0x1);
         
-        if(!BermudaIsPowerOfTwo(prescaler))
+        if(BermudaIsPowerOfTwo(prescaler))
                 return -1;
         
         spi->prescaler = prescaler;
@@ -240,7 +240,7 @@ PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
  * 
  * BIT 1 : When bit 1 is logical 1 the data will be sampled on the leading edge.
  */
-PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
+PRIVATE WEAK inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
 {
         if(!BermudaIsPowerOfTwo(mode))
         {
@@ -274,7 +274,7 @@ PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
  * 
  * BIT 1 : When bit 1 is logical 1 the data will be sampled on the trailing edge.
  */
-PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode)
+PRIVATE WEAK inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode)
 {
         if(!BermudaIsPowerOfTwo(mode))
         {
@@ -304,7 +304,7 @@ PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode)
  * This function will put the SPI in either master or slave mode, depending on
  * the value of mode.
  */
-PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
+PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
 {
         if(SPI_MASTER == mode)
         {
@@ -327,7 +327,7 @@ PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
  * This function enables this SPI interrupt flag. If the interrupts are enabled
  * globally, then the SPI ISR will be called when a SPI transfer is complete.
  */
-PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi)
+PRIVATE WEAK inline void BermudaAttatchSpiIRQ(SPI *spi)
 {
         spb(*spi->spcr, SPIE);
         spi->flags |= (1<<SPI_IRQ);
@@ -341,7 +341,7 @@ PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi)
  * This function disables the SPI interrupt flag. After calling, the SPI ISR will
  * not be called again by the SPI.
  */
-PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi)
+PRIVATE WEAK inline void BermudaDetachSpiIRQ(SPI *spi)
 {
         cpb(*spi->spcr, SPIE);
         spi->flags &= ~(1<<SPI_IRQ);
@@ -356,7 +356,7 @@ PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi)
  * 
  * When order is not 0 the bit order will be LSB first, otherwise MSB first.
  */
-PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order)
+PRIVATE WEAK inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order)
 {
         if(order)
                 spb(*spi->spcr, DORD);

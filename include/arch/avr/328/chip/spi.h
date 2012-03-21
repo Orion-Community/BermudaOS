@@ -77,18 +77,18 @@ extern int BermudaSpiDestroy(SPI *spi);
 extern void BermudaSetMasterSpi(SPI *spi);
 extern void BermudaSetSlaveSpi(SPI *spi);
 
-PRIVATE void BermudaSetupSpiRegs(SPI *spi);
-PRIVATE void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
-PRIVATE inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode);
-PRIVATE inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
-PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
-PRIVATE inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
-PRIVATE inline void BermudaSpiEnable(SPI *spi);
-PRIVATE inline void BermudaSpiDisable(SPI *spi);
+PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);
+PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
+PRIVATE WEAK inline int BermudaSetSpiClockMode(SPI *spi, unsigned char mode);
+PRIVATE WEAK inline int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
+PRIVATE WEAK inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
+PRIVATE WEAK inline int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+PRIVATE WEAK inline void BermudaSpiEnable(SPI *spi);
+PRIVATE WEAK inline void BermudaSpiDisable(SPI *spi);
 
 #ifdef THREADS
-PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi);
-PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi);
+PRIVATE WEAK inline void BermudaAttatchSpiIRQ(SPI *spi);
+PRIVATE WEAK inline void BermudaDetachSpiIRQ(SPI *spi);
 #endif
 __DECL_END
 

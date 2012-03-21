@@ -26,12 +26,6 @@
 #include <arch/avr/io.h>
 #include <lib/binary.h>
 
-/*
- * private functions
- */
-// static void BermADCWrite(struct adc*, unsigned short);
-static unsigned short BermudaADCConvert(unsigned char);
-
 struct adc BermADC;
 static unsigned char adc_ref = 1; /* default analog reference */
 
@@ -50,10 +44,13 @@ void BermudaInitBaseADC()
         struct adc* adc = &BermADC;
         adc->id = 0;
         BermudaInitADC(adc);
-        spb(*adc->adcsra, ADEN);
-        spb(*adc->adcsra, ADIE);
-        spb(*adc->adcsra, ADPS1);
-        spb(*adc->adcsra, ADPS2);
+        BermudaAdcEnable(adc);
+
+        BermudaAdcSetPrescaler(adc, ADC_DEFAULT_CLK);
+#ifdef THREADS
+        BermudaAdcIrqAttatch(adc);
+#endif
+        
         return;
 }
 
@@ -77,7 +74,16 @@ struct adc* adc;
         return;
 }
 
-static unsigned short BermudaADCConvert(pin)
+/**
+ * \fn BermudaADCConvert(pin)
+ * \brief Read the ADC.
+ * \param pin The ADC pin to read from.
+ * \return The converted value.
+ *
+ * This function starts the analog to digital conversion and returns the
+ * result.
+ */
+PRIVATE unsigned short BermudaADCConvert(pin)
 unsigned char pin;
 {
         if((BermudaGetADCSRA() & BIT(ADEN)) == 0)
@@ -102,6 +108,51 @@ unsigned char pin;
         unsigned char low = *adc->adcl;
         unsigned char high = *adc->adch;
         return low | (high << 8);
+}
+
+/**
+ * \fn BermudaAdcSetAnalogRef(adc, aref)
+ * \brief Set the analog reference.
+ * \param adc Analog Digital Converter.
+ * \param aref The analog reference.
+ *
+ * 0 | AREF, Internal Vref turned off
+ * 1 | AVCC with external capacitor at AREF pin
+ * 2 | Invalid
+ * 3 | Internal 1.1V Voltage Reference with external capacitor at AREF pin
+ */
+PRIVATE WEAK inline void BermudaAdcSetAnalogRef(adc, aref)
+struct adc *adc;
+unsigned char aref;
+{
+        if(2 == aref)
+                return;
+
+        *(adc->admux) = (aref << 6);
+}
+
+/**
+ * \fn BermudaAdcEnable(struct adc *adc)
+ * \brief Enable the ADC.
+ * \param adc ADC to enable.
+ *
+ * This function enables the given ADC.
+ */
+PRIVATE inline void BermudaAdcEnable(struct adc *adc)
+{
+        spb(*adc->adcsra, ADEN);
+}
+
+/**
+ * \fn BermudaAdcEnable(struct adc *adc)
+ * \brief Disable the ADC.
+ * \param adc ADC to disable.
+ *
+ * This function disables the given ADC.
+ */
+PRIVATE inline void BermudaAdcDisable(struct adc *adc)
+{
+        cpb(*adc->adcsra, ADEN);
 }
 
 /**
@@ -153,6 +204,7 @@ PRIVATE inline int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescal
                         break;
 
                 case 64:
+                        printf("hoi");
                         cpb(*adc->adcsra, ADPS0);
                         spb(*adc->adcsra, ADPS1);
                         spb(*adc->adcsra, ADPS2);
@@ -171,6 +223,32 @@ PRIVATE inline int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescal
         return 0;
 }
 
+#ifdef THREADS
+/**
+ * \fn BermudaAdcIrqAttatch(struct adc *adc)
+ * \brief Attatch the ADC IRQ.
+ * \param adc The ADC which interrupt should be enabled.
+ *
+ * The ADC completion hw IRQ will be active after calling this function. The pre-
+ * defined vector for this ISR is <i>ADC_vect</i>.
+ */
+PRIVATE void BermudaAdcIrqAttatch(struct adc *adc)
+{
+        spb(*adc->adcsra, ADIE);
+}
+
+/**
+ * \fn BermudaAdcIrqDetatch(struct adc *adc)
+ * \brief Disable the ADC IRQ.
+ * \param adc The ADC which IRQ should be disabled.
+ *
+ * The ADC completion hw IRQ will be deactivated after calling this function.
+ */
+PRIVATE void BermudaAdcIrqDetatch(struct adc *adc)
+{
+        cpb(*adc->adcsra, ADIE);
+}
+
 /**
  * \fn
  * \brief ADC ISR
@@ -181,3 +259,4 @@ SIGNAL(ADC_vect)
 {
         return;
 }
+#endif

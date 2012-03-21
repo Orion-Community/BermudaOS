@@ -46,7 +46,7 @@ struct adc
         adc_write_t write;
         void (*update)(struct adc*);
 
-        unsigned char prescaler;
+        unsigned char prescaler, aref;
         
         volatile uint8_t *adcl, *adch,
                 *admux, *adcsra, *adcsrb,

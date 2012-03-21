@@ -129,6 +129,7 @@ unsigned char aref;
                 return;
 
         *(adc->admux) = (aref << 6);
+        adc->aref = aref;
 }
 
 /**

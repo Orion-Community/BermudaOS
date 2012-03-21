@@ -96,7 +96,7 @@ int main(void)
         BermudaInitBaseADC();
         sei();
 
-#ifdef __SPI
+#ifdef __SPI__
         BermudaSpiInit(malloc(sizeof(SPI)));
 #endif
         

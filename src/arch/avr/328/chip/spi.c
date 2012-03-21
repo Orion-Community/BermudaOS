@@ -17,8 +17,7 @@
  */
 
 /** \file */
-
-#ifdef __SPI
+#if  defined(__SPI__) || defined(__DOXYGEN__)
 
 #include <bermuda.h>
 #include <lib/binary.h>

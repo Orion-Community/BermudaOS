@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __SPI
+#ifdef __SPI__
 #ifndef __SPI_H
 #define __SPI_H
 

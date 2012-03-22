@@ -130,10 +130,7 @@ int BermudaSpiTransmit(SPI *spi, void *data, size_t len)
         int i = 0;
         for(; i < len; i++)
         {
-                if(BermudaSpiTxByte(spi, ((unsigned char*)data)[i]))
-                        goto fail;
-                else
-                        continue;
+                BermudaSpiTxByte(spi, ((unsigned char*)data)[i]);
         }
         
         return 0;
@@ -361,7 +358,7 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
   *
   * This function transmits one data byte over the given SPI.
   */
-PRIVATE WEAK int BermudaSpiTxByte(SPI *spi, unsigned char data)
+PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
 {
         *spi->spdr = data;
 #ifndef THREADS
@@ -370,10 +367,8 @@ PRIVATE WEAK int BermudaSpiTxByte(SPI *spi, unsigned char data)
 #else /* if THREADS */
         BermudaThreadSleep();
 #endif
-        if(*spi->spdr == data)
-                return 0;
-        else
-                return -1;
+        
+        return *spi->spdr;
 }
 
 #ifdef THREADS

@@ -22,6 +22,7 @@
 
 #include <arch/avr/io.h>
 #include <bermuda.h>
+#include <lib/binary.h>
 
 #define SPI_INIT  0
 #define SPI_IRQ   1
@@ -33,6 +34,8 @@
 
 #define SPI_CLOCK_PHASE_SAMPLE 0
 #define SPI_CLOCK_PHASE_SETUP  1
+
+#define BermudaSpiIsMaster(spi) (spi->flags & BIT(3))
 
 typedef struct spi SPI;
 
@@ -76,11 +79,13 @@ extern int BermudaSpiInit(SPI *spi);
 extern int BermudaSpiDestroy(SPI *spi);
 extern void BermudaSetMasterSpi(SPI *spi);
 extern void BermudaSetSlaveSpi(SPI *spi);
+extern int BermudaSpiTransmit(SPI *spi, void *data, size_t len);
 
 PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);
 PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
 PRIVATE WEAK int BermudaSetSpiClockMode(SPI *spi, unsigned char mode);
 PRIVATE WEAK int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
+PRIVATE WEAK int BermudaSpiTxByte(SPI *spi, unsigned char data);
 PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
 PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
 PRIVATE inline void BermudaSpiEnable(SPI *spi);

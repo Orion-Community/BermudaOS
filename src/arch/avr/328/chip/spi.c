@@ -108,6 +108,41 @@ void BermudaSetSlaveSpi(SPI *spi)
 }
 
 /**
+  * \fn BermudaSpiTransmit(SPI *spi, void *data, size_t len)
+  * \brief Transmit one byte over the SPI.
+  * \param spi The SPI to use.
+  * \param data The data to sent.
+  * \param len The length of <i>data</i>.
+  * \return [0] on success, -1 otherwise.
+  *
+  * This function transmits an array of data over the SPI. It should only
+  * be called when the SPI is in master mode. When the SPI is not in master
+  * mode and this function is called, it will return -2.
+  */
+int BermudaSpiTransmit(SPI *spi, void *data, size_t len)
+{
+        if(NULL == spi || NULL == data)
+                return -1;
+
+        if(!BermudaSpiIsMaster(spi))
+                return -1;
+        
+        int i = 0;
+        for(; i < len; i++)
+        {
+                if(BermudaSpiTxByte(spi, ((unsigned char*)data)[i]))
+                        goto fail;
+                else
+                        continue;
+        }
+        
+        return 0;
+        
+        fail:
+        return -1;
+}
+
+/**
  * \fn BermudaSpiEnable(SPI *spi)
  * \brief Enable the SPI.
  * \param spi The SPI to enable.
@@ -315,6 +350,30 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
                 cpb(*spi->spcr, MSTR);
                 spi->flags &= ~( 1 << SPI_MODE);
         }
+}
+
+/**
+  * \fn BermudaSpiTxByte(SPI *spi, unsigned char data)
+  * \brief Transmit one byte over the SPI.
+  * \param spi The SPI to use.
+  * \param data The data byte to sent.
+  * \return [0] on success, -1 otherwise.
+  *
+  * This function transmits one data byte over the given SPI.
+  */
+PRIVATE WEAK int BermudaSpiTxByte(SPI *spi, unsigned char data)
+{
+        *spi->spdr = data;
+#ifndef THREADS
+        /* wait for the transfer */
+        while(!(*spi->spdr & BIT(SPIF)));
+#else /* if THREADS */
+        BermudaThreadSleep();
+#endif
+        if(*spi->spdr == data)
+                return 0;
+        else
+                return -1;
 }
 
 #ifdef THREADS

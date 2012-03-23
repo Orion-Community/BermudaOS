@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../include
 TARGET			= sys.o
 ARDUINO_LIBS		=
 
-CSRCS			= 
+CSRCS			= thread.c 
 CPPSRCS			= cplusplus.cpp
 ASMSRCS			=
 

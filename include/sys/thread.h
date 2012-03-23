@@ -19,7 +19,13 @@
 #ifndef __THREAD_H
 #define __THREAD_H
 
+#include <bermuda.h>
 #include <inttypes.h>
+#include <avr/io.h>
+
+typedef void (*thread_handle_t)(void *data);
+
+#define BermudaGetStackPointer() (SP)
 
 #ifndef RTSCHED
 
@@ -31,7 +37,9 @@ struct thread
 {
         struct thread *next;
         struct thread *prev;
-        void *stack;            /* start of the stack */
+        unsigned int id;
+        char *name;
+        unsigned char *stack;            /* start of the stack */
         unsigned char *sp;      /* stack pointer */
         void *param;            /* thread parameter */
         unsigned char prio;
@@ -39,6 +47,19 @@ struct thread
         unsigned int sleep_time;
 } __attribute__((packed));
 typedef struct thread THREAD;
+
+__DECL
+extern int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
+                                unsigned short stack_size, void *stack);
+extern THREAD *BermudaThreadSleep();
+extern THREAD *BermudaThreadExit();
+extern THREAD *BermudaThreadCreate(char *name, thread_handle_t handle, void *arg,
+                                unsigned short stack_size);
+
+PRIVATE WEAK int *BermudaThreadNativeCreate();
+__DECL_END
+
+
 #endif
 
 #endif

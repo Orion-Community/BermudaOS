@@ -119,7 +119,7 @@ void BermudaSetSlaveSpi(SPI *spi)
   * be called when the SPI is in master mode. When the SPI is not in master
   * mode and this function is called, it will return -2.
   */
-int BermudaSpiTransmit(SPI *spi, void *data, size_t len)
+int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len)
 {
         if(NULL == spi || NULL == data)
                 return -1;
@@ -130,13 +130,31 @@ int BermudaSpiTransmit(SPI *spi, void *data, size_t len)
         int i = 0;
         for(; i < len; i++)
         {
-                BermudaSpiTxByte(spi, ((unsigned char*)data)[i]);
+                if(BermudaSpiTxByte(spi, ((unsigned char*)data)[i]) != 
+                                                ((unsigned char*)data)[i])
+                        goto fail;
+                else
+                        continue;
         }
         
         return 0;
         
         fail:
         return -1;
+}
+
+/**
+  * \fn BermudaSpiTxByte(SPI *spi, unsigned char data)
+  * \brief Transmit one byte over the SPI.
+  * \param spi The SPI to use.
+  * \param data The data byte to sent.
+  * \return [0] on success, -1 otherwise.
+  *
+  * This function transmits one data byte over the given SPI.
+  */
+unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data)
+{
+        return BermudaSpiTxByte(spi, data);
 }
 
 /**

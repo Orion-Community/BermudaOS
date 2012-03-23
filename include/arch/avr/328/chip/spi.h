@@ -79,7 +79,8 @@ extern int BermudaSpiInit(SPI *spi);
 extern int BermudaSpiDestroy(SPI *spi);
 extern void BermudaSetMasterSpi(SPI *spi);
 extern void BermudaSetSlaveSpi(SPI *spi);
-extern int BermudaSpiTransmit(SPI *spi, void *data, size_t len);
+extern int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len);
+extern unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data);
 
 PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);
 PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);

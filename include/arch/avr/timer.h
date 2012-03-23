@@ -19,15 +19,33 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <bermuda.h>
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/timer.h>
 #endif
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+typedef struct timer TIMER;
+
+struct timer
+{
+        char *name;
+        unsigned char id;
+        
+        unsigned long tick;
+        
+        /* timer config */
+        unsigned char prescaler : 3;
+        unsigned char mode : 3;
+        unsigned short top;
+        
+        /* I/O registers */
+        volatile unsigned char *tccr0a, *tccr0b, *tcnt0, *ocr0a, *ocr0b, 
+                               *timsk0, *tifr0;
+} __PACK__;
+
+__DECL
+
+__DECL_END
+
 #endif /* __TIMER_H */

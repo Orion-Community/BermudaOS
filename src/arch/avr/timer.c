@@ -17,3 +17,17 @@
  */
 
 #include <stdlib.h>
+#include <arch/avr/io.h>
+
+void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,
+                                unsigned char prescaler, TIMER *timer)
+{
+        if(NULL == timer)
+                return;
+
+        timer->name = name;
+        timer->top = top;
+        timer->prescaler = BermudaTimerSetPrescaler(timer, prescaler);
+}
+
+

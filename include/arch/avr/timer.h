@@ -45,7 +45,9 @@ struct timer
 } __PACK__;
 
 __DECL
-
+extern void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,
+                                unsigned char prescaler);
+extern int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres);
 __DECL_END
 
 #endif /* __TIMER_H */

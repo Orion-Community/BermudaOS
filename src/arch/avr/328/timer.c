@@ -17,6 +17,7 @@
  */
 
 #include <avr/io.h>
+#include <lib/binary.h>
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
@@ -56,6 +57,34 @@ void BermudaInitTimer0()
         
         /* re-enable interrupts */
         sei();
+}
+
+int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
+{
+        if(0xFF == pres)
+                goto SetPrescaler;
+        if(BermudaIsPowerOfTwo(pres))
+                return -1;
+
+        SetPrescaler:
+        
+        cpb(*timer->tccr0b, CS00);
+        cpb(*timer->tccr0b, CS01);
+        cpb(*timer->tccr0b, CS02);
+
+        switch(pres)
+        {
+                case 0: /* a prescaler of 0 disalbes the timer */
+                        timer->prescaler = 0;
+                        break;
+                case 0xFF: /* a pres of 255 means there will not be a prescaler */
+                        spb(*timer->tccr0b, CS00);
+                        
+                default:
+                        break;
+        }
+        
+        return 0;
 }
 
 static unsigned long timer_count = 0;

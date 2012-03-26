@@ -21,10 +21,6 @@
 
 #include <bermuda.h>
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-        #include <arch/avr/328/timer.h>
-#endif
-
 typedef struct timer TIMER;
 
 struct timer
@@ -48,6 +44,8 @@ __DECL
 extern void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,
                                 unsigned char prescaler);
 extern int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres);
+extern void BermudaInitTimer0();
+extern inline unsigned long BermudaGetTimerCount();
 __DECL_END
 
 #endif /* __TIMER_H */

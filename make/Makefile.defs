@@ -14,7 +14,7 @@ OBJCOPY		= avr-objcopy
 AVRDUDE		= avrdude
 AVRDUDE_COM_OPTS = -q -V -p $(MCU) -c $(AVRDUDE_ARD_PROGRAMMER) -b \
 	$(AVRDUDE_ARD_BAUDRATE) -P $(ARD_PORT) $(AVRDUDE_ARD_EXTRAOPTS) \
-	-C /etc/avrdude.conf
+        $(AVRDUDE_CONF)
 
 STDDEFS		= -D BAUD=9600 -D __SPI__
 

@@ -36,9 +36,6 @@ extern "C" {
 #define BermudaGetTIMSK0() MEM_IO8(0x6E)
 #define BermudaGetTIFR0()  SFR_IO8(0x15)
 
-extern void BermudaInitTimer0();
-extern inline unsigned long BermudaGetTimerCount();
-
 #ifdef __cplusplus
 }
 #endif

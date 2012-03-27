@@ -349,6 +349,9 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
 {
         if(SPI_MASTER == mode)
         {
+                spb(SPI_POUT, SS);
+                spb(SPI_DDR, SCK);
+                spb(SPI_DDR, MOSI);
                 spb(*spi->spcr, MSTR);
                 spi->flags |= 1 << SPI_MODE;
         }

@@ -86,53 +86,34 @@ void flash_led(uint8_t count)
         }
 }
 
-void spi_init()
-{
-        DDRB = (1<<3)|(1<<5);
-        PORTB |= 1<<2;
-        SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
-        printf("Master: %X\n", SPCR & (1<<MSTR));
-}
-
-void spi_write(unsigned char data)
-{
-        /* Start transmission */
-        SPDR = data;
-        /* Wait for transmission complete */
-        while(!(SPSR & (1<<SPIF)))
-        {
-                printf("Waiting - Master: %X\n", SPCR & (1<<MSTR));
-                _delay_ms(500);
-        }
-}
-
 int main(void)
 {
         BermudaInitUART();
 
-//         BermudaInitTimer0();
-//         BermudaInitBaseADC();
+        BermudaInitTimer0();
+        BermudaInitBaseADC();
         sei();
         char buf = 'A';
-        spi_init();
-        spb(LED_PORT, LED);
-//         BermudaSpiInit(malloc(sizeof(SPI)));
-//         LED_DDR = (1<<3)|(1<<5);
+        SPI *spi_if = malloc(sizeof(*spi_if));
+        BermudaSpiInit(spi_if);
         
-//         struct adc *adc = BermudaGetADC();
-//         BermudaSetPinMode(14, INPUT); /* pin A0 */
+        spb(LED_PORT, LED);
+        BermudaSpiInit(malloc(sizeof(SPI)));
+        
+        struct adc *adc = BermudaGetADC();
+        BermudaSetPinMode(14, INPUT); /* pin A0 */
         while(1)
         {
-                printf("Master: %X\n", SPCR & (1<<MSTR));
-                spi_write(buf);
+                printf("Master bit: %X\n", SPCR & (1<<MSTR));
+                BermudaSpiTransmitBuf(spi_if, &buf, 1);
                 _delay_ms(1000);
-//                 float raw_temp = adc->read(0);
-//                 int temperature = raw_temp / 1024 * 5000;
-//                 temperature /= 10;
-//                 printf("Temperature: %f - Free memory: %d\n", raw_temp,
-//                         BermudaFreeMemory()
-//                 );
-//                 _delay_ms(1000);
+                float raw_temp = adc->read(0);
+                int temperature = raw_temp / 1024 * 5000;
+                temperature /= 10;
+                printf("Temperature: %d - Free memory: %d\n", temperature,
+                        BermudaFreeMemory()
+                );
+                _delay_ms(1000);
         }
         return 0;
 }

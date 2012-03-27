@@ -38,6 +38,18 @@ extern "C" {
 #define A4 18
 #define A5 19
 
+#if defined(__AVR_ATmega328P__)
+#define SS   2
+#define MOSI 3
+#define MISO 4
+#define SCK  5
+
+#define SPI_POUT (*(BermudaGetAvrIO()->portb))
+#define SPI_DDR  (*(BermudaGetAvrIO()->ddrb))
+#else
+#error Other arduino boards are not supported yet!
+#endif
+
 
 #ifdef __cplusplus
 }

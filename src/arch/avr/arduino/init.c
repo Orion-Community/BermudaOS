@@ -80,35 +80,59 @@ void flash_led(uint8_t count)
         while (count--)
         {
                 LED_PORT |= _BV(LED);
-                _delay_ms(100);
+                _delay_ms(1);
                 LED_PORT &= ~_BV(LED);
-                _delay_ms(100);
+                _delay_ms(1);
+        }
+}
+
+void spi_init()
+{
+        DDRB = (1<<3)|(1<<5);
+        PORTB |= 1<<2;
+        SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
+        printf("Master: %X\n", SPCR & (1<<MSTR));
+}
+
+void spi_write(unsigned char data)
+{
+        /* Start transmission */
+        SPDR = data;
+        /* Wait for transmission complete */
+        while(!(SPSR & (1<<SPIF)))
+        {
+                printf("Waiting - Master: %X\n", SPCR & (1<<MSTR));
+                _delay_ms(500);
         }
 }
 
 int main(void)
 {
         BermudaInitUART();
-        LED_DDR = 0xFF;
-        spb(LED_PORT, LED);
 
-        BermudaInitTimer0();
-        BermudaInitBaseADC();
+//         BermudaInitTimer0();
+//         BermudaInitBaseADC();
         sei();
-
-#ifdef __SPI__
-        BermudaSpiInit(malloc(sizeof(SPI)));
-#endif
+        char buf = 'A';
+        spi_init();
+        spb(LED_PORT, LED);
+//         BermudaSpiInit(malloc(sizeof(SPI)));
+//         LED_DDR = (1<<3)|(1<<5);
         
-        struct adc *adc = BermudaGetADC();
-        BermudaSetPinMode(14, INPUT); /* pin A0 */
+//         struct adc *adc = BermudaGetADC();
+//         BermudaSetPinMode(14, INPUT); /* pin A0 */
         while(1)
         {
-                float raw_temp = adc->read(0) ;
-                int temperature = raw_temp / 1024 * 5000;
-                temperature /= 10;
-                printf("Analog pin 0 value: %d\n", temperature);
+                printf("Master: %X\n", SPCR & (1<<MSTR));
+                spi_write(buf);
                 _delay_ms(1000);
+//                 float raw_temp = adc->read(0);
+//                 int temperature = raw_temp / 1024 * 5000;
+//                 temperature /= 10;
+//                 printf("Temperature: %f - Free memory: %d\n", raw_temp,
+//                         BermudaFreeMemory()
+//                 );
+//                 _delay_ms(1000);
         }
         return 0;
 }

@@ -89,6 +89,7 @@ PRIVATE WEAK int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
 PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data);
 PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
 PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode);
 PRIVATE inline void BermudaSpiEnable(SPI *spi);
 PRIVATE inline void BermudaSpiDisable(SPI *spi);
 

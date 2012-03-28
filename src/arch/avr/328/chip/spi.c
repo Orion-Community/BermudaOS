@@ -67,8 +67,7 @@ int BermudaSpiInit(SPI *spi)
         BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
         BermudaSetMasterSpi(spi);
         
-        BermudaSetSpiClockMode(spi, 1); /* LOW when idle */
-        BermudaSetSpiClockMode(spi, 2); /* sample on trailing edge */
+        BermudaSpiSetSckMode(spi, 4);
         BermudaSetSpiBitOrder(spi, 1); /* LSB first */
         spi->name = "spi0";
         spi->id = 0;
@@ -270,70 +269,49 @@ PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
 }
 
 /**
- * \fn BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
- * \brief Set a clock mode.
- * \param spi SPI to set the mode for.
- * \param mode The mode to set.
- * \return -1 if the mode is not a power of two.
+ * BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
+ * \brief Set the serial clock mode.
+ * \param spi The SP interface.
+ * \param mode The mode to apply to <i>spi</i>.
+ * \return Error code.
  * 
- * BIT 0 : When bit 0 is a logical 1 the leading edge will be falling and the
- *         SCK pin will be high on idle.
- * 
- * BIT 1 : When bit 1 is logical 1 the data will be sampled on the leading edge.
+ * * [0] High on idle, sample.
+ * * [1] High on idle, setup.
+ * * [2] Low on idle, sample.
+ * * [4] Low on idle, setup.
  */
-PRIVATE WEAK int BermudaSetSpiClockMode(SPI *spi, unsigned char mode)
+PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
 {
-        if(!BermudaIsPowerOfTwo(mode))
+        if(mode > 4)
+                goto fail;
+        if(BermudaIsPowerOfTwo(mode))
         {
+                cpb(*spi->spcr, CPOL);
+                cpb(*spi->spcr, CPHA);
+                
                 switch(mode)
-                {
+                {                                
                         case 1:
-                                spb(*spi->spcr, CPOL);
-                                break;
-                        case 2:
                                 spb(*spi->spcr, CPHA);
                                 break;
-                        default:
-                                break;
-                }
-                return 0;
-        }
-        else
-                return -1;
-        
-}
-
-/**
- * \fn BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode)
- * \brief Unset a clock mode.
- * \param spi SPI to clear the mode for.
- * \param mode The mode to clear.
- * \return -1 if the mode is not a power of two.
- * 
- * BIT 0 : When bit 0 is a logical 1 the leading edge will be rising and the
- *         SCK pin will be low on idle.
- * 
- * BIT 1 : When bit 1 is logical 1 the data will be sampled on the trailing edge.
- */
-PRIVATE WEAK int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode)
-{
-        if(!BermudaIsPowerOfTwo(mode))
-        {
-                switch(mode)
-                {
-                        case 1:
-                                cpb(*spi->spcr, CPOL);
-                                break;
+                                
                         case 2:
-                                cpb(*spi->spcr, CPHA);
+                                spb(*spi->spcr, CPOL);
                                 break;
+                                
+                        case 4:
+                                spb(*spi->spcr, CPOL);
+                                spb(*spi->spcr, CPHA);
+                                break;
+                                
                         default:
                                 break;
                 }
                 return 0;
         }
-        else
-                return -1;
+        
+        fail:
+        return -1;
 }
 
 /**

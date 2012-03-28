@@ -31,7 +31,7 @@
  * 
  * Global definition of the SPI. Initialised to NULL by default
  */
-static SPI *BermudaSPI = NULL;
+SPI *BermudaSPI = NULL;
 
 #ifdef THREADS
 /**
@@ -72,6 +72,7 @@ int BermudaSpiInit(SPI *spi)
         BermudaSetSpiBitOrder(spi, 1); /* LSB first */
         spi->name = "spi0";
         spi->id = 0;
+        
 #ifdef THREADS
         BermudaAttatchSpiIRQ(spi);
         BermudaThreadCreate("BermudaSpiThread", &BermudaSpiThread, BermudaSPI,
@@ -129,18 +130,9 @@ int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len)
         
         int i = 0;
         for(; i < len; i++)
-        {
-                if(BermudaSpiTxByte(spi, ((unsigned char*)data)[i]) != 
-                                                ((unsigned char*)data)[i])
-                        goto fail;
-                else
-                        continue;
-        }
+                BermudaSpiTxByte(spi, ((unsigned char*)data)[i]);
         
         return 0;
-        
-        fail:
-        return -1;
 }
 
 /**
@@ -357,6 +349,9 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
 {
         if(SPI_MASTER == mode)
         {
+                spb(SPI_POUT, SS);
+                spb(SPI_DDR, SCK);
+                spb(SPI_DDR, MOSI);
                 spb(*spi->spcr, MSTR);
                 spi->flags |= 1 << SPI_MODE;
         }
@@ -381,12 +376,12 @@ PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
         *spi->spdr = data;
 #ifndef THREADS
         /* wait for the transfer */
-        while(!(*spi->spdr & BIT(SPIF)));
+        /*while(!(*spi->spsr & BIT(SPIF)))*/;
 #else /* if THREADS */
         BermudaThreadSleep();
 #endif
         
-        return *spi->spdr;
+        return 0;
 }
 
 #ifdef THREADS
@@ -438,6 +433,7 @@ PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order)
 #ifdef THREADS
 SIGNAL(SPI_STC_vect)
 {
+        printf("SPI_IRQ");
         return;
 }
 

@@ -29,6 +29,10 @@
         #include <arch/avr/328/chip/spi.h>
 #endif
 
+#if defined(__ARDUINO__)
+        #include <arch/avr/arduino/io.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

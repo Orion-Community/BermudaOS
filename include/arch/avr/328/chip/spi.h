@@ -92,6 +92,12 @@ PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
 PRIVATE inline void BermudaSpiEnable(SPI *spi);
 PRIVATE inline void BermudaSpiDisable(SPI *spi);
 
+extern SPI *BermudaSPI;
+static inline SPI *BermudaGetSpi()
+{
+        return BermudaSPI;
+}
+
 #ifdef THREADS
 PRIVATE WEAK void BermudaAttatchSpiIRQ(SPI *spi);
 PRIVATE WEAK void BermudaDetachSpiIRQ(SPI *spi);

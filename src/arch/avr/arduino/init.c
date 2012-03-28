@@ -80,34 +80,37 @@ void flash_led(uint8_t count)
         while (count--)
         {
                 LED_PORT |= _BV(LED);
-                _delay_ms(100);
+                _delay_ms(1);
                 LED_PORT &= ~_BV(LED);
-                _delay_ms(100);
+                _delay_ms(1);
         }
 }
 
 int main(void)
 {
+        char buf = 'A';
+        SPI *spi_if = malloc(sizeof(*spi_if));
+        
         BermudaInitUART();
-        LED_DDR = 0xFF;
-        spb(LED_PORT, LED);
-
         BermudaInitTimer0();
         BermudaInitBaseADC();
+        BermudaSpiInit(spi_if);
+        
         sei();
-
-#ifdef __SPI__
-        BermudaSpiInit(malloc(sizeof(SPI)));
-#endif
         
         struct adc *adc = BermudaGetADC();
         BermudaSetPinMode(14, INPUT); /* pin A0 */
         while(1)
         {
-                float raw_temp = adc->read(0) ;
+                printf("Master bit: %X\n", SPCR & (1<<MSTR));
+                BermudaSpiTransmitBuf(spi_if, &buf, 1);
+                _delay_ms(1000);
+                float raw_temp = adc->read(0);
                 int temperature = raw_temp / 1024 * 5000;
                 temperature /= 10;
-                printf("Analog pin 0 value: %d\n", temperature);
+                printf("Temperature: %d - Free memory: %d\n", temperature,
+                        BermudaFreeMemory()
+                );
                 _delay_ms(1000);
         }
         return 0;

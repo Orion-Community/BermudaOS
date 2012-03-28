@@ -21,6 +21,7 @@
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
+#include <arch/avr/328/timer.h>
 
 /**
  * \fn BermudaInitTimer0()
@@ -61,17 +62,24 @@ void BermudaInitTimer0()
 
 /**
   * \fn BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
-  * \brief Set the prescaler of <i>timer</i> to <i>pres</i>.
-  * \param timer The timer to set the prescaler for.
+  * \brief Set the timer prescaler.
+  * \param timer The prescaler will be set for this given timer.
   * \param pres The prescaler to set.
-  * \return Return code.
+  * \return Error code.
   *
-  * This function sets the desired prescaler for a timer. The timer structure
-  * has to be initialized and the prescaler has to be a power of two.
+  * The prescaler must be a power of two, but there are a few exceptions. The
+  * followeing values have a different meaning:
+  *
+  * * [pres == 0] This will disable the counter.
+  * * [pres == 0xFF] This will set a prescaler of 1 (i.e. no prescaler)
+  * * [pres == 0xFE] This will set the prescaler to an external clock on the T0
+  *                  pin - falling edge.
+  * * [pres == 0xFD] Same as <i>pres == 0xFE</i>, but it will clock on the rising
+  *                  rising edge.
   */
 int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
 {
-        if(0xFF == pres)
+        if(0xFF == pres || 0xFE == pres || 0xFD == pres)
                 goto SetPrescaler;
         if(BermudaIsPowerOfTwo(pres))
                 return -1;
@@ -81,12 +89,43 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
         cpb(*timer->tccr0b, CS00);
         cpb(*timer->tccr0b, CS01);
         cpb(*timer->tccr0b, CS02);
-
+        
+        timer->prescaler = pres;
+        
         switch(pres)
         {
-                case 0: /* a prescaler of 0 disalbes the timer */
-                        timer->prescaler = 0;
+                case 0:
                         break;
+                        
+                case 8:
+                        spb(*timer->tccr0b, CS01);
+                        break;
+                        
+                case 64:
+                        spb(*timer->tccr0b, CS00);
+                        spb(*timer->tccr0b, CS01);
+                        break;
+                        
+                case 256:
+                        spb(*timer->tccr0b, CS02);
+                        break;
+                        
+                case 1024:
+                        spb(*timer->tccr0b, CS00);
+                        spb(*timer->tccr0b, CS02);
+                        break;
+                
+                case 0xFD:
+                        spb(*timer->tccr0b, CS00);
+                        spb(*timer->tccr0b, CS01);
+                        spb(*timer->tccr0b, CS02);
+                        break;
+                        
+                case 0xFE:
+                        spb(*timer->tccr0b, CS01);
+                        spb(*timer->tccr0b, CS02);
+                        break;
+                        
                 case 0xFF: /* a pres of 255 means there will not be a prescaler */
                         spb(*timer->tccr0b, CS00);
                         

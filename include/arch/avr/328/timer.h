@@ -41,6 +41,7 @@ extern void BermudaInitTimer0();
 extern inline unsigned long BermudaGetTimerCount();
 PRIVATE WEAK void BermudaSetOutputCompareMatch(TIMER *timer, ocm_t ocm);
 
+
 #ifdef __cplusplus
 }
 #endif

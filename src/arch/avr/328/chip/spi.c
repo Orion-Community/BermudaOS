@@ -327,14 +327,31 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
 {
         if(SPI_MASTER == mode)
         {
-                spb(SPI_POUT, SS);
+                /*
+                 * Set SCK and MOSI as output and MISO and SS as output
+                 * The SS pin is be set HIGH
+                 */
                 spb(SPI_DDR, SCK);
                 spb(SPI_DDR, MOSI);
+                cpb(SPI_DDR, MISO);
+                cpb(SPI_DDR, SS);
+                spb(SPI_POUT, SS);
+                
                 spb(*spi->spcr, MSTR);
                 spi->flags |= 1 << SPI_MODE;
         }
         else
         {
+                /*
+                 * Set the SS, SCK and MOSI as input and the MISO as output.
+                 * The SS pin is set HIGH
+                 */
+                cpb(SPI_DDR, SS);
+                cpb(SPI_DDR, MOSI);
+                cpb(SPI_DDR, SCK);
+                spb(SPI_DDR, MISO);
+                cpb(SPI_POUT, SS);
+                
                 cpb(*spi->spcr, MSTR);
                 spi->flags &= ~( 1 << SPI_MODE);
         }

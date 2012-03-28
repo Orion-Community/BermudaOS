@@ -59,6 +59,16 @@ void BermudaInitTimer0()
         sei();
 }
 
+/**
+  * \fn BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
+  * \brief Set the prescaler of <i>timer</i> to <i>pres</i>.
+  * \param timer The timer to set the prescaler for.
+  * \param pres The prescaler to set.
+  * \return Return code.
+  *
+  * This function sets the desired prescaler for a timer. The timer structure
+  * has to be initialized and the prescaler has to be a power of two.
+  */
 int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
 {
         if(0xFF == pres)
@@ -85,6 +95,11 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
         }
         
         return 0;
+}
+
+PRIVATE WEAK void BermudaSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
+{
+        
 }
 
 static unsigned long timer_count = 0;

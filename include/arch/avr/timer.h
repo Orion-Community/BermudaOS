@@ -44,6 +44,14 @@ struct timer
                                *timsk0, *tifr0;
 } __PACK__;
 
+typedef enum
+{
+        DISABLE,
+        TOGGLE,
+        CLEAR,
+        SET,
+} ocm_t;
+
 __DECL
 extern void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,
                                 unsigned char prescaler);

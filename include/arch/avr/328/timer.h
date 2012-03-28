@@ -20,6 +20,7 @@
 #define __TIMER328_H
 
 #include <arch/avr/io.h>
+#include <bermuda.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,6 +39,7 @@ extern "C" {
 
 extern void BermudaInitTimer0();
 extern inline unsigned long BermudaGetTimerCount();
+PRIVATE WEAK void BermudaSetOutputCompareMatch(TIMER *timer, ocm_t ocm);
 
 #ifdef __cplusplus
 }

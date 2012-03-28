@@ -102,16 +102,15 @@ int main(void)
         BermudaSetPinMode(14, INPUT); /* pin A0 */
         while(1)
         {
-//                 printf("Master bit: %X\n", SPCR & (1<<MSTR));
                 BermudaSpiTransmitBuf(spi_if, &buf, 1);
-//                 _delay_ms(1000);
-//                 float raw_temp = adc->read(0);
-//                 int temperature = raw_temp / 1024 * 5000;
-//                 temperature /= 10;
-//                 printf("Temperature: %d - Free memory: %d\n", temperature,
-//                         BermudaFreeMemory()
-//                 );
-//                 _delay_ms(1000);
+                
+                float raw_temp = adc->read(0);
+                int temperature = raw_temp / 1024 * 5000;
+                temperature /= 10;
+                printf("Temperature: %d - Free memory: %d\n", temperature,
+                        BermudaFreeMemory()
+                );
+                _delay_ms(500);
         }
         return 0;
 }

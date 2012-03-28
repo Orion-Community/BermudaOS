@@ -67,8 +67,8 @@ int BermudaSpiInit(SPI *spi)
         BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
         BermudaSetMasterSpi(spi);
         
-        BermudaUnsetSpiClockMode(spi, 1); /* LOW when idle */
-        BermudaSetSpiClockMode(spi, 1); /* sample on trailing edge */
+        BermudaSetSpiClockMode(spi, 1); /* LOW when idle */
+        BermudaSetSpiClockMode(spi, 2); /* sample on trailing edge */
         BermudaSetSpiBitOrder(spi, 1); /* LSB first */
         spi->name = "spi0";
         spi->id = 0;

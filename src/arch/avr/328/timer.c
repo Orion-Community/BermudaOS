@@ -138,7 +138,32 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
 
 PRIVATE WEAK void BermudaSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
 {
+        if(NULL == timer)
+                return;
         
+        cpb(*timer->tccr0a, COM0A0);
+        cpb(*timer->tccr0a, COM0A1);
+        
+        switch(ocm)
+        {
+                case 1:
+                        spb(*timer->tccr0a, COM0A0);
+                        break;
+
+                case 2:
+                        spb(*timer->tccr0a, COM0A1);
+                        break;
+
+                case 3:
+                        spb(*timer->tccr0a, COM0A0);
+                        spb(*timer->tccr0a, COM0A1);
+                        break;
+
+                default:
+                        break;
+        }
+        
+        return;
 }
 
 static unsigned long timer_count = 0;

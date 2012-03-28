@@ -136,7 +136,16 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
         return 0;
 }
 
-PRIVATE WEAK void BermudaSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
+/**
+  * \fn BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
+  * \brief Set the Output Compare Match for the given timer.
+  * \param timer The timer.
+  * \param ocm The output compare mode
+  *
+  * If bit 7 of <i>ocm</i> is set, the OCMB bits will be set instead of the
+  * OCMA bits.
+  */
+PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
 {
         unsigned char bit0, bit1;
         

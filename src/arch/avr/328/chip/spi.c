@@ -376,7 +376,7 @@ PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
         *spi->spdr = data;
 #ifndef THREADS
         /* wait for the transfer */
-        /*while(!(*spi->spsr & BIT(SPIF)))*/;
+        while(!(*spi->spsr & BIT(SPIF)));
 #else /* if THREADS */
         BermudaThreadSleep();
 #endif

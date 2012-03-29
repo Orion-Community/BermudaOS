@@ -21,8 +21,6 @@
 
 #include <bermuda.h>
 
-typedef struct timer TIMER;
-
 struct timer
 {
         char *name;
@@ -39,6 +37,7 @@ struct timer
         volatile unsigned char *tccr0a, *tccr0b, *tcnt0, *ocr0a, *ocr0b, 
                                *timsk0, *tifr0;
 } __PACK__;
+typedef struct timer TIMER;
 
 typedef enum
 {
@@ -52,8 +51,10 @@ __DECL
 extern void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,
                                 unsigned char prescaler);
 extern int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres);
-extern void BermudaInitTimer0();
-extern inline unsigned long BermudaGetTimerCount();
 __DECL_END
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/328/timer.h>
+#endif
 
 #endif /* __TIMER_H */

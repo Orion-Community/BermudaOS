@@ -93,12 +93,6 @@ PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode);
 PRIVATE inline void BermudaSpiEnable(SPI *spi);
 PRIVATE inline void BermudaSpiDisable(SPI *spi);
 
-extern SPI *BermudaSPI;
-static inline SPI *BermudaGetSpi()
-{
-        return BermudaSPI;
-}
-
 #ifdef THREADS
 PRIVATE WEAK void BermudaAttatchSpiIRQ(SPI *spi);
 PRIVATE WEAK void BermudaDetachSpiIRQ(SPI *spi);

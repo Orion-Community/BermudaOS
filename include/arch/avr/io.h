@@ -22,17 +22,6 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-        #include <arch/avr/328/io.h>
-        #include <arch/avr/328/chip/adc.h>
-        #include <arch/avr/328/chip/uart.h>
-        #include <arch/avr/328/chip/spi.h>
-#endif
-
-#if defined(__ARDUINO__)
-        #include <arch/avr/arduino/io.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -72,6 +61,17 @@ extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
                                 BermudaPinToMask+(pin))
 #define BermudaGetIOMode(port)  ((volatile unsigned char*)pgm_read_word( \
                                 BermudaPortToMode+(port)))
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/328/io.h>
+        #include <arch/avr/328/chip/adc.h>
+        #include <arch/avr/328/chip/uart.h>
+        #include <arch/avr/328/chip/spi.h>
+#endif
+
+#ifdef __ARDUINO__
+        #include <arch/avr/arduino/io.h>
+#endif
 
 #ifdef __cplusplus
 }

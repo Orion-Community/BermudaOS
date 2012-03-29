@@ -19,14 +19,9 @@
 #ifndef __TIMER328_H
 #define __TIMER328_H
 
-#include <arch/avr/io.h>
-#include <arch/avr/timer.h>
-
 #include <bermuda.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <arch/avr/io.h>
+// #include <arch/avr/timer.h>
 
 #define BermudaGetTCCR0A() SFR_IO8(0x24)
 #define BermudaGetTCCR0B() SFR_IO8(0x25)
@@ -39,13 +34,10 @@ extern "C" {
 #define BermudaGetTIMSK0() MEM_IO8(0x6E)
 #define BermudaGetTIFR0()  SFR_IO8(0x15)
 
+__DECL
 extern void BermudaInitTimer0();
 extern inline unsigned long BermudaGetTimerCount();
-PRIVATE WEAK void PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *
-                                                        timer, ocm_t ocm);
+PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm);
+__DECL_END
 
-
-#ifdef __cplusplus
-}
-#endif
 #endif /* __TIMER328_H */

@@ -156,6 +156,7 @@ PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
         {
                 bit0 = COM0B0;
                 bit1 = COM0B1;
+                ocm &= ~0x80;
         }
         else
         {

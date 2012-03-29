@@ -50,6 +50,8 @@ extern "C" {
 #error Other arduino boards are not supported yet!
 #endif
 
+extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);
+extern unsigned char BermudaDigitalPinRead(unsigned char pin);
 
 #ifdef __cplusplus
 }

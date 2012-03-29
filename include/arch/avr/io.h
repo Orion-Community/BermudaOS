@@ -44,6 +44,9 @@ extern "C" {
 #define INPUT 0x0
 #define OUTPUT 0x1
 
+#define LOW 0x0
+#define HIGH 0x1
+
 extern const unsigned short ROM BermudaPortToOutput[];
 extern const unsigned short ROM BermudaPortToInput[];
 extern const unsigned short ROM BermudaPortToMode[];
@@ -61,6 +64,10 @@ extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
                                 BermudaPinToMask+(pin))
 #define BermudaGetIOMode(port)  ((volatile unsigned char*)pgm_read_word( \
                                 BermudaPortToMode+(port)))
+#define BermudaGetOuputReg(port) ((volatile unsigned char*)pgm_read_word( \
+                                BermudaPortToOutput+(port)))
+#define BermudaGetInputReg(port) ((volatile unsigned char*)pgm_read_word( \
+                                BermudaPortToInput+(port)))
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>

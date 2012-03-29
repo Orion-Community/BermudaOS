@@ -87,24 +87,26 @@ void flash_led(uint8_t count)
 }
 
 int main(void)
-{
-        char *buf = "AB";
-        
-        SPI *spi_if = malloc(sizeof(*spi_if));
-        
+{        
         BermudaInitUART();
         BermudaInitTimer0();
         BermudaInitBaseADC();
+#ifdef __SPI__
+        SPI *spi_if = malloc(sizeof(*spi_if));
+        char *buf = "AB";
         BermudaSpiInit(spi_if);
+#endif
         
         sei();
         
         struct adc *adc = BermudaGetADC();
-        BermudaSetPinMode(14, INPUT); /* pin A0 */
+        BermudaSetPinMode(A0, INPUT); /* pin A0 */
+
         while(1)
         {
+#ifdef __SPI__
                 BermudaSpiTransmitBuf(spi_if, buf, 2);
-                
+#endif
                 float raw_temp = adc->read(0);
                 int temperature = raw_temp / 1024 * 5000;
                 temperature /= 10;

@@ -47,15 +47,49 @@ unsigned char pin, mode;
         if(mode == INPUT)
         {
                 cli();
-                cpb(*modeReg, mask);
+                *modeReg &= ~mask;
                 sei();
                 return;
         }
         else
         {
                 cli();
-                spb(*modeReg, mask);
+                *modeReg |= mask;
                 sei();
                 return;
         }
+}
+
+void BermudaDigitalPinWrite(unsigned char pin, unsigned char value)
+{
+        unsigned char mask = BermudaGetIOMask(pin);
+        unsigned char port = BermudaGetIOPort(pin);
+        volatile unsigned char *out = BermudaGetOuputReg(port);
+
+        if(PIN_NOT_AVAILABLE == port)
+                return;
+
+        if(value == INPUT)
+        {
+                *out &= ~mask;
+        }
+        else
+        {
+                *out |= mask;
+        }
+}
+
+unsigned char BermudaDigitalPinRead(unsigned char pin)
+{
+        unsigned char bit = BermudaGetIOMask(pin);
+        unsigned char port = BermudaGetIOPort(pin);
+        volatile unsigned char *in = BermudaGetInputReg(port);
+
+        if(PIN_NOT_AVAILABLE == port)
+                return LOW;
+
+        if((*in & bit) != 0)
+                return HIGH;
+        else
+                return LOW;
 }

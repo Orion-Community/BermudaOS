@@ -36,7 +36,7 @@ const struct avr_io io =
 
 const unsigned short ROM BermudaPortToOutput[] =
 {
-        PIN_NOT_AVAILABLE,
+        (unsigned short)PIN_NOT_AVAILABLE,
         (unsigned short)BermudaGetAddressPORTB(),
         (unsigned short)BermudaGetAddressPORTC(),
         (unsigned short)BermudaGetAddressPORTD(),
@@ -44,7 +44,7 @@ const unsigned short ROM BermudaPortToOutput[] =
 
 const unsigned short ROM BermudaPortToInput[] =
 {
-        PIN_NOT_AVAILABLE,
+        (unsigned short)PIN_NOT_AVAILABLE,
         (unsigned short)BermudaGetAddressPINB(),
         (unsigned short)BermudaGetAddressPINC(),
         (unsigned short)BermudaGetAddressPIND(),

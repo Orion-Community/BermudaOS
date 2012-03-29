@@ -20,6 +20,8 @@
 #define __TIMER328_H
 
 #include <arch/avr/io.h>
+#include <arch/avr/timer.h>
+
 #include <bermuda.h>
 
 #ifdef __cplusplus

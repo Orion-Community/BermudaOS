@@ -15,3 +15,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#if defined(__SPI__) && defined(__SPIRAM__)
+
+#include <stdlib.h>
+#include <arch/avr/spi.h>
+
+#endif /* __SPI__ && __SPIRAM__*/

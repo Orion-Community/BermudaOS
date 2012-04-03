@@ -36,6 +36,7 @@
 #define SPI_CLOCK_PHASE_SETUP  1
 
 #define BermudaSpiIsMaster(spi) (spi->flags & BIT(3))
+#define BermudaSpiIsInitialized(spi) (spi->flags & BIT(0))
 
 typedef struct spi SPI;
 
@@ -73,6 +74,8 @@ typedef enum
 #define SPI_PRESCALER_DEFAULT 128
 
 __DECL
+extern SPI *BermudaSPI;
+
 extern unsigned char BermudaSpiRead(SPI *spi);
 extern void BermudaSpiWrite(SPI *spi, unsigned char data);
 extern int BermudaSpiInit(SPI *spi);
@@ -81,6 +84,11 @@ extern void BermudaSetMasterSpi(SPI *spi);
 extern void BermudaSetSlaveSpi(SPI *spi);
 extern int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len);
 extern unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data);
+
+static inline SPI *BermudaSpiGetInterface()
+{
+        return BermudaSPI;
+}
 
 PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);
 PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);

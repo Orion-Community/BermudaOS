@@ -29,6 +29,8 @@
 #include <arch/avr/arduino/io.h>
 #include <arch/avr/timer.h>
 
+#include <lib/spiram.h>
+
 #define LED_DDR  BermudaGetDDRB()
 #define LED_PORT BermudaGetPORTB()
 #define LED_PIN  BermudaGetPINB()
@@ -93,7 +95,6 @@ int main(void)
         BermudaInitBaseADC();
 #ifdef __SPI__
         SPI *spi_if = malloc(sizeof(*spi_if));
-        char *buf = "AB";
         BermudaSpiInit(spi_if);
 #endif
         
@@ -101,12 +102,10 @@ int main(void)
         
         struct adc *adc = BermudaGetADC();
         BermudaSetPinMode(A0, INPUT); /* pin A0 */
+        BermudaSpiRamInit();
 
         while(1)
         {
-#ifdef __SPI__
-                BermudaSpiTransmitBuf(spi_if, buf, 2);
-#endif
                 float raw_temp = adc->read(0);
                 int temperature = raw_temp / 1024 * 5000;
                 temperature /= 10;

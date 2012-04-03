@@ -38,6 +38,33 @@ extern "C" {
 #define A4 18
 #define A5 19
 
+#ifdef _AVR_PORTPINS_H_
+#undef PIN0
+#undef PIN1
+#undef PIN2
+#undef PIN3
+#undef PIN4
+#undef PIN5
+#undef PIN6
+#undef PIN7
+#endif
+
+#define DIGITAL_BASE_PIN 0
+#define PIN0 DIGITAL_BASE_PIN+0
+#define PIN1 DIGITAL_BASE_PIN+1
+#define PIN2 DIGITAL_BASE_PIN+2
+#define PIN3 DIGITAL_BASE_PIN+3
+#define PIN4 DIGITAL_BASE_PIN+4
+#define PIN5 DIGITAL_BASE_PIN+5
+#define PIN6 DIGITAL_BASE_PIN+6
+#define PIN7 DIGITAL_BASE_PIN+7
+#define PIN8 DIGITAL_BASE_PIN+8
+#define PIN9 DIGITAL_BASE_PIN+9
+#define PIN10 DIGITAL_BASE_PIN+10
+#define PIN11 DIGITAL_BASE_PIN+11
+#define PIN12 DIGITAL_BASE_PIN+12
+#define PIN13 DIGITAL_BASE_PIN+13
+
 #if defined(__AVR_ATmega328P__)
 #define SS   2
 #define MOSI 3

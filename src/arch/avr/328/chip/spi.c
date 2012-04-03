@@ -16,8 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file */
 #if  defined(__SPI__) || defined(__DOXYGEN__)
+
+/** \file */
 
 #include <bermuda.h>
 #include <lib/binary.h>

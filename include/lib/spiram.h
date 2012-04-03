@@ -16,25 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file spiram.c */
-#if defined(__SPI__) && defined(__SPIRAM__)
+#ifndef __SPIRAM_H
 
-#include <stdlib.h>
+#include <bermuda.h>
 #include <arch/spi.h>
-#include <arch/io.h>
-#include <lib/spiram.h>
 
-void BermudaSpiRamInit()
-{
-        SPI *spi = BermudaSpiGetInterface();
+__DECL
+void BermudaSpiRamInit();
+__DECL_END
 
-        if(!BermudaSpiIsInitialized(spi))
-                return;
-
-        /* configure the hold pin on pin 2 */
-        BermudaSetPinMode(PIN2, OUTPUT);
-        BermudaDigitalPinWrite(PIN2, HIGH);
-
-        return;
-}
-#endif /* __SPI__ && __SPIRAM__*/
+#endif /* __SPIRAM_H */

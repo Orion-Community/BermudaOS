@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - SpiRam library
+ *  BermudaOS - Arch independent SPI header file
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file spiram.c */
-#if defined(__SPI__) && defined(__SPIRAM__)
+#ifndef __ARCH_SPI_H
 
-#include <stdlib.h>
-#include <arch/spi.h>
-#include <arch/io.h>
-#include <lib/spiram.h>
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/328/chip/spi.h>
+#endif
 
-void BermudaSpiRamInit()
-{
-        SPI *spi = BermudaSpiGetInterface();
-
-        if(!BermudaSpiIsInitialized(spi))
-                return;
-
-        /* configure the hold pin on pin 2 */
-        BermudaSetPinMode(PIN2, OUTPUT);
-        BermudaDigitalPinWrite(PIN2, HIGH);
-
-        return;
-}
-#endif /* __SPI__ && __SPIRAM__*/
+#endif /* __ARCH_SPI_H */

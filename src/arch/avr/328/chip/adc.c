@@ -205,7 +205,6 @@ PRIVATE WEAK int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescaler
                         break;
 
                 case 64:
-                        printf("hoi");
                         cpb(*adc->adcsra, ADPS0);
                         spb(*adc->adcsra, ADPS1);
                         spb(*adc->adcsra, ADPS2);

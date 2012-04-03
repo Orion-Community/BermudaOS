@@ -199,6 +199,21 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
         
         switch(mode)
         {
+                case WFM_PHASE_CORRECT:
+                        break;
+                
+                case WFM_PHASE_CORRECT_MAX:
+                        break;
+                
+                case WFM_CTC:
+                        break;
+                
+                case WFM_FAST_PWM_MAX:
+                        break;
+                
+                case WFM_FAST_PWM_MAX:
+                        break;
+                        
                 default: /* normal operation */
                         break;
         }

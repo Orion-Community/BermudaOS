@@ -29,7 +29,7 @@ struct timer
         unsigned long tick;
         
         /* timer config */
-        unsigned char prescaler : 3;
+        unsigned short prescaler;
         unsigned char mode : 3;
         unsigned short top;
         
@@ -46,6 +46,16 @@ typedef enum
         CLEAR,
         SET,
 } ocm_t;
+
+typedef enum
+{
+        WFM_NORMAL,
+        WFM_PHASE_CORRECT,
+        WFM_PHASE_CORRECT_MAX,
+        WFM_CTC,
+        WFM_FAST_PWM_MAX,
+        WFM_FAST_PWM,
+} wfm_t;
 
 __DECL
 extern void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,

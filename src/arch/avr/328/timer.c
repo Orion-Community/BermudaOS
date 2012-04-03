@@ -94,9 +94,6 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
         
         switch(pres)
         {
-                case 0:
-                        break;
-                        
                 case 8:
                         spb(*timer->tccr0b, CS01);
                         break;
@@ -187,6 +184,26 @@ PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
         }
         
         return;
+}
+
+PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
+{
+        if(NULL == timer)
+                return;
+        BermudaTimerDisable(timer);
+        
+        /* reset the entire operation mode */
+        cpb(*timer->tccr0a, WGM00);
+        cpb(*timer->tccr0a, WGM01);
+        cpb(*timer->tccr0b, WGM02);
+        
+        switch(mode)
+        {
+                default: /* normal operation */
+                        break;
+        }
+        
+        BermudaTimerEnable(timer);
 }
 
 static unsigned long timer_count = 0;

@@ -21,7 +21,7 @@
 
 #include <bermuda.h>
 #include <arch/avr/io.h>
-// #include <arch/avr/timer.h>
+#include <arch/avr/timer.h>
 
 #define BermudaGetTCCR0A() SFR_IO8(0x24)
 #define BermudaGetTCCR0B() SFR_IO8(0x25)
@@ -38,6 +38,21 @@ __DECL
 extern void BermudaInitTimer0();
 extern inline unsigned long BermudaGetTimerCount();
 PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm);
+PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode);
+
+static inline void BermudaTimerDisable(TIMER *timer)
+{
+        unsigned short prescaler = timer->prescaler;
+        BermudaTimerSetPrescaler(timer, DISABLE); /* disable the timer */
+        timer->prescaler = prescaler;
+        return;
+}
+
+static inline void BermudaTimerEnable(TIMER *timer)
+{
+        BermudaTimerSetPrescaler(timer, timer->prescaler);
+        return;
+}
 __DECL_END
 
 #endif /* __TIMER328_H */

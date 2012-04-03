@@ -7,9 +7,6 @@ LOCAL_LIB		= ../../../include
 RAW_TARGET		= raw.elf
 TARGET			= bermuda.hex
 ARDUINO_LIBS		=
-ARD_PORT		= /dev/ttyACM0
-AVRDUDE_ARD_BAUDRATE   = 115200
-AVRDUDE_ARD_PROGRAMMER = arduino
 
 CSRCS			=
 CPPSRCS			=

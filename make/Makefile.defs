@@ -11,10 +11,10 @@ STRIP		= $(AVRBIN)/avr-strip
 DOXY		= $(BIN)/doxygen
 MAKE		= make
 OBJCOPY		= avr-objcopy
-AVRDUDE		= avrdude
+AVRDUDE		= $(AVRBIN)/avrdude
 AVRDUDE_COM_OPTS = -q -V -p $(MCU) -c $(AVRDUDE_ARD_PROGRAMMER) -b \
 	$(AVRDUDE_ARD_BAUDRATE) -P $(ARD_PORT) $(AVRDUDE_ARD_EXTRAOPTS) \
-	-C /etc/avrdude.conf
+        $(AVRDUDE_CONF)
 
 STDDEFS		= -D BAUD=9600 -D __SPI__ -D __SPIRAM__ -D __ARDUINO__
 

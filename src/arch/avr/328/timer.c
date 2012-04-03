@@ -186,6 +186,16 @@ PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
         return;
 }
 
+/**
+ * \fn BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
+ * \brief Set the waveform generation mode
+ * \param timer The timer.
+ * \param mode The mode to set to <i>timer</i>.
+ * \see enum wfm_t
+ * 
+ * This function will set the mode of the waveform generator of the given timer.
+ * Valid modes are found in the enumeration wfm_t.
+ */
 PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
 {
         if(NULL == timer)

@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../include
 TARGET			= lib.o
 ARDUINO_LIBS		=
 
-CSRCS			= xorlist.c
+CSRCS			= spiram.c
 CPPSRCS			=
 
 include ../../make/Makefile.$(BUILDSYS)

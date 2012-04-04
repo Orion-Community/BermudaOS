@@ -53,6 +53,17 @@ void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte)
         return;
 }
 
+unsigned char BermudaSpiRamReadByte(unsigned int address)
+{
+        unsigned char byte = 0;
+        BermudaSpiRamSetMode(SPI_RAM_BYTE);
+        spi->transact(spi, RDDA);
+        spi->transact(spi, (unsigned char)(address>>8));
+        spi->transact(spi, (unsigned char)(address & 0xff));
+        byte = spi->transact(spi, 0xff);
+        return byte;
+}
+
 void BermudaSpiRamSetMode(spiram_t mode)
 {
         if(mode <= SPI_RAM_BUF)

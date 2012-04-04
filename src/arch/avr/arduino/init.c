@@ -105,6 +105,10 @@ int main(void)
         struct adc *adc = BermudaGetADC();
         BermudaSetPinMode(A0, INPUT); /* pin A0 */
 
+        // test spiram
+        BermudaSpiRamWriteByte(0x0, 0x99);
+        printf("SPI RAM readback: %x\n", BermudaSpiRamReadByte(0x0));
+
         while(1)
         {
                 float raw_temp = adc->read(0);

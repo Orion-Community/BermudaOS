@@ -40,6 +40,7 @@ __DECL
 extern void BermudaSpiRamInit();
 extern void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte);
 extern void BermudaSpiRamSetMode(spiram_t mode);
+extern unsigned char BermudaSpiRamReadByte(unsigned int address);
 __DECL_END
 
 #endif /* __SPIRAM_H */

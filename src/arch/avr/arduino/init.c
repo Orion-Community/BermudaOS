@@ -96,13 +96,14 @@ int main(void)
 #ifdef __SPI__
         SPI *spi_if = malloc(sizeof(*spi_if));
         BermudaSpiInit(spi_if);
+#ifdef __SPIRAM__
+        BermudaSpiRamInit();
 #endif
-        
+#endif
         sei();
         
         struct adc *adc = BermudaGetADC();
         BermudaSetPinMode(A0, INPUT); /* pin A0 */
-        BermudaSpiRamInit();
 
         while(1)
         {

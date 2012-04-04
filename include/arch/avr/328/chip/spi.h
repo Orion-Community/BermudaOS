@@ -45,8 +45,7 @@ struct spi
         char *name;
         unsigned char id;
         
-        unsigned char (*read) (SPI*);
-        void          (*write)(SPI*, unsigned char);
+        unsigned char (*transact)(SPI *spi, unsigned char data);
         unsigned char flags; /*
                               * 0   -> set to one when initialized
                               * 1   -> ISR enabled

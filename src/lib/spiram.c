@@ -24,17 +24,64 @@
 #include <arch/io.h>
 #include <lib/spiram.h>
 
+PRIVATE WEAK SPI *spi = NULL;
+
 void BermudaSpiRamInit()
 {
-        SPI *spi = BermudaSpiGetInterface();
+        SPI *spiram = BermudaSpiGetInterface();
+        if(NULL == spiram)
+                return;
 
-        if(!BermudaSpiIsInitialized(spi))
+        if(!BermudaSpiIsInitialized(spiram))
                 return;
 
         /* configure the hold pin on pin 2 */
         BermudaSetPinMode(PIN2, OUTPUT);
         BermudaDigitalPinWrite(PIN2, HIGH);
+        spi = spiram;
 
         return;
+}
+
+void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte)
+{
+        BermudaSpiRamSetMode(SPI_RAM_BYTE);
+        spi->transact(spi, WRDA);
+        spi->transact(spi, (unsigned char)(address>>8));
+        spi->transact(spi, (unsigned char)(address & 0xff));
+        spi->transact(spi, byte);
+        return;
+}
+
+void BermudaSpiRamSetMode(spiram_t mode)
+{
+        if(mode <= SPI_RAM_BUF)
+        {
+                spi->transact(spi, RDSR);
+                unsigned char status = spi->transact(spi, 0xff);
+                
+                switch(mode)
+                {
+                        case SPI_RAM_BYTE:
+                                status &= ~(3<<6);
+                                break;
+                                
+                        case SPI_RAM_PAGE:
+                                status &= ~(3<<6);
+                                status |= 0x80;
+                                break;
+                                
+                        case SPI_RAM_BUF:
+                                status &= ~(3<<6);
+                                status |= 0x40;
+                                break;
+
+                        default:
+                                status = 0;
+                                break;
+                }
+                spi->transact(spi, WRSR);
+                spi->transact(spi, status);
+        }
 }
 #endif /* __SPI__ && __SPIRAM__*/

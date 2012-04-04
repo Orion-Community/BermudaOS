@@ -21,8 +21,25 @@
 #include <bermuda.h>
 #include <arch/spi.h>
 
+/* SPI RAM opcodes */
+#define WRSR 0x1
+#define RDSR 0x5
+
+// data opcodes
+#define RDDA 0x3
+#define WRDA 0x2
+
+typedef enum
+{
+        SPI_RAM_BYTE,
+        SPI_RAM_PAGE,
+        SPI_RAM_BUF,
+} spiram_t;
+
 __DECL
-void BermudaSpiRamInit();
+extern void BermudaSpiRamInit();
+extern void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte);
+extern void BermudaSpiRamSetMode(spiram_t mode);
 __DECL_END
 
 #endif /* __SPIRAM_H */

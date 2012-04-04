@@ -72,6 +72,7 @@ int BermudaSpiInit(SPI *spi)
         BermudaSetSpiBitOrder(spi, 1); /* LSB first */
         spi->name = "spi0";
         spi->id = 0;
+        spi->transact = &BermudaSpiTransmit;
         
 #ifdef THREADS
         BermudaAttatchSpiIRQ(spi);

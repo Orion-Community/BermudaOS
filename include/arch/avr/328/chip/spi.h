@@ -83,6 +83,7 @@ extern void BermudaSetMasterSpi(SPI *spi);
 extern void BermudaSetSlaveSpi(SPI *spi);
 extern int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len);
 extern unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data);
+extern unsigned char BermudaSpiRxByte(SPI *spi);
 
 static inline SPI *BermudaSpiGetInterface()
 {

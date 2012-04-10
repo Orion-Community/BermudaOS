@@ -102,22 +102,18 @@ int main(void)
 #endif
         sei();
         
-        struct adc *adc = BermudaGetADC();
-        BermudaSetPinMode(A0, INPUT); /* pin A0 */
-
-        // test spiram
-        BermudaSpiRamWriteByte(0x0, 0x99);
-        printf("SPI RAM readback: %x\n", BermudaSpiRamReadByte(0x0));
-
         while(1)
         {
-                float raw_temp = adc->read(0);
-                int temperature = raw_temp / 1024 * 5000;
-                temperature /= 10;
-                printf("Temperature: %d - Free memory: %d\n", temperature,
-                        BermudaFreeMemory()
-                );
-                _delay_ms(500);
+//                 BermudaSpiRamEnable();
+//                 spi_if->transact(spi_if, WRSR);
+//                 spi_if->transact(spi_if, 0x0);
+//                 BermudaSpiRamDisable();
+// 
+// 
+                BermudaSpiRamEnable();
+                spi_if->transact(spi_if, RDSR);
+                printf("Status reg: %x\n", spi_if->transact(spi_if, 0xff));
+                BermudaSpiRamDisable();
         }
         return 0;
 }

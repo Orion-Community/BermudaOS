@@ -29,6 +29,8 @@
 #define RDDA 0x3
 #define WRDA 0x2
 
+#define HOLD 0x1
+
 typedef enum
 {
         SPI_RAM_BYTE,
@@ -41,6 +43,8 @@ extern void BermudaSpiRamInit();
 extern void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte);
 extern void BermudaSpiRamSetMode(spiram_t mode);
 extern unsigned char BermudaSpiRamReadByte(unsigned int address);
+extern void BermudaSpiRamEnable();
+extern void BermudaSpiRamDisable();
 __DECL_END
 
 #endif /* __SPIRAM_H */

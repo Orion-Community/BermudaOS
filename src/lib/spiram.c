@@ -23,8 +23,20 @@
 #include <arch/spi.h>
 #include <arch/io.h>
 #include <lib/spiram.h>
+#include <util/delay.h>
 
 PRIVATE WEAK SPI *spi = NULL;
+PRIVATE WEAK unsigned char _current_mode = 0xff;
+
+void BermudaSpiRamEnable()
+{
+        BermudaDigitalPinWrite(SS, LOW);
+}
+
+void BermudaSpiRamDisable()
+{
+        BermudaDigitalPinWrite(SS, HIGH);
+}
 
 void BermudaSpiRamInit()
 {
@@ -35,6 +47,7 @@ void BermudaSpiRamInit()
         if(!BermudaSpiIsInitialized(spiram))
                 return;
 
+        BermudaSpiRamDisable();
         /* configure the hold pin on pin 2 */
         BermudaSetPinMode(PIN2, OUTPUT);
         BermudaDigitalPinWrite(PIN2, HIGH);
@@ -46,10 +59,12 @@ void BermudaSpiRamInit()
 void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte)
 {
         BermudaSpiRamSetMode(SPI_RAM_BYTE);
+        BermudaSpiRamEnable();
         spi->transact(spi, WRDA);
         spi->transact(spi, (unsigned char)(address>>8));
         spi->transact(spi, (unsigned char)(address & 0xff));
         spi->transact(spi, byte);
+        BermudaSpiRamDisable();
         return;
 }
 
@@ -57,10 +72,13 @@ unsigned char BermudaSpiRamReadByte(unsigned int address)
 {
         unsigned char byte = 0;
         BermudaSpiRamSetMode(SPI_RAM_BYTE);
+
+        BermudaSpiRamEnable();
         spi->transact(spi, RDDA);
         spi->transact(spi, (unsigned char)(address>>8));
         spi->transact(spi, (unsigned char)(address & 0xff));
         byte = spi->transact(spi, 0xff);
+        BermudaSpiRamDisable();
         return byte;
 }
 
@@ -68,22 +86,18 @@ void BermudaSpiRamSetMode(spiram_t mode)
 {
         if(mode <= SPI_RAM_BUF)
         {
-                spi->transact(spi, RDSR);
-                unsigned char status = spi->transact(spi, 0xff);
+                unsigned char status = HOLD;
                 
                 switch(mode)
                 {
                         case SPI_RAM_BYTE:
-                                status &= ~(3<<6);
                                 break;
                                 
                         case SPI_RAM_PAGE:
-                                status &= ~(3<<6);
                                 status |= 0x80;
                                 break;
                                 
                         case SPI_RAM_BUF:
-                                status &= ~(3<<6);
                                 status |= 0x40;
                                 break;
 
@@ -91,8 +105,13 @@ void BermudaSpiRamSetMode(spiram_t mode)
                                 status = 0;
                                 break;
                 }
+                
+                BermudaSpiRamEnable();
+//                 spi->transact(spi, RDSR);
+//                 printf("SPIRAM status = %x\n", BermudaSpiRxByte(spi));
                 spi->transact(spi, WRSR);
                 spi->transact(spi, status);
+                BermudaSpiRamDisable();
         }
 }
 #endif /* __SPI__ && __SPIRAM__*/

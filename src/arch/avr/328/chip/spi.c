@@ -68,8 +68,8 @@ int BermudaSpiInit(SPI *spi)
         BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
         BermudaSetMasterSpi(spi);
         
-        BermudaSpiSetSckMode(spi, 4);
-        BermudaSetSpiBitOrder(spi, 1); /* LSB first */
+        BermudaSpiSetSckMode(spi, 1);
+        BermudaSetSpiBitOrder(spi, 0); /* LSB first */
         spi->name = "spi0";
         spi->id = 0;
         spi->transact = &BermudaSpiTransmit;
@@ -277,10 +277,10 @@ PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
  * \param mode The mode to apply to <i>spi</i>.
  * \return Error code.
  * 
- * * [0] High on idle, sample.
- * * [1] High on idle, setup.
- * * [2] Low on idle, sample.
- * * [4] Low on idle, setup.
+ * * [0] Low on idle, sample.
+ * * [1] Low on idle, setup.
+ * * [2] High on idle, sample.
+ * * [4] High on idle, setup.
  */
 PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
 {
@@ -336,7 +336,7 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
                 spb(SPI_DDR, SCK);
                 spb(SPI_DDR, MOSI);
                 cpb(SPI_DDR, MISO);
-                cpb(SPI_DDR, SS);
+                spb(SPI_DDR, SS);
                 spb(SPI_POUT, SS);
                 
                 spb(*spi->spcr, MSTR);
@@ -377,8 +377,14 @@ PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
 #else /* if THREADS */
         BermudaThreadSleep();
 #endif
-        
-        return 0;
+        unsigned char ret = *spi->spdr;
+        return ret;
+}
+
+unsigned char BermudaSpiRxByte(SPI *spi)
+{
+        while((*spi->spsr & BIT(SPIF)));
+        return *spi->spdr;
 }
 
 #ifdef THREADS

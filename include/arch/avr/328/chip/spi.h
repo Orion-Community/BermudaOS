@@ -85,6 +85,8 @@ extern int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len);
 extern unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data);
 extern unsigned char BermudaSpiRxByte(SPI *spi);
 
+extern void BermudaSpiNativeInit(SPI *spi);
+
 static inline SPI *BermudaSpiGetInterface()
 {
         return BermudaSPI;

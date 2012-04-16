@@ -65,11 +65,10 @@ int BermudaSpiInit(SPI *spi)
                 BermudaSPI = spi;
         
         BermudaSetupSpiRegs(spi);
-        BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
-        BermudaSetMasterSpi(spi);
+        BermudaSetSckPrescaler(spi, 4);
         
-        BermudaSpiSetSckMode(spi, 1);
-        BermudaSetSpiBitOrder(spi, 0); /* LSB first */
+        BermudaSpiSetSckMode(spi, 0);
+        BermudaSetSpiBitOrder(spi, 0); /* MSB first */
         spi->name = "spi0";
         spi->id = 0;
         spi->transact = &BermudaSpiTransmit;
@@ -79,10 +78,27 @@ int BermudaSpiInit(SPI *spi)
         BermudaThreadCreate("BermudaSpiThread", &BermudaSpiThread, BermudaSPI,
                                 128);
 #endif
+        BermudaSetMasterSpi(spi);
         BermudaSpiEnable(spi);
         
-        sei();
         return 0;
+}
+
+void BermudaSpiNativeInit(SPI *spi)
+{
+        BermudaSetupSpiRegs(spi);
+
+        BermudaSetPinMode(SCK, OUTPUT);
+        BermudaSetPinMode(MOSI, OUTPUT);
+        BermudaSetPinMode(SS, OUTPUT);
+
+        BermudaDigitalPinWrite(SCK, LOW);
+        BermudaDigitalPinWrite(MOSI, LOW);
+        BermudaDigitalPinWrite(SS, HIGH);
+
+        SPCR |= _BV(SPR0);
+        SPCR |= _BV(MSTR);
+        SPCR |= _BV(SPE);
 }
 
 /**
@@ -330,14 +346,16 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
         if(SPI_MASTER == mode)
         {
                 /*
-                 * Set SCK and MOSI as output and MISO and SS as output
+                 * Set SCK, MOSI and SS as output and MISO as input
                  * The SS pin is be set HIGH
                  */
-                spb(SPI_DDR, SCK);
-                spb(SPI_DDR, MOSI);
-                cpb(SPI_DDR, MISO);
-                spb(SPI_DDR, SS);
-                spb(SPI_POUT, SS);
+                BermudaSetPinMode(SCK, OUTPUT);
+                BermudaSetPinMode(MOSI, OUTPUT);
+                BermudaSetPinMode(SS, OUTPUT);
+
+                BermudaDigitalPinWrite(SCK, LOW);
+                BermudaDigitalPinWrite(MOSI, LOW);
+                BermudaDigitalPinWrite(SS, HIGH);
                 
                 spb(*spi->spcr, MSTR);
                 spi->flags |= 1 << SPI_MODE;
@@ -346,13 +364,13 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
         {
                 /*
                  * Set the SS, SCK and MOSI as input and the MISO as output.
-                 * The SS pin is set HIGH
                  */
-                cpb(SPI_DDR, SS);
-                cpb(SPI_DDR, MOSI);
-                cpb(SPI_DDR, SCK);
-                spb(SPI_DDR, MISO);
-                cpb(SPI_POUT, SS);
+                BermudaSetPinMode(SCK, INPUT);
+                BermudaSetPinMode(MOSI, INPUT);
+                BermudaSetPinMode(SS, INPUT);
+                BermudaSetPinMode(MISO, OUTPUT);
+
+                BermudaDigitalPinWrite(MISO, LOW);
                 
                 cpb(*spi->spcr, MSTR);
                 spi->flags &= ~( 1 << SPI_MODE);
@@ -370,14 +388,14 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
   */
 PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
 {
-        *spi->spdr = data;
+        *(spi->spdr) = data;
 #ifndef THREADS
         /* wait for the transfer */
         while(!(*spi->spsr & BIT(SPIF)));
 #else /* if THREADS */
         BermudaThreadSleep();
 #endif
-        unsigned char ret = *spi->spdr;
+        unsigned char ret = *(spi->spdr);
         return ret;
 }
 
@@ -436,7 +454,6 @@ PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order)
 #ifdef THREADS
 SIGNAL(SPI_STC_vect)
 {
-        printf("SPI_IRQ");
         return;
 }
 

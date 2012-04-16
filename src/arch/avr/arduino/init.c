@@ -88,11 +88,17 @@ void flash_led(uint8_t count)
         }
 }
 
+void setup()
+{
+        BermudaSpiRamWriteByte(0x0, 0x99);
+}
+
 int main(void)
 {        
         BermudaInitUART();
         BermudaInitTimer0();
         BermudaInitBaseADC();
+        
 #ifdef __SPI__
         SPI *spi_if = malloc(sizeof(*spi_if));
         BermudaSpiInit(spi_if);
@@ -101,19 +107,18 @@ int main(void)
 #endif
 #endif
         sei();
-        
+
+        setup();
+
         while(1)
         {
-//                 BermudaSpiRamEnable();
-//                 spi_if->transact(spi_if, WRSR);
-//                 spi_if->transact(spi_if, 0x0);
-//                 BermudaSpiRamDisable();
-// 
-// 
-                BermudaSpiRamEnable();
-                spi_if->transact(spi_if, RDSR);
-                printf("Status reg: %x\n", spi_if->transact(spi_if, 0xff));
-                BermudaSpiRamDisable();
+                unsigned int x = 0;
+
+                _delay_ms(20);
+                x = (unsigned int)BermudaSpiRamReadByte(0x0);
+                _delay_ms(20);
+
+                printf("Data byte readback: %x\n", x);
         }
         return 0;
 }

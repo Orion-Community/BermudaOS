@@ -10,16 +10,14 @@
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
-
+#include <SPI.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "main.h"
+#include "SpiRAM.h"
 
 unsigned char DIGITAL_PINS[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13 };
-
-#define LED_DDR DDRB
-#define LED_PORT PORTB
-#define LED_PIN  PINB
-#define LED      PINB5
 
 extern unsigned int __heap_start;
 extern void *__brkval;
@@ -32,20 +30,8 @@ struct __freelist {
 /* The head of the free list structure */
 extern struct __freelist *__flp;
 
-void flash_led(uint8_t count)
-{
-	while (count--) {
-		LED_PORT |= _BV(LED);
-		_delay_ms(100);
-		LED_PORT &= ~_BV(LED);
-		_delay_ms(500);
-	}
-}
-
 int main(void)
 {
-	LED_DDR = 0xff;
-        flash_led(3);
         /*
          * initialise the arduino framework
          */
@@ -106,25 +92,36 @@ int BermFreeMemory()
 static int
 setup()
 {
-        pinMode(DIGITAL_PINS[13], OUTPUT);
-        ArduinoWait(50);
-        ArduinoDigitalWrite(DIGITAL_PINS[13], LOW);
-        pinMode(A0, INPUT);
         Serial.begin(9600);
-        Serial.println("test");
-        LED_DDR |= _BV(LED);
+        Spi.begin();
+        
+	SpiRam.enable();
+	Spi.transfer(WRSR);
+	Spi.transfer(0x1);
+	SpiRam.disable();
+	
+	ArduinoWait(20);
+
         return E_SUCCESS;
 }
+
+static char output[40];
 
 static int
 loop()
 {
-        float raw_temp = ArduinoAnalogRead(A0);
-        float temp = raw_temp / 1024 * 5000;
- 
-        Serial.print("Temperature: ");
-        Serial.println(raw_temp);
-        ArduinoWait(1000);
+	unsigned int x = 4;
+	
+	SpiRam.enable();
+	Spi.transfer(RDSR);
+	x = (unsigned int)Spi.transfer(0xFF);
+	SpiRam.disable();
+	
+	ArduinoWait(20);
+	
+	sprintf(output, "SREG value: %x\r\n", x);
+	Serial.print(output);
+
         return E_SUCCESS;
 }
 

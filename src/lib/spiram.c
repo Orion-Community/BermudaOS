@@ -48,9 +48,7 @@ void BermudaSpiRamInit()
                 return;
 
         BermudaSpiRamDisable();
-        /* configure the hold pin on pin 2 */
-        BermudaSetPinMode(PIN2, OUTPUT);
-        BermudaDigitalPinWrite(PIN2, HIGH);
+
         spi = spiram;
 
         return;
@@ -107,8 +105,6 @@ void BermudaSpiRamSetMode(spiram_t mode)
                 }
                 
                 BermudaSpiRamEnable();
-//                 spi->transact(spi, RDSR);
-//                 printf("SPIRAM status = %x\n", BermudaSpiRxByte(spi));
                 spi->transact(spi, WRSR);
                 spi->transact(spi, status);
                 BermudaSpiRamDisable();

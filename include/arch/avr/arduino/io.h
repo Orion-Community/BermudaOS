@@ -66,10 +66,10 @@ extern "C" {
 #define PIN13 DIGITAL_BASE_PIN+13
 
 #if defined(__AVR_ATmega328P__)
-#define SS   2
-#define MOSI 3
-#define MISO 4
-#define SCK  5
+#define SS   10
+#define MOSI 11
+#define MISO 12
+#define SCK  13
 
 #define SPI_POUT (*(BermudaGetAvrIO()->portb))
 #define SPI_DDR  (*(BermudaGetAvrIO()->ddrb))

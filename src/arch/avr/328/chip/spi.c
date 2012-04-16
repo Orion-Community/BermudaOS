@@ -65,7 +65,7 @@ int BermudaSpiInit(SPI *spi)
                 BermudaSPI = spi;
         
         BermudaSetupSpiRegs(spi);
-        BermudaSetSckPrescaler(spi, 4);
+        BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
         
         BermudaSpiSetSckMode(spi, 0);
         BermudaSetSpiBitOrder(spi, 0); /* MSB first */
@@ -84,10 +84,15 @@ int BermudaSpiInit(SPI *spi)
         return 0;
 }
 
-void BermudaSpiNativeInit(SPI *spi)
+/**
+ * BermudaSpiNativeInit()
+ * \brief Bit-banged initialisation
+ *
+ * This function initializes the SPI alot faster, but can only be used when
+ * all other operations are implemented by the application
+ */
+void BermudaSpiNativeInit()
 {
-        BermudaSetupSpiRegs(spi);
-
         BermudaSetPinMode(SCK, OUTPUT);
         BermudaSetPinMode(MOSI, OUTPUT);
         BermudaSetPinMode(SS, OUTPUT);

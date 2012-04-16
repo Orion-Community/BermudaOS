@@ -86,9 +86,40 @@ extern unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data);
 extern unsigned char BermudaSpiRxByte(SPI *spi);
 extern void BermudaSpiNativeInit();
 
+/**
+ * \fn BermudaSpiGetInterface()
+ * \brief Return the main SPI interface
+ * \return The SPI bus interface
+ * 
+ * Returns the main SPI. This the SPI which is initialized first.
+ */
 static inline SPI *BermudaSpiGetInterface()
 {
         return BermudaSPI;
+}
+
+/**
+ * \fn BermudaSpiEnable(unsigned char ss)
+ * \brief Enable the given SPI.
+ * \param ss The SS pin to enable.
+ * 
+ * This function pulls the given SS pin low.
+ */
+static inline void BermudaSpiEnable(unsigned char ss)
+{
+        BermudaDigitalPinWrite(ss, LOW);
+}
+
+/**
+ * \fn BermudaSpiDisable(unsigned char ss)
+ * \brief Disable the given SPI.
+ * \param ss The SS pin to disable.
+ * 
+ * This function will pull the given SS pin high.
+ */
+static inline void BermudaSpiDisable(unsigned char ss)
+{
+        BermudaDigitalPinWrite(ss, HIGH);
 }
 
 PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);

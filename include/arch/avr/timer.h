@@ -60,7 +60,12 @@ typedef enum
 __DECL
 extern void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,
                                 unsigned char prescaler);
+
+#ifdef __LAZY__
 extern int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres);
+#else
+extern void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres);
+#endif
 __DECL_END
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)

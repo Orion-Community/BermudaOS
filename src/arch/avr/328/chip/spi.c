@@ -23,7 +23,6 @@
 #include <bermuda.h>
 #include <lib/binary.h>
 #include <avr/interrupt.h>
-#include <avr/io.h>
 #include <arch/avr/io.h>
 
 /**
@@ -65,7 +64,7 @@ int BermudaSpiInit(SPI *spi)
                 BermudaSPI = spi;
         
         BermudaSetupSpiRegs(spi);
-        BermudaSetSckPrescaler(spi, SPI_PRESCALER_DEFAULT);
+        BermudaSetSckPrescaler(spi, B11);
         
         BermudaSpiSetSckMode(spi, 0);
         BermudaSetSpiBitOrder(spi, 0); /* MSB first */
@@ -211,6 +210,7 @@ PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi)
         spi->spdr = &BermudaGetSPDR();
 }
 
+#ifdef __LAZY__
 /**
  * \fn BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
  * \brief Setup the desired socket prescaler.
@@ -291,6 +291,18 @@ PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
         return 0;
 }
 
+#else
+PRIVATE WEAK void BermudaSetSckPrescaler(SPI *spi, unsigned char pres)
+{
+        *spi->spcr &= ~B11; // disable both prescaler bits
+        *spi->spsr &= ~B1;  // disable spi2x bit
+        
+        *spi->spcr |= pres & B11; // set prescaler bits
+        *spi->spsr |= (pres & B100) >> 2; // set spi2x bit
+}
+#endif
+
+#ifdef __LAZY__
 /**
  * BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
  * \brief Set the serial clock mode.
@@ -336,6 +348,23 @@ PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
         fail:
         return -1;
 }
+#else
+/**
+ * BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
+ * \brief Set the serial clock mode.
+ * \param spi The SP interface.
+ * \param mode The mode to apply to <i>spi</i>.
+ * 
+ * mode[0]: Represents the CPHA bit.
+ * mode[1]: Represents the CPOL bit.
+ */
+PRIVATE WEAK void BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
+{
+        *spi->spcr &= ~B1100; // results in spcr & 11110011
+        *spi->spcr &= (mode & B11) << 2;
+        return;
+}
+#endif
 
 /**
  * \fn BermudaSetSpiMode(SPI *spi, spi_mode_t mode)

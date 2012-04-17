@@ -122,14 +122,20 @@ static inline void BermudaSpiStop(unsigned char ss)
         BermudaDigitalPinWrite(ss, HIGH);
 }
 
+#ifdef __LAZY__
+PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode);
+#else
+PRIVATE WEAK void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+PRIVATE WEAK void BermudaSpiSetSckMode(SPI *spi, unsigned char mode);
+#endif
+
 PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);
 PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
 PRIVATE WEAK int BermudaSetSpiClockMode(SPI *spi, unsigned char mode);
 PRIVATE WEAK int BermudaUnsetSpiClockMode(SPI *spi, unsigned char mode);
 PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data);
 PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
-PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
-PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode);
 PRIVATE inline void BermudaSpiEnable(SPI *spi);
 PRIVATE inline void BermudaSpiDisable(SPI *spi);
 

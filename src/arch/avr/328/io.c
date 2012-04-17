@@ -32,6 +32,7 @@ const struct avr_io io =
         .ddrb           = BermudaGetAddressDDRB(),
         .ddrc           = BermudaGetAddressDDRC(),
         .ddrd           = BermudaGetAddressDDRD(),
+        .sreg           = BermudaGetAddressSREG(),
 };
 
 const unsigned short ROM BermudaPortToOutput[] =

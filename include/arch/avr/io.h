@@ -36,7 +36,7 @@ extern "C" {
 #define MEM_IO16(addr) (*(volatile unsigned short*)(addr))
 
 #define IO_OFFSET 0x20
-#define SFR_IO8(addr) MEM_IO8((addr)+IO_OFFSET)
+#define SFR_IO8(addr) MEM_IO8((addr+IO_OFFSET))
 
 /* pin defs */
 #define PIN_NOT_AVAILABLE 0

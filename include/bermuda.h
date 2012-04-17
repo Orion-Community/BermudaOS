@@ -31,5 +31,7 @@
 
 #define PRIVATE __attribute__ ((visibility ("hidden")))
 #define WEAK    __attribute__((weak))
+#define __raw   __attribute__((naked))
+#define __sig   __attribute__((signal))
 
 #endif

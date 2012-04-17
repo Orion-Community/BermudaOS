@@ -52,8 +52,8 @@ int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
         t->stack_size = stack_size;
         t->param = arg;
         t->sp = (unsigned char*)(&t->stack[stack_size-1]);
-        *t->sp-- = (unsigned short)handle & 0xff;
-        *t->sp-- = ((unsigned short)handle >> 8) & 0xff;
+        *(t->sp--) = (unsigned short)handle & 0xff;
+        *(t->sp--) = ((unsigned short)handle >> 8) & 0xff;
         
         return 0;
 }

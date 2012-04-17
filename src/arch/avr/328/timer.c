@@ -16,12 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <avr/io.h>
 #include <lib/binary.h>
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/328/timer.h>
+
+PRIVATE WEAK TIMER *timer0 = NULL;
 
 /**
  * \fn BermudaInitTimer0()
@@ -40,26 +41,27 @@
 void BermudaInitTimer0()
 {
         cli();
+        timer0 = malloc(sizeof(*timer0));
+        if(timer0 == NULL)
+                return;
+        
+        timer0->tccr0a = &BermudaGetTCCR0A();
+        timer0->tccr0b = &BermudaGetTCCR0B();
         
         /* mode: fast pwm, BOTTOM (0x0) to OCR0A */
-        spb(BermudaGetTCCR0A(), WGM00);
-        spb(BermudaGetTCCR0A(), WGM01);
-        spb(BermudaGetTCCR0B(), WGM02);
+        BermudaTimerSetWaveFormMode(timer0, B111);
 
         /* set prescaler */
-        spb(BermudaGetTCCR0B(), CS00);
-        spb(BermudaGetTCCR0B(), CS01);
+        BermudaTimerSetPrescaler(timer0, B11);
         
         /* Set the top to 244 */
         BermudaGetOCR0A() = 244;
         
         /* Enable the overflow interrupt */
         spb(BermudaGetTIMSK0(), TOIE0);
-        
-        /* re-enable interrupts */
-        sei();
 }
 
+#ifdef __LAZY__
 /**
   * \fn BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
   * \brief Set the timer prescaler.
@@ -132,7 +134,26 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
         
         return 0;
 }
+#else
+/**
+  * \fn BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
+  * \brief Set the timer prescaler.
+  * \param timer The prescaler will be set for this given timer.
+  * \param pres The prescaler to set.
+  * \return Error code.
+  * 
+  * pres[0]: Represents CS00;
+  * pres[1]: Represents CS01;
+  * pres[2]: Represents CS02;
+  */
+void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres)
+{
+        *timer->tccr0b &= ~B111; // results in 11111000
+        *timer->tccr0b |= pres & B111;
+}
+#endif
 
+#ifdef __LAZY__
 /**
   * \fn BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
   * \brief Set the Output Compare Match for the given timer.
@@ -185,7 +206,28 @@ PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
         
         return;
 }
+#else
+/**
+  * \fn BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
+  * \brief Set the Output Compare Match for the given timer.
+  * \param timer The timer.
+  * \param ocm The output compare mode
+  *
+  * ocm[0] COM0B0
+  * ocm[1] COM0B1
+  * ocm[2] COM0A0
+  * ocm[3] COM0A1
+  */
+PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(timer, ocm)
+TIMER *timer;
+unsigned char ocm;
+{
+        *timer->tccr0a &= B11110000;
+        *timer->tccr0a |= (ocm & B1111) << 4;
+}
+#endif
 
+#ifdef __LAZY__
 /**
  * \fn BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
  * \brief Set the waveform generation mode
@@ -239,6 +281,27 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
         
         BermudaTimerEnable(timer);
 }
+#else
+/**
+ * \fn BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
+ * \brief Set the waveform generation mode
+ * \param timer The timer.
+ * \param mode The mode to set to <i>timer</i>.
+ *
+ * mode[0]: Represents WGM00;
+ * mode[1]: Represents WGM01;
+ * mode[2]: Represents WGM02;
+ */
+PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
+{
+        *timer->tccr0a &= ~B11; // clear WGM00 & WGM01
+        *timer->tccr0b &= ~B1000; // clear WGM02
+        
+        *timer->tccr0a |= mode & B11;
+        *timer->tccr0b |= (mode & B1) << 3;
+        return;
+}
+#endif
 
 static unsigned long timer_count = 0;
 SIGNAL(TIMER0_OVF_vect)

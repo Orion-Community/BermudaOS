@@ -37,8 +37,15 @@
 __DECL
 extern void BermudaInitTimer0();
 extern inline unsigned long BermudaGetTimerCount();
-PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm);
+
+#ifdef __LAZY__
 PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode);
+PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm);
+#else
+PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode);
+PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer,
+                                                        unsigned char ocm);
+#endif
 
 static inline void BermudaTimerDisable(TIMER *timer)
 {

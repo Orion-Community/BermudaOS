@@ -105,7 +105,7 @@ static inline SPI *BermudaSpiGetInterface()
  * 
  * This function pulls the given SS pin low.
  */
-static inline void BermudaSpiEnable(unsigned char ss)
+static inline void BermudaSpiStart(unsigned char ss)
 {
         BermudaDigitalPinWrite(ss, LOW);
 }
@@ -117,7 +117,7 @@ static inline void BermudaSpiEnable(unsigned char ss)
  * 
  * This function will pull the given SS pin high.
  */
-static inline void BermudaSpiDisable(unsigned char ss)
+static inline void BermudaSpiStop(unsigned char ss)
 {
         BermudaDigitalPinWrite(ss, HIGH);
 }

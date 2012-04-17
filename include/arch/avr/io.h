@@ -57,6 +57,8 @@ extern inline unsigned char BermudaReadPGMByte(unsigned short);
 extern inline unsigned short BermudaReadPGMWord(unsigned short);
 
 extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
+extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);
+extern unsigned char BermudaDigitalPinRead(unsigned char pin);
 
 #define BermudaGetIOPort(pin) BermudaReadPGMByte((unsigned short) \
                                 BermudaPinToPort+(pin))

@@ -30,12 +30,12 @@ PRIVATE WEAK unsigned char _current_mode = 0xff;
 
 void BermudaSpiRamEnable()
 {
-        BermudaSpiEnable(SS);
+        BermudaSpiStart(SS);
 }
 
 void BermudaSpiRamDisable()
 {
-        BermudaSpiDisable(SS);
+        BermudaSpiStop(SS);
 }
 
 void BermudaSpiRamInit()

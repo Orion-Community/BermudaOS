@@ -4,3 +4,6 @@
 *.lst
 build-cli/
 *.geany
+.cproject
+.project
+.settings/

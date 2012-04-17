@@ -17,15 +17,19 @@
  */
 
 #ifndef __STACK_H
+#define __STACK_H
 
 #include <bermuda.h>
+#include <sys/thread.h>
 #include <arch/avr/io.h>
 
 #define STACK_L SFR_IO8(0x3D)
 #define STACK_H SFR_IO8(0x3E)
 
+typedef unsigned char* stack_t;
+
 __DECL
-void __sig __raw BermudaStackInit(void *stack);
+extern void BermudaStackInit(stack_t stack, thread_handle_t handle);
 __DECL_END
 
 #endif

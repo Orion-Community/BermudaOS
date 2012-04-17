@@ -17,6 +17,8 @@
  */
 
 #ifndef __ARCH_IO_H
+#define __ARCH_IO_H
+
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/io.h>
 #endif

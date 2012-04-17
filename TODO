@@ -2,3 +2,4 @@ TODO for version 0.0.2
 
 * Fix threads
 * Create an App environment
+* Write assembly inb and outb functions

@@ -107,18 +107,11 @@ int main(void)
 #endif
 #endif
         sei();
-
         setup();
 
         while(1)
         {
-                unsigned int x = 0;
 
-                _delay_ms(20);
-                x = (unsigned int)BermudaSpiRamReadByte(0x0);
-                _delay_ms(20);
-
-                printf("Data byte readback: %x\n", x);
         }
         return 0;
 }

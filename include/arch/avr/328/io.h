@@ -60,6 +60,7 @@ struct avr_io
 
 extern const struct avr_io io;
 #define BermudaGetAvrIO() (&io)
+#define AvrIO BermudaGetAvrIO()
 #ifdef __cplusplus
 }
 #endif

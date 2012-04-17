@@ -16,7 +16,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-void __sig __raw BermudaStackInit(void *stack)
+#include <bermuda.h>
+#include <sys/thread.h>
+
+#include <arch/avr/stack.h>
+#include <arch/avr/io.h>
+
+void BermudaStackInit(stack_t sp, thread_handle_t handle)
 {
+        /*
+         * first we add the function pointer to the stack
+         */
+        *(sp--) = (unsigned short)handle & 0xff;
+        *(sp--) = ((unsigned short)handle >> 8) & 0xff;
         
+        /* add the SREG register */
+        *(sp--) = 0x0; // location of R0 normally
+        *(sp--) = *AvrIO->sreg;
+        
+        /* pad the other registers */
+        // TODO: pad registers
 }

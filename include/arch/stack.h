@@ -16,26 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
-#include <sys/thread.h>
+#ifndef __ARCH_STACK_H
+#define __ARCH_STACK_H
 
-#include <arch/avr/stack.h>
-#include <arch/avr/io.h>
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+        #include <arch/avr/stack.h>
+#endif
 
-void BermudaStackInit(stack_t sp, unsigned short stack_size, thread_handle_t handle)
-{
-        /*
-         * first we add the function pointer to the stack
-         */
-        *(sp--) = (unsigned short)handle & 0xff;
-        *(sp--) = ((unsigned short)handle >> 8) & 0xff;
-        
-        /* add the SREG register */
-        *(sp--) = 0x0; // location of R0 normally
-        *(sp--) = *AvrIO->sreg;
-        
-        /* pad the other registers */
-        int i = 0;
-        for(; i < 31; i++)
-                *(sp--) = 0;
-}
+#endif

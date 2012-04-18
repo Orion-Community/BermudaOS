@@ -21,8 +21,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <avr/io.h>
-#include <arch/avr/io.h>
+#include <arch/io.h>
+#include <arch/stack.h>
 
 #include <sys/thread.h>
 

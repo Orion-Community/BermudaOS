@@ -8,7 +8,7 @@ TARGET			= sys.o
 ARDUINO_LIBS		=
 
 CSRCS			= thread.c 
-CPPSRCS			= cplusplus.cpp
+CPPSRCS			= 
 ASMSRCS			=
 
 include ../../make/Makefile.$(BUILDSYS)

@@ -90,7 +90,9 @@ void flash_led(uint8_t count)
 
 void setup()
 {
+#ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x0, 0x99);
+#endif
 }
 
 int main(void)
@@ -109,9 +111,13 @@ int main(void)
         sei();
         setup();
 
+        BermudaSetPinMode(13, OUTPUT);
+        unsigned char x = 1;
         while(1)
         {
-
+                        BermudaDigitalPinWrite(13, x);
+                        x ^= 1;
+                        _delay_ms(200);
         }
         return 0;
 }

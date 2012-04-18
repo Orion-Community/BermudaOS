@@ -25,11 +25,13 @@
 
 #define STACK_L SFR_IO8(0x3D)
 #define STACK_H SFR_IO8(0x3E)
+#define STACK   (STACK_L | (STACK_H << 8))
 
 typedef unsigned char* stack_t;
 
 __DECL
-extern void BermudaStackInit(stack_t stack, unsigned short stack_size, thread_handle_t handle);
+extern void BermudaStackInit(THREAD *t, stack_t stack, 
+                             unsigned short stack_size, thread_handle_t handle);
 __DECL_END
 
 #endif

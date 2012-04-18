@@ -18,6 +18,7 @@
 
 #include <lib/binary.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/328/timer.h>

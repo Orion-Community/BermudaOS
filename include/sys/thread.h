@@ -25,7 +25,9 @@
 
 typedef void (*thread_handle_t)(void *data);
 
-#define BermudaGetStackPointer() (SP)
+#define THREAD(fn, param) \
+PRIVATE WEAK void fn(void *param); \
+PRIVATE WEAK void fn(void *param)
 
 #ifndef RTSCHED
 
@@ -55,6 +57,7 @@ extern THREAD *BermudaThreadSleep();
 extern THREAD *BermudaThreadExit();
 extern THREAD *BermudaThreadCreate(char *name, thread_handle_t handle, void *arg,
                                 unsigned short stack_size);
+extern void BermudaSwitchTask(void *sp);
 
 PRIVATE WEAK int *BermudaThreadNativeCreate();
 __DECL_END

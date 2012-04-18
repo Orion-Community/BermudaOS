@@ -22,8 +22,20 @@
 #include <arch/avr/stack.h>
 #include <arch/avr/io.h>
 
-void BermudaStackInit(stack_t sp, unsigned short stack_size, thread_handle_t handle)
+void BermudaStackInit(t, sp, stack_size, handle)
+THREAD *t;
+stack_t sp;
+unsigned short stack_size;
+thread_handle_t handle;
 {
+        /* if the stack pointer is NULL we will setup the main stack */
+        if(NULL == sp)
+                sp = (stack_t)(STACK - stack_size - 2);
+                
+        t->stack = sp;
+        t->stack_size = stack_size;
+        t->sp = &sp[stack_size-1];
+        
         /*
          * first we add the function pointer to the stack
          */
@@ -36,6 +48,6 @@ void BermudaStackInit(stack_t sp, unsigned short stack_size, thread_handle_t han
         
         /* pad the other registers */
         int i = 0;
-        for(; i < 31; i++)
+        for(; i < 32; i++)
                 *(sp--) = 0;
 }

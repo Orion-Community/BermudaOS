@@ -20,16 +20,18 @@
 #include <stdio.h>
 
 #include <avr/interrupt.h>
-#include <avr/io.h>
 #include <avr/pgmspace.h>
 
 #include <util/delay.h>
+
+#include <sys/thread.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
 #include <arch/avr/timer.h>
 
 #include <lib/spiram.h>
+#include <lib/binary.h>
 
 #define LED_DDR  BermudaGetDDRB()
 #define LED_PORT BermudaGetPORTB()
@@ -81,10 +83,10 @@ void flash_led(uint8_t count)
 {
         while (count--)
         {
-                LED_PORT |= _BV(LED);
-                _delay_ms(1);
-                LED_PORT &= ~_BV(LED);
-                _delay_ms(1);
+                LED_PORT |= BIT(LED);
+                _delay_ms(100);
+                LED_PORT &= ~BIT(LED);
+                _delay_ms(100);
         }
 }
 
@@ -94,6 +96,20 @@ void setup()
         BermudaSpiRamWriteByte(0x0, 0x99);
 #endif
 }
+
+#ifdef __THREAD_DBG__
+// #ifndef THREADS
+//         #error Thread debugging not possible without threads
+// #endif
+THREAD(TestThread, data)
+{
+        unsigned char x = 1;
+        BermudaDigitalPinWrite(13, x);
+        while(1)
+        {
+        }
+}
+#endif
 
 int main(void)
 {        
@@ -112,12 +128,17 @@ int main(void)
         setup();
 
         BermudaSetPinMode(13, OUTPUT);
-        unsigned char x = 1;
+        unsigned char led = 0;
+        
+        THREAD *th = malloc(sizeof(*th));
+        BermudaThreadInit(th, TestThread, NULL, 128, malloc(128));
+        BermudaSwitchTask(th->sp);
+        
         while(1)
         {
-                        BermudaDigitalPinWrite(13, x);
-                        x ^= 1;
-                        _delay_ms(200);
+                BermudaDigitalPinWrite(13, led);
+                led ^= 1;
+                _delay_ms(200);
         }
         return 0;
 }

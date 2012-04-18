@@ -17,13 +17,13 @@
  */
 
 .section .text
-.global TaskSwitch
+.global BermudaSwitchTask
 
 #define SREG         0x3f
 #define SPH          0x3e
 #define SPL          0x3d
 
-BermSwitchTask:
+BermudaSwitchTask:
         cli
         push r0
         in   r0,SREG
@@ -116,4 +116,4 @@ BermSwitchTask:
 
         out  SREG,r0
         pop  r0
-        reti
+        ret

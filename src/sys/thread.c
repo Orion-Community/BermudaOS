@@ -45,13 +45,8 @@ int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
         if(NULL == t)
                 return -1;
                 
-        if(NULL == stack)
-                stack = (void*)(BermudaGetStackPointer() - stack_size - 2);
-        
-        t->stack = stack;
-        t->stack_size = stack_size;
+        BermudaStackInit(t, stack, stack_size, handle);
         t->param = arg;
-        t->sp = (unsigned char*)(&t->stack[stack_size-1]);
         
         return 0;
 }

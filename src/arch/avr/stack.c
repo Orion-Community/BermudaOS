@@ -22,7 +22,7 @@
 #include <arch/avr/stack.h>
 #include <arch/avr/io.h>
 
-void BermudaStackInit(stack_t sp, thread_handle_t handle)
+void BermudaStackInit(stack_t sp, unsigned short stack_size, thread_handle_t handle)
 {
         /*
          * first we add the function pointer to the stack
@@ -35,5 +35,7 @@ void BermudaStackInit(stack_t sp, thread_handle_t handle)
         *(sp--) = *AvrIO->sreg;
         
         /* pad the other registers */
-        // TODO: pad registers
+        int i = 0;
+        for(; i < 31; i++)
+        	sp[i] = 0;
 }

@@ -29,7 +29,7 @@
 typedef unsigned char* stack_t;
 
 __DECL
-extern void BermudaStackInit(stack_t stack, thread_handle_t handle);
+extern void BermudaStackInit(stack_t stack, unsigned short stack_size, thread_handle_t handle);
 __DECL_END
 
 #endif

@@ -38,6 +38,8 @@
 #define LED_PIN  BermudaGetPINB()
 #define LED      PINB5
 
+static THREAD MainT;
+static THREAD *th = NULL;
 extern unsigned int __heap_start;
 extern void *__brkval;
 
@@ -90,26 +92,68 @@ void flash_led(uint8_t count)
         }
 }
 
-void setup()
-{
-#ifdef __SPIRAM__
-        BermudaSpiRamWriteByte(0x0, 0x99);
-#endif
-}
-
 #ifdef __THREAD_DBG__
 // #ifndef THREADS
 //         #error Thread debugging not possible without threads
 // #endif
 THREAD(TestThread, data)
 {
-        unsigned char x = 1;
-        BermudaDigitalPinWrite(13, x);
+        unsigned char led = 1;
+        char x = 0;
         while(1)
         {
+                BermudaDigitalPinWrite(13, led);
+                led ^= 1;
+                _delay_ms(200);
+
+                x++;
+                if((x % 10) == 0)
+                {
+                        BermudaCurrentThread = &MainT;
+                        BermudaPreviousThread = th;
+                        BermudaSwitchTask(MainT.sp);
+                }
+                printf("working, really!\n");
+                        
+        }
+}
+
+
+THREAD(MainThread, data)
+{
+        unsigned char led = 1;
+        char x = 0;
+        while(1)
+        {
+                BermudaDigitalPinWrite(13, led);
+                led ^= 1;
+                _delay_ms(1000);
+
+                x++;
+                if((x % 10) == 0)
+                {
+                        BermudaCurrentThread = th;
+                        BermudaPreviousThread = &MainT;
+                        BermudaSwitchTask(th->sp);
+                }
         }
 }
 #endif
+
+void setup()
+{
+#ifdef __THREAD_DBG__
+        th = malloc(sizeof(*th));
+        BermudaThreadInit(th, TestThread, NULL, 128, malloc(128));
+        BermudaThreadInit(&MainT, MainThread, NULL, 128, malloc(128));
+        printf("Free memory: %i\n", BermudaFreeMemory());
+        BermudaCurrentThread = &MainT;
+        BermudaSwitchTask(MainT.sp);
+#endif
+#ifdef __SPIRAM__
+        BermudaSpiRamWriteByte(0x0, 0x99);
+#endif
+}
 
 int main(void)
 {        
@@ -125,20 +169,16 @@ int main(void)
 #endif
 #endif
         sei();
-        setup();
 
         BermudaSetPinMode(13, OUTPUT);
         unsigned char led = 0;
-        
-        THREAD *th = malloc(sizeof(*th));
-        BermudaThreadInit(th, TestThread, NULL, 128, malloc(128));
-        BermudaSwitchTask(th->sp);
-        
+        setup();
+
         while(1)
         {
                 BermudaDigitalPinWrite(13, led);
                 led ^= 1;
-                _delay_ms(200);
+                _delay_ms(50);
         }
         return 0;
 }

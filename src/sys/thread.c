@@ -26,6 +26,9 @@
 
 #include <sys/thread.h>
 
+THREAD *BermudaCurrentThread = NULL;
+THREAD *BermudaPreviousThread = NULL;
+
 /**
  * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
  *                               unsigned short stack_size, void *stack)
@@ -44,7 +47,7 @@ int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
 {
         if(NULL == t)
                 return -1;
-                
+
         BermudaStackInit(t, stack, stack_size, handle);
         t->param = arg;
         

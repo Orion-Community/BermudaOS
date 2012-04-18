@@ -62,6 +62,8 @@ extern void BermudaSwitchTask(void *sp);
 PRIVATE WEAK int *BermudaThreadNativeCreate();
 __DECL_END
 
+extern THREAD *BermudaCurrentThread;
+extern THREAD *BermudaPreviousThread;
 
 #endif
 

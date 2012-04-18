@@ -30,8 +30,8 @@ thread_handle_t handle;
 {
         /* if the stack pointer is NULL we will setup the main stack */
         if(NULL == sp)
-                sp = (stack_t)(STACK - stack_size - 2);
-                
+                sp = (stack_t)(STACK);
+
         t->stack = sp;
         t->stack_size = stack_size;
         t->sp = &sp[stack_size-1];
@@ -39,15 +39,27 @@ thread_handle_t handle;
         /*
          * first we add the function pointer to the stack
          */
-        *(sp--) = (unsigned short)handle & 0xff;
-        *(sp--) = ((unsigned short)handle >> 8) & 0xff;
+        *(t->sp--) = (unsigned short)handle & 0xff;
+        *(t->sp--) = ((unsigned short)handle >> 8) & 0xff;
         
         /* add the SREG register */
-        *(sp--) = 0x0; // location of R0 normally
-        *(sp--) = *AvrIO->sreg;
+        *(t->sp--) = 0x0; // location of R0 normally
+        *(t->sp--) = *AvrIO->sreg;
         
         /* pad the other registers */
         int i = 0;
-        for(; i < 32; i++)
-                *(sp--) = 0;
+        for(; i < 31; i++)
+                *(t->sp--) = 0;
+#ifdef __THREAD_DBG__
+        printf("Stack: %p - SP: %p\n", t->stack, t->sp);
+#endif
+}
+
+void BermudaStackSave(stack_t sp)
+{
+        if(BermudaPreviousThread == NULL)
+                return;
+
+        sp += 2;
+        BermudaPreviousThread->sp = sp;
 }

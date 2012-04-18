@@ -18,6 +18,7 @@
 
 .section .text
 .global BermudaSwitchTask
+.extern BermudaStackSave
 
 #define SREG         0x3f
 #define SPH          0x3e
@@ -71,7 +72,7 @@ BermudaSwitchTask:
          */
         in   r24,SPL
         in   r25,SPH
-/*        call thread_save_sp */
+        call BermudaStackSave
 
         pop  r25
         pop  r24
@@ -116,4 +117,4 @@ BermudaSwitchTask:
 
         out  SREG,r0
         pop  r0
-        ret
+        reti

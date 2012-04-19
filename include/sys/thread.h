@@ -30,6 +30,7 @@ PRIVATE WEAK void fn(void *param); \
 PRIVATE WEAK void fn(void *param)
 
 #ifndef RTSCHED
+#define BERMUDA_DEFAULT_PRIO 150
 
 /**
   * \struct struct thread

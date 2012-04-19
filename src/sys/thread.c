@@ -28,6 +28,7 @@
 
 THREAD *BermudaCurrentThread = NULL;
 THREAD *BermudaPreviousThread = NULL;
+THREAD *BermudaThreadHead = NULL;
 
 /**
  * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
@@ -50,6 +51,7 @@ int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
 
         BermudaStackInit(t, stack, stack_size, handle);
         t->param = arg;
+        t->prio = BERMUDA_DEFAULT_PRIO;
         
         return 0;
 }

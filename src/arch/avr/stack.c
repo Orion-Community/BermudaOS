@@ -30,7 +30,7 @@ thread_handle_t handle;
 {
         /* if the stack pointer is NULL we will setup the main stack */
         if(NULL == sp)
-                sp = (stack_t)(STACK);
+                sp = (stack_t)MEM-stack_size-2;
 
         t->stack = sp;
         t->stack_size = stack_size;

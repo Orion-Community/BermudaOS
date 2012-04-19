@@ -433,12 +433,6 @@ PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
         return ret;
 }
 
-unsigned char BermudaSpiRxByte(SPI *spi)
-{
-        while((*spi->spsr & BIT(SPIF)));
-        return *spi->spdr;
-}
-
 #ifdef THREADS
 /**
  * \fn BermudaAttatchSpiIRQ(SPI *spi)

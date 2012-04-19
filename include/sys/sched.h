@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Stack support :: Used by the general schedule module
+ *  BermudaOS - Schedule module
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,22 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __STACK_H
-#define __STACK_H
+#ifndef __SCHED_H_
+#define __SCHED_H_
 
 #include <bermuda.h>
 #include <sys/thread.h>
-#include <arch/avr/io.h>
 
-#define STACK_L SFR_IO8(0x3D)
-#define STACK_H SFR_IO8(0x3E)
-#define STACK   ((STACK_L) | ((STACK_H) << 8))
-
-typedef unsigned char* stack_t;
-
-__DECL
-extern void BermudaStackInit(THREAD *t, stack_t stack, 
-                             unsigned short stack_size, thread_handle_t handle);
-__DECL_END
+void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
+void BermudaSchedulerAddThread(THREAD *t);
+PRIVATE WEAK void BermudaSchedulerListAdd(THREAD *th);
 
 #endif

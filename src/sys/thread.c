@@ -18,17 +18,12 @@
 
 /** \file thread.c */
 
-#include <string.h>
 #include <stdlib.h>
 
 #include <arch/io.h>
 #include <arch/stack.h>
 
 #include <sys/thread.h>
-
-THREAD *BermudaCurrentThread = NULL;
-THREAD *BermudaPreviousThread = NULL;
-THREAD *BermudaThreadHead = NULL;
 
 /**
  * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
@@ -44,14 +39,15 @@ THREAD *BermudaThreadHead = NULL;
  * pointer will be used.
  */
 int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
-                                unsigned short stack_size, void *stack)
+                                unsigned short stack_size, void *stack,
+                                unsigned char prio)
 {
         if(NULL == t)
                 return -1;
 
         BermudaStackInit(t, stack, stack_size, handle);
         t->param = arg;
-        t->prio = BERMUDA_DEFAULT_PRIO;
+        t->prio = prio;
         
         return 0;
 }

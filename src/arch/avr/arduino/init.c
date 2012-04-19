@@ -25,6 +25,7 @@
 #include <util/delay.h>
 
 #include <sys/thread.h>
+#include <sys/sched.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
@@ -148,8 +149,9 @@ void setup()
 #ifdef __THREAD_DBG__
         BermudaSetPinMode(13, OUTPUT);
         th = malloc(sizeof(*th));
-        BermudaThreadInit(th, TestThread, NULL, 128, malloc(128));
-        BermudaThreadInit(&MainT, MainThread, NULL, 128, malloc(128));
+        BermudaThreadInit(th, TestThread, NULL, 128, malloc(128),
+                          BERMUDA_DEFAULT_PRIO);
+        BermudaSchedulerInit(&MainT, &MainThread);
         printf("Free memory: %i\n", BermudaFreeMemory());
         BermudaCurrentThread = &MainT;
         BermudaSwitchTask(MainT.sp);

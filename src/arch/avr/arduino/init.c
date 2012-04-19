@@ -38,8 +38,11 @@
 #define LED_PIN  BermudaGetPINB()
 #define LED      PINB5
 
+#ifdef __THREAD_DBG__
 static THREAD MainT;
 static THREAD *th = NULL;
+#endif
+
 extern unsigned int __heap_start;
 extern void *__brkval;
 
@@ -143,6 +146,7 @@ THREAD(MainThread, data)
 void setup()
 {
 #ifdef __THREAD_DBG__
+        BermudaSetPinMode(13, OUTPUT);
         th = malloc(sizeof(*th));
         BermudaThreadInit(th, TestThread, NULL, 128, malloc(128));
         BermudaThreadInit(&MainT, MainThread, NULL, 128, malloc(128));
@@ -151,7 +155,7 @@ void setup()
         BermudaSwitchTask(MainT.sp);
 #endif
 #ifdef __SPIRAM__
-        BermudaSpiRamWriteByte(0x0, 0x99);
+        BermudaSpiRamWriteByte(0x58, 0x99);
 #endif
 }
 
@@ -169,16 +173,19 @@ int main(void)
 #endif
 #endif
         sei();
-
-        BermudaSetPinMode(13, OUTPUT);
-        unsigned char led = 0;
         setup();
 
         while(1)
         {
-                BermudaDigitalPinWrite(13, led);
-                led ^= 1;
-                _delay_ms(50);
+#ifdef __SPIRAM__
+                unsigned int x = 0;
+
+                _delay_ms(20);
+                x = (unsigned int)BermudaSpiRamReadByte(0x58);
+                _delay_ms(20);
+
+                printf("Data byte readback: %x\n", x);
+#endif
         }
         return 0;
 }

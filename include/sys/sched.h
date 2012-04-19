@@ -24,6 +24,6 @@
 
 void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
 void BermudaSchedulerAddThread(THREAD *t);
-PRIVATE WEAK void BermudaSchedulerListAdd(THREAD *th);
+PRIVATE WEAK THREAD* BermudaGetLastThread();
 
 #endif

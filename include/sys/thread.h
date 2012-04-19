@@ -19,7 +19,8 @@
 #ifndef __THREAD_H
 #define __THREAD_H
 
-#include <bermuda.h>
+#include <lib/binary.h>
+
 #include <inttypes.h>
 #include <avr/io.h>
 
@@ -28,6 +29,10 @@ typedef void (*thread_handle_t)(void *data);
 #define THREAD(fn, param) \
 PRIVATE WEAK void fn(void *param); \
 PRIVATE WEAK void fn(void *param)
+
+#define BermudaThreadDoesIO(th)  (th->flags & B1)
+#define BermudaThreadEnterIO(th) (th->flags |= B1);
+#define BermudaThreadExitIO(th)  (th->flags &= (~B1))
 
 #ifndef RTSCHED
 #define BERMUDA_DEFAULT_PRIO 150
@@ -48,6 +53,10 @@ struct thread
         unsigned char prio;
         unsigned short stack_size;
         unsigned int sleep_time;
+        unsigned char flags; /*
+                              * [0] If one, stop scheduling, IO is performing
+                              * [1-7] reserved
+                              */
 } __attribute__((packed));
 typedef struct thread THREAD;
 

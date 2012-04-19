@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <bermuda.h>
 
 #include <arch/io.h>
 #include <arch/stack.h>
@@ -46,11 +47,40 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
         BermudaSwitchTask(BermudaThreadHead->sp);
 }
 
+/**
+ * \fn BermudaSchedulerListAdd(THREAD *th)
+ * \brief Add a new thread to the list
+ * \param th Thread to add.
+ *
+ * This function will edit the thread list to add the new thread <i>th</i>.
+ */
 void BermudaSchedulerAddThread(THREAD *t)
 {
+        BermudaThreadEnterIO(t); // stop the scheduler
+        THREAD *last = BermudaGetLastThread();
+
+        last->next = t;
+        t->next = NULL;
+        t->prev = last;
+        
+        BermudaThreadExitIO(t); // continue scheduling
 }
 
-PRIVATE WEAK void BermudaSchedulerListAdd(THREAD *th)
+/**
+ * \fn BermudaGetLastThread()
+ * \brief Find the last item of BermudaThreadHead.
+ * \return The last entry of the thread list.
+ * This function will return the last entry of the thread list.
+ */
+PRIVATE WEAK THREAD* BermudaGetLastThread()
 {
-        
+        THREAD *carriage = BermudaThreadHead;
+        for(; carriage != NULL && carriage != carriage->next; carriage =
+                                                                carriage->next)
+        {
+                if(carriage->next == NULL)
+                        break;
+        }
+        // carriage points now to the last block of the thread list
+        return carriage;
 }

@@ -48,6 +48,7 @@ int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
         BermudaStackInit(t, stack, stack_size, handle);
         t->param = arg;
         t->prio = prio;
+        t->flags = 0;
         
         return 0;
 }

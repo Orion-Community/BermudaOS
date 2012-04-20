@@ -26,8 +26,7 @@
 #include <sys/thread.h>
 
 /**
- * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
- *                               unsigned short stack_size, void *stack)
+ * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
  * \brief Initialize the scheduler with main thread.
  * \param t Main thread
  * \param handle Main handle

@@ -16,7 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __SPI__
+/** \file spi.h */
+
 #ifndef __SPI_H
 #define __SPI_H
 
@@ -77,13 +78,68 @@ extern SPI *BermudaSPI;
 
 extern unsigned char BermudaSpiRead(SPI *spi);
 extern void BermudaSpiWrite(SPI *spi, unsigned char data);
+
+/**
+ * \fn BermudaSpiInit(SPI *spi)
+ * \brief Initialise the Serial Peripheral Interface.
+ * \param spi SPI instance
+ *
+ * The parameter <i>spi</i> has to be allocated before passed to this function.
+ * When this function returns the SPI is ready to use.
+ */
 extern int BermudaSpiInit(SPI *spi);
 extern int BermudaSpiDestroy(SPI *spi);
+
+/**
+ * \fn BermudaSetMasterSpi(SPI *spi)
+ * \brief Enable master mode.
+ * \param spi The SPI structure to enable master mode on.
+ *
+ * This function puts the SPI interface in master mode
+ */
 extern void BermudaSetMasterSpi(SPI *spi);
+
+/**
+ * \fn BermudaSetSlaveSpi(SPI *spi)
+ * \brief Enable slave mode.
+ * \param spi The SPI structure to enable slave mode on.
+ *
+ * This function puts the SPI interface in slave mode
+ */
 extern void BermudaSetSlaveSpi(SPI *spi);
+
+/**
+  * \fn BermudaSpiTransmit(SPI *spi, void *data, size_t len)
+  * \brief Transmit one byte over the SPI.
+  * \param spi The SPI to use.
+  * \param data The data to sent.
+  * \param len The length of <i>data</i>.
+  * \return [0] on success, -1 otherwise.
+  *
+  * This function transmits an array of data over the SPI. It should only
+  * be called when the SPI is in master mode. When the SPI is not in master
+  * mode and this function is called, it will return -2.
+  */
 extern int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len);
+
+/**
+  * \fn BermudaSpiTxByte(SPI *spi, unsigned char data)
+  * \brief Transmit one byte over the SPI.
+  * \param spi The SPI to use.
+  * \param data The data byte to sent.
+  * \return [0] on success, -1 otherwise.
+  *
+  * This function transmits one data byte over the given SPI.
+  */
 extern unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data);
-extern unsigned char BermudaSpiRxByte(SPI *spi);
+
+/**
+ * \fn BermudaSpiNativeInit()
+ * \brief Bit-banged initialisation
+ *
+ * This function initializes the SPI alot faster, but can only be used when
+ * all other operations are implemented by the application
+ */
 extern void BermudaSpiNativeInit();
 
 /**
@@ -123,25 +179,128 @@ static inline void BermudaSpiStop(unsigned char ss)
 }
 
 #ifdef __LAZY__
+/**
+ * \fn BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
+ * \brief Setup the desired socket prescaler.
+ * \param spi The SPI to set the prescaler for.
+ * \param prescaler The desired prescaler. It must be a power of 2 (<= 128).
+ * \return 0 on success, else otherwise.
+ *
+ * This will configure the SCK prescaler. If the prescaler is not a power of two,
+ * -1 will be returned.
+ *
+ * Bit 0 of <i>prescaler</i> indicates of the SPI should operate in double speed
+ * mode.
+ */
 PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+/**
+ * BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
+ * \brief Set the serial clock mode.
+ * \param spi The SP interface.
+ * \param mode The mode to apply to <i>spi</i>.
+ * \return Error code.
+ *
+ * * [0] Low on idle, sample.
+ * * [1] Low on idle, setup.
+ * * [2] High on idle, sample.
+ * * [4] High on idle, setup.
+ */
 PRIVATE WEAK int BermudaSpiSetSckMode(SPI *spi, unsigned char mode);
 #else
 PRIVATE WEAK void BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler);
+
+/**
+ * BermudaSpiSetSckMode(SPI *spi, unsigned char mode)
+ * \brief Set the serial clock mode.
+ * \param spi The SP interface.
+ * \param mode The mode to apply to <i>spi</i>.
+ *
+ * mode[0]: Represents the CPHA bit.
+ * mode[1]: Represents the CPOL bit.
+ */
 PRIVATE WEAK void BermudaSpiSetSckMode(SPI *spi, unsigned char mode);
 #endif
 
+/**
+ * \fn BermudaSetupSpiRegs(SPI *spi)
+ * \brief Setup I/O registers.
+ * \param spi The SPI to setup registers for.
+ *
+ * This function links the SPI structure to the register addresses.
+ */
 PRIVATE WEAK void BermudaSetupSpiRegs(SPI *spi);
+
+/**
+ * \fn BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
+ * \brief Set the SPI operation mode.
+ * \param spi The SPI to set the operation mode for.
+ * \param mode Operation mode to set.
+ *
+ * This function will put the SPI in either master or slave mode, depending on
+ * the value of mode.
+ */
 PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode);
+
+/**
+  * \fn BermudaSpiTxByte(SPI *spi, unsigned char data)
+  * \brief Transmit one byte over the SPI.
+  * \param spi The SPI to use.
+  * \param data The data byte to sent.
+  * \return [0] on success, -1 otherwise.
+  *
+  * This function transmits one data byte over the given SPI.
+  */
 PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data);
+
+/**
+ * \fn BermudaSetSpiBitOrder(SPI *spi, unsigned char order)
+ * \brief The bit order can be configured using this function.
+ * \param spi SPI descriptor.
+ * \param order The bit order.
+ *
+ * When order is not 0 the bit order will be LSB first, otherwise MSB first.
+ */
 PRIVATE inline void BermudaSetSpiBitOrder(SPI *spi, unsigned char order);
+
+/**
+ * \fn BermudaSpiEnable(SPI *spi)
+ * \brief Enable the SPI.
+ * \param spi The SPI to enable.
+ *
+ * This function enables the given SPI interface.
+ */
 PRIVATE inline void BermudaSpiEnable(SPI *spi);
+
+/**
+ * \fn BermudaSpiDisable(SPI *spi)
+ * \brief Enable the SPI.
+ * \param spi The SPI to disable.
+ *
+ * This function disables the given SPI interface.
+ */
 PRIVATE inline void BermudaSpiDisable(SPI *spi);
 
 #ifdef THREADS
+/**
+ * \fn BermudaAttatchSpiIRQ(SPI *spi)
+ * \brief Setup the SPI ISR.
+ * \param spi The ISR will be attatched to this SPI descriptor.
+ *
+ * This function enables this SPI interrupt flag. If the interrupts are enabled
+ * globally, then the SPI ISR will be called when a SPI transfer is complete.
+ */
 PRIVATE WEAK void BermudaAttatchSpiIRQ(SPI *spi);
+
+/**
+ * \fn BermudaDetachSpiIRQ(SPI *spi)
+ * \brief Disable the SPI ISR.
+ * \param spi The ISR will be dettatched from this SPI descriptor.
+ *
+ * This function disables the SPI interrupt flag. After calling, the SPI ISR will
+ * not be called again by the SPI.
+ */
 PRIVATE WEAK void BermudaDetachSpiIRQ(SPI *spi);
 #endif
 __DECL_END
 
 #endif /* __SPI_H */
-#endif /* __SPI   */

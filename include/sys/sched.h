@@ -16,14 +16,68 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file sched.h */
 #ifndef __SCHED_H_
 #define __SCHED_H_
 
 #include <bermuda.h>
 #include <sys/thread.h>
 
+typedef enum
+{
+        RUNNING,
+        SLEEPING,
+} thread_state_t;
+
+__DECL
+/**
+ * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
+ * \brief Initialize the scheduler with main thread.
+ * \param t Main thread
+ * \param handle Main handle
+ * \param arg Arguments to the main thread
+ * \param stack_size Size of the stack
+ * \param stack Stack pointer
+ *
+ * Initialize the main thread. If <i>stack</i> is NULL, then the current stack
+ * pointer will be used.
+ */
 void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
+
+/**
+ * \fn BermudaSchedulerAddThread(THREAD *t)
+ * \brief Add a new thread to the list
+ * \param th Thread to add.
+ *
+ * This function will edit the thread list to add the new thread <i>th</i>.
+ */
 void BermudaSchedulerAddThread(THREAD *t);
+
+/**
+ * \fn BermudaGetLastThread()
+ * \brief Find the last item of BermudaThreadHead.
+ * \return The last entry of the thread list.
+ * This function will return the last entry of the thread list.
+ */
 PRIVATE WEAK THREAD* BermudaGetLastThread();
 
+/**
+ * \fn BermudaSchedulerDeleteThread(THREAD *t)
+ * \brief Delete a given thread from the list.
+ * \param t Thread to delete.
+ *
+ * This function will delete the <i>THREAD t</i> from the linked list and fix
+ * the list.
+ */
+PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t);
+
+/**
+ * \fn BermudaThreadExit(THREAD *t)
+ * \brief Exit the given thread.
+ * \param t Thread to exit.
+ *
+ * This function will exit the given thread and delete it from the running list.
+ */
+void BermudaThreadExit(THREAD *t);
+__DECL_END
 #endif

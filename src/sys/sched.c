@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file sched.c */
 #include <stdlib.h>
 #include <bermuda.h>
 
@@ -29,6 +30,14 @@ THREAD *BermudaCurrentThread = NULL;
 THREAD *BermudaPreviousThread = NULL;
 THREAD *BermudaThreadHead = NULL;
 
+/**
+ * \fn BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
+ * \brief Init scheduling
+ * \param th The main thread.
+ * \param handle The main thread handler.
+ *
+ * This function will initialise the scheduler and the main thread.
+ */
 void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
 {
         /* initialise the thread list head */
@@ -48,7 +57,7 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
 }
 
 /**
- * \fn BermudaSchedulerListAdd(THREAD *th)
+ * \fn BermudaSchedulerAddThread(THREAD *t)
  * \brief Add a new thread to the list
  * \param th Thread to add.
  *
@@ -83,4 +92,49 @@ PRIVATE WEAK THREAD* BermudaGetLastThread()
         }
         // carriage points now to the last block of the thread list
         return carriage;
+}
+
+/**
+ * \fn BermudaSchedulerDeleteThread(THREAD *t)
+ * \brief Delete a given thread from the list.
+ * \param t Thread to delete.
+ *
+ * This function will delete the <i>THREAD t</i> from the linked list and fix
+ * the list.
+ */
+PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
+{
+        BermudaThreadEnterIO(t);
+
+        if(t->prev == NULL) // we're at the list head
+                t->next->prev = NULL;
+        else if(t->next == NULL) // we're at the tail of the list
+        {
+                t->prev->next = NULL;
+        }
+        else // we're somewhere in the middle of nowhere
+        {
+                t->prev->next = t->next;
+                t->next->prev = t->next;
+        }
+
+        t->next = NULL;
+        t->prev = NULL;
+        
+        BermudaThreadExitIO(t);
+}
+
+/**
+ * \fn BermudaThreadExit(THREAD *t)
+ * \brief Exit the given thread.
+ * \param t Thread to exit.
+ *
+ * This function will exit the given thread and delete it from the running list.
+ */
+void BermudaThreadExit(THREAD *t)
+{
+        if(t->next == NULL && t->prev == NULL)
+                return;
+        BermudaSchedulerDeleteThread(t);
+        free(t);
 }

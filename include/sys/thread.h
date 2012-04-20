@@ -64,8 +64,6 @@ __DECL
 extern int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
                                 unsigned short stack_size, void *stack,
                                 unsigned char prio);
-extern THREAD *BermudaThreadSleep();
-extern THREAD *BermudaThreadExit();
 extern void BermudaSwitchTask(void *sp);
 
 PRIVATE WEAK int *BermudaThreadNativeCreate();

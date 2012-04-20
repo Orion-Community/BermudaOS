@@ -16,9 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if  defined(__SPI__) || defined(__DOXYGEN__)
-
 /** \file */
+
+#if  defined(__SPI__) || defined(__DOXYGEN__)
 
 #include <bermuda.h>
 #include <lib/binary.h>
@@ -84,7 +84,7 @@ int BermudaSpiInit(SPI *spi)
 }
 
 /**
- * BermudaSpiNativeInit()
+ * \fn BermudaSpiNativeInit()
  * \brief Bit-banged initialisation
  *
  * This function initializes the SPI alot faster, but can only be used when

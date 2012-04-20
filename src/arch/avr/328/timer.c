@@ -48,6 +48,8 @@ void BermudaInitTimer0()
         
         timer0->tccr0a = &BermudaGetTCCR0A();
         timer0->tccr0b = &BermudaGetTCCR0B();
+        timer0->timsk0 = &BermudaGetTIMSK0();
+        timer0->ocr0a  = &BermudaGetOCR0A();
         
         /* mode: fast pwm, BOTTOM (0x0) to OCR0A */
         BermudaTimerSetWaveFormMode(timer0, B111);
@@ -56,10 +58,10 @@ void BermudaInitTimer0()
         BermudaTimerSetPrescaler(timer0, B11);
         
         /* Set the top to 244 */
-        BermudaGetOCR0A() = 244;
+        *(timer0->ocr0a) = 244;
         
         /* Enable the overflow interrupt */
-        spb(BermudaGetTIMSK0(), TOIE0);
+        spb(*timer0->timsk0, TOIE0);
 }
 
 #ifdef __LAZY__
@@ -307,7 +309,7 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 static unsigned long timer_count = 0;
 SIGNAL(TIMER0_OVF_vect)
 {
-        timer_count++;
+        timer0->tick++;
 }
 
 inline unsigned long BermudaGetTimerCount()

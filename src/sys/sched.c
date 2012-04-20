@@ -138,3 +138,30 @@ void BermudaThreadExit(THREAD *t)
         BermudaSchedulerDeleteThread(t);
         free(t);
 }
+
+/**
+ * \fn BermudaSchedulerExec()
+ * \brief Run the scheduler.
+ * 
+ * This function is called from the timer interrupt (and thus runs in an interrupt)
+ * it should not be called by any other part of the system.
+ */
+void BermudaSchedulerExec()
+{
+        // locks aren't needed since we're in an interrupt
+        
+}
+
+/**
+ * \fn BermudaSchedulerGetNextRunnable(THREAD *head)
+ * \brief Get the next runnable thread from the given head list.
+ * \param head The thread head to check.
+ * \return The next runnable thread in the list.
+ * 
+ * This function will search for the next runnable thread. If there aren't anymore
+ * runnable threads this function returns NULL.
+ */
+PRIVATE WEAK void BermudaSchedulerGetNextRunnable(THREAD *head)
+{
+        
+}

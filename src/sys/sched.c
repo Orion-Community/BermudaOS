@@ -27,8 +27,10 @@
 #include <sys/thread.h>
 
 THREAD *BermudaCurrentThread = NULL;
-THREAD *BermudaPreviousThread = NULL;
 THREAD *BermudaThreadHead = NULL;
+THREAD *BermudaIdleThread = NULL; // TODO: initialise the idle thread
+THREAD *BermudaPreviousThread = NULL;
+
 
 /**
  * \fn BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
@@ -65,23 +67,23 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
  */
 void BermudaSchedulerAddThread(THREAD *t)
 {
-        BermudaThreadEnterIO(t); // stop the scheduler
-        THREAD *last = BermudaGetLastThread();
+        BermudaThreadEnterIO(BermudaCurrentThread); // stop the scheduler
+        THREAD *last = BermudaSchedulerGetLastThread();
 
         last->next = t;
         t->next = NULL;
         t->prev = last;
         
-        BermudaThreadExitIO(t); // continue scheduling
+        BermudaThreadExitIO(BermudaCurrentThread); // continue scheduling
 }
 
 /**
- * \fn BermudaGetLastThread()
+ * \fn BermudaSchedulerGetLastThread()
  * \brief Find the last item of BermudaThreadHead.
  * \return The last entry of the thread list.
  * This function will return the last entry of the thread list.
  */
-PRIVATE WEAK THREAD* BermudaGetLastThread()
+PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread()
 {
         THREAD *carriage = BermudaThreadHead;
         for(; carriage != NULL && carriage != carriage->next; carriage =
@@ -104,7 +106,7 @@ PRIVATE WEAK THREAD* BermudaGetLastThread()
  */
 PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
 {
-        BermudaThreadEnterIO(t);
+        BermudaThreadEnterIO(BermudaCurrentThread);
 
         if(t->prev == NULL) // we're at the list head
                 t->next->prev = NULL;
@@ -121,7 +123,7 @@ PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
         t->next = NULL;
         t->prev = NULL;
         
-        BermudaThreadExitIO(t);
+        BermudaThreadExitIO(BermudaCurrentThread);
 }
 
 /**
@@ -137,6 +139,9 @@ void BermudaThreadExit(THREAD *t)
                 return;
         BermudaSchedulerDeleteThread(t);
         free(t);
+        BermudaCurrentThread = (BermudaCurrentThread->next) ? 
+                                BermudaCurrentThread->next : BermudaThreadHead;
+        BermudaSwitchTask(BermudaCurrentThread->sp); // pass control to the next
 }
 
 /**
@@ -149,7 +154,9 @@ void BermudaThreadExit(THREAD *t)
 void BermudaSchedulerExec()
 {
         // locks aren't needed since we're in an interrupt
-        
+        THREAD *next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
+        if(NULL == next)
+                next = BermudaIdleThread; // TODO: initialise the idle thread
 }
 
 /**
@@ -161,7 +168,10 @@ void BermudaSchedulerExec()
  * This function will search for the next runnable thread. If there aren't anymore
  * runnable threads this function returns NULL.
  */
-PRIVATE WEAK void BermudaSchedulerGetNextRunnable(THREAD *head)
+PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 {
+        BermudaThreadEnterIO(BermudaCurrentThread);
         
+        BermudaThreadExitIO(BermudaCurrentThread);
+        return NULL;
 }

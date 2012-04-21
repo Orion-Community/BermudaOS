@@ -23,12 +23,6 @@
 #include <bermuda.h>
 #include <sys/thread.h>
 
-typedef enum
-{
-        RUNNING,
-        SLEEPING,
-} thread_state_t;
-
 __DECL
 /**
  * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
@@ -54,12 +48,12 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
 void BermudaSchedulerAddThread(THREAD *t);
 
 /**
- * \fn BermudaGetLastThread()
+ * \fn BermudaSchedulerGetLastThread()
  * \brief Find the last item of BermudaThreadHead.
  * \return The last entry of the thread list.
  * This function will return the last entry of the thread list.
  */
-PRIVATE WEAK THREAD* BermudaGetLastThread();
+PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread();
 
 /**
  * \fn BermudaSchedulerDeleteThread(THREAD *t)
@@ -89,7 +83,7 @@ void BermudaThreadExit(THREAD *t);
  * This function will search for the next runnable thread. If there aren't anymore
  * runnable threads this function returns NULL.
  */
-PRIVATE WEAK void BermudaSchedulerGetNextRunnable(THREAD *head);
+PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
 
 /**
  * \fn BermudaSchedulerExec()

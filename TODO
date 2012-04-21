@@ -3,3 +3,13 @@ TODO for version 0.0.2
 * Fix threads
 * Create an App environment
 * Write assembly inb and outb functions
+* perfectionize timers
+
+TODO for version 0.0.3
+
+* Hardware TWI
+* Software SPI
+
+TODO for version 0.0.4
+
+* Software I2C

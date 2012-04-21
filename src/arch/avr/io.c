@@ -30,14 +30,3 @@ inline unsigned char BermudaReadPGMByte(unsigned short addr)
         return result;
 }
 
-inline unsigned short BermudaReadPGMWord(unsigned short addr)
-{
-        unsigned short result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %A0, Z+\n\t"
-                             "lpm %B0, Z"
-                             : "=r" (result)
-                             : "z" (addr)
-        );
-        return result;
-}

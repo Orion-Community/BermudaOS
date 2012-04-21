@@ -30,12 +30,40 @@ typedef void (*thread_handle_t)(void *data);
 PRIVATE WEAK void fn(void *param); \
 PRIVATE WEAK void fn(void *param)
 
-#define BermudaThreadDoesIO(th)  (th->flags & B1)
-#define BermudaThreadEnterIO(th) (th->flags |= B1);
-#define BermudaThreadExitIO(th)  (th->flags &= (~B1))
+#define BERMUDA_TH_STATE_BITS 1
+#define BERMUDA_TH_IO_MASK 0x1
+
+#define BermudaThreadDoesIO(th)  (th->flags & BERMUDA_TH_IO_MASK)
+#define BermudaThreadEnterIO(th) (th->flags |= BERMUDA_TH_IO_MASK);
+#define BermudaThreadExitIO(th)  (th->flags &= (~BERMUDA_TH_IO_MASK))
 
 #ifndef RTSCHED
 #define BERMUDA_DEFAULT_PRIO 150
+
+/**
+ * \typedef thread_state_t
+ * \brief Current running state of a thread.
+ * 
+ * This enumeration describes the state of a thread.
+ */
+typedef enum
+{
+        /**
+         * \enum RUNNING
+         * \brief The thread is currently running.
+         */
+        THREAD_RUNNING,
+        /**
+         * \enum READY
+         * \brief The thread is ready to be scheduled.
+         */
+        THREAD_READY,
+        /**
+         * \enum SLEEPING
+         * \brief A thread having this state is not ready to run yet.
+         */
+        THREAD_SLEEPING,
+} thread_state_t;
 
 /**
   * \struct struct thread
@@ -55,7 +83,7 @@ struct thread
         unsigned int sleep_time;
         unsigned char flags; /*
                               * [0] If one, stop scheduling, IO is performing
-                              * [1-7] reserved
+                              * [1-2] thread_state_t
                               */
 } __attribute__((packed));
 typedef struct thread THREAD;

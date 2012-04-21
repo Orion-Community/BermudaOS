@@ -23,6 +23,8 @@
 #include <bermuda.h>
 #include <sys/thread.h>
 
+extern unsigned char BermudaSchedulerEnabled;
+
 __DECL
 /**
  * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
@@ -93,5 +95,16 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
  * it should not be called by any other part of the system.
  */
 void BermudaSchedulerExec();
+
+/**
+ * \fn BermudaSchedulerDisable()
+ * \brief This function will disable.
+ *
+ * This function will stop the scheduler and pass control to the main thread.
+ */
+static inline void BermudaSchedulerDisable()
+{
+        BermudaSchedulerEnabled = 0;
+}
 __DECL_END
 #endif

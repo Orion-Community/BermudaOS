@@ -27,9 +27,10 @@
 #include <sys/thread.h>
 
 THREAD *BermudaCurrentThread = NULL;
-THREAD *BermudaThreadHead = NULL;
-THREAD *BermudaIdleThread = NULL; // TODO: initialise the idle thread
+static THREAD *BermudaThreadHead = NULL;
+static THREAD *BermudaIdleThread = NULL; // TODO: initialise the idle thread
 THREAD *BermudaPreviousThread = NULL;
+unsigned char BermudaSchedulerEnable = 0;
 
 
 /**
@@ -54,8 +55,7 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
         // initialise the thread
         BermudaThreadInit(BermudaThreadHead, handle, NULL, 64, NULL,
                                         BERMUDA_DEFAULT_PRIO);
-        // pass control to the main thread
-        BermudaSwitchTask(BermudaThreadHead->sp);
+        BermudaSchedulerEnable = 1;
 }
 
 /**
@@ -157,6 +157,13 @@ void BermudaSchedulerExec()
         THREAD *next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
         if(NULL == next)
                 next = BermudaIdleThread; // TODO: initialise the idle thread
+
+        BermudaCurrentThread->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
+
+        /* do the actual swap of threads */
+        BermudaPreviousThread = BermudaCurrentThread;
+        BermudaCurrentThread = next;
+        BermudaSwitchTask(BermudaCurrentThread->sp);
 }
 
 /**
@@ -171,7 +178,19 @@ void BermudaSchedulerExec()
 PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 {
         BermudaThreadEnterIO(BermudaCurrentThread);
+
+        THREAD *c = head;
+        for(; c != NULL && c != c->next; c = c->next)
+        {
+                if((c->flags & (THREAD_READY << BERMUDA_TH_STATE_BITS)) != 0)
+                        break;
+                else if(c->next == NULL)
+                {
+                        c = NULL;
+                        break;
+                }
+        }
         
         BermudaThreadExitIO(BermudaCurrentThread);
-        return NULL;
+        return c;
 }

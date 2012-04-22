@@ -106,5 +106,17 @@ static inline void BermudaSchedulerDisable()
 {
         BermudaSchedulerEnabled = 0;
 }
+
+#ifdef __THREAD_DBG__
+/**
+  * \fn BermudaSchedulerTest()
+  * \brief Run a scheduler test suite.
+  *
+  * This function will test the functionallity of the scheduler and thread
+  * behaviour.
+  */
+void BermudaSchedulerTest();
+#endif
+
 __DECL_END
 #endif

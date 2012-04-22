@@ -158,14 +158,22 @@ void BermudaSchedulerExec()
 {
         // locks aren't needed since we're in an interrupt
         THREAD *next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
-        if(NULL == next)
-                next = BermudaIdleThread; // TODO: initialise the idle thread
 
+        if(NULL == next)
+		{
+                next = BermudaIdleThread; // TODO: initialise the idle thread
+				printf("LOCKED!\n");
+				while(1);
+		}
+		BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
         BermudaCurrentThread->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
+		next->flags &= ~BERMUDA_TH_STATE_MASK;
+		next->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
 
         /* do the actual swap of threads */
         BermudaPreviousThread = BermudaCurrentThread;
         BermudaCurrentThread = next;
+		printf("Old task: %s", BermudaCurrentThread->name);
         BermudaSwitchTask(BermudaCurrentThread->sp);
 }
 
@@ -181,26 +189,29 @@ void BermudaSchedulerExec()
 PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 {
         BermudaThreadEnterIO(BermudaCurrentThread);
-
         THREAD *c = head;
         for(; c != NULL && c != c->next; c = c->next)
         {
                 if((c->flags & (THREAD_READY << BERMUDA_TH_STATE_BITS)) != 0)
                         break;
-                else if(c->next == NULL)
-                {
-                        c = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
-                        break;
-                }
+                if(c->next == NULL)
+                        c = BermudaThreadHead;
         }
-        
         BermudaThreadExitIO(BermudaCurrentThread);
         return c;
 }
 
 #ifdef __THREAD_DBG__
+/**
+  * \fn BermudaSchedulerTest()
+  * \brief Run a scheduler test suite.
+  *
+  * This function will test the functionallity of the scheduler and thread
+  * behaviour.
+  */
 void BermudaSchedulerTest()
 {
-        
+        printf("Next runnable: %s\n", BermudaSchedulerGetNextRunnable(BermudaThreadHead)->name);
+		printf("Flags %x - %x\n", BermudaThreadHead->flags, BermudaThreadHead->next->flags);
 }
 #endif

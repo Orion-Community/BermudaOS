@@ -113,12 +113,11 @@ THREAD(TestThread, data)
                 x++;
                 if((x % 10) == 0)
                 {
-                        BermudaCurrentThread = &MainT;
-                        BermudaPreviousThread = th;
-                        BermudaSwitchTask(MainT.sp);
-                }
-                printf("working, really!\n");
-                        
+                        //BermudaCurrentThread = &MainT;
+                        //BermudaPreviousThread = th;
+                        //BermudaSwitchTask(MainT.sp);
+						BermudaSchedulerExec();
+                }                        
         }
 }
 
@@ -139,7 +138,9 @@ THREAD(MainThread, data)
                         BermudaCurrentThread = th;
                         BermudaPreviousThread = &MainT;
                         BermudaSwitchTask(th->sp);
+						//BermudaSchedulerExec();
                 }
+				printf("[%i] %s - %s\n", x, BermudaCurrentThread->name, BermudaPreviousThread->name);
         }
 }
 #endif
@@ -154,7 +155,8 @@ void setup()
         BermudaSchedulerInit(&MainT, &MainThread);
         BermudaSchedulerAddThread(th);
         printf("Free memory: %i\n", BermudaFreeMemory());
-        BermudaCurrentThread = &MainT;
+		BermudaCurrentThread = &MainT;
+		
         BermudaSwitchTask(MainT.sp);
 #endif
 #ifdef __SPIRAM__

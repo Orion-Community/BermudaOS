@@ -31,6 +31,7 @@ PRIVATE WEAK void fn(void *param); \
 PRIVATE WEAK void fn(void *param)
 
 #define BERMUDA_TH_STATE_BITS 1
+#define BERMUDA_TH_STATE_MASK (B11 << BERMUDA_TH_STATE_BITS)
 #define BERMUDA_TH_IO_MASK 0x1
 
 #define BermudaThreadDoesIO(th)  (th->flags & BERMUDA_TH_IO_MASK)

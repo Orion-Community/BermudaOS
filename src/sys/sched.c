@@ -158,23 +158,32 @@ void BermudaSchedulerExec()
 {
         // locks aren't needed since we're in an interrupt
         THREAD *next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
-
+        
         if(NULL == next)
-		{
+        {
                 next = BermudaIdleThread; // TODO: initialise the idle thread
-				printf("LOCKED!\n");
-				while(1);
-		}
-		BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
+                printf("LOCKED!\n");
+                while(1);
+        }
+        
+        BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
         BermudaCurrentThread->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
-		next->flags &= ~BERMUDA_TH_STATE_MASK;
-		next->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
+        next->flags &= ~BERMUDA_TH_STATE_MASK;
+        next->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
 
         /* do the actual swap of threads */
         BermudaPreviousThread = BermudaCurrentThread;
         BermudaCurrentThread = next;
-		printf("Old task: %s", BermudaCurrentThread->name);
+        printf("New task: %s\n", BermudaCurrentThread->name);
         BermudaSwitchTask(BermudaCurrentThread->sp);
+}
+
+void BermudaSchedulerStart()
+{
+        BermudaCurrentThread = BermudaThreadHead;
+        BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
+        BermudaCurrentThread->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
+        BermudaPreviousThread = NULL;
 }
 
 /**
@@ -190,13 +199,22 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 {
         BermudaThreadEnterIO(BermudaCurrentThread);
         THREAD *c = head;
-        for(; c != NULL && c != c->next; c = c->next)
+
+        for(; c != NULL && c->next != c; c = c->next)
         {
-                if((c->flags & (THREAD_READY << BERMUDA_TH_STATE_BITS)) != 0)
+                printf("carriage name: %s - %x\n", c->name, (c->flags & BERMUDA_TH_STATE_MASK));
+                if((c->flags & BERMUDA_TH_STATE_MASK) == 2)
                         break;
                 if(c->next == NULL)
-                        c = BermudaThreadHead;
+                {
+                        c = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
+                        if(c == NULL)
+                                goto out;
+                        break;
+                }
         }
+
+        out:
         BermudaThreadExitIO(BermudaCurrentThread);
         return c;
 }

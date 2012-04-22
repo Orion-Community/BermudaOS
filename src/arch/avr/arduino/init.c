@@ -42,6 +42,7 @@
 #ifdef __THREAD_DBG__
 static THREAD MainT;
 static THREAD *th = NULL;
+static THREAD *th2 = NULL;
 #endif
 
 extern unsigned int __heap_start;
@@ -108,16 +109,27 @@ THREAD(TestThread, data)
         {
                 BermudaDigitalPinWrite(13, led);
                 led ^= 1;
-                _delay_ms(200);
+                _delay_ms(100);
 
                 x++;
                 if((x % 10) == 0)
-                {
-                        //BermudaCurrentThread = &MainT;
-                        //BermudaPreviousThread = th;
-                        //BermudaSwitchTask(MainT.sp);
-						BermudaSchedulerExec();
-                }                        
+                        BermudaSchedulerExec();                    
+        }
+}
+
+THREAD(TestThread2, data)
+{
+        unsigned char led = 1;
+        char x = 0;
+        while(1)
+        {
+                BermudaDigitalPinWrite(13, led);
+                led ^= 1;
+                _delay_ms(500);
+
+                x++;
+                if((x % 10) == 0)
+                        BermudaSchedulerExec();
         }
 }
 
@@ -134,13 +146,10 @@ THREAD(MainThread, data)
 
                 x++;
                 if((x % 10) == 0)
-                {
-                        BermudaCurrentThread = th;
-                        BermudaPreviousThread = &MainT;
-                        BermudaSwitchTask(th->sp);
-						//BermudaSchedulerExec();
-                }
-				printf("[%i] %s - %s\n", x, BermudaCurrentThread->name, BermudaPreviousThread->name);
+                        BermudaSchedulerExec();
+
+                printf("[%i] %s - %s\n", x, BermudaCurrentThread->name,
+                       BermudaPreviousThread->name);
         }
 }
 #endif
@@ -152,12 +161,14 @@ void setup()
         th = malloc(sizeof(*th));
         BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, malloc(128),
                           BERMUDA_DEFAULT_PRIO);
+        BermudaThreadInit(th2, "Test Thread", TestThread2, NULL, 128, malloc(128),
+                          BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerInit(&MainT, &MainThread);
         BermudaSchedulerAddThread(th);
+        BermudaSchedulerAddThread(th2);
         printf("Free memory: %i\n", BermudaFreeMemory());
-		BermudaCurrentThread = &MainT;
-		
-        BermudaSwitchTask(MainT.sp);
+        BermudaSchedulerStart();
+        BermudaSwitchTask(BermudaCurrentThread->sp);
 #endif
 #ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x58, 0x99);

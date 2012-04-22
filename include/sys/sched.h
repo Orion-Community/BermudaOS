@@ -76,6 +76,8 @@ PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t);
  */
 void BermudaThreadExit(THREAD *t);
 
+void BermudaSchedulerStart();
+
 /**
  * \fn BermudaSchedulerGetNextRunnable(TRHEAD *head)
  * \brief Get the next runnable thread from the given head list.

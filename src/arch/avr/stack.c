@@ -60,7 +60,6 @@ void BermudaStackSave(stack_t sp)
         if(BermudaPreviousThread == NULL)
                 return;
 
-        printf("stack save: %s\n", BermudaPreviousThread->name);
         sp += 2;
         BermudaPreviousThread->sp = sp;
 }

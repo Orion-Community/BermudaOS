@@ -162,7 +162,6 @@ void BermudaSchedulerExec()
         if(NULL == next)
         {
                 next = BermudaIdleThread; // TODO: initialise the idle thread
-                printf("LOCKED!\n");
                 while(1);
         }
         
@@ -174,7 +173,6 @@ void BermudaSchedulerExec()
         /* do the actual swap of threads */
         BermudaPreviousThread = BermudaCurrentThread;
         BermudaCurrentThread = next;
-        printf("New task: %s\n", BermudaCurrentThread->name);
         BermudaSwitchTask(BermudaCurrentThread->sp);
 }
 
@@ -184,6 +182,7 @@ void BermudaSchedulerStart()
         BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
         BermudaCurrentThread->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
         BermudaPreviousThread = NULL;
+        BermudaSwitchTask(BermudaCurrentThread->sp);
 }
 
 /**
@@ -202,13 +201,12 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 
         for(; c != NULL && c->next != c; c = c->next)
         {
-                printf("carriage name: %s - %x\n", c->name, (c->flags & BERMUDA_TH_STATE_MASK));
-                if((c->flags & BERMUDA_TH_STATE_MASK) == 2)
+                if((c->flags & BERMUDA_TH_STATE_MASK) == 2) // if ready
                         break;
-                if(c->next == NULL)
+                if(c->next == NULL) // if we're at the end (begin from start)
                 {
                         c = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
-                        if(c == NULL)
+                        if(c == NULL) // run only one recursive round
                                 goto out;
                         break;
                 }
@@ -218,18 +216,3 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
         BermudaThreadExitIO(BermudaCurrentThread);
         return c;
 }
-
-#ifdef __THREAD_DBG__
-/**
-  * \fn BermudaSchedulerTest()
-  * \brief Run a scheduler test suite.
-  *
-  * This function will test the functionallity of the scheduler and thread
-  * behaviour.
-  */
-void BermudaSchedulerTest()
-{
-        printf("Next runnable: %s\n", BermudaSchedulerGetNextRunnable(BermudaThreadHead)->name);
-		printf("Flags %x - %x\n", BermudaThreadHead->flags, BermudaThreadHead->next->flags);
-}
-#endif

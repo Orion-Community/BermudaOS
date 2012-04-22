@@ -89,8 +89,8 @@ struct thread
 typedef struct thread THREAD;
 
 __DECL
-extern int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
-                                unsigned short stack_size, void *stack,
+extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, 
+                             void *arg, unsigned short stack_size, void *stack,
                                 unsigned char prio);
 extern void BermudaSwitchTask(void *sp);
 

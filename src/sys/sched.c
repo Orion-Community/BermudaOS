@@ -53,7 +53,7 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
         BermudaThreadHead->prev = NULL;
 
         // initialise the thread
-        BermudaThreadInit(BermudaThreadHead, handle, NULL, 64, NULL,
+        BermudaThreadInit(BermudaThreadHead, "Main Thread", handle, NULL, 64, NULL,
                                         BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerEnable = 1;
 }
@@ -67,6 +67,9 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
  */
 void BermudaSchedulerAddThread(THREAD *t)
 {
+        if(NULL == t)
+                return;
+        
         BermudaThreadEnterIO(BermudaCurrentThread); // stop the scheduler
         THREAD *last = BermudaSchedulerGetLastThread();
 
@@ -186,7 +189,7 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
                         break;
                 else if(c->next == NULL)
                 {
-                        c = NULL;
+                        c = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
                         break;
                 }
         }
@@ -194,3 +197,10 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
         BermudaThreadExitIO(BermudaCurrentThread);
         return c;
 }
+
+#ifdef __THREAD_DBG__
+void BermudaSchedulerTest()
+{
+        
+}
+#endif

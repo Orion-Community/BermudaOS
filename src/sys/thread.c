@@ -37,7 +37,7 @@
  * Initialize the main thread. If <i>stack</i> is NULL, then the current stack
  * pointer will be used.
  */
-int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
+int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
                                 unsigned short stack_size, void *stack,
                                 unsigned char prio)
 {
@@ -48,6 +48,7 @@ int BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg,
         t->param = arg;
         t->prio = prio;
         t->flags = 0 | (THREAD_READY << BERMUDA_TH_STATE_BITS);
+        t->name = name;
         
         return 0;
 }

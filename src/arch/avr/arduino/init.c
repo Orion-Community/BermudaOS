@@ -149,9 +149,10 @@ void setup()
 #ifdef __THREAD_DBG__
         BermudaSetPinMode(13, OUTPUT);
         th = malloc(sizeof(*th));
-        BermudaThreadInit(th, TestThread, NULL, 128, malloc(128),
+        BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, malloc(128),
                           BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerInit(&MainT, &MainThread);
+        BermudaSchedulerAddThread(th);
         printf("Free memory: %i\n", BermudaFreeMemory());
         BermudaCurrentThread = &MainT;
         BermudaSwitchTask(MainT.sp);

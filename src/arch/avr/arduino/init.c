@@ -104,33 +104,33 @@ void flash_led(uint8_t count)
 // #endif
 THREAD(TestThread, data)
 {
-        unsigned char led = 1;
+//         unsigned char led = 1;
         char x = 0;
         while(1)
         {
-                BermudaDigitalPinWrite(13, led);
-                led ^= 1;
-                _delay_ms(100);
-
-                x++;
-                if((x % 10) == 0)
-                        BermudaSchedulerExec();                    
+                BermudaThreadEnterIO(BermudaCurrentThread);
+//                 BermudaDigitalPinWrite(13, led);
+                printf("Test Thread 1\n");
+                BermudaThreadExitIO(BermudaCurrentThread);
+//                 led ^= 1;
+                _delay_ms(18);
+                x++;                   
         }
 }
 
 THREAD(TestThread2, data)
 {
-        unsigned char led = 1;
+//         unsigned char led = 1;
         char x = 0;    
         while(1)
         {
-                BermudaDigitalPinWrite(13, led);
-                led ^= 1;
-                _delay_ms(500);
-
+                BermudaThreadEnterIO(BermudaCurrentThread);
+//                 BermudaDigitalPinWrite(13, led);
+                printf("Test Thread 2\n");
+                BermudaThreadExitIO(BermudaCurrentThread);
+//                 led ^= 1;
+                _delay_ms(18);
                 x++;
-                if((x % 10) == 0)
-                        BermudaSchedulerExec();
         }
 }
 
@@ -141,13 +141,14 @@ THREAD(MainThread, data)
         char x = 0;
         while(1)
         {
+                BermudaThreadEnterIO(BermudaCurrentThread);
                 BermudaDigitalPinWrite(13, led);
+                printf("Main Thread\n");
+                BermudaThreadExitIO(BermudaCurrentThread);
                 led ^= 1;
-                _delay_ms(1000);
+                _delay_ms(100);
 
                 x++;
-                if((x % 10) == 0)
-                        BermudaSchedulerExec();
         }
 }
 #endif

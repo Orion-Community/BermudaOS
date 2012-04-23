@@ -17,8 +17,14 @@
  */
 
 #include <lib/binary.h>
+
 #include <avr/interrupt.h>
+
 #include <util/delay.h>
+
+#include <sys/sched.h>
+#include <sys/thread.h>
+
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/328/timer.h>
@@ -311,9 +317,11 @@ static short timer_count;
 static short x = 0;
 SIGNAL(TIMER0_OVF_vect)
 {
-        if((timer_count % 1024) == 0)
+        if((timer_count % 16) == 0 && 
+          !BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {
-                printf("Seconds passed: %i\n", x);
+//                 printf("Seconds passed: %i\n", x);
+                BermudaSchedulerExec();
                 timer_count = 0;
                 x++;
         }

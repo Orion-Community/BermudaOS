@@ -30,7 +30,7 @@ THREAD *BermudaCurrentThread = NULL;
 static THREAD *BermudaThreadHead = NULL;
 static THREAD *BermudaIdleThread = NULL; // TODO: initialise the idle thread
 THREAD *BermudaPreviousThread = NULL;
-unsigned char BermudaSchedulerEnable = 0;
+unsigned char BermudaSchedulerEnabled = 0;
 
 
 /**
@@ -55,7 +55,6 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
         // initialise the thread
         BermudaThreadInit(BermudaThreadHead, "Main Thread", handle, NULL, 64, NULL,
                                         BERMUDA_DEFAULT_PRIO);
-        BermudaSchedulerEnable = 1;
 }
 
 /**
@@ -182,6 +181,7 @@ void BermudaSchedulerStart()
         BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
         BermudaCurrentThread->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
         BermudaPreviousThread = NULL;
+        BermudaSchedulerEnable();
         BermudaSwitchTask(BermudaCurrentThread->sp);
 }
 

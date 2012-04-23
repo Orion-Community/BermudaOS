@@ -109,5 +109,10 @@ static inline void BermudaSchedulerDisable()
         BermudaSchedulerEnabled = 0;
 }
 
+static inline void BermudaSchedulerEnable()
+{
+        BermudaSchedulerEnabled = 1;
+}
+
 __DECL_END
 #endif

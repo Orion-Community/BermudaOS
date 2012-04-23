@@ -21,6 +21,7 @@
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
+#include <avr/io.h>
 
 #include <util/delay.h>
 
@@ -120,7 +121,7 @@ THREAD(TestThread, data)
 THREAD(TestThread2, data)
 {
         unsigned char led = 1;
-        char x = 0;
+        char x = 0;    
         while(1)
         {
                 BermudaDigitalPinWrite(13, led);
@@ -184,7 +185,7 @@ int main(void)
         BermudaSpiRamInit();
 #endif
 #endif
-        sei();
+        sei();        
         setup();
 
         while(1)

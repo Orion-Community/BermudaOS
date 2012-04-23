@@ -50,6 +50,7 @@ void BermudaInitTimer0()
         timer0->controlB = &BermudaGetTCCR0B();
         timer0->int_mask = &BermudaGetTIMSK0();
         timer0->output_comp_a  = &BermudaGetOCR0A();
+        timer0->countReg = &BermudaGetTCNT0();
         
         /* mode: fast pwm, BOTTOM (0x0) to OCR0A */
         BermudaTimerSetWaveFormMode(timer0, B111);
@@ -306,17 +307,19 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 }
 #endif
 
-static unsigned long timer_count = 0;
+static short timer_count;
+static short x = 0;
 SIGNAL(TIMER0_OVF_vect)
 {
-        timer0->tick++;
-
-        if((timer0->tick % 1024) == 0)
+        if((timer_count % 1024) == 0)
         {
-                printf("BANG %x\n", timer0->tick);
-                timer0->tick = 0;
+                printf("Seconds passed: %i\n", x);
+                timer_count = 0;
+                x++;
         }
-
+        
+        timer0->tick++;
+        timer_count++;
 }
 
 inline unsigned long BermudaGetTimerCount()

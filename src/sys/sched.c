@@ -18,6 +18,7 @@
 
 /** \file sched.c */
 #include <stdlib.h>
+#include <avr/interrupt.h>
 #include <bermuda.h>
 
 #include <arch/io.h>
@@ -155,6 +156,8 @@ void BermudaThreadExit(THREAD *t)
  */
 void BermudaSchedulerExec()
 {
+        unsigned char ints = *(AvrIO->sreg) & 0x80;
+        cli();
         // locks aren't needed since we're in an interrupt
         THREAD *next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
         
@@ -165,7 +168,13 @@ void BermudaSchedulerExec()
         }
         
         BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
-        BermudaCurrentThread->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
+        if(BermudaCurrentThread->sleep_time == 0)
+                BermudaCurrentThread->flags |= (THREAD_READY << 
+                                                        BERMUDA_TH_STATE_BITS);
+        else
+                BermudaCurrentThread->flags |= (THREAD_SLEEPING << 
+                                                        BERMUDA_TH_STATE_BITS);
+        
         next->flags &= ~BERMUDA_TH_STATE_MASK;
         next->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
 
@@ -173,6 +182,8 @@ void BermudaSchedulerExec()
         BermudaPreviousThread = BermudaCurrentThread;
         BermudaCurrentThread = next;
         BermudaSwitchTask(BermudaCurrentThread->sp);
+        *(AvrIO->sreg) |= ints;
+        return;
 }
 
 void BermudaSchedulerStart()

@@ -19,11 +19,13 @@
 /** \file thread.c */
 
 #include <stdlib.h>
+#include <avr/interrupt.h>
 
 #include <arch/io.h>
 #include <arch/stack.h>
 
 #include <sys/thread.h>
+#include <sys/sched.h>
 
 /**
  * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
@@ -49,6 +51,19 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
         t->prio = prio;
         t->flags = 0 | (THREAD_READY << BERMUDA_TH_STATE_BITS);
         t->name = name;
+        t->sleep_time = 0;
         
         return 0;
+}
+
+void BermudaThreadSleep(unsigned int ms)
+{
+        unsigned char ints = *(AvrIO->sreg) & 0x80;
+        cli();
+        
+        BermudaCurrentThread->sleep_time = ms;
+        BermudaSchedulerExec();
+        
+        *(AvrIO->sreg) |= ints;
+        return;
 }

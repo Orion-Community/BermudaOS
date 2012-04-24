@@ -104,33 +104,33 @@ void flash_led(uint8_t count)
 // #endif
 THREAD(TestThread, data)
 {
-//         unsigned char led = 1;
-        char x = 0;
+        unsigned char led = 1;
+//         char x = 0;
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
-//                 BermudaDigitalPinWrite(13, led);
-                printf("Test Thread 1\n");
+                BermudaDigitalPinWrite(13, led);
+                printf("thread 1\n");
+                _delay_ms(100);
                 BermudaThreadExitIO(BermudaCurrentThread);
-//                 led ^= 1;
-                _delay_ms(18);
-                x++;                   
+                _delay_ms(1);
+                led ^= 1;                
         }
 }
 
 THREAD(TestThread2, data)
 {
-//         unsigned char led = 1;
-        char x = 0;    
+        unsigned char led = 1;
+//         char x = 0;    
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
-//                 BermudaDigitalPinWrite(13, led);
-                printf("Test Thread 2\n");
+                BermudaDigitalPinWrite(13, led);
+                printf("thread 2\n");
+                _delay_ms(100);
                 BermudaThreadExitIO(BermudaCurrentThread);
-//                 led ^= 1;
-                _delay_ms(18);
-                x++;
+                _delay_ms(1);
+                led ^= 1;
         }
 }
 
@@ -138,17 +138,16 @@ THREAD(TestThread2, data)
 THREAD(MainThread, data)
 {
         unsigned char led = 1;
-        char x = 0;
+//         char x = 0;
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
                 BermudaDigitalPinWrite(13, led);
-                printf("Main Thread\n");
-                BermudaThreadExitIO(BermudaCurrentThread);
-                led ^= 1;
+                printf("Main tread\n");
                 _delay_ms(100);
-
-                x++;
+                BermudaThreadExitIO(BermudaCurrentThread);
+                _delay_ms(1);
+                led ^= 1;
         }
 }
 #endif

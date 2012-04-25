@@ -105,12 +105,11 @@ void flash_led(uint8_t count)
 THREAD(TestThread, data)
 {
         unsigned char led = 1;
-//         char x = 0;
+
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
                 BermudaDigitalPinWrite(12, led);
-//                 printf("thread 1\n");
                 BermudaThreadExitIO(BermudaCurrentThread);
                 BermudaThreadSleep(500);
                 led ^= 1;                
@@ -120,11 +119,11 @@ THREAD(TestThread, data)
 THREAD(TestThread2, data)
 {
         unsigned char led = 1;
-//         char x = 0;    
+   
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
-//                 BermudaDigitalPinWrite(13, led);
+
                 printf("thread 2\n");
                 BermudaThreadExitIO(BermudaCurrentThread);
                 BermudaThreadSleep(1000);
@@ -136,13 +135,13 @@ THREAD(TestThread2, data)
 THREAD(MainThread, data)
 {
         unsigned char led = 1;
-//         char x = 0;
+
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
                 BermudaDigitalPinWrite(13, led);
-//                 printf("Main tread\n");
                 BermudaThreadExitIO(BermudaCurrentThread);
+                
                 led ^= 1;
                 BermudaThreadSleep(200);
         }
@@ -163,7 +162,6 @@ void setup()
         BermudaSchedulerInit(&MainT, &MainThread);
         BermudaSchedulerAddThread(th);
         BermudaSchedulerAddThread(th2);
-        BermudaSchedulerStart();
 #endif
 #ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x58, 0x99);
@@ -185,6 +183,8 @@ int main(void)
 #endif
         sei();        
         setup();
+        printf("Free memory: %i\n", BermudaFreeMemory());
+        BermudaSchedulerStart();
 
         while(1)
         {

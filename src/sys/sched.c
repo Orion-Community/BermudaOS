@@ -34,7 +34,7 @@ THREAD *BermudaPreviousThread = NULL;
 static THREAD *BermudaThreadHead = NULL;
 
 static THREAD *BermudaIdleThread = NULL;
-static char BermudaIdleThreadStack[50];
+static char BermudaIdleThreadStack[64];
 PRIVATE WEAK void IdleThread(void *arg);
 
 unsigned char BermudaSchedulerEnabled = 0;
@@ -66,7 +66,7 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
         // initialise the idle thread
         BermudaIdleThread = malloc(sizeof(*BermudaIdleThread));
         BermudaThreadInit(BermudaIdleThread, "Idle Thread", &IdleThread, NULL, 64,
-                                malloc(64), BERMUDA_DEFAULT_PRIO);
+                                &BermudaIdleThreadStack[0], BERMUDA_DEFAULT_PRIO);
 }
 
 /**
@@ -85,10 +85,10 @@ void BermudaSchedulerTick()
                 if((t->flags & BERMUDA_TH_STATE_MASK) == (THREAD_SLEEPING << 
                                                         BERMUDA_TH_STATE_BITS))
                 {
-                        t->sleep_time -= 1;
+                        t->sleep_time--;
                         
                         if(t->sleep_time == 0)
-                        {
+                        { // make them runnable if the timer expired
                                 t->flags &= ~BERMUDA_TH_STATE_MASK;
                                                         
                                 t->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
@@ -144,6 +144,8 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread()
  * \fn BermudaSchedulerDeleteThread(THREAD *t)
  * \brief Delete a given thread from the list.
  * \param t Thread to delete.
+ * \warning This function has not been tested yet!
+ * \todo Test this function.
  *
  * This function will delete the <i>THREAD t</i> from the linked list and fix
  * the list.
@@ -174,6 +176,8 @@ PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
  * \fn BermudaThreadExit(THREAD *t)
  * \brief Exit the given thread.
  * \param t Thread to exit.
+ * \warning This function has not been tested yet!
+ * \todo Test this function.
  *
  * This function will exit the given thread and delete it from the running list.
  */
@@ -203,16 +207,15 @@ void BermudaSchedulerExec()
         THREAD *next = NULL;
         if(BermudaCurrentThread == BermudaIdleThread)
                 next = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
+                // start at the head when idle has ran
         else
                 next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
         
         if(NULL == next)
-        {
-                next = BermudaIdleThread;
-        }
+                next = BermudaIdleThread; // idle if there is no runnable thread
         
         if(BermudaCurrentThread == next)
-        {
+        { // just return if the next thread is the same as the current one
                 *(AvrIO->sreg) |= ints;
                 return;
         }
@@ -222,7 +225,7 @@ void BermudaSchedulerExec()
                 BermudaCurrentThread->flags |= (THREAD_READY << 
                                                         BERMUDA_TH_STATE_BITS);
         else
-        {
+        { // flag as sleeping when sleep_time != 0
                 BermudaCurrentThread->flags |= (THREAD_SLEEPING << 
                                                         BERMUDA_TH_STATE_BITS);
         }
@@ -246,7 +249,6 @@ void BermudaSchedulerStart()
         BermudaCurrentThread->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
         BermudaPreviousThread = NULL;
         BermudaSchedulerEnable();
-//         BermudaSchedulerEnabled = 1;
         BermudaSwitchTask(BermudaCurrentThread->sp);
 }
 

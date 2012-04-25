@@ -94,8 +94,8 @@ extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle,
                              void *arg, unsigned short stack_size, void *stack,
                                 unsigned char prio);
 extern void BermudaSwitchTask(void *sp);
+void BermudaThreadSleep(unsigned int ms);
 
-PRIVATE WEAK int *BermudaThreadNativeCreate();
 __DECL_END
 
 extern THREAD *BermudaCurrentThread;

@@ -99,6 +99,16 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
 void BermudaSchedulerExec();
 
 /**
+ * \fn BermudaSchedulerTick()
+ * \brief Run the scheduler.
+ * \warning Should only be called from the timer interrupt!
+ * 
+ * This function will run the scheduler. It should be called from the timer
+ * interrupt running at ~1000Hz.
+ */
+void BermudaSchedulerTick();
+
+/**
  * \fn BermudaSchedulerDisable()
  * \brief This function will disable.
  *
@@ -109,6 +119,12 @@ static inline void BermudaSchedulerDisable()
         BermudaSchedulerEnabled = 0;
 }
 
+/**
+ * \fn BermudaSchedulerEnable()
+ * \brief Enable the scheduler.
+ * 
+ * This function will start the scheduler
+ */
 static inline void BermudaSchedulerEnable()
 {
         BermudaSchedulerEnabled = 1;

@@ -19,6 +19,7 @@
 /** \file sched.c */
 #include <stdlib.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include <bermuda.h>
 
 #include <arch/io.h>
@@ -28,9 +29,14 @@
 #include <sys/thread.h>
 
 THREAD *BermudaCurrentThread = NULL;
-static THREAD *BermudaThreadHead = NULL;
-static THREAD *BermudaIdleThread = NULL; // TODO: initialise the idle thread
 THREAD *BermudaPreviousThread = NULL;
+
+static THREAD *BermudaThreadHead = NULL;
+
+static THREAD *BermudaIdleThread = NULL;
+static char BermudaIdleThreadStack[50];
+PRIVATE WEAK void IdleThread(void *arg);
+
 unsigned char BermudaSchedulerEnabled = 0;
 
 
@@ -56,6 +62,41 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
         // initialise the thread
         BermudaThreadInit(BermudaThreadHead, "Main Thread", handle, NULL, 64, NULL,
                                         BERMUDA_DEFAULT_PRIO);
+        
+        // initialise the idle thread
+        BermudaIdleThread = malloc(sizeof(*BermudaIdleThread));
+        BermudaThreadInit(BermudaIdleThread, "Idle Thread", &IdleThread, NULL, 64,
+                                malloc(64), BERMUDA_DEFAULT_PRIO);
+}
+
+/**
+ * \fn BermudaSchedulerTick()
+ * \brief Run the scheduler.
+ * \warning Should only be called from the timer interrupt!
+ * 
+ * This function will run the scheduler. It should be called from the timer
+ * interrupt running at ~1000Hz.
+ */
+void BermudaSchedulerTick()
+{
+        THREAD *t = BermudaThreadHead;
+        for(; t != NULL && t != t->next; t = t->next)
+        {
+                if((t->flags & BERMUDA_TH_STATE_MASK) == (THREAD_SLEEPING << 
+                                                        BERMUDA_TH_STATE_BITS))
+                {
+                        t->sleep_time -= 1;
+                        
+                        if(t->sleep_time == 0)
+                        {
+                                t->flags &= ~BERMUDA_TH_STATE_MASK;
+                                                        
+                                t->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
+                        }
+                }
+                if(t->next == NULL)
+                        break;
+        }
 }
 
 /**
@@ -158,22 +199,34 @@ void BermudaSchedulerExec()
 {
         unsigned char ints = *(AvrIO->sreg) & 0x80;
         cli();
-        // locks aren't needed since we're in an interrupt
-        THREAD *next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
+        
+        THREAD *next = NULL;
+        if(next == BermudaIdleThread)
+                next = BermudaThreadHead;
+        else
+                next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
         
         if(NULL == next)
         {
-                next = BermudaIdleThread; // TODO: initialise the idle thread
-                while(1);
+                next = BermudaIdleThread;
         }
+        
+        if(BermudaCurrentThread == next)
+        {
+                *(AvrIO->sreg) |= ints;
+                return;
+        }
+                
         
         BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
         if(BermudaCurrentThread->sleep_time == 0)
                 BermudaCurrentThread->flags |= (THREAD_READY << 
                                                         BERMUDA_TH_STATE_BITS);
         else
+        {
                 BermudaCurrentThread->flags |= (THREAD_SLEEPING << 
                                                         BERMUDA_TH_STATE_BITS);
+        }
         
         next->flags &= ~BERMUDA_TH_STATE_MASK;
         next->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
@@ -181,6 +234,7 @@ void BermudaSchedulerExec()
         /* do the actual swap of threads */
         BermudaPreviousThread = BermudaCurrentThread;
         BermudaCurrentThread = next;
+
         BermudaSwitchTask(BermudaCurrentThread->sp);
         *(AvrIO->sreg) |= ints;
         return;
@@ -193,6 +247,7 @@ void BermudaSchedulerStart()
         BermudaCurrentThread->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
         BermudaPreviousThread = NULL;
         BermudaSchedulerEnable();
+//         BermudaSchedulerEnabled = 1;
         BermudaSwitchTask(BermudaCurrentThread->sp);
 }
 
@@ -209,21 +264,36 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 {
         BermudaThreadEnterIO(BermudaCurrentThread);
         THREAD *c = head;
-
+        
         for(; c != NULL && c->next != c; c = c->next)
         {
                 if((c->flags & BERMUDA_TH_STATE_MASK) == 2) // if ready
                         break;
                 if(c->next == NULL) // if we're at the end (begin from start)
                 {
+                        if(c == BermudaThreadHead)
+                        {
+                                c = NULL;
+                                goto out;
+                        }
                         c = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
                         if(c == NULL) // run only one recursive round
                                 goto out;
                         break;
                 }
         }
-
+        
         out:
         BermudaThreadExitIO(BermudaCurrentThread);
         return c;
+}
+
+THREAD(IdleThread, arg)
+{
+        sei();
+        unsigned char x = 0;
+        while(1)
+        {
+                x += 0;
+        }
 }

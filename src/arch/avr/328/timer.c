@@ -315,12 +315,12 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 
 static short timer_count;
 static short x = 0;
-// TODO: add support for thread sleeping
+
 SIGNAL(TIMER0_OVF_vect)
 {
         if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {
-//                 printf("Seconds passed: %i\n", x);
+                BermudaSchedulerTick();
                 BermudaSchedulerExec();
                 timer_count = 0;
                 x++;

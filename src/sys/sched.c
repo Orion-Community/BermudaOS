@@ -201,8 +201,8 @@ void BermudaSchedulerExec()
         cli();
         
         THREAD *next = NULL;
-        if(next == BermudaIdleThread)
-                next = BermudaThreadHead;
+        if(BermudaCurrentThread == BermudaIdleThread)
+                next = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
         else
                 next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
         
@@ -217,7 +217,6 @@ void BermudaSchedulerExec()
                 return;
         }
                 
-        
         BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
         if(BermudaCurrentThread->sleep_time == 0)
                 BermudaCurrentThread->flags |= (THREAD_READY << 
@@ -271,7 +270,7 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
                         break;
                 if(c->next == NULL) // if we're at the end (begin from start)
                 {
-                        if(c == BermudaThreadHead)
+                        if(head == BermudaThreadHead)
                         {
                                 c = NULL;
                                 goto out;
@@ -281,6 +280,7 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
                                 goto out;
                         break;
                 }
+                
         }
         
         out:

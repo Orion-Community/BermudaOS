@@ -109,10 +109,10 @@ THREAD(TestThread, data)
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
-                BermudaDigitalPinWrite(13, led);
+                BermudaDigitalPinWrite(12, led);
 //                 printf("thread 1\n");
                 BermudaThreadExitIO(BermudaCurrentThread);
-                BermudaThreadSleep(100);
+                BermudaThreadSleep(500);
                 led ^= 1;                
         }
 }
@@ -124,11 +124,10 @@ THREAD(TestThread2, data)
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
-                BermudaDigitalPinWrite(13, led);
+//                 BermudaDigitalPinWrite(13, led);
                 printf("thread 2\n");
-                _delay_ms(100);
                 BermudaThreadExitIO(BermudaCurrentThread);
-                _delay_ms(1);
+                BermudaThreadSleep(1000);
                 led ^= 1;
         }
 }
@@ -145,7 +144,7 @@ THREAD(MainThread, data)
 //                 printf("Main tread\n");
                 BermudaThreadExitIO(BermudaCurrentThread);
                 led ^= 1;
-                BermudaThreadSleep(500);
+                BermudaThreadSleep(200);
         }
 }
 #endif
@@ -154,6 +153,7 @@ void setup()
 {
 #ifdef __THREAD_DBG__
         BermudaSetPinMode(13, OUTPUT);
+        BermudaSetPinMode(12, OUTPUT);
         th = malloc(sizeof(*th));
         th2 = malloc(sizeof(*th));
         BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, malloc(128),
@@ -161,8 +161,8 @@ void setup()
         BermudaThreadInit(th2, "Lala Thread", TestThread2, NULL, 128, malloc(128),
                           BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerInit(&MainT, &MainThread);
-//         BermudaSchedulerAddThread(th);
-//         BermudaSchedulerAddThread(th2);
+        BermudaSchedulerAddThread(th);
+        BermudaSchedulerAddThread(th2);
         BermudaSchedulerStart();
 #endif
 #ifdef __SPIRAM__

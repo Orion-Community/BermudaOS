@@ -17,6 +17,8 @@
  */
 
 /** \file sched.c */
+#ifdef __THREADS__
+
 #include <stdlib.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -299,3 +301,4 @@ THREAD(IdleThread, arg)
                 x += 0;
         }
 }
+#endif

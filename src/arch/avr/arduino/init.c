@@ -184,7 +184,9 @@ int main(void)
         sei();        
         setup();
         printf("Free memory: %i\n", BermudaFreeMemory());
+#ifdef __THREADS__
         BermudaSchedulerStart();
+#endif
 
         while(1)
         {

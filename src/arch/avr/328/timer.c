@@ -314,17 +314,17 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 #endif
 
 static short timer_count;
-static short x = 0;
 
 SIGNAL(TIMER0_OVF_vect)
 {
+#ifdef __THREADS__
         if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {
                 BermudaSchedulerTick();
                 BermudaSchedulerExec();
                 timer_count = 0;
-                x++;
         }
+#endif
         
         timer0->tick++;
         timer_count++;

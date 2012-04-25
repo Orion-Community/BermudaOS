@@ -17,7 +17,7 @@
  */
 
 /** \file thread.c */
-
+#ifdef __THREADS__
 #include <stdlib.h>
 #include <avr/interrupt.h>
 
@@ -67,3 +67,4 @@ void BermudaThreadSleep(unsigned int ms)
         *(AvrIO->sreg) |= ints;
         return;
 }
+#endif

@@ -17,12 +17,8 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <avr/interrupt.h>
-#include <avr/pgmspace.h>
-#include <avr/io.h>
-
 #include <util/delay.h>
 
 #include <sys/thread.h>
@@ -87,17 +83,6 @@ int BermudaFreeMemory()
         return free_memory;
 }
 
-void flash_led(uint8_t count)
-{
-        while (count--)
-        {
-                LED_PORT |= BIT(LED);
-                _delay_ms(100);
-                LED_PORT &= ~BIT(LED);
-                _delay_ms(100);
-        }
-}
-
 #ifdef __THREAD_DBG__
 #ifndef __THREADS__
         #error Thread debugging not possible without threads
@@ -124,13 +109,18 @@ THREAD(TestThread, data)
 THREAD(TestThread2, data)
 {
         unsigned char led = 1;
+        int temperature = 10;
+        struct adc *adc = BermudaGetADC();
    
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
-
-                printf("thread 2\n");
+                float raw_temp = adc->read(A0);                
+                printf("Temperature: %i\n", temperature);
                 BermudaThreadExitIO(BermudaCurrentThread);
+
+                temperature = raw_temp / 1024 * 5000;
+                temperature /= 10;
                 BermudaThreadSleep(1000);
                 led ^= 1;
         }
@@ -158,6 +148,7 @@ PRIVATE WEAK void setup()
 #ifdef __THREAD_DBG__
         BermudaSetPinMode(13, OUTPUT);
         BermudaSetPinMode(12, OUTPUT);
+        BermudaSetPinMode(A0, INPUT);
         th = malloc(sizeof(*th));
         th2 = malloc(sizeof(*th));
         BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, malloc(128),

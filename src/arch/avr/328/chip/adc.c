@@ -91,6 +91,9 @@ struct adc* adc;
 PRIVATE WEAK unsigned short BermudaADCConvert(pin)
 unsigned char pin;
 {
+#ifdef __ARDUINO__
+        pin -= 14;
+#endif
         if((BermudaGetADCSRA() & BIT(ADEN)) == 0)
                 return 0;
         

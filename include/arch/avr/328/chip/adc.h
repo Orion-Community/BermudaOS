@@ -74,10 +74,7 @@ PRIVATE void BermudaAdcIrqAttatch(struct adc *adc);
 PRIVATE void BermudaAdcIrqDetatch(struct adc *adc);
 #endif
 
-static inline struct adc* BermudaGetADC()
-{
-        return &BermADC;
-}
+#define BermudaGetADC() &BermADC;
 __DECL_END
 
 #endif

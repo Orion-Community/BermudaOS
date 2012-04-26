@@ -20,8 +20,6 @@
 #ifdef __THREADS__
 
 #include <stdlib.h>
-#include <avr/interrupt.h>
-#include <util/delay.h>
 #include <bermuda.h>
 
 #include <arch/io.h>
@@ -157,7 +155,10 @@ PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
         BermudaThreadEnterIO(BermudaCurrentThread);
 
         if(t->prev == NULL) // we're at the list head
+        {
                 t->next->prev = NULL;
+                BermudaThreadHead = t->next;
+        }
         else if(t->next == NULL) // we're at the tail of the list
         {
                 t->prev->next = NULL;
@@ -175,23 +176,21 @@ PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
 }
 
 /**
- * \fn BermudaThreadExit(THREAD *t)
- * \brief Exit the given thread.
- * \param t Thread to exit.
- * \warning This function has not been tested yet!
- * \todo Test this function.
+ * \fn BermudaThreadExit()
+ * \brief Exit the current thread.
+ * \todo Make sure the task that the deleted thread is not being used anymore.
  *
  * This function will exit the given thread and delete it from the running list.
  */
-void BermudaThreadExit(THREAD *t)
+void BermudaThreadExit()
 {
+        THREAD *t = BermudaCurrentThread;
         if(t->next == NULL && t->prev == NULL)
                 return;
         BermudaSchedulerDeleteThread(t);
+        free(t->stack);
         free(t);
-        BermudaCurrentThread = (BermudaCurrentThread->next) ? 
-                                BermudaCurrentThread->next : BermudaThreadHead;
-        BermudaSwitchTask(BermudaCurrentThread->sp); // pass control to the next
+        BermudaSchedulerExec();
 }
 
 /**
@@ -203,8 +202,8 @@ void BermudaThreadExit(THREAD *t)
  */
 void BermudaSchedulerExec()
 {
-        unsigned char ints = *(AvrIO->sreg) & 0x80;
-        cli();
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
         
         THREAD *next = NULL;
         if(BermudaCurrentThread == BermudaIdleThread)
@@ -240,7 +239,7 @@ void BermudaSchedulerExec()
         BermudaCurrentThread = next;
 
         BermudaSwitchTask(BermudaCurrentThread->sp);
-        *(AvrIO->sreg) |= ints;
+        BermudaIntsRestore(ints);
         return;
 }
 
@@ -294,11 +293,6 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 
 THREAD(IdleThread, arg)
 {
-        sei();
-        unsigned char x = 0;
-        while(1)
-        {
-                x += 0;
-        }
+        while(1);
 }
 #endif

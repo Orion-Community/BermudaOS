@@ -19,7 +19,6 @@
 /** \file thread.c */
 #ifdef __THREADS__
 #include <stdlib.h>
-#include <avr/interrupt.h>
 
 #include <arch/io.h>
 #include <arch/stack.h>
@@ -58,13 +57,13 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
 
 void BermudaThreadSleep(unsigned int ms)
 {
-        unsigned char ints = *(AvrIO->sreg) & 0x80;
-        cli();
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
         
         BermudaCurrentThread->sleep_time = ms;
         BermudaSchedulerExec();
         
-        *(AvrIO->sreg) |= ints;
+        BermudaIntsRestore(ints);
         return;
 }
 #endif

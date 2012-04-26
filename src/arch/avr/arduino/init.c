@@ -105,6 +105,7 @@ void flash_led(uint8_t count)
 THREAD(TestThread, data)
 {
         unsigned char led = 1;
+        unsigned char x = 0;
 
         while(1)
         {
@@ -112,7 +113,11 @@ THREAD(TestThread, data)
                 BermudaDigitalPinWrite(12, led);
                 BermudaThreadExitIO(BermudaCurrentThread);
                 BermudaThreadSleep(500);
-                led ^= 1;                
+                led ^= 1;
+                x++;
+                if((x % 10) == 0)
+                        BermudaThreadExit();
+                
         }
 }
 

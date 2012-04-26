@@ -21,9 +21,6 @@
 
 #include <lib/binary.h>
 
-#include <inttypes.h>
-#include <avr/io.h>
-
 typedef void (*thread_handle_t)(void *data);
 
 #define THREAD(fn, param) \
@@ -94,7 +91,7 @@ extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle,
                              void *arg, unsigned short stack_size, void *stack,
                                 unsigned char prio);
 extern void BermudaSwitchTask(void *sp);
-void BermudaThreadSleep(unsigned int ms);
+extern void BermudaThreadSleep(unsigned int ms);
 
 __DECL_END
 

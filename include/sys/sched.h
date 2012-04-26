@@ -68,14 +68,20 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread();
 PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t);
 
 /**
- * \fn BermudaThreadExit(THREAD *t)
- * \brief Exit the given thread.
- * \param t Thread to exit.
+ * \fn BermudaThreadExit()
+ * \brief Exit the current thread.
+ * \todo Make sure the task that the deleted thread is not being used anymore.
  *
  * This function will exit the given thread and delete it from the running list.
  */
-void BermudaThreadExit(THREAD *t);
+void BermudaThreadExit();
 
+/**
+ * \fn BermudaSchedulerStart()
+ * \brief Start the scheduler.
+ *
+ * This function will enable the scheduler and pass control to the thread head.
+ */
 void BermudaSchedulerStart();
 
 /**

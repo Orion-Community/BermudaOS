@@ -99,9 +99,9 @@ void flash_led(uint8_t count)
 }
 
 #ifdef __THREAD_DBG__
-// #ifndef THREADS
-//         #error Thread debugging not possible without threads
-// #endif
+#ifndef __THREADS__
+        #error Thread debugging not possible without threads
+#endif
 THREAD(TestThread, data)
 {
         unsigned char led = 1;
@@ -153,7 +153,7 @@ THREAD(MainThread, data)
 }
 #endif
 
-void setup()
+PRIVATE WEAK void setup()
 {
 #ifdef __THREAD_DBG__
         BermudaSetPinMode(13, OUTPUT);
@@ -177,7 +177,9 @@ int main(void)
 {        
         BermudaInitUART();
         BermudaInitTimer0();
+#ifdef __ADC__
         BermudaInitBaseADC();
+#endif
         
 #ifdef __SPI__
         SPI *spi_if = malloc(sizeof(*spi_if));

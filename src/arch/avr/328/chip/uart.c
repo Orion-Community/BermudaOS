@@ -27,6 +27,9 @@ static void BermudaRedirUARTIO();
 
 int BermudaInitUART()
 {
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
+        
         UBRR0H = UBRRH_VALUE;
         UBRR0L = UBRRL_VALUE;
         
@@ -40,6 +43,8 @@ int BermudaInitUART()
         UCSR0B = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
         
         BermudaRedirUARTIO();
+        
+        BermudaIntsRestore(ints);
         return 0;
 }
 

@@ -54,7 +54,8 @@ static THREAD *BermudaSpiThread = NULL;
  */
 int BermudaSpiInit(SPI *spi)
 {
-        cli();
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
         if(NULL == spi)
         {
                 sei();
@@ -80,6 +81,7 @@ int BermudaSpiInit(SPI *spi)
         BermudaSetMasterSpi(spi);
         BermudaSpiEnable(spi);
         
+        BermudaIntsRestore(ints);
         return 0;
 }
 

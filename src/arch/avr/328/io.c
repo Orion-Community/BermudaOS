@@ -58,3 +58,9 @@ const unsigned short ROM BermudaPortToMode[] =
         (unsigned short)BermudaGetAddressDDRC(),
         (unsigned short)BermudaGetAddressDDRD(),
 };
+
+inline void BermudaSafeCli(unsigned char *ints)
+{
+        *ints = *(AvrIO->sreg) & 0x80;
+        __asm__ __volatile__ ("cli" ::);
+}

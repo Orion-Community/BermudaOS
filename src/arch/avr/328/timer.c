@@ -17,8 +17,14 @@
  */
 
 #include <lib/binary.h>
+
 #include <avr/interrupt.h>
+
 #include <util/delay.h>
+
+#include <sys/sched.h>
+#include <sys/thread.h>
+
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/328/timer.h>
@@ -64,7 +70,7 @@ TIMER *timer;
         if(NULL == timer)
                 return;
         
-//         BermudaTimerSetOutputCompareMatch(timer, ocm);
+        BermudaTimerSetOutputCompareMatch(timer, ocm);
         BermudaTimerSetPrescaler(timer, prescaler);
         BermudaTimerSetWaveFormMode(timer, waveform);
 }
@@ -335,17 +341,21 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 }
 #endif
 
-static unsigned long timer_count = 0;
+static short timer_count;
+
 SIGNAL(TIMER0_OVF_vect)
 {
-        timer0->tick++;
-
-        if((timer0->tick % 1024) == 0)
+#ifdef __THREADS__
+        if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {
-                printf("BANG %x\n", timer0->tick);
-                timer0->tick = 0;
+                BermudaSchedulerTick();
+                BermudaSchedulerExec();
+                timer_count = 0;
         }
-
+#endif
+        
+        timer0->tick++;
+        timer_count++;
 }
 
 inline unsigned long BermudaGetTimerCount()

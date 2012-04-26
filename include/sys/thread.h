@@ -21,9 +21,6 @@
 
 #include <lib/binary.h>
 
-#include <inttypes.h>
-#include <avr/io.h>
-
 typedef void (*thread_handle_t)(void *data);
 
 #define THREAD(fn, param) \
@@ -35,7 +32,7 @@ PRIVATE WEAK void fn(void *param)
 #define BERMUDA_TH_IO_MASK 0x1
 
 #define BermudaThreadDoesIO(th)  (th->flags & BERMUDA_TH_IO_MASK)
-#define BermudaThreadEnterIO(th) (th->flags |= BERMUDA_TH_IO_MASK);
+#define BermudaThreadEnterIO(th) (th->flags |= BERMUDA_TH_IO_MASK)
 #define BermudaThreadExitIO(th)  (th->flags &= (~BERMUDA_TH_IO_MASK))
 
 #ifndef RTSCHED
@@ -94,8 +91,8 @@ extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle,
                              void *arg, unsigned short stack_size, void *stack,
                                 unsigned char prio);
 extern void BermudaSwitchTask(void *sp);
+extern void BermudaThreadSleep(unsigned int ms);
 
-PRIVATE WEAK int *BermudaThreadNativeCreate();
 __DECL_END
 
 extern THREAD *BermudaCurrentThread;

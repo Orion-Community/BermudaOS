@@ -21,6 +21,7 @@
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
+#include <avr/io.h>
 
 #include <util/delay.h>
 
@@ -98,38 +99,40 @@ void flash_led(uint8_t count)
 }
 
 #ifdef __THREAD_DBG__
-// #ifndef THREADS
-//         #error Thread debugging not possible without threads
-// #endif
+#ifndef __THREADS__
+        #error Thread debugging not possible without threads
+#endif
 THREAD(TestThread, data)
 {
         unsigned char led = 1;
-        char x = 0;
+        unsigned char x = 0;
+
         while(1)
         {
-                BermudaDigitalPinWrite(13, led);
+                BermudaThreadEnterIO(BermudaCurrentThread);
+                BermudaDigitalPinWrite(12, led);
+                BermudaThreadExitIO(BermudaCurrentThread);
+                BermudaThreadSleep(500);
                 led ^= 1;
-                _delay_ms(100);
-
                 x++;
                 if((x % 10) == 0)
-                        BermudaSchedulerExec();                    
+                        BermudaThreadExit();
+                
         }
 }
 
 THREAD(TestThread2, data)
 {
         unsigned char led = 1;
-        char x = 0;
+   
         while(1)
         {
-                BermudaDigitalPinWrite(13, led);
-                led ^= 1;
-                _delay_ms(500);
+                BermudaThreadEnterIO(BermudaCurrentThread);
 
-                x++;
-                if((x % 10) == 0)
-                        BermudaSchedulerExec();
+                printf("thread 2\n");
+                BermudaThreadExitIO(BermudaCurrentThread);
+                BermudaThreadSleep(1000);
+                led ^= 1;
         }
 }
 
@@ -137,24 +140,24 @@ THREAD(TestThread2, data)
 THREAD(MainThread, data)
 {
         unsigned char led = 1;
-        char x = 0;
+
         while(1)
         {
+                BermudaThreadEnterIO(BermudaCurrentThread);
                 BermudaDigitalPinWrite(13, led);
+                BermudaThreadExitIO(BermudaCurrentThread);
+                
                 led ^= 1;
-                _delay_ms(1000);
-
-                x++;
-                if((x % 10) == 0)
-                        BermudaSchedulerExec();
+                BermudaThreadSleep(200);
         }
 }
 #endif
 
-void setup()
+PRIVATE WEAK void setup()
 {
 #ifdef __THREAD_DBG__
         BermudaSetPinMode(13, OUTPUT);
+        BermudaSetPinMode(12, OUTPUT);
         th = malloc(sizeof(*th));
         th2 = malloc(sizeof(*th));
         BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, malloc(128),
@@ -164,7 +167,6 @@ void setup()
         BermudaSchedulerInit(&MainT, &MainThread);
         BermudaSchedulerAddThread(th);
         BermudaSchedulerAddThread(th2);
-        BermudaSchedulerStart();
 #endif
 #ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x58, 0x99);
@@ -175,7 +177,9 @@ int main(void)
 {        
         BermudaInitUART();
         BermudaInitTimer0();
+#ifdef __ADC__
         BermudaInitBaseADC();
+#endif
         
 #ifdef __SPI__
         SPI *spi_if = malloc(sizeof(*spi_if));
@@ -184,8 +188,12 @@ int main(void)
         BermudaSpiRamInit();
 #endif
 #endif
-        sei();
+        sei();        
         setup();
+        printf("Free memory: %i\n", BermudaFreeMemory());
+#ifdef __THREADS__
+        BermudaSchedulerStart();
+#endif
 
         while(1)
         {

@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __THREADS__
+
 #include <bermuda.h>
 #include <sys/thread.h>
 
@@ -63,3 +65,4 @@ void BermudaStackSave(stack_t sp)
         sp += 2;
         BermudaPreviousThread->sp = sp;
 }
+#endif

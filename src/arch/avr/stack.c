@@ -52,7 +52,7 @@ thread_handle_t handle;
         int i = 0;
         for(; i < 31; i++)
                 *(t->sp--) = 0;
-#ifdef __THREAD_DBG__
+#if defined(__VERBAL__) && (__VERBAL__)
         printf("Stack: %p - SP: %p\n", t->stack, t->sp);
 #endif
 }

@@ -115,8 +115,10 @@ THREAD(TestThread2, data)
         while(1)
         {
                 BermudaThreadEnterIO(BermudaCurrentThread);
-                float raw_temp = adc->read(A0);                
+                float raw_temp = adc->read(A0);
+#ifdef __VERBAL__
                 printf("Temperature: %i\n", temperature);
+#endif
                 BermudaThreadExitIO(BermudaCurrentThread);
 
                 temperature = raw_temp / 1024 * 5000;
@@ -181,7 +183,9 @@ int main(void)
 #endif
         sei();        
         setup();
+#ifdef __VERBAL__
         printf("Free memory: %i\n", BermudaFreeMemory());
+#endif
 #ifdef __THREADS__
         BermudaSchedulerStart();
 #endif

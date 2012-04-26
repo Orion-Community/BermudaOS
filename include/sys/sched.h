@@ -137,4 +137,15 @@ static inline void BermudaSchedulerEnable()
 }
 
 __DECL_END
+
+/**
+ * \def BermudaThreadYield()
+ * \brief This will yield the current thread and pass control to the next one.
+ * \warning This has not been tested yet!
+ *
+ * This define calls the function BermudaSchedulerExec, which will execute the
+ * schedule algorithm immediately.
+ */
+#define BermudaThreadYield() BermudaSchedulerExec()
+
 #endif

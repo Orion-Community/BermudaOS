@@ -45,17 +45,10 @@ void BermudaInitTimer0()
         timer0 = malloc(sizeof(*timer0));
         if(timer0 == NULL)
                 return;
-        
-        timer0->controlA = &BermudaGetTCCR0A();
-        timer0->controlB = &BermudaGetTCCR0B();
-        timer0->int_mask = &BermudaGetTIMSK0();
-        timer0->output_comp_a  = &BermudaGetOCR0A();
-        
-        /* mode: fast pwm, BOTTOM (0x0) to OCR0A */
-        BermudaTimerSetWaveFormMode(timer0, B111);
 
-        /* set prescaler */
-        BermudaTimerSetPrescaler(timer0, B11);
+        // fast pwm, TOP = OCR0A, prescaler 64, com disconnected
+        BermudaTimer0InitRegs(timer0);
+        BermudaTimerInit(timer0, B111, B11, B0);
         
         /* Set the top to 244 */
         *(timer0->output_comp_a) = 244;
@@ -63,6 +56,42 @@ void BermudaInitTimer0()
         /* Enable the overflow interrupt */
         spb(*timer0->int_mask, TOIE0);
 }
+
+void BermudaTimerInit(timer, waveform, prescaler, ocm)
+unsigned char waveform, prescaler, ocm;
+TIMER *timer;
+{
+        if(NULL == timer)
+                return;
+        
+//         BermudaTimerSetOutputCompareMatch(timer, ocm);
+        BermudaTimerSetPrescaler(timer, prescaler);
+        BermudaTimerSetWaveFormMode(timer, waveform);
+}
+
+#if (TIMERS & B1) == B1
+PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer)
+{
+        timer->controlA      = &BermudaGetTCCR0A();
+        timer->controlB      = &BermudaGetTCCR0B();
+        timer->int_mask      = &BermudaGetTIMSK0();
+        timer->int_flag      = &BermudaGetTIFR0();
+        timer->output_comp_a = &BermudaGetOCR0A();
+        timer->output_comp_b = &BermudaGetOCR0B();
+        timer->countReg      = &BermudaGetTCNT0();
+        return;
+}
+#endif
+
+#if (TIMERS & B10) == B10
+#error No support for timer 1 yet!
+PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
+#endif
+
+#if (TIMERS & B100) == B100
+#error No support for timer 2 yet!
+PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+#endif
 
 #ifdef __LAZY__
 /**

@@ -16,7 +16,8 @@ AVRDUDE_COM_OPTS = -q -V -p $(MCU) -c $(AVRDUDE_ARD_PROGRAMMER) -b \
 	$(AVRDUDE_ARD_BAUDRATE) -P $(ARD_PORT) $(AVRDUDE_ARD_EXTRAOPTS) \
         $(AVRDUDE_CONF)
 
-STDDEFS		= -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ -D __THREAD_DBG__
+STDDEFS		= -D TIMERS=1 -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ -D __THREADS__ \
+		  -D __THREAD_DBG__
 
 AVR_LIBC=$(AVRLIB)
 LOCAL_INC=$(LOCAL_LIB)
@@ -27,7 +28,7 @@ LDFLAGS		= -r -Os -m avr5
 CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
 		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU) -ffunction-sections \
 		  -fdata-sections -w
-ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall -c
+ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall -c 
 
 CPPOBJS		= $(CPPSRCS:.cpp=.o)
 COBJS		= $(CSRCS:.c=.o)

@@ -86,28 +86,6 @@ int BermudaSpiInit(SPI *spi)
 }
 
 /**
- * \fn BermudaSpiNativeInit()
- * \brief Bit-banged initialisation
- *
- * This function initializes the SPI alot faster, but can only be used when
- * all other operations are implemented by the application
- */
-void BermudaSpiNativeInit()
-{
-        BermudaSetPinMode(SCK, OUTPUT);
-        BermudaSetPinMode(MOSI, OUTPUT);
-        BermudaSetPinMode(SS, OUTPUT);
-
-        BermudaDigitalPinWrite(SCK, LOW);
-        BermudaDigitalPinWrite(MOSI, LOW);
-        BermudaDigitalPinWrite(SS, HIGH);
-
-        SPCR |= _BV(SPR0);
-        SPCR |= _BV(MSTR);
-        SPCR |= _BV(SPE);
-}
-
-/**
  * \fn BermudaSetMasterSpi(SPI *spi)
  * \brief Enable master mode.
  * \param spi The SPI structure to enable master mode on.
@@ -132,8 +110,8 @@ void BermudaSetSlaveSpi(SPI *spi)
 }
 
 /**
-  * \fn BermudaSpiTransmit(SPI *spi, void *data, size_t len)
-  * \brief Transmit one byte over the SPI.
+  * \fn BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len)
+  * \brief Transmit an array.
   * \param spi The SPI to use.
   * \param data The data to sent.
   * \param len The length of <i>data</i>.
@@ -159,11 +137,11 @@ int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len)
 }
 
 /**
-  * \fn BermudaSpiTxByte(SPI *spi, unsigned char data)
+  * \fn BermudaSpiTransmit(SPI *spi, unsigned char data)
   * \brief Transmit one byte over the SPI.
   * \param spi The SPI to use.
   * \param data The data byte to sent.
-  * \return [0] on success, -1 otherwise.
+  * \return The data sent from the slave.
   *
   * This function transmits one data byte over the given SPI.
   */

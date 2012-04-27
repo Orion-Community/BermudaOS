@@ -27,6 +27,7 @@
 #include <lib/binary.h>
 #include <arch/avr/io.h>
 #include <lib/binary.h>
+#include <sys/sched.h>
 
 struct adc BermADC;
 static unsigned char adc_ref = 1; /* default analog reference */
@@ -98,6 +99,9 @@ unsigned char pin;
                 return 0;
         
         struct adc *adc = &BermADC;
+#ifdef __THREADS__
+        BermudaThreadEnterIO(BermudaCurrentThread);
+#endif
         while((*adc->adcsra & BIT(ADSC)) != 0);
         
         /* select input channel */
@@ -107,14 +111,14 @@ unsigned char pin;
         spb(*adc->adcsra, ADSC);
 
         /* wait for it to finish */
-#ifdef THREADS
-        BermudaThreadSleep();
-#else
         while((*adc->adcsra & BIT(ADSC)) != 0);
-#endif
+
         /* finished, get results and return them */
         unsigned char low = *adc->adcl;
         unsigned char high = *adc->adch;
+#ifdef __THREADS__
+        BermudaThreadExitIO(BermudaCurrentThread);
+#endif
         return low | (high << 8);
 }
 

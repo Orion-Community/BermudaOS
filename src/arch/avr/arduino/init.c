@@ -94,10 +94,8 @@ THREAD(TestThread, data)
 
         while(1)
         {
-                BermudaThreadEnterIO(BermudaCurrentThread);
                 BermudaDigitalPinWrite(12, led);
-                BermudaThreadExitIO(BermudaCurrentThread);
-                BermudaThreadSleep(500);
+                BermudaThreadSleep(200);
                 led ^= 1;
                 x++;
                 if((x % 10) == 0)
@@ -110,19 +108,23 @@ THREAD(TestThread2, data)
 {
         unsigned char led = 1;
         int temperature = 10;
+        float raw_temp = 0;
+#ifdef __ADC__
         struct adc *adc = BermudaGetADC();
+#endif
    
         while(1)
         {
-                BermudaThreadEnterIO(BermudaCurrentThread);
-                float raw_temp = adc->read(A0);
-#ifdef __VERBAL__
-                printf("Temperature: %i\n", temperature);
-#endif
-                BermudaThreadExitIO(BermudaCurrentThread);
-
+#ifdef __ADC__
+                raw_temp = adc->read(A0);
+#endif __ADC__
                 temperature = raw_temp / 1024 * 5000;
                 temperature /= 10;
+#ifdef __VERBAL__
+                printf("Temperature: %i - Free memory: %i\n", temperature,
+                        BermudaFreeMemory()
+                );
+#endif
                 BermudaThreadSleep(1000);
                 led ^= 1;
         }
@@ -135,9 +137,7 @@ THREAD(MainThread, data)
 
         while(1)
         {
-                BermudaThreadEnterIO(BermudaCurrentThread);
                 BermudaDigitalPinWrite(13, led);
-                BermudaThreadExitIO(BermudaCurrentThread);
                 
                 led ^= 1;
                 BermudaThreadSleep(200);
@@ -155,7 +155,7 @@ PRIVATE WEAK void setup()
         th2 = malloc(sizeof(*th));
         BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, malloc(128),
                           BERMUDA_DEFAULT_PRIO);
-        BermudaThreadInit(th2, "Lala Thread", TestThread2, NULL, 128, malloc(128),
+        BermudaThreadInit(th2, "Test Thread 2", TestThread2, NULL, 128, malloc(128),
                           BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerInit(&MainT, &MainThread);
         BermudaSchedulerAddThread(th);
@@ -183,9 +183,7 @@ int main(void)
 #endif
         sei();        
         setup();
-#ifdef __VERBAL__
-        printf("Free memory: %i\n", BermudaFreeMemory());
-#endif
+        
 #ifdef __THREADS__
         BermudaSchedulerStart();
 #endif

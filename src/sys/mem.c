@@ -29,6 +29,8 @@
 PRIVATE WEAK volatile HEAPNODE *BermudaHeapHead = NULL;
 PRIVATE WEAK mutex_t    BermudaMmLock   = 0;
 
+static inline HEAPNODE *BermudaHeapInitHeader(HEAPNODE *node, size_t size);
+
 /**
  * \fn BermudaHeapInitBlock(void *start, size_t size)
  * \brief Initialise a new heap block.
@@ -113,13 +115,58 @@ volatile HEAPNODE *beta;
         
         if(((void*)beta) + sizeof(HEAPNODE) + beta->size == alpha)
         { // alpa and beta are given reversed.. swap
-                HEAPNODE tmp = alpha;
+                volatile HEAPNODE *tmp = alpha;
                 alpha = beta;
                 beta = tmp;
         }
         
-        alpa->size = beta->size + sizeof(HEAPNODE); // calc new size
-        alpa->next = beta->next;
+        alpha->size = beta->size + sizeof(HEAPNODE); // calc new size
+        alpha->next = beta->next;
         
         return 0;
+}
+
+/**
+ * \fn BermudaHeapSpitNode(volatile HEAPNODE *node, size_t req)
+ * \brief Split the given memory node.
+ * \param node The memory node to split.
+ * \param req Requested size of node.
+ * 
+ * This function will split the memory node <i>node</i> to the given size <i>
+ * size</i>.
+ */
+PRIVATE WEAK void BermudaHeapSpitNode(volatile HEAPNODE *node, size_t req)
+{
+        if(node->magic != BERMUDA_MM_FREE_MAGIC)
+        {
+#ifdef __VERBAL__
+                printf("Node merge failed: %p - Size: %x\n", node, node->size);
+#endif
+                return;
+        }
+        
+        volatile HEAPNODE *next = BermudaHeapInitHeader(((void*)node)+req+
+                                        sizeof(*node),
+                                             node->size - req - sizeof(*next));
+        next->next = node->next;
+        node->next = next;
+        node->size = req;
+}
+
+/**
+ * \fn BermudaHeapInitHeader(HEAPNODE *node, size_t size)
+ * \brief Initialise a heap node.
+ * \param node Memory address to add the header to.
+ * \param size Size of <i>node</i>.
+ * \return The memory address of the given node.
+ * 
+ * At the given memory address a heap node header will be initialised. The
+ * HEAPNODE.magic attribute will be set to <i>BERMUDA_MM_FREE_MAGIC</i>.
+ */
+static inline HEAPNODE *BermudaHeapInitHeader(HEAPNODE *node, size_t size)
+{
+        node->magic = BERMUDA_MM_FREE_MAGIC;
+        node->size = size;
+        node->next = NULL;
+        return node;
 }

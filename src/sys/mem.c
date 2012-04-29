@@ -27,9 +27,89 @@
 #include <arch/io.h>
 
 PRIVATE WEAK volatile HEAPNODE *BermudaHeapHead = NULL;
-PRIVATE WEAK mutex_t    BermudaMmLock   = 0;
 
 static inline HEAPNODE *BermudaHeapInitHeader(HEAPNODE *node, size_t size);
+
+/**
+ * \fn void *BermudaHeapAlloc(size_t size)
+ * \brief Allocated a given amout of memory.
+ * \param size Requested memory size.
+ * \return Pointer to the start of the memory block.
+ * 
+ * This function will search for a fitting block of memory. If no fitting block
+ * is found it will return <i><b>NULL</b></i>.
+ */
+__attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size) 
+{
+        if(size > MEM)
+                return NULL;
+        void *ret = NULL;
+        volatile HEAPNODE *c = BermudaHeapHead, *prev = NULL;
+        while(c)
+        {
+                if(c->size == size)
+                { // requested block fits perfectly
+                        break;
+                }
+                
+                if(c->size > size)
+                { // block is to large
+                        if(c->size < size+sizeof(*c)+4)
+                                break; // block size is to small to split
+                        
+                        // split the node
+                        BermudaHeapSplitNode(c, size);
+                        break;
+                }
+                prev = c;
+                c = c->next;
+        }
+        
+        if(c == NULL)
+                return NULL;
+        
+        BermudaHeapUseBlock(c, prev);
+        ret = ((void*)c)+sizeof(*c);
+        return ret;
+}
+
+/**
+ * \fn BermudaHeapUseBlock(volatile HEAPNODE *node, volatile HEAPNODE *prev)
+ * \brief Use a memory block from the heap.
+ * \param node Block which is going to be used.
+ * \param prev Block in the list before <i>node</i>.
+ * 
+ * This block will set the magic attribute to used and remove the block from the
+ * heap list.
+ */
+PRIVATE WEAK void BermudaHeapUseBlock(volatile HEAPNODE *node,
+                                      volatile HEAPNODE *prev)
+{
+        if(node->magic != BERMUDA_MM_FREE_MAGIC)
+        {
+#ifdef __VERBAL__
+                printf("BermudaUseHeapBlock failure!\n");
+#endif
+                return;
+        }
+        
+        node->magic = BERMUDA_MM_ALLOC_MAGIC;
+        if(prev != NULL && node->next != NULL)
+        { // somewhere in the middle of the list
+                prev->next = node->next;
+                return;
+        }
+        if(prev == NULL)
+        { // at the start of the list
+                BermudaHeapHead = node->next;
+                return;
+        }
+        if(node->next == NULL)
+        {
+                prev->next = NULL;
+                return;
+        }
+}
 
 /**
  * \fn BermudaHeapInitBlock(void *start, size_t size)
@@ -96,6 +176,16 @@ PRIVATE WEAK char BermudaNodeReturn(volatile HEAPNODE *block)
         return -1;
 }
 
+/**
+ * \fn BermudaHeapMergeNode(volatile HEAPNODE *alpha, volatile HEAPNODE *beta)
+ * \brief Merge two nodes if possible.
+ * \param alpha Node 1.
+ * \param beta Node 2.
+ * \return Error code.
+ * 
+ * This function will try to merge node <i>alpha</i> and <i>beta</i>. If it is
+ * not possible, -1 is returned.
+ */
 PRIVATE WEAK char BermudaHeapMergeNode(alpha, beta)
 volatile HEAPNODE *alpha;
 volatile HEAPNODE *beta;
@@ -127,7 +217,7 @@ volatile HEAPNODE *beta;
 }
 
 /**
- * \fn BermudaHeapSpitNode(volatile HEAPNODE *node, size_t req)
+ * \fn BermudaHeapSplitNode(volatile HEAPNODE *node, size_t req)
  * \brief Split the given memory node.
  * \param node The memory node to split.
  * \param req Requested size of node.
@@ -135,7 +225,7 @@ volatile HEAPNODE *beta;
  * This function will split the memory node <i>node</i> to the given size <i>
  * size</i>.
  */
-PRIVATE WEAK void BermudaHeapSpitNode(volatile HEAPNODE *node, size_t req)
+PRIVATE WEAK void BermudaHeapSplitNode(volatile HEAPNODE *node, size_t req)
 {
         if(node->magic != BERMUDA_MM_FREE_MAGIC)
         {

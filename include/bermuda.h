@@ -19,6 +19,8 @@
 #ifndef __BERMUDA_H
 #define __BERMUDA_H
 
+#include <sys/mem.h>
+
 #ifdef __cplusplus
 #define __DECL extern "C" {
 #define __DECL_END }

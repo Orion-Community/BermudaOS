@@ -52,7 +52,7 @@ __DECL
 void BermudaHeapInitBlock(volatile void *start, size_t size);
 
 /**
- * \fn BermudaHeapSpitNode(volatile HEAPNODE *node, size_t req)
+ * \fn BermudaHeapSplitNode(volatile HEAPNODE *node, size_t req)
  * \brief Split the given memory node.
  * \param node The memory node to split.
  * \param req Requested size of node.
@@ -60,7 +60,7 @@ void BermudaHeapInitBlock(volatile void *start, size_t size);
  * This function will split the memory node <i>node</i> to the given size <i>
  * size</i>.
  */
-PRIVATE WEAK void BermudaHeapSpitNode(volatile HEAPNODE *node, size_t req);
+PRIVATE WEAK void BermudaHeapSplitNode(volatile HEAPNODE *node, size_t req);
 
 /**
  * \fn BermudaHeapMergeNode(volatile HEAPNODE *alpha, volatile HEAPNODE *beta)
@@ -84,6 +84,29 @@ PRIVATE WEAK char BermudaHeapMergeNode(volatile HEAPNODE *alpha,
  * This will put the given block back in the linked heap list.
  */
 PRIVATE WEAK char BermudaNodeReturn(volatile HEAPNODE *block);
+
+/**
+ * \fn BermudaHeapUseBlock(HEAPNODE *node, HEAPNODE *prev)
+ * \brief Use a memory block from the heap.
+ * \param node Block which is going to be used.
+ * \param prev Block in the list before <i>node</i>.
+ * 
+ * This block will set the magic attribute to used and remove the block from the
+ * heap list.
+ */
+PRIVATE WEAK void BermudaHeapUseBlock(volatile HEAPNODE *node, 
+                                      volatile HEAPNODE *prev);
+
+/**
+ * \fn void *BermudaHeapAlloc(size_t size)
+ * \brief Allocated a given amout of memory.
+ * \param size Requested memory size.
+ * \return Pointer to the start of the memory block.
+ * 
+ * This function will search for a fitting block of memory. If no fitting block
+ * is found it will return <i><b>NULL</b></i>.
+ */
+void *BermudaHeapAlloc(size_t size) __attribute__ ((malloc));
 __DECL_END
 
 #endif /* __MEM_H__ */

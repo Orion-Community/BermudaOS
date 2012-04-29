@@ -187,6 +187,7 @@ int main(void)
 #ifdef __THREADS__
         BermudaSchedulerStart();
 #endif
+        
 
         while(1)
         {

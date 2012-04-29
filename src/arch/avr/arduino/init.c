@@ -117,7 +117,7 @@ THREAD(TestThread2, data)
         {
 #ifdef __ADC__
                 raw_temp = adc->read(A0);
-#endif __ADC__
+#endif
                 temperature = raw_temp / 1024 * 5000;
                 temperature /= 10;
 #ifdef __VERBAL__

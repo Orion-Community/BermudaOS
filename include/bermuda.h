@@ -34,4 +34,6 @@
 #define __raw   __attribute__((naked))
 #define __sig   __attribute__((signal))
 
+typedef unsigned char mutex_t;
+
 #endif

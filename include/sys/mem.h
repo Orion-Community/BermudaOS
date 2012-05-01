@@ -76,14 +76,14 @@ PRIVATE WEAK char BermudaHeapMergeNode(volatile HEAPNODE *alpha,
                                        volatile HEAPNODE *beta);
 
 /**
- * \fn BermudaNodeReturn(volatile HEAPNODE *block)
+ * \fn BermudaHeapNodeReturn(volatile HEAPNODE *block)
  * \brief Return a block to the list.
  * \param block Block to return.
  * \return error code
  * 
  * This will put the given block back in the linked heap list.
  */
-PRIVATE WEAK char BermudaNodeReturn(volatile HEAPNODE *block);
+PRIVATE WEAK char BermudaHeapNodeReturn(volatile HEAPNODE *block);
 
 /**
  * \fn BermudaHeapUseBlock(HEAPNODE *node, HEAPNODE *prev)
@@ -107,6 +107,16 @@ PRIVATE WEAK void BermudaHeapUseBlock(volatile HEAPNODE *node,
  * is found it will return <i><b>NULL</b></i>.
  */
 void *BermudaHeapAlloc(size_t size) __attribute__ ((malloc));
+
+/**
+ * \fn BermudaHeapFree(void *ptr)
+ * \brief Free an allocated heap block.
+ * \param ptr Block pointer to free.
+ * 
+ * The given pointer <i>ptr</i>, which points to <b>node+sizeof(*node)</b>, is
+ * returned to the heap.
+ */
+void BermudaHeapFree(void *ptr);
 __DECL_END
 
 #endif /* __MEM_H__ */

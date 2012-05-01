@@ -75,6 +75,38 @@ __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
 }
 
 /**
+ * \fn BermudaHeapFree(void *ptr)
+ * \brief Free an allocated heap block.
+ * \param ptr Block pointer to free.
+ * 
+ * The given pointer <i>ptr</i>, which points to <b>node+sizeof(*node), is
+ * returned to the heap.
+ */
+void BermudaHeapFree(void *ptr)
+{
+             volatile HEAPNODE *node = ((void*)ptr)-sizeof(*node);
+             if(node->magic != BERMUDA_MM_ALLOC_MAGIC)
+                     return;
+             
+             volatile HEAPNODE *c = BermudaHeapHead;
+             BermudaHeapNodeReturn(node);
+             while(c)
+             {
+                     if(((void*)c) + c->size + sizeof(*c) == node || ((void*)
+                        node) + node->size + sizeof(*node) == c)
+                     {
+                             if(-1 == BermudaHeapMergeNode(node, c))
+                                     goto next;
+                             else
+                                     break;
+                     }
+                     next:
+                     c = c->next;
+             }
+        return;
+}
+
+/**
  * \fn BermudaHeapUseBlock(volatile HEAPNODE *node, volatile HEAPNODE *prev)
  * \brief Use a memory block from the heap.
  * \param node Block which is going to be used.
@@ -136,13 +168,13 @@ void BermudaHeapInitBlock(volatile void *start, size_t size)
 }
 
 /**
- * \fn BermudaNodeReturn(HEAPNODE *block)
+ * \fn BermudaHeapNodeReturn(HEAPNODE *block)
  * \brief Return a block to the list.
  * \param block Block to return.
  * 
  * This will put the given block back in the linked heap list.
  */
-PRIVATE WEAK char BermudaNodeReturn(volatile HEAPNODE *block)
+PRIVATE WEAK char BermudaHeapNodeReturn(volatile HEAPNODE *block)
 {
         if(block->magic != BERMUDA_MM_ALLOC_MAGIC || block->size == 0)
                 return -1; // don't accept nonsense blocks

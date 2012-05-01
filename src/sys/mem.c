@@ -96,13 +96,38 @@ void BermudaHeapFree(void *ptr)
                 if(((void*)c) + c->size + sizeof(*c) == node || ((void*)
                 node) + node->size + sizeof(*node) == c)
                 {
-                        if(-1 == BermudaHeapMergeNode(c, node))
+                        node = BermudaHeapMergeNode(c, node);
+                        if(NULL == node)
                                 break;
+                        else
+                        {
+                                c = node;
+                        }
                 }
-// 
                 c = c->next;
         }
         return;
+}
+
+/**
+ * \fn BermudaHeapAvailable()
+ * \brief Compute the available heap memory.
+ * \return Available memory.
+ * 
+ * This function will calculate the available memory in the heap.
+ */
+size_t BermudaHeapAvailable()
+{
+        volatile HEAPNODE *c = BermudaHeapHead;
+        size_t total = 0;
+        
+        while(c)
+        {
+                total += c->size;
+                c = c->next;
+        }
+        
+        return total;
 }
 
 #ifdef __MM_DEBUG__
@@ -171,11 +196,11 @@ void BermudaHeapInitBlock(volatile void *start, size_t size)
         if(!BermudaHeapHead)
         { // if the MM is not yet initialised
                 BermudaHeapHead = (HEAPNODE*)start;
-                BermudaHeapInitHeader(start, size);
+                BermudaHeapInitHeader(start, size-sizeof(HEAPNODE));
         }
         else
         {
-                BermudaHeapInitHeader(start, size);
+                BermudaHeapInitHeader(start, size-sizeof(HEAPNODE));
         }
         
         return;
@@ -231,12 +256,12 @@ PRIVATE WEAK char BermudaHeapNodeReturn(volatile HEAPNODE *block)
  * \brief Merge two nodes if possible.
  * \param alpha Node 1.
  * \param beta Node 2.
- * \return Error code.
+ * \return The new heap node.
  *
  * This function will try to merge node <i>alpha</i> and <i>beta</i>. If it is
  * not possible, -1 is returned.
  */
-PRIVATE WEAK char BermudaHeapMergeNode(alpha, beta)
+PRIVATE WEAK volatile HEAPNODE *BermudaHeapMergeNode(alpha, beta)
 volatile HEAPNODE *alpha;
 volatile HEAPNODE *beta;
 {
@@ -246,12 +271,12 @@ volatile HEAPNODE *beta;
 #ifdef __VERBAL__
                 printf("Heap merge failed!\n");
 #endif
-                return -1;
+                return NULL;
         }
         
         if((((void*)alpha) + sizeof(HEAPNODE)+ alpha->size != beta) &&
                 (((void*)beta) + sizeof(HEAPNODE) + beta->size != alpha))
-                return -1;
+                return NULL;
         
         if(((void*)beta) + sizeof(HEAPNODE) + beta->size == alpha)
         { // alpa and beta are given reversed.. swap
@@ -260,12 +285,10 @@ volatile HEAPNODE *beta;
                 beta = tmp;
         }
         
-        printf("Merging! Size a = %u Size b = %u\n", alpha->size, beta->size);
         alpha->size += beta->size + sizeof(HEAPNODE); // calc new size
         alpha->next = beta->next;
-        printf("Merging! Size a = %u Size b = %u\n", alpha->size, beta->size);
         
-        return 0;
+        return alpha;
 }
 
 /**

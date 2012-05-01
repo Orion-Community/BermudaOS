@@ -48,7 +48,7 @@ PRIVATE WEAK TIMER *timer0 = NULL;
 void BermudaInitTimer0()
 {
         cli();
-        timer0 = malloc(sizeof(*timer0));
+        timer0 = BermudaHeapAlloc(sizeof(*timer0));
         if(timer0 == NULL)
                 return;
 

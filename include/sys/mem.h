@@ -67,12 +67,12 @@ PRIVATE WEAK void BermudaHeapSplitNode(volatile HEAPNODE *node, size_t req);
  * \brief Merge two nodes if possible.
  * \param alpha Node 1.
  * \param beta Node 2.
- * \return Error code.
- * 
+ * \return The new heap node.
+ *
  * This function will try to merge node <i>alpha</i> and <i>beta</i>. If it is
  * not possible, -1 is returned.
  */
-PRIVATE WEAK char BermudaHeapMergeNode(volatile HEAPNODE *alpha, 
+PRIVATE WEAK volatile HEAPNODE *BermudaHeapMergeNode(volatile HEAPNODE *alpha, 
                                        volatile HEAPNODE *beta);
 
 /**
@@ -127,6 +127,16 @@ void BermudaHeapFree(void *ptr);
  */
 void BermudaHeapPrint();
 #endif
+
+/**
+ * \fn BermudaHeapAvailable()
+ * \brief Compute the available heap memory.
+ * \return Available memory.
+ * 
+ * This function will calculate the available memory in the heap.
+ */
+size_t BermudaHeapAvailable();
+
 __DECL_END
 
 #endif /* __MEM_H__ */

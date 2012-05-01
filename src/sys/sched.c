@@ -27,6 +27,7 @@
 
 #include <sys/sched.h>
 #include <sys/thread.h>
+#include <sys/mem.h>
 
 THREAD *BermudaCurrentThread = NULL;
 THREAD *BermudaPreviousThread = NULL;
@@ -52,7 +53,7 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
 {
         /* initialise the thread list head */
         if(NULL == th)
-                BermudaThreadHead = malloc(sizeof(*BermudaThreadHead));
+                BermudaThreadHead = BermudaHeapAlloc(sizeof(*BermudaThreadHead));
         else
                 BermudaThreadHead = th;
         
@@ -64,7 +65,7 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
                                         BERMUDA_DEFAULT_PRIO);
         
         // initialise the idle thread
-        BermudaIdleThread = malloc(sizeof(*BermudaIdleThread));
+        BermudaIdleThread = BermudaHeapAlloc(sizeof(*BermudaIdleThread));
         BermudaThreadInit(BermudaIdleThread, "Idle Thread", &IdleThread, NULL, 64,
                                 &BermudaIdleThreadStack[0], BERMUDA_DEFAULT_PRIO);
 }

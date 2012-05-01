@@ -43,45 +43,6 @@ static THREAD *th2 = NULL;
 #endif
 
 extern unsigned int __heap_start;
-extern void *__brkval;
-
-struct __freelist {
-  size_t sz;
-  struct __freelist *nx;
-};
-
-/* The head of the free list structure */
-extern struct __freelist *__flp;
-
-/* Calculates the size of the free list */
-int BermudaFreeListSize() {
-        struct __freelist* current;
-        int total = 0;
-
-        for (current = __flp; current; current = current->nx) 
-        {
-                total += 2; /* Add two bytes for the memory block's header  */
-                total += (int) current->sz;
-        }
-
-        return total;
-}
-
-int BermudaFreeMemory() 
-{
-        int free_memory;
-
-        if ((int)__brkval == 0) 
-        {
-                free_memory = ((int)&free_memory) - ((int)&__heap_start);
-        } 
-        else 
-        {
-                free_memory = ((int)&free_memory) - ((int)__brkval);
-                free_memory += BermudaFreeListSize();
-        }
-        return free_memory;
-}
 
 #ifdef __THREAD_DBG__
 #ifndef __THREADS__
@@ -106,8 +67,7 @@ THREAD(TestThread, data)
 
 THREAD(TestThread2, data)
 {
-        unsigned char led = 1;
-        int temperature = 10;
+        int temperature = 0;
         float raw_temp = 0;
 #ifdef __ADC__
         struct adc *adc = BermudaGetADC();
@@ -122,11 +82,10 @@ THREAD(TestThread2, data)
                 temperature /= 10;
 #ifdef __VERBAL__
                 printf("Temperature: %i - Free memory: %i\n", temperature,
-                        BermudaFreeMemory()
+                        BermudaHeapAvailable()
                 );
 #endif
-                BermudaThreadSleep(1000);
-                led ^= 1;
+                BermudaThreadSleep(500);
         }
 }
 
@@ -140,7 +99,7 @@ THREAD(MainThread, data)
                 BermudaDigitalPinWrite(13, led);
                 
                 led ^= 1;
-                BermudaThreadSleep(200);
+                BermudaThreadSleep(500);
         }
 }
 #endif
@@ -151,12 +110,12 @@ PRIVATE WEAK void setup()
         BermudaSetPinMode(13, OUTPUT);
         BermudaSetPinMode(12, OUTPUT);
         BermudaSetPinMode(A0, INPUT);
-        th = malloc(sizeof(*th));
-        th2 = malloc(sizeof(*th));
-        BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, malloc(128),
-                          BERMUDA_DEFAULT_PRIO);
-        BermudaThreadInit(th2, "Test Thread 2", TestThread2, NULL, 128, malloc(128),
-                          BERMUDA_DEFAULT_PRIO);
+        th = BermudaHeapAlloc(sizeof(*th));
+        th2 = BermudaHeapAlloc(sizeof(*th));
+        BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+        BermudaThreadInit(th2, "Test Thread 2", TestThread2, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerInit(&MainT, &MainThread);
         BermudaSchedulerAddThread(th);
         BermudaSchedulerAddThread(th2);
@@ -167,7 +126,8 @@ PRIVATE WEAK void setup()
 }
 
 int main(void)
-{        
+{       
+        BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
         BermudaInitUART();
         BermudaInitTimer0();
 #ifdef __ADC__
@@ -175,29 +135,18 @@ int main(void)
 #endif
         
 #ifdef __SPI__
-        SPI *spi_if = malloc(sizeof(*spi_if));
+        SPI *spi_if = BermudaHeapAlloc(sizeof(*spi_if));
         BermudaSpiInit(spi_if);
 #ifdef __SPIRAM__
         BermudaSpiRamInit();
 #endif
 #endif
-        sei();        
+        sei();
         setup();
         
 #ifdef __THREADS__
         BermudaSchedulerStart();
 #endif
-        
-        BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
-        void *n = BermudaHeapAlloc(100);
-        void *x = BermudaHeapAlloc(4);
-
-        printf("Pointer %p %p Heap start: %p\n", n, x, &__heap_start);
-        BermudaHeapFree(n);
-
-        BermudaHeapAlloc(64);
-        BermudaHeapPrint();
-
         while(1)
         {
 #ifdef __SPIRAM__

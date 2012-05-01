@@ -28,7 +28,8 @@
 
 PRIVATE WEAK volatile HEAPNODE *BermudaHeapHead = NULL;
 
-static inline HEAPNODE *BermudaHeapInitHeader(HEAPNODE *node, size_t size);
+static inline volatile HEAPNODE *BermudaHeapInitHeader(volatile HEAPNODE *node, 
+                                              size_t size);
 
 /**
  * \fn void *BermudaHeapAlloc(size_t size)
@@ -124,8 +125,11 @@ void BermudaHeapInitBlock(volatile void *start, size_t size)
         if(!BermudaHeapHead)
         { // if the MM is not yet initialised
                 BermudaHeapHead = (HEAPNODE*)start;
-                BermudaHeapHead->magic = BERMUDA_MM_FREE_MAGIC;
-                BermudaHeapHead->size = size;
+                BermudaHeapInitHeader(start, size);
+        }
+        else
+        {
+                BermudaHeapInitHeader(start, size);
         }
         
         return;
@@ -253,7 +257,8 @@ PRIVATE WEAK void BermudaHeapSplitNode(volatile HEAPNODE *node, size_t req)
  * At the given memory address a heap node header will be initialised. The
  * HEAPNODE.magic attribute will be set to <i>BERMUDA_MM_FREE_MAGIC</i>.
  */
-static inline HEAPNODE *BermudaHeapInitHeader(HEAPNODE *node, size_t size)
+static inline volatile HEAPNODE *BermudaHeapInitHeader(volatile HEAPNODE *node, 
+                                              size_t size)
 {
         node->magic = BERMUDA_MM_FREE_MAGIC;
         node->size = size;

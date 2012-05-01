@@ -19,8 +19,6 @@
 #ifndef __BERMUDA_H
 #define __BERMUDA_H
 
-#include <sys/mem.h>
-
 #ifdef __cplusplus
 #define __DECL extern "C" {
 #define __DECL_END }
@@ -37,5 +35,7 @@
 #define __sig   __attribute__((signal))
 
 typedef unsigned char mutex_t;
+
+#include <sys/mem.h>
 
 #endif

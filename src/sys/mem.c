@@ -106,6 +106,21 @@ void BermudaHeapFree(void *ptr)
         return;
 }
 
+#ifdef __MM_DEBUG__
+void BermudaHeapPrint()
+{
+        HEAPNODE *c = BermudaHeapHead;
+        unsigned short i = 0;
+        while(c)
+        {
+                printf("Node[%u]: %p with size %x", i, c, c->size);
+                i++;
+                c = c->next;
+        }
+        return;
+}
+#endif
+
 /**
  * \fn BermudaHeapUseBlock(volatile HEAPNODE *node, volatile HEAPNODE *prev)
  * \brief Use a memory block from the heap.

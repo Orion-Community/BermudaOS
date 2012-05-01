@@ -117,6 +117,16 @@ void *BermudaHeapAlloc(size_t size) __attribute__ ((malloc));
  * returned to the heap.
  */
 void BermudaHeapFree(void *ptr);
+
+#ifdef __MM_DEBUG__
+/**
+ * \fn BermudaHeapPrint()
+ * \brief Print heap info.
+ * 
+ * This function prints heap information.
+ */
+void BermudaHeapPrint();
+#endif
 __DECL_END
 
 #endif /* __MEM_H__ */

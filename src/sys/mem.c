@@ -84,36 +84,35 @@ __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
  */
 void BermudaHeapFree(void *ptr)
 {
-             volatile HEAPNODE *node = ((void*)ptr)-sizeof(*node);
-             if(node->magic != BERMUDA_MM_ALLOC_MAGIC)
-                     return;
-             
-             volatile HEAPNODE *c = BermudaHeapHead;
-             BermudaHeapNodeReturn(node);
-             while(c)
-             {
-                     if(((void*)c) + c->size + sizeof(*c) == node || ((void*)
-                        node) + node->size + sizeof(*node) == c)
-                     {
-                             if(-1 == BermudaHeapMergeNode(node, c))
-                                     goto next;
-                             else
-                                     break;
-                     }
-                     next:
-                     c = c->next;
-             }
+        volatile HEAPNODE *node = ((void*)ptr)-sizeof(*node);
+        if(node->magic != BERMUDA_MM_ALLOC_MAGIC)
+                return;
+
+        volatile HEAPNODE *c = BermudaHeapHead;
+        BermudaHeapNodeReturn(node);
+        
+        while(c)
+        {
+                if(((void*)c) + c->size + sizeof(*c) == node || ((void*)
+                node) + node->size + sizeof(*node) == c)
+                {
+                        if(-1 == BermudaHeapMergeNode(c, node))
+                                break;
+                }
+// 
+                c = c->next;
+        }
         return;
 }
 
 #ifdef __MM_DEBUG__
 void BermudaHeapPrint()
 {
-        HEAPNODE *c = BermudaHeapHead;
+        volatile HEAPNODE *c = BermudaHeapHead;
         unsigned short i = 0;
         while(c)
         {
-                printf("Node[%u]: %p with size %x", i, c, c->size);
+                printf("Node[%u]: %p with size %x\n", i, c, c->size);
                 i++;
                 c = c->next;
         }
@@ -209,8 +208,8 @@ PRIVATE WEAK char BermudaHeapNodeReturn(volatile HEAPNODE *block)
         {
                 if(block > node && block < node->next)
                 {
-                        prev->next = block;
-                        block->next = node;
+                        block->next = node->next;
+                        node->next = block;
                         return 0;
                 }
                 
@@ -233,7 +232,7 @@ PRIVATE WEAK char BermudaHeapNodeReturn(volatile HEAPNODE *block)
  * \param alpha Node 1.
  * \param beta Node 2.
  * \return Error code.
- * 
+ *
  * This function will try to merge node <i>alpha</i> and <i>beta</i>. If it is
  * not possible, -1 is returned.
  */
@@ -261,8 +260,10 @@ volatile HEAPNODE *beta;
                 beta = tmp;
         }
         
-        alpha->size = beta->size + sizeof(HEAPNODE); // calc new size
+        printf("Merging! Size a = %u Size b = %u\n", alpha->size, beta->size);
+        alpha->size += beta->size + sizeof(HEAPNODE); // calc new size
         alpha->next = beta->next;
+        printf("Merging! Size a = %u Size b = %u\n", alpha->size, beta->size);
         
         return 0;
 }

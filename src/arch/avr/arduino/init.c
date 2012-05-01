@@ -190,9 +190,13 @@ int main(void)
         
         BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
         void *n = BermudaHeapAlloc(100);
-        void *x = BermudaHeapAlloc(1);
-//         void *x = NULL;
-        printf("Pointer %p %p\n", n, x);
+        void *x = BermudaHeapAlloc(4);
+
+        printf("Pointer %p %p Heap start: %p\n", n, x, &__heap_start);
+        BermudaHeapFree(n);
+
+        BermudaHeapAlloc(64);
+        BermudaHeapPrint();
 
         while(1)
         {

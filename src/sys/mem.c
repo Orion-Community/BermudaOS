@@ -27,6 +27,7 @@
 #include <arch/io.h>
 
 PRIVATE WEAK volatile HEAPNODE *BermudaHeapHead = NULL;
+PRIVATE WEAK mutex_t            mem_lock        = 0;
 
 static inline volatile HEAPNODE *BermudaHeapInitHeader(volatile HEAPNODE *node, 
                                               size_t size);
@@ -42,8 +43,12 @@ static inline volatile HEAPNODE *BermudaHeapInitHeader(volatile HEAPNODE *node,
  */
 __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size) 
 {
+        BermudaMutexEnter(&mem_lock);
         if(size > MEM)
+        {
+                BermudaMutexRelease(&mem_lock);
                 return NULL;
+        }
         void *ret = NULL;
         volatile HEAPNODE *c = BermudaHeapHead, *prev = NULL;
         while(c)
@@ -71,6 +76,8 @@ __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
         
         BermudaHeapUseBlock(c, prev);
         ret = ((void*)c)+sizeof(*c);
+        
+        BermudaMutexRelease(&mem_lock);
         return ret;
 }
 
@@ -84,9 +91,13 @@ __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
  */
 void BermudaHeapFree(void *ptr)
 {
+        BermudaMutexEnter(&mem_lock);
         volatile HEAPNODE *node = ((void*)ptr)-sizeof(*node);
         if(node->magic != BERMUDA_MM_ALLOC_MAGIC)
+        {
+                BermudaMutexRelease(&mem_lock);
                 return;
+        }
 
         volatile HEAPNODE *c = BermudaHeapHead;
         BermudaHeapNodeReturn(node);
@@ -106,6 +117,7 @@ void BermudaHeapFree(void *ptr)
                 }
                 c = c->next;
         }
+        BermudaMutexRelease(&mem_lock);
         return;
 }
 
@@ -118,6 +130,7 @@ void BermudaHeapFree(void *ptr)
  */
 size_t BermudaHeapAvailable()
 {
+        BermudaMutexEnter(&mem_lock);
         volatile HEAPNODE *c = BermudaHeapHead;
         size_t total = 0;
         
@@ -127,12 +140,14 @@ size_t BermudaHeapAvailable()
                 c = c->next;
         }
         
+        BermudaMutexRelease(&mem_lock);
         return total;
 }
 
 #ifdef __MM_DEBUG__
 void BermudaHeapPrint()
 {
+        BermudaMutexEnter(&mem_lock);
         volatile HEAPNODE *c = BermudaHeapHead;
         unsigned short i = 0;
         while(c)
@@ -141,6 +156,7 @@ void BermudaHeapPrint()
                 i++;
                 c = c->next;
         }
+        BermudaMutexRelease(&mem_lock);
         return;
 }
 #endif
@@ -192,7 +208,8 @@ PRIVATE WEAK void BermudaHeapUseBlock(volatile HEAPNODE *node,
  * This function will initialise a new heap block, and add it to to heap list.
  */
 void BermudaHeapInitBlock(volatile void *start, size_t size)
-{        
+{       
+        BermudaMutexEnter(&mem_lock);
         if(!BermudaHeapHead)
         { // if the MM is not yet initialised
                 BermudaHeapHead = (HEAPNODE*)start;
@@ -201,8 +218,12 @@ void BermudaHeapInitBlock(volatile void *start, size_t size)
         else
         {
                 BermudaHeapInitHeader(start, size-sizeof(HEAPNODE));
+                HEAPNODE *node = (HEAPNODE *)start;
+                node->magic = BERMUDA_MM_ALLOC_MAGIC;
+                BermudaHeapFree((void*)start+sizeof(HEAPNODE));
         }
         
+        BermudaMutexRelease(&mem_lock);
         return;
 }
 

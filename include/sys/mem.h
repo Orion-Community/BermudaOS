@@ -31,10 +31,42 @@
 #define BERMUDA_MM_FREE_MAGIC 0x99
 #define BERMUDA_MM_ALLOC_MAGIC 0x66
 
+/**
+ * \struct heap_node
+ * \brief Describes a piece of heap memory.
+ * 
+ * This structure is used to allocate and free pieces of heap memory.
+ */
 struct heap_node
 {
+        /**
+         * \var magic
+         * \brief Describes the state of the node.
+         * \see BERMUDA_MM_FREE_MAGIC
+         * \see BERMUDA_MM_ALLOC_MAGIC
+         * 
+         * This variable contains either BERMUDA_MM_FREE_MAGIC or 
+         * BERMUDA_MM_ALLOC_MAGIC. If it has any other value, the node should be
+         * handled as invalid.
+         */
         unsigned char magic;
+        
+        /**
+         * \var next
+         * \brief Next pointer.
+         * \note NULL means end of list.
+         * 
+         * Points to the next node of the linked list.
+         */
         volatile struct heap_node *next;
+        
+        /**
+         * \var size
+         * \brief Size of the node.
+         * \note Minimal size is 4.
+         * 
+         * This describes the size of the node.
+         */
         unsigned short size;
 } __PACK__;
 typedef struct heap_node HEAPNODE;

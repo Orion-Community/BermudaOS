@@ -23,6 +23,7 @@
 #include <bermuda.h>
 
 #include <arch/io.h>
+#include <sys/thread.h>
 
 /**
  * \def BERMUDA_EVENT_WAIT_INFINITE
@@ -31,9 +32,68 @@
  */
 #define BERMUDA_EVENT_WAIT_INFINITE 0
 
-__DECL
 /**
- * \fn BermudaEventWait(THREAD *queue, unsigned int mdt)
+ * \struct _event
+ * \brief Event data type.
+ *
+ * Definies the event data structure, which can be executed by the scheduler.
+ */
+struct _event
+{
+        /**
+         * \var next
+         * \brief Next pointer.
+         * \note NULL means end of list.
+         * \warning Should never point to itself.
+         * 
+         * Pointer to next entry in the list.
+         */
+        struct _event *next;
+        
+        /**
+         * \var thread
+         * \brief Associated thread.
+         *
+         * The thread associated with this event.
+         */
+        THREAD *thread;
+
+        /**
+         * \var count
+         * \brief Semaphore count.
+         *
+         * Semaphore counter associated with this event.
+         */
+        char count;
+}
+
+/**
+ * \typedef EVENT
+ * \brief Type definition of struct _event.
+ * \see struct _event
+ */
+typedef struct _event EVENT;
+
+/**
+ * \var _event_queue
+ * \brief Global event queue.
+ *
+ * List of all event queues.
+ */
+extern EVENT *_event_queue[];
+
+/**
+ * \def BermudaGetEventQueue()
+ * \brief Get the event queue.
+ *
+ * Get the global list of event queues.
+ */
+#define BermudaGetEventQueue() _event_queue
+
+__DECL
+
+/**
+ * \fn BermudaEventWait(THREAD **queue, unsigned int mdt)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param mdt <i>Maximum Delay Time</i>. Maximum time to wait.
@@ -41,14 +101,15 @@ __DECL
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-extern void BermudaEventWait(THREAD *queue, unsigned int mdt);
+extern void BermudaEventWait(THREAD **queue, unsigned int mdt);
 
 /**
  * \fn BermudaEventPost(THREAD *queue)
  * \brief Release the current event and execute the next event in the queue.
  * \param queue Event queue.
  * 
- * Release the lock of the current event and add the next event to the sched queue.
+ * Release the lock of the current event and add the next event to the
+ * sched queue.
  */
 extern void BermudaEventPost(THREAD *queue);
 

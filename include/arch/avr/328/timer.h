@@ -34,6 +34,9 @@
 #define BermudaGetTIMSK0() MEM_IO8(0x6E)
 #define BermudaGetTIFR0()  SFR_IO8(0x15)
 
+#define TIMER2_ASYC_SR MEM_IO8(0xB6)
+#define TIMER2_GEN_TCCR SFR_IO8(0x23)
+
 __DECL
 extern void BermudaInitTimer0();
 extern inline unsigned long BermudaGetTimerCount();
@@ -58,7 +61,9 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 
 #if (TIMERS & B100) == B100
 #error No support for timer 2 yet!
-PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer);
+PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
+                                                     unsigned char sr);
 #endif
 
 void BermudaTimerInit(TIMER *timer, unsigned char waveform,

@@ -96,7 +96,20 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 
 #if (TIMERS & B100) == B100
 #error No support for timer 2 yet!
-PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer)
+{
+        
+}
+#endif
+
+#if (TIMERS & B100) == B100
+#error No support for timer 2 yet!
+PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
+                                                     unsigned char sr)
+{
+        TIMER2_ASYC_SR &= B10000011;
+        TIMER2_ASYC_SR |= sr;
+}
 #endif
 
 #ifdef __LAZY__

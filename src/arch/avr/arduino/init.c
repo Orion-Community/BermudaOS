@@ -85,7 +85,7 @@ THREAD(TestThread2, data)
                         BermudaHeapAvailable()
                 );
 #endif
-                BermudaThreadSleep(500);
+                BermudaThreadSleep(1000);
         }
 }
 

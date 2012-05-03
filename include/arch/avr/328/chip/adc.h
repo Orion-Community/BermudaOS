@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __ADC__
 #ifndef __ADC_H
 #define __ADC_H
 
@@ -30,7 +31,8 @@
 #define BermudaGetADCSRB()  MEM_IO8(0x7B)
 #define BermudaGetDIDR0()   MEM_IO8(0x7E)
 
-#define ADC_DEFAULT_CLK         64
+#define ADC_DEFAULT_LAZY_CLK         64
+#define ADC_DEFAULT_CLK              B110
 
 struct adc;
 
@@ -72,10 +74,8 @@ PRIVATE void BermudaAdcIrqAttatch(struct adc *adc);
 PRIVATE void BermudaAdcIrqDetatch(struct adc *adc);
 #endif
 
-static inline struct adc* BermudaGetADC()
-{
-        return &BermADC;
-}
+#define BermudaGetADC() &BermADC;
 __DECL_END
 
+#endif
 #endif

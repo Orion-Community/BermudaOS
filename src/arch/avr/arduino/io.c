@@ -21,6 +21,7 @@
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
 #include <lib/binary.h>
+#include <sys/sched.h>
 
 const unsigned char ROM BermudaPinToPort[] =
 {
@@ -69,6 +70,9 @@ void BermudaDigitalPinWrite(unsigned char pin, unsigned char value)
         if(PIN_NOT_AVAILABLE == port)
                 return;
 
+#ifdef __THREADS__
+        BermudaThreadEnterIO(BermudaCurrentThread);
+#endif
         if(value == INPUT)
         {
                 *out &= ~mask;
@@ -77,6 +81,9 @@ void BermudaDigitalPinWrite(unsigned char pin, unsigned char value)
         {
                 *out |= mask;
         }
+#ifdef __THREADS__
+        BermudaThreadExitIO(BermudaCurrentThread);
+#endif
 }
 
 unsigned char BermudaDigitalPinRead(unsigned char pin)
@@ -84,12 +91,20 @@ unsigned char BermudaDigitalPinRead(unsigned char pin)
         unsigned char bit = BermudaGetIOMask(pin);
         unsigned char port = BermudaGetIOPort(pin);
         volatile unsigned char *in = BermudaGetInputReg(port);
+        unsigned char ret = LOW;
 
         if(PIN_NOT_AVAILABLE == port)
                 return LOW;
 
+#ifdef __THREADS__
+        BermudaThreadEnterIO(BermudaCurrentThread);
+#endif
         if((*in & bit) != 0)
-                return HIGH;
+                ret = HIGH;
         else
-                return LOW;
+                ret = LOW;
+#ifdef __THREADS__
+        BermudaThreadExitIO(BermudaCurrentThread);
+#endif
+        return ret;
 }

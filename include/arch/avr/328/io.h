@@ -59,8 +59,29 @@ struct avr_io
 } __attribute__((packed));
 
 extern const struct avr_io io;
+
+/**
+ * \fn BermudaSafeCli(unsigned char *ints)
+ * \brief Safely disable interrupts.
+ * \param ints Interrupt state wil be saved in <i>ints</i>.
+ *
+ * This function will save the current interrupt enabled state in ints and then
+ * call the assembly instruction <i>cli</i>.
+ */
+extern inline void BermudaSafeCli(unsigned char *ints);
+
 #define BermudaGetAvrIO() (&io)
 #define AvrIO BermudaGetAvrIO()
+
+/**
+ * \def BermudaIntsRestore(x)
+ * \brief Restore interrupts to the given saved state.
+ *
+ * When interrupts are disabled with BermudaSafeCli(unsigned char *ints), then
+ * you can restore the original state with BermudaIntsRestore(x).
+ */
+#define BermudaIntsRestore(x) (*(AvrIO->sreg) | x)
+
 #ifdef __cplusplus
 }
 #endif

@@ -47,6 +47,23 @@ PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer,
                                                         unsigned char ocm);
 #endif
 
+#if (TIMERS & B1) == B1
+PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+#endif
+
+#if (TIMERS & B10) == B10
+#error No support for timer 1 yet!
+PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
+#endif
+
+#if (TIMERS & B100) == B100
+#error No support for timer 2 yet!
+PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+#endif
+
+void BermudaTimerInit(TIMER *timer, unsigned char waveform,
+                      unsigned char prescaler, unsigned char ocm);
+
 static inline void BermudaTimerDisable(TIMER *timer)
 {
         unsigned short prescaler = timer->prescaler;

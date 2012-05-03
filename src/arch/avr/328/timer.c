@@ -17,8 +17,14 @@
  */
 
 #include <lib/binary.h>
+
 #include <avr/interrupt.h>
+
 #include <util/delay.h>
+
+#include <sys/sched.h>
+#include <sys/thread.h>
+
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/328/timer.h>
@@ -42,27 +48,56 @@ PRIVATE WEAK TIMER *timer0 = NULL;
 void BermudaInitTimer0()
 {
         cli();
-        timer0 = malloc(sizeof(*timer0));
+        timer0 = BermudaHeapAlloc(sizeof(*timer0));
         if(timer0 == NULL)
                 return;
-        
-        timer0->tccr0a = &BermudaGetTCCR0A();
-        timer0->tccr0b = &BermudaGetTCCR0B();
-        timer0->timsk0 = &BermudaGetTIMSK0();
-        timer0->ocr0a  = &BermudaGetOCR0A();
-        
-        /* mode: fast pwm, BOTTOM (0x0) to OCR0A */
-        BermudaTimerSetWaveFormMode(timer0, B111);
 
-        /* set prescaler */
-        BermudaTimerSetPrescaler(timer0, B11);
+        // fast pwm, TOP = OCR0A, prescaler 64, com disconnected
+        BermudaTimer0InitRegs(timer0);
+        BermudaTimerInit(timer0, B111, B11, B0);
         
         /* Set the top to 244 */
-        *(timer0->ocr0a) = 244;
+        *(timer0->output_comp_a) = 244;
         
         /* Enable the overflow interrupt */
-        spb(*timer0->timsk0, TOIE0);
+        spb(*timer0->int_mask, TOIE0);
 }
+
+void BermudaTimerInit(timer, waveform, prescaler, ocm)
+unsigned char waveform, prescaler, ocm;
+TIMER *timer;
+{
+        if(NULL == timer)
+                return;
+        
+        BermudaTimerSetOutputCompareMatch(timer, ocm);
+        BermudaTimerSetPrescaler(timer, prescaler);
+        BermudaTimerSetWaveFormMode(timer, waveform);
+}
+
+#if (TIMERS & B1) == B1
+PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer)
+{
+        timer->controlA      = &BermudaGetTCCR0A();
+        timer->controlB      = &BermudaGetTCCR0B();
+        timer->int_mask      = &BermudaGetTIMSK0();
+        timer->int_flag      = &BermudaGetTIFR0();
+        timer->output_comp_a = &BermudaGetOCR0A();
+        timer->output_comp_b = &BermudaGetOCR0B();
+        timer->countReg      = &BermudaGetTCNT0();
+        return;
+}
+#endif
+
+#if (TIMERS & B10) == B10
+#error No support for timer 1 yet!
+PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
+#endif
+
+#if (TIMERS & B100) == B100
+#error No support for timer 2 yet!
+PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+#endif
 
 #ifdef __LAZY__
 /**
@@ -91,45 +126,45 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
 
         SetPrescaler:
         
-        cpb(*timer->tccr0b, CS00);
-        cpb(*timer->tccr0b, CS01);
-        cpb(*timer->tccr0b, CS02);
+        cpb(*timer->controlB, CS00);
+        cpb(*timer->controlB, CS01);
+        cpb(*timer->controlB, CS02);
         
         timer->prescaler = pres;
         
         switch(pres)
         {
                 case 8:
-                        spb(*timer->tccr0b, CS01);
+                        spb(*timer->controlB, CS01);
                         break;
                         
                 case 64:
-                        spb(*timer->tccr0b, CS00);
-                        spb(*timer->tccr0b, CS01);
+                        spb(*timer->controlB, CS00);
+                        spb(*timer->controlB, CS01);
                         break;
                         
                 case 256:
-                        spb(*timer->tccr0b, CS02);
+                        spb(*timer->controlB, CS02);
                         break;
                         
                 case 1024:
-                        spb(*timer->tccr0b, CS00);
-                        spb(*timer->tccr0b, CS02);
+                        spb(*timer->controlB, CS00);
+                        spb(*timer->controlB, CS02);
                         break;
                 
                 case 0xFD:
-                        spb(*timer->tccr0b, CS00);
-                        spb(*timer->tccr0b, CS01);
-                        spb(*timer->tccr0b, CS02);
+                        spb(*timer->controlB, CS00);
+                        spb(*timer->controlB, CS01);
+                        spb(*timer->controlB, CS02);
                         break;
                         
                 case 0xFE:
-                        spb(*timer->tccr0b, CS01);
-                        spb(*timer->tccr0b, CS02);
+                        spb(*timer->controlB, CS01);
+                        spb(*timer->controlB, CS02);
                         break;
                         
                 case 0xFF: /* a pres of 255 means there will not be a prescaler */
-                        spb(*timer->tccr0b, CS00);
+                        spb(*timer->controlB, CS00);
                         
                 default:
                         break;
@@ -151,8 +186,8 @@ int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
   */
 void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres)
 {
-        *timer->tccr0b &= ~B111; // results in 11111000
-        *timer->tccr0b |= pres & B111;
+        *timer->controlB &= ~B111; // results in 11111000
+        *timer->controlB |= pres & B111;
 }
 #endif
 
@@ -185,22 +220,22 @@ PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
                 bit1 = COM0A1;
         }
         
-        cpb(*timer->tccr0a, bit0);
-        cpb(*timer->tccr0a, bit1);
+        cpb(*timer->controlA, bit0);
+        cpb(*timer->controlA, bit1);
         
         switch(ocm)
         {
                 case 1:
-                        spb(*timer->tccr0a, bit0);
+                        spb(*timer->controlA, bit0);
                         break;
 
                 case 2:
-                        spb(*timer->tccr0a, bit1);
+                        spb(*timer->controlA, bit1);
                         break;
 
                 case 3:
-                        spb(*timer->tccr0a, bit0);
-                        spb(*timer->tccr0a, bit1);
+                        spb(*timer->controlA, bit0);
+                        spb(*timer->controlA, bit1);
                         break;
 
                 default:
@@ -225,8 +260,8 @@ PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(timer, ocm)
 TIMER *timer;
 unsigned char ocm;
 {
-        *timer->tccr0a &= B11110000;
-        *timer->tccr0a |= (ocm & B1111) << 4;
+        *timer->controlA &= B11110000;
+        *timer->controlA |= (ocm & B1111) << 4;
 }
 #endif
 
@@ -248,34 +283,34 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
         BermudaTimerDisable(timer);
         
         /* reset the entire operation mode */
-        cpb(*timer->tccr0a, WGM00);
-        cpb(*timer->tccr0a, WGM01);
-        cpb(*timer->tccr0b, WGM02);
+        cpb(*timer->controlA, WGM00);
+        cpb(*timer->controlA, WGM01);
+        cpb(*timer->controlB, WGM02);
         
         switch(mode)
         {
                 case WFM_PHASE_CORRECT:
-                        spb(*timer->tccr0a, WGM00);
-                        spb(*timer->tccr0b, WGM02);
+                        spb(*timer->controlA, WGM00);
+                        spb(*timer->controlB, WGM02);
                         break;
                 
                 case WFM_PHASE_CORRECT_MAX:
-                        spb(*timer->tccr0a, WGM00);
+                        spb(*timer->controlA, WGM00);
                         break;
                 
                 case WFM_CTC:
-                        spb(*timer->tccr0a, WGM01);
+                        spb(*timer->controlA, WGM01);
                         break;
                 
                 case WFM_FAST_PWM:
-                        spb(*timer->tccr0a, WGM00);
-                        spb(*timer->tccr0a, WGM01);
-                        spb(*timer->tccr0b, WGM02);
+                        spb(*timer->controlA, WGM00);
+                        spb(*timer->controlA, WGM01);
+                        spb(*timer->controlB, WGM02);
                         break;
                 
                 case WFM_FAST_PWM_MAX:
-                        spb(*timer->tccr0a, WGM00);
-                        spb(*timer->tccr0a, WGM01);
+                        spb(*timer->controlA, WGM00);
+                        spb(*timer->controlA, WGM01);
                         break;
                         
                 default: /* normal operation */
@@ -297,19 +332,30 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
  */
 PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 {
-        *timer->tccr0a &= ~B11; // clear WGM00 & WGM01
-        *timer->tccr0b &= ~B1000; // clear WGM02
+        *timer->controlA &= ~B11; // clear WGM00 & WGM01
+        *timer->controlB &= ~B1000; // clear WGM02
         
-        *timer->tccr0a |= mode & B11;
-        *timer->tccr0b |= (mode & B1) << 3;
+        *timer->controlA |= mode & B11;
+        *timer->controlB |= (mode & B1) << 3;
         return;
 }
 #endif
 
-static unsigned long timer_count = 0;
+static short timer_count;
+
 SIGNAL(TIMER0_OVF_vect)
 {
+#ifdef __THREADS__
+        if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
+        {
+                BermudaSchedulerTick();
+                BermudaSchedulerExec();
+                timer_count = 0;
+        }
+#endif
+        
         timer0->tick++;
+        timer_count++;
 }
 
 inline unsigned long BermudaGetTimerCount()

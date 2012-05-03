@@ -68,13 +68,21 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread();
 PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t);
 
 /**
- * \fn BermudaThreadExit(THREAD *t)
- * \brief Exit the given thread.
- * \param t Thread to exit.
+ * \fn BermudaThreadExit()
+ * \brief Exit the current thread.
+ * \todo Make sure the task that the deleted thread is not being used anymore.
  *
  * This function will exit the given thread and delete it from the running list.
  */
-void BermudaThreadExit(THREAD *t);
+void BermudaThreadExit();
+
+/**
+ * \fn BermudaSchedulerStart()
+ * \brief Start the scheduler.
+ *
+ * This function will enable the scheduler and pass control to the thread head.
+ */
+void BermudaSchedulerStart();
 
 /**
  * \fn BermudaSchedulerGetNextRunnable(TRHEAD *head)
@@ -97,6 +105,16 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
 void BermudaSchedulerExec();
 
 /**
+ * \fn BermudaSchedulerTick()
+ * \brief Run the scheduler.
+ * \warning Should only be called from the timer interrupt!
+ * 
+ * This function will run the scheduler. It should be called from the timer
+ * interrupt running at ~1000Hz.
+ */
+void BermudaSchedulerTick();
+
+/**
  * \fn BermudaSchedulerDisable()
  * \brief This function will disable.
  *
@@ -106,5 +124,28 @@ static inline void BermudaSchedulerDisable()
 {
         BermudaSchedulerEnabled = 0;
 }
+
+/**
+ * \fn BermudaSchedulerEnable()
+ * \brief Enable the scheduler.
+ * 
+ * This function will start the scheduler
+ */
+static inline void BermudaSchedulerEnable()
+{
+        BermudaSchedulerEnabled = 1;
+}
+
 __DECL_END
+
+/**
+ * \def BermudaThreadYield()
+ * \brief This will yield the current thread and pass control to the next one.
+ * \warning This has not been tested yet!
+ *
+ * This define calls the function BermudaSchedulerExec, which will execute the
+ * schedule algorithm immediately.
+ */
+#define BermudaThreadYield() BermudaSchedulerExec()
+
 #endif

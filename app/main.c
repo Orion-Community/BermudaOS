@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - BermudaOS stdlib
+ *  BermudaOS - App main
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -15,27 +15,3 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __BERMUDA_H
-#define __BERMUDA_H
-
-#ifdef __cplusplus
-#define __DECL extern "C" {
-#define __DECL_END }
-#else
-#define __DECL
-#define __DECL_END
-#endif
-
-#define __PACK__ __attribute__((packed))
-
-#define PRIVATE __attribute__ ((visibility ("hidden")))
-#define WEAK    __attribute__((weak))
-#define __raw   __attribute__((naked))
-#define __sig   __attribute__((signal))
-
-typedef unsigned char mutex_t;
-
-#include <sys/mem.h>
-
-#endif

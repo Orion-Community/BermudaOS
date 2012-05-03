@@ -17,16 +17,19 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <arch/avr/io.h>
 #include <util/setbaud.h>
 #include <avr/io.h>
+#include <sys/sched.h>
 
 /* PRIVATE functions */
 static void BermudaRedirUARTIO();
 
 int BermudaInitUART()
 {
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
+        
         UBRR0H = UBRRH_VALUE;
         UBRR0L = UBRRL_VALUE;
         
@@ -40,16 +43,24 @@ int BermudaInitUART()
         UCSR0B = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
         
         BermudaRedirUARTIO();
+        
+        BermudaIntsRestore(ints);
         return 0;
 }
 
 int BermudaUARTPutChar(char c, FILE *stream)
 {
+#ifdef __THREADS__
+        BermudaThreadEnterIO(BermudaCurrentThread);
+#endif
         if(c == '\n')
                 BermudaUARTPutChar('\r', stream);
         
         while((UCSR0A & _BV(UDRE0)) == 0);
         UDR0 = c;
+#ifdef __THREADS__
+        BermudaThreadExitIO(BermudaCurrentThread);
+#endif
         return 0;
 }
 

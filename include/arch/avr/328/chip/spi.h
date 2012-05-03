@@ -134,15 +134,6 @@ extern int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len);
 extern unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data);
 
 /**
- * \fn BermudaSpiNativeInit()
- * \brief Bit-banged initialisation
- *
- * This function initializes the SPI alot faster, but can only be used when
- * all other operations are implemented by the application
- */
-extern void BermudaSpiNativeInit();
-
-/**
  * \fn BermudaSpiGetInterface()
  * \brief Return the main SPI interface
  * \return The SPI bus interface

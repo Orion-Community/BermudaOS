@@ -26,7 +26,7 @@ struct timer
         char *name;
         unsigned char id;
         
-        unsigned long tick;
+        unsigned int tick;
         
         /* timer config */
         unsigned short prescaler;
@@ -34,8 +34,8 @@ struct timer
         unsigned short top;
         
         /* I/O registers */
-        volatile unsigned char *tccr0a, *tccr0b, *tcnt0, *ocr0a, *ocr0b, 
-                               *timsk0, *tifr0;
+        volatile unsigned char *controlA, *controlB, *countReg, *output_comp_a,
+                                *output_comp_b, *int_mask, *int_flag;
 } __PACK__;
 typedef struct timer TIMER;
 

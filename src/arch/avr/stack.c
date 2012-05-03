@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __THREADS__
+
 #include <bermuda.h>
 #include <sys/thread.h>
 
@@ -50,7 +52,7 @@ thread_handle_t handle;
         int i = 0;
         for(; i < 31; i++)
                 *(t->sp--) = 0;
-#ifdef __THREAD_DBG__
+#if defined(__THREAD_DBG__) && (__VERBAL__)
         printf("Stack: %p - SP: %p\n", t->stack, t->sp);
 #endif
 }
@@ -63,3 +65,4 @@ void BermudaStackSave(stack_t sp)
         sp += 2;
         BermudaPreviousThread->sp = sp;
 }
+#endif

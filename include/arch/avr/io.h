@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file io.h */
+
 #ifndef __PORT_IO_H
 #define __PORT_IO_H
 
@@ -59,6 +61,24 @@ extern inline unsigned short BermudaReadPGMWord(unsigned short);
 extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
 extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);
 extern unsigned char BermudaDigitalPinRead(unsigned char pin);
+
+/**
+ * \fn BermudaMutexRelease(unsigned char *lock)
+ * \brief Release the mutex lock from <i>lock</i>.
+ * \param lock Lock pointer.
+ * 
+ * This function releases the lock from <i>lock</i> mutually exclusive.
+ */
+extern inline void BermudaMutexRelease(unsigned char *lock);
+
+/**
+ * \fn BermudaMutexEnter(unsigned char *lock)
+ * \brief Enter locking state.
+ * \param lock Lock pointer.
+ * 
+ * This function locks a variable mutually exclusive.
+ */
+extern void BermudaMutexEnter(unsigned char *lock);
 
 #define BermudaGetIOPort(pin) BermudaReadPGMByte((unsigned short) \
                                 BermudaPinToPort+(pin))

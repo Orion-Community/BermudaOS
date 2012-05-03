@@ -17,11 +17,8 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <avr/interrupt.h>
-#include <avr/pgmspace.h>
-
 #include <util/delay.h>
 
 #include <sys/thread.h>
@@ -42,83 +39,53 @@
 #ifdef __THREAD_DBG__
 static THREAD MainT;
 static THREAD *th = NULL;
+static THREAD *th2 = NULL;
 #endif
 
 extern unsigned int __heap_start;
-extern void *__brkval;
-
-struct __freelist {
-  size_t sz;
-  struct __freelist *nx;
-};
-
-/* The head of the free list structure */
-extern struct __freelist *__flp;
-
-/* Calculates the size of the free list */
-int BermudaFreeListSize() {
-        struct __freelist* current;
-        int total = 0;
-
-        for (current = __flp; current; current = current->nx) 
-        {
-                total += 2; /* Add two bytes for the memory block's header  */
-                total += (int) current->sz;
-        }
-
-        return total;
-}
-
-int BermudaFreeMemory() 
-{
-        int free_memory;
-
-        if ((int)__brkval == 0) 
-        {
-                free_memory = ((int)&free_memory) - ((int)&__heap_start);
-        } 
-        else 
-        {
-                free_memory = ((int)&free_memory) - ((int)__brkval);
-                free_memory += BermudaFreeListSize();
-        }
-        return free_memory;
-}
-
-void flash_led(uint8_t count)
-{
-        while (count--)
-        {
-                LED_PORT |= BIT(LED);
-                _delay_ms(100);
-                LED_PORT &= ~BIT(LED);
-                _delay_ms(100);
-        }
-}
 
 #ifdef __THREAD_DBG__
-// #ifndef THREADS
-//         #error Thread debugging not possible without threads
-// #endif
+#ifndef __THREADS__
+        #error Thread debugging not possible without threads
+#endif
 THREAD(TestThread, data)
 {
         unsigned char led = 1;
-        char x = 0;
+        unsigned char x = 0;
+
         while(1)
         {
-                BermudaDigitalPinWrite(13, led);
+                BermudaDigitalPinWrite(12, led);
+                BermudaThreadSleep(200);
                 led ^= 1;
-                _delay_ms(200);
-
                 x++;
                 if((x % 10) == 0)
-                {
-                        BermudaCurrentThread = &MainT;
-                        BermudaPreviousThread = th;
-                        BermudaSwitchTask(MainT.sp);
-                }
-                printf("working, really!\n");
-                        
+                        BermudaThreadExit();
+                
+        }
+}
+
+THREAD(TestThread2, data)
+{
+        int temperature = 0;
+        float raw_temp = 0;
+#ifdef __ADC__
+        struct adc *adc = BermudaGetADC();
+#endif
+   
+        while(1)
+        {
+#ifdef __ADC__
+                raw_temp = adc->read(A0);
+#endif
+                temperature = raw_temp / 1024 * 5000;
+                temperature /= 10;
+#ifdef __VERBAL__
+                printf("Temperature: %i - Free memory: %i\n", temperature,
+                        BermudaHeapAvailable()
+                );
+#endif
+                BermudaThreadSleep(500);
         }
 }
 
@@ -126,35 +93,32 @@ THREAD(TestThread, data)
 THREAD(MainThread, data)
 {
         unsigned char led = 1;
-        char x = 0;
+
         while(1)
         {
                 BermudaDigitalPinWrite(13, led);
+                
                 led ^= 1;
-                _delay_ms(1000);
-
-                x++;
-                if((x % 10) == 0)
-                {
-                        BermudaCurrentThread = th;
-                        BermudaPreviousThread = &MainT;
-                        BermudaSwitchTask(th->sp);
-                }
+                BermudaThreadSleep(500);
         }
 }
 #endif
 
-void setup()
+PRIVATE WEAK void setup()
 {
 #ifdef __THREAD_DBG__
         BermudaSetPinMode(13, OUTPUT);
-        th = malloc(sizeof(*th));
-        BermudaThreadInit(th, TestThread, NULL, 128, malloc(128),
-                          BERMUDA_DEFAULT_PRIO);
+        BermudaSetPinMode(12, OUTPUT);
+        BermudaSetPinMode(A0, INPUT);
+        th = BermudaHeapAlloc(sizeof(*th));
+        th2 = BermudaHeapAlloc(sizeof(*th));
+        BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+        BermudaThreadInit(th2, "Test Thread 2", TestThread2, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerInit(&MainT, &MainThread);
-        printf("Free memory: %i\n", BermudaFreeMemory());
-        BermudaCurrentThread = &MainT;
-        BermudaSwitchTask(MainT.sp);
+        BermudaSchedulerAddThread(th);
+        BermudaSchedulerAddThread(th2);
 #endif
 #ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x58, 0x99);
@@ -162,13 +126,16 @@ void setup()
 }
 
 int main(void)
-{        
+{       
+        BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
         BermudaInitUART();
         BermudaInitTimer0();
+#ifdef __ADC__
         BermudaInitBaseADC();
+#endif
         
 #ifdef __SPI__
-        SPI *spi_if = malloc(sizeof(*spi_if));
+        SPI *spi_if = BermudaHeapAlloc(sizeof(*spi_if));
         BermudaSpiInit(spi_if);
 #ifdef __SPIRAM__
         BermudaSpiRamInit();
@@ -176,7 +143,10 @@ int main(void)
 #endif
         sei();
         setup();
-
+        
+#ifdef __THREADS__
+        BermudaSchedulerStart();
+#endif
         while(1)
         {
 #ifdef __SPIRAM__

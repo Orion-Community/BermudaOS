@@ -17,14 +17,17 @@
  */
 
 /** \file adc.c */
+#ifdef __ADC__
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <avr/io.h>
-#include <lib/binary.h>
 #include <avr/interrupt.h>
+
+#include <lib/binary.h>
 #include <arch/avr/io.h>
 #include <lib/binary.h>
+#include <sys/sched.h>
 
 struct adc BermADC;
 static unsigned char adc_ref = 1; /* default analog reference */
@@ -41,6 +44,9 @@ static THREAD *BermudaADCThread;
  */
 void BermudaInitBaseADC()
 {
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
+        
         struct adc* adc = &BermADC;
         adc->id = 0;
         BermudaInitADC(adc);
@@ -50,7 +56,7 @@ void BermudaInitBaseADC()
 #ifdef THREADS
         BermudaAdcIrqAttatch(adc);
 #endif
-        
+        BermudaIntsRestore(ints);
         return;
 }
 
@@ -86,10 +92,16 @@ struct adc* adc;
 PRIVATE WEAK unsigned short BermudaADCConvert(pin)
 unsigned char pin;
 {
+#ifdef __ARDUINO__
+        pin -= 14;
+#endif
         if((BermudaGetADCSRA() & BIT(ADEN)) == 0)
                 return 0;
         
         struct adc *adc = &BermADC;
+#ifdef __THREADS__
+        BermudaThreadEnterIO(BermudaCurrentThread);
+#endif
         while((*adc->adcsra & BIT(ADSC)) != 0);
         
         /* select input channel */
@@ -99,14 +111,14 @@ unsigned char pin;
         spb(*adc->adcsra, ADSC);
 
         /* wait for it to finish */
-#ifdef THREADS
-        BermudaThreadSleep();
-#else
         while((*adc->adcsra & BIT(ADSC)) != 0);
-#endif
+
         /* finished, get results and return them */
         unsigned char low = *adc->adcl;
         unsigned char high = *adc->adch;
+#ifdef __THREADS__
+        BermudaThreadExitIO(BermudaCurrentThread);
+#endif
         return low | (high << 8);
 }
 
@@ -156,6 +168,7 @@ PRIVATE inline void BermudaAdcDisable(struct adc *adc)
         cpb(*adc->adcsra, ADEN);
 }
 
+#ifdef __LAZY__
 /**
  * \fn BermudaAdcSetPrescaler(ADC *adc)
  * \brief Set the CLK prescaler.
@@ -222,6 +235,26 @@ PRIVATE WEAK int BermudaAdcSetPrescaler(struct adc *adc, unsigned char prescaler
         }
         return 0;
 }
+#else
+/**
+ * \fn BermudaAdcSetPrescaler(ADC *adc)
+ * \brief Set the CLK prescaler.
+ * \param adc ADC to configure.
+ * \param prescaler Prescaler to set.
+ *
+ * prescaler[0] := ADSP0
+ * prescaler[1] := ADSP1
+ * prescaler[2] := ADSP2
+ */
+PRIVATE WEAK int BermudaAdcSetPrescaler(adc, prescaler)
+struct adc *adc;
+unsigned char prescaler;
+{
+        *(adc->adcsra) &= ~B111; // clear all prescaler bits
+        *(adc->adcsra) |= (prescaler & B111);
+        return 0;
+}
+#endif
 
 #ifdef THREADS
 /**
@@ -259,4 +292,5 @@ SIGNAL(ADC_vect)
 {
         return;
 }
-#endif
+#endif /* __THREADS__ */
+#endif /* __ADC__ */

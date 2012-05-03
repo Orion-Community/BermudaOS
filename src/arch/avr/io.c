@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file io.c */
+
 #include <arch/avr/io.h>
 #include <avr/io.h>
 
@@ -30,3 +32,37 @@ inline unsigned char BermudaReadPGMByte(unsigned short addr)
         return result;
 }
 
+/**
+ * \fn BermudaMutexEnter(unsigned char *lock)
+ * \brief Enter locking state.
+ * \param lock Lock pointer.
+ * 
+ * This function locks a variable mutually exclusive.
+ */
+void BermudaMutexEnter(unsigned char *lock)
+{
+        unsigned char test = 0x1;
+        
+        while(test != 0x0)
+        {
+                test  ^= *lock;
+                *lock ^= test;
+                test  ^= *lock;
+        }
+}
+
+/**
+ * \fn BermudaMutexRelease(unsigned char *lock)
+ * \brief Release the mutex lock from <i>lock</i>.
+ * \param lock Lock pointer.
+ * 
+ * This function releases the lock from <i>lock</i> mutually exclusive.
+ */
+inline void BermudaMutexRelease(unsigned char *lock)
+{
+        unsigned char atomic = 0;
+        
+        atomic ^= *lock;
+        *lock  ^= atomic;
+        atomic ^= *lock;
+}

@@ -95,15 +95,21 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 #endif
 
 #if (TIMERS & B100) == B100
-#error No support for timer 2 yet!
+// #error No support for timer 2 yet!
 PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer)
 {
-        
+        timer->controlA      = &BermudaGetTCCR2A();
+        timer->controlB      = &BermudaGetTCCR2B();
+        timer->int_mask      = &BermudaGetTIMSK2();
+        timer->int_flag      = &BermudaGetTIFR2();
+        timer->output_comp_a = &BermudaGetOCR2A();
+        timer->output_comp_b = &BermudaGetOCR2B();
+        timer->countReg      = &BermudaGetTCNT2();
 }
 #endif
 
 #if (TIMERS & B100) == B100
-#error No support for timer 2 yet!
+// #error No support for timer 2 yet!
 PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
                                                      unsigned char sr)
 {

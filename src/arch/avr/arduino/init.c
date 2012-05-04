@@ -50,14 +50,28 @@ extern unsigned int __heap_start;
 #endif
 THREAD(TestThread, data)
 {
-        unsigned char led = 1;
+
         unsigned char x = 0;
+
+#ifdef __SPIRAM__
+        unsigned int rd = 0;
+#else
+        unsigned char led = 1;
+#endif
 
         while(1)
         {
+
+#ifdef __SPIRAM__
+                rd = (unsigned int)BermudaSpiRamReadByte(0x58);
+#ifdef __VERBAL__
+                printf("Data byte readback: %x\n", rd);
+#endif
+#else
                 BermudaDigitalPinWrite(12, led);
-                BermudaThreadSleep(200);
                 led ^= 1;
+#endif
+                BermudaThreadSleep(200);
                 x++;
                 if((x % 10) == 0)
                         BermudaThreadExit();
@@ -67,17 +81,16 @@ THREAD(TestThread, data)
 
 THREAD(TestThread2, data)
 {
-        int temperature = 0;
-        float raw_temp = 0;
 #ifdef __ADC__
         struct adc *adc = BermudaGetADC();
+        int temperature = 0;
+        float raw_temp = 0;
 #endif
    
         while(1)
         {
 #ifdef __ADC__
                 raw_temp = adc->read(A0);
-#endif
                 temperature = raw_temp / 1024 * 5000;
                 temperature /= 10;
 #ifdef __VERBAL__
@@ -85,6 +98,9 @@ THREAD(TestThread2, data)
                         BermudaHeapAvailable()
                 );
 #endif
+#endif
+
+
                 BermudaThreadSleep(1000);
         }
 }
@@ -107,9 +123,6 @@ THREAD(MainThread, data)
 PRIVATE WEAK void setup()
 {
 #ifdef __THREAD_DBG__
-        BermudaSetPinMode(13, OUTPUT);
-        BermudaSetPinMode(12, OUTPUT);
-        BermudaSetPinMode(A0, INPUT);
         th = BermudaHeapAlloc(sizeof(*th));
         th2 = BermudaHeapAlloc(sizeof(*th));
         BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, 
@@ -122,6 +135,10 @@ PRIVATE WEAK void setup()
 #endif
 #ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x58, 0x99);
+#else
+        BermudaSetPinMode(13, OUTPUT);
+        BermudaSetPinMode(12, OUTPUT);
+        BermudaSetPinMode(A0, INPUT);
 #endif
 }
 
@@ -148,16 +165,6 @@ int main(void)
         BermudaSchedulerStart();
 #endif
         while(1)
-        {
-#ifdef __SPIRAM__
-                unsigned int x = 0;
-
-                _delay_ms(20);
-                x = (unsigned int)BermudaSpiRamReadByte(0x58);
-                _delay_ms(20);
-
-                printf("Data byte readback: %x\n", x);
-#endif
-        }
+        {}
         return 0;
 }

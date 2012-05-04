@@ -21,6 +21,8 @@
 #if  defined(__SPI__) || defined(__DOXYGEN__)
 
 #include <bermuda.h>
+#include <sys/thread.h>
+#include <sys/sched.h>
 #include <lib/binary.h>
 #include <avr/interrupt.h>
 #include <arch/avr/io.h>
@@ -402,6 +404,9 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
   */
 PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
 {
+#ifdef __THREADS__
+        BermudaThreadEnterIO(BermudaCurrentThread);
+#endif
         *(spi->spdr) = data;
 #ifndef THREADS
         /* wait for the transfer */
@@ -410,6 +415,9 @@ PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
         BermudaThreadSleep();
 #endif
         unsigned char ret = *(spi->spdr);
+#ifdef __THREADS__
+        BermudaThreadExitIO(BermudaCurrentThread);
+#endif
         return ret;
 }
 

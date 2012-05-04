@@ -34,6 +34,18 @@
 #define BermudaGetTIMSK0() MEM_IO8(0x6E)
 #define BermudaGetTIFR0()  SFR_IO8(0x15)
 
+/* timer 2 */
+#define BermudaGetTCCR2A() MEM_IO8(0xB0)
+#define BermudaGetTCCR2B() MEM_IO8(0xB1)
+
+#define BermudaGetTCNT2() MEM_IO8(0xB2)
+
+#define BermudaGetOCR2A() MEM_IO8(0xB3)
+#define BermudaGetOCR2B() MEM_IO8(0xB4)
+
+#define BermudaGetTIMSK2() MEM_IO8(0x70)
+#define BermudaGetTIFR2()  SFR_IO8(0x17)
+
 #define TIMER2_ASYC_SR MEM_IO8(0xB6)
 #define TIMER2_GEN_TCCR SFR_IO8(0x23)
 
@@ -60,7 +72,7 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 #endif
 
 #if (TIMERS & B100) == B100
-#error No support for timer 2 yet!
+// #error No support for timer 2 yet!
 PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer);
 PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
                                                      unsigned char sr);

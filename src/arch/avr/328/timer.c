@@ -30,6 +30,7 @@
 #include <arch/avr/328/timer.h>
 
 PRIVATE WEAK TIMER *timer0 = NULL;
+PRIVATE WEAK TIMER *timer2 = NULL;
 
 /**
  * \fn BermudaInitTimer0()
@@ -62,6 +63,38 @@ void BermudaInitTimer0()
         /* Enable the overflow interrupt */
         spb(*timer0->int_mask, TOIE0);
 }
+
+#if (TIMERS & B100) == B100
+/**
+ * \fn BermudaInitTimer2()
+ * \brief Initialize timer 2.
+ *
+ * This function initializes timer 2 with the following properties:
+ *
+ * * ISR type:                  Overflow
+ * * Prescaler:                 32
+ * * TOP:                       250
+ * * Generated frequency:       2000Hz
+ *
+ * The main function of this timer is to provide sleep support and generate a
+ * timer feed to the scheduler.
+ */
+void BermudaInitTimer2()
+{
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
+
+        timer2 = BermudaHeapAlloc(sizeof(*timer2));
+        BermudaTimer2InitRegs(timer2);
+        BermudaTimerInit(timer2, B111, B11, B0);
+
+        *(timer2->output_comp_a) = 250;
+        spb(*timer2->int_mask, TOIE2);
+        timer2->tick = 0;
+        
+        BermudaIntsRestore(ints);
+}
+#endif
 
 void BermudaTimerInit(timer, waveform, prescaler, ocm)
 unsigned char waveform, prescaler, ocm;
@@ -360,8 +393,6 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 }
 #endif
 
-static short timer_count;
-
 SIGNAL(TIMER0_OVF_vect)
 {
 #ifdef __THREADS__
@@ -369,15 +400,19 @@ SIGNAL(TIMER0_OVF_vect)
         {
                 BermudaSchedulerTick();
                 BermudaSchedulerExec();
-                timer_count = 0;
         }
 #endif
         
         timer0->tick++;
-        timer_count++;
 }
 
-inline unsigned long BermudaGetTimerCount()
+#if (TIMERS & B100) == B100
+SIGNAL(TIMER2_OVF_vect)
 {
-        return timer_count;
+        if(timer2->tick == 2000)
+        {
+                timer2->tick = 0;
+        }
+        timer2->tick++;
 }
+#endif

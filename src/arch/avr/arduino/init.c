@@ -147,6 +147,10 @@ int main(void)
         BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
         BermudaInitUART();
         BermudaInitTimer0();
+#if (TIMERS & B100) == B100
+        BermudaInitTimer2();
+#endif
+        
 #ifdef __ADC__
         BermudaInitBaseADC();
 #endif

@@ -51,7 +51,22 @@
 
 __DECL
 extern void BermudaInitTimer0();
-extern inline unsigned long BermudaGetTimerCount();
+
+/**
+ * \fn BermudaInitTimer2()
+ * \brief Initialize timer 2.
+ *
+ * This function initializes timer 2 with the following properties:
+ *
+ * * ISR type:                  Overflow
+ * * Prescaler:                 32
+ * * TOP:                       250
+ * * Generated frequency:       2000Hz
+ *
+ * The main function of this timer is to provide sleep support and generate a
+ * timer feed to the scheduler.
+ */
+extern void BermudaInitTimer2();
 
 #ifdef __LAZY__
 PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode);
@@ -73,12 +88,13 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 
 #if (TIMERS & B100) == B100
 // #error No support for timer 2 yet!
+extern void BermudaInitTimer2();
 PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer);
 PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
                                                      unsigned char sr);
 #endif
 
-void BermudaTimerInit(TIMER *timer, unsigned char waveform,
+extern void BermudaTimerInit(TIMER *timer, unsigned char waveform,
                       unsigned char prescaler, unsigned char ocm);
 
 static inline void BermudaTimerDisable(TIMER *timer)

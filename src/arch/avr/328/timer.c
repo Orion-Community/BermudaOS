@@ -395,15 +395,18 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 
 SIGNAL(TIMER0_OVF_vect)
 {
+        timer0->tick++;
 #ifdef __THREADS__
+#ifdef __EVENTS__
+        BermudaEventTick();
+#endif
         if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {
                 BermudaSchedulerTick();
-                BermudaSchedulerExec();
+                BermudaSchedulerExec(); // this function returns from the isr
+                                        // all code below is unreachable
         }
 #endif
-        
-        timer0->tick++;
 }
 
 #if (TIMERS & B100) == B100
@@ -411,6 +414,7 @@ SIGNAL(TIMER2_OVF_vect)
 {
         if(timer2->tick == 2000)
         {
+//                 printf("Second passed\n");
                 timer2->tick = 0;
         }
         timer2->tick++;

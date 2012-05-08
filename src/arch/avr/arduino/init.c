@@ -150,7 +150,7 @@ int main(void)
 #if (TIMERS & B100) == B100
         BermudaInitTimer2();
 #endif
-        
+
 #ifdef __ADC__
         BermudaInitBaseADC();
 #endif

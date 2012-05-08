@@ -76,21 +76,27 @@ typedef struct _event EVENT;
 
 /**
  * \var _event_queue
- * \brief Global event queue.
  *
  * List of all event queues.
  */
 extern EVENT *_event_queue[];
 
 /**
- * \def BermudaGetEventQueue()
- * \brief Get the event queue.
+ * \def BermudaGetEventQueue
  *
  * Get the global list of event queues.
  */
 #define BermudaGetEventQueue() _event_queue
 
+
+/**
+ * \fn BermudaEventTick()
+ * \brief One ms tick.
+ *
+ * This function clocks all events.
+ */
 __DECL
+extern void BermudaEventTick();
 
 /**
  * \fn BermudaEventWait(THREAD **queue, unsigned int mdt)

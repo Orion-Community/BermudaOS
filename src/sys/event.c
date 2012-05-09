@@ -32,6 +32,8 @@
 #include <sys/thread.h>
 #include <sys/event.h>
 
+PRIVATE WEAK void dummy(void *arg);
+
 /**
  * \var _event_queue
  *
@@ -54,6 +56,13 @@ PRIVATE WEAK void BermudaEventInit()
         
         _event_queue = BermudaHeapAlloc(sizeof(*_event_queue)); // allocate one
                                                                 // entry.
+        // initialse parents, childs and next to NULL
+        _event_queue->next = NULL; _event_queue->parent = NULL; _event_queue->child = NULL;
+        _event_queue->type = EVENT_ROOT;
+        _event_queue->max_wait = BERMUDA_EVENT_WAIT_INFINITE;
+        _event_queue->thread = BermudaSchedGetIdleThread();
+        _event_queue->handle = &dummy;
+        _event_queue->arg = NULL;
         return;
 }
 
@@ -65,5 +74,10 @@ PRIVATE WEAK void BermudaEventInit()
  */
 void BermudaEventTick()
 {
+}
+
+ACTION_EVENT(dummy, arg)
+{
+        return;
 }
 #endif /* __EVENTS__ */

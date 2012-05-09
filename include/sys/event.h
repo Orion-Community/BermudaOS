@@ -32,17 +32,30 @@
  */
 #define BERMUDA_EVENT_WAIT_INFINITE 0
 
+/**
+ * \enum _event_type
+ * \typedef EVENT_TYPE
+ * \brief Event type definition.
+ * \see enum _event_type
+ * 
+ * This enumeration defines the different types of events.
+ */
 typedef enum _event_type
 {
+        /** \brief Root event. */
         EVENT_ROOT,
+        /** \brief Virtual event */
         EVENT_VIRTUAL,
-        EVENT_IO,
+        /** \brief I/O event */
+        EVENT_IO, 
+        /** \brief I2C event. Must be a child of an I/O event. */
         EVENT_I2C,
+        /** \brief SPI event. Must be a child of an I/O event. */
         EVENT_SPI,
 } EVENT_TYPE;
 
 /**
- * \typedef action_event
+ * \typedef void (*action_event)(void*)
  * \brief Type for action handlers.
  * 
  * A function of this type will be called when an event triggered.
@@ -140,6 +153,10 @@ extern EVENT *_event_queue;
  * Get the global tree of events.
  */
 #define BermudaGetEventQueue() _event_queue
+
+#define ACTION_EVENT(fn, arg0) \
+PRIVATE WEAK void fn(void * arg0); \
+PRIVATE WEAK void fn(void * arg0)
 
 
 /**

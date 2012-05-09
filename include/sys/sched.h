@@ -136,6 +136,15 @@ static inline void BermudaSchedulerEnable()
         BermudaSchedulerEnabled = 1;
 }
 
+/**
+ * \fn BermudaSchedGetIdleThread()
+ * \brief Get the idle thread.
+ * \see IdleThread
+ * 
+ * Return the idle thread, which does nothing.
+ */
+extern inline THREAD *BermudaSchedGetIdleThread();
+
 __DECL_END
 
 /**

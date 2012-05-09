@@ -34,12 +34,32 @@ THREAD *BermudaPreviousThread = NULL;
 
 static THREAD *BermudaThreadHead = NULL;
 
+/**
+ * \var BermudaIdleThread
+ * \brief The idle thread.
+ * \see IdleThread
+ * 
+ * This thread does exactly what it name states; idle. This threads just runs
+ * an infinite loop. It will be ran when there are no other threads to run (e.g.
+ * when the main thread is the only thread running and is sleeping).
+ */
 static THREAD *BermudaIdleThread = NULL;
+
 static char BermudaIdleThreadStack[64];
 PRIVATE WEAK void IdleThread(void *arg);
-
 unsigned char BermudaSchedulerEnabled = 0;
 
+/**
+ * \fn BermudaSchedGetIdleThread()
+ * \brief Get the idle thread.
+ * \see BermudaIdleThread
+ * 
+ * Return the idle thread, which does nothing.
+ */
+inline THREAD *BermudaSchedGetIdleThread()
+{
+        return BermudaIdleThread;
+}
 
 /**
  * \fn BermudaSchedulerInit(THREAD *th, thread_handle_t handle)

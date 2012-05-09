@@ -80,14 +80,14 @@ extern unsigned char BermudaSpiRead(SPI *spi);
 extern void BermudaSpiWrite(SPI *spi, unsigned char data);
 
 /**
- * \fn BermudaSpiInit(SPI *spi)
+ * \fn BermudaSpiHardwareInit(SPI *spi)
  * \brief Initialise the Serial Peripheral Interface.
  * \param spi SPI instance
  *
  * The parameter <i>spi</i> has to be allocated before passed to this function.
  * When this function returns the SPI is ready to use.
  */
-extern int BermudaSpiInit(SPI *spi);
+extern int BermudaSpiHardwareInit(SPI *spi);
 extern int BermudaSpiDestroy(SPI *spi);
 
 /**

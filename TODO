@@ -1,12 +1,13 @@
 TODO for version 0.0.2
 
-* Fix threads
-* Create an App environment
+* Fix threads [x]
+* Create an App environment [x]
 * perfectionize timers
 
 TODO for version 0.0.3
 
 * Hardware TWI
+* Events
 
 TODO for version 0.0.4
 

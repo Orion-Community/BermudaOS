@@ -30,7 +30,7 @@
 
 #include <sys/sched.h>
 #include <sys/thread.h>
-#include <sys/event.h>
+#include <sys/events/core.h>
 
 PRIVATE WEAK void dummy(void *arg);
 
@@ -76,6 +76,55 @@ void BermudaEventTick()
 {
 }
 
+/**
+ * \fn BermudaEventRootAdd(EVENT *e)
+ * \brief Add an event to the root.
+ * \param e Event to add.
+ * \see BermudaEventAdd
+ * 
+ * The given event <i>e</i> will be added to the childeren of the root event.
+ */
+void BermudaEventRootAdd(EVENT *e)
+{
+        BermudaEventAdd(_event_queue, e);
+}
+
+/**
+ * \fn BermudaEventAdd(EVENT *parent, EVENT *e)
+ * \brief Add an event to the tree.
+ * \param parent Parent node.
+ * \param e      Event to add to the tree.
+ * 
+ * Add the given event <i>e</i> to the tree (as child to the given <i>
+ * parent</i>).
+ */
+PRIVATE WEAK void BermudaEventAdd(EVENT *parent, EVENT *e)
+{
+        if(NULL == parent->child)
+                parent->child = e;
+        else
+        { // iterate trough the childeren of parent
+                EVENT *c = parent->child;
+                for(; c != NULL && c != c->next; c = c->next)
+                {
+                        if(c->next == NULL)
+                        {
+                                c->next = e;
+                                break;
+                        }
+                }
+        }
+        return;
+}
+
+/**
+ * \fn ACTION_EVENT(dummy, arg)
+ * \brief Dummy action event.
+ * 
+ * Preprocesses to: <i>PRIVATE WEAK void dummy(void *arg)</i>. This is the dummy
+ * action event, which will be executed if there is no other action event
+ * available.
+ */
 ACTION_EVENT(dummy, arg)
 {
         return;

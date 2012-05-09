@@ -22,7 +22,7 @@
 
 #include <sys/sched.h>
 #include <sys/thread.h>
-#include <sys/event.h>
+#include <sys/events/core.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>

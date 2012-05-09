@@ -169,6 +169,37 @@ __DECL
 extern void BermudaEventTick();
 
 /**
+ * \fn BermudaEventInit()
+ * \brief Initialise the event frame work.
+ * \see _event_queue
+ * 
+ * This function will initialse the event frame work by allocating the the
+ * event queue.
+ */
+PRIVATE WEAK void BermudaEventInit();
+
+/**
+ * \fn BermudaEventRootAdd(EVENT *e)
+ * \brief Add an event to the root.
+ * \param e Event to add.
+ * \see BermudaEventAdd
+ * 
+ * The given event <i>e</i> will be added to the childeren of the root event.
+ */
+extern void BermudaEventRootAdd(EVENT *e);
+
+/**
+ * \fn BermudaEventAdd(EVENT *parent, EVENT *e)
+ * \brief Add an event to the tree.
+ * \param parent Parent node.
+ * \param e      Event to add to the tree.
+ * 
+ * Add the given event <i>e</i> to the tree (as child to the given <i>
+ * parent</i>).
+ */
+PRIVATE WEAK void BermudaEventAdd(EVENT *parent, EVENT *e);
+
+/**
  * \fn BermudaEventWait(EVENT **queue, unsigned int mdt)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
@@ -188,16 +219,6 @@ extern void BermudaEventWait(EVENT **queue, unsigned int mdt);
  * sched queue.
  */
 extern void BermudaEventPost(EVENT *queue);
-
-/**
- * \fn BermudaEventInit()
- * \brief Initialise the event frame work.
- * \see _event_queue
- * 
- * This function will initialse the event frame work by allocating the the
- * event queue.
- */
-PRIVATE WEAK void BermudaEventInit();
 
 /**
  * \fn signal()

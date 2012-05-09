@@ -20,10 +20,9 @@
 
 #include <avr/interrupt.h>
 
-#include <util/delay.h>
-
 #include <sys/sched.h>
 #include <sys/thread.h>
+#include <sys/event.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>

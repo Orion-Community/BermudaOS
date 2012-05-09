@@ -40,15 +40,23 @@
  */
 struct _event
 {
+//         /**
+//          * \var next
+//          * \brief Next pointer.
+//          * \note NULL means end of list.
+//          * \warning Should never point to itself.
+//          * 
+//          * Pointer to next entry in the list.
+//          */
+//         struct _event *next;
+
         /**
-         * \var next
-         * \brief Next pointer.
-         * \note NULL means end of list.
-         * \warning Should never point to itself.
+         * \brief Maximum time to wait.
          * 
-         * Pointer to next entry in the list.
+         * Maximum time the event should wait. If the event didn't take place,
+         * the event will be deleted.
          */
-        struct _event *next;
+        unsigned int max_wait;
         
         /**
          * \var thread
@@ -65,7 +73,7 @@ struct _event
          * Semaphore counter associated with this event.
          */
         char count;
-}
+};
 
 /**
  * \typedef EVENT
@@ -79,7 +87,7 @@ typedef struct _event EVENT;
  *
  * List of all event queues.
  */
-extern EVENT *_event_queue[];
+extern EVENT **_event_queue;
 
 /**
  * \def BermudaGetEventQueue
@@ -99,7 +107,7 @@ __DECL
 extern void BermudaEventTick();
 
 /**
- * \fn BermudaEventWait(THREAD **queue, unsigned int mdt)
+ * \fn BermudaEventWait(EVENT **queue, unsigned int mdt)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param mdt <i>Maximum Delay Time</i>. Maximum time to wait.
@@ -107,17 +115,27 @@ extern void BermudaEventTick();
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-extern void BermudaEventWait(THREAD **queue, unsigned int mdt);
+extern void BermudaEventWait(EVENT **queue, unsigned int mdt);
 
 /**
- * \fn BermudaEventPost(THREAD *queue)
+ * \fn BermudaEventPost(EVENT *queue)
  * \brief Release the current event and execute the next event in the queue.
  * \param queue Event queue.
  * 
  * Release the lock of the current event and add the next event to the
  * sched queue.
  */
-extern void BermudaEventPost(THREAD *queue);
+extern void BermudaEventPost(EVENT *queue);
+
+/**
+ * \fn BermudaEventInit()
+ * \brief Initialise the event frame work.
+ * \see _event_queue
+ * 
+ * This function will initialse the event frame work by allocating the the
+ * event queue.
+ */
+PRIVATE WEAK void BermudaEventInit();
 
 /**
  * \fn signal()

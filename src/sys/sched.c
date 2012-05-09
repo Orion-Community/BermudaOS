@@ -209,8 +209,8 @@ void BermudaThreadExit()
         if(t->next == NULL && t->prev == NULL)
                 return;
         BermudaSchedulerDeleteThread(t);
-        free(t->stack);
-        free(t);
+        BermudaHeapFree(t->stack);
+        BermudaHeapFree(t);
         BermudaSchedulerExec();
 }
 

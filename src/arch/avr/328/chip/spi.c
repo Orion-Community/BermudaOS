@@ -54,7 +54,7 @@ static THREAD *BermudaSpiThread = NULL;
  * The parameter <i>spi</i> has to be allocated before passed to this function.
  * When this function returns the SPI is ready to use.
  */
-int BermudaSpiInit(SPI *spi)
+int BermudaSpiHardwareInit(SPI *spi)
 {
         unsigned char ints = 0;
         BermudaSafeCli(&ints);

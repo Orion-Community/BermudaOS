@@ -35,9 +35,9 @@
 /**
  * \var _event_queue
  *
- * List of all event queues.
+ * Tree of all events.
  */
-EVENT **_event_queue = NULL;
+EVENT *_event_queue = NULL;
 
 /**
  * \fn BermudaEventInit()

@@ -32,6 +32,23 @@
  */
 #define BERMUDA_EVENT_WAIT_INFINITE 0
 
+typedef enum _event_type
+{
+        EVENT_ROOT,
+        EVENT_VIRTUAL,
+        EVENT_IO,
+        EVENT_I2C,
+        EVENT_SPI,
+} EVENT_TYPE;
+
+/**
+ * \typedef action_event
+ * \brief Type for action handlers.
+ * 
+ * A function of this type will be called when an event triggered.
+ */
+typedef void (*action_event)(void*);
+
 /**
  * \struct _event
  * \brief Event data type.
@@ -40,15 +57,29 @@
  */
 struct _event
 {
-//         /**
-//          * \var next
-//          * \brief Next pointer.
-//          * \note NULL means end of list.
-//          * \warning Should never point to itself.
-//          * 
-//          * Pointer to next entry in the list.
-//          */
-//         struct _event *next;
+        /**
+         * \brief Next pointer.
+         * \note NULL means end of list.
+         * \warning Should never point to itself.
+         * 
+         * Pointer to next entry in the list.
+         */
+        struct _event *next;
+        
+        /**
+         * \brief Parent pointer.
+         * \note A NULL parent means this node is the root node.
+         * 
+         * This points to the parent node.
+         */
+        struct _event *parent;
+        
+        /**
+         * \brief Childeren pointer.
+         * 
+         * Points to the childeren of this node.
+         */
+        struct _event *child;
 
         /**
          * \brief Maximum time to wait.
@@ -59,7 +90,6 @@ struct _event
         unsigned int max_wait;
         
         /**
-         * \var thread
          * \brief Associated thread.
          *
          * The thread associated with this event.
@@ -67,12 +97,27 @@ struct _event
         THREAD *thread;
 
         /**
-         * \var count
-         * \brief Semaphore count.
-         *
-         * Semaphore counter associated with this event.
+         * \brief Event handler.
+         * \note If the handle equals NULL, the action_event of the parent node
+         *       will be executed.
+         * 
+         * This function will be run as a RUN_ONCE_THREAD.
          */
-        char count;
+        action_event handle;
+        
+        /**
+         * \brief Event handler arguments.
+         *
+         * Arguments to pass to the action event handler.
+         */
+        void *arg;
+        
+        /**
+         * \brief Type of this event.
+         * 
+         * A type describing this event.
+         */
+        EVENT_TYPE type;
 };
 
 /**
@@ -85,14 +130,14 @@ typedef struct _event EVENT;
 /**
  * \var _event_queue
  *
- * List of all event queues.
+ * Tree of all events.
  */
-extern EVENT **_event_queue;
+extern EVENT *_event_queue;
 
 /**
  * \def BermudaGetEventQueue
  *
- * Get the global list of event queues.
+ * Get the global tree of events.
  */
 #define BermudaGetEventQueue() _event_queue
 

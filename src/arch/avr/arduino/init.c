@@ -157,7 +157,7 @@ int main(void)
         
 #ifdef __SPI__
         SPI *spi_if = BermudaHeapAlloc(sizeof(*spi_if));
-        BermudaSpiInit(spi_if);
+        BermudaSpiHardwareInit(spi_if);
 #ifdef __SPIRAM__
         BermudaSpiRamInit();
 #endif

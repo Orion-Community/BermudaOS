@@ -20,11 +20,16 @@
 #define __BERMUDA_H
 
 #ifdef __cplusplus
+#include <cplusplus.h>
+
 #define __DECL extern "C" {
 #define __DECL_END }
+
 #else
+
 #define __DECL
 #define __DECL_END
+
 #endif
 
 #define __PACK__ __attribute__((packed))

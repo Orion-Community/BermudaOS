@@ -166,7 +166,6 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread()
  * \brief Delete a given thread from the list.
  * \param t Thread to delete.
  * \warning This function has not been tested yet!
- * \todo Test this function.
  *
  * This function will delete the <i>THREAD t</i> from the linked list and fix
  * the list.
@@ -194,6 +193,42 @@ PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
         t->prev = NULL;
         
         BermudaThreadExitIO(BermudaCurrentThread);
+}
+
+/**
+ * \fn BermudaThreadWait()
+ * \brief Stop the current thread.
+ * \return The current thread.
+ * \see BermudaThreadNotify()
+ * 
+ * The current thread will be stopped imediatly. The execution can be resumed
+ * by calling BermudaThreadNotify.
+ */
+THREAD *BermudaThreadWait()
+{
+        BermudaThreadEnterIO(BermudaCurrentThread);
+        THREAD *ret = BermudaCurrentThread;
+        BermudaThreadExitIO(BermudaCurrentThread);
+        
+        BermudaSchedulerDeleteThread(ret);
+        
+        return ret;
+}
+
+/**
+ * \fn BermudaThreadNotify(THREAD *t)
+ * \brief Notify the given thread.
+ * \param t Thread to notify.
+ * \warning Do not call this function is the thread is not in a waiting state.
+ * \note Waiting state is NOT sleeping.
+ * \see BermudaThreadNotify()
+ * 
+ * The given thread <i>t</i> will be notified and execution of the given thread
+ * will be resumed.
+ */
+void BermudaThreadNotify(THREAD *t)
+{
+        BermudaSchedulerAddThread(t);
 }
 
 /**

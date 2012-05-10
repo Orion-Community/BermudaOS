@@ -16,84 +16,46 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file event.h */
-#ifndef __EVENT_H_
-#define __EVENT_H_
+/** \file core.h */
 
 #include <bermuda.h>
 
-#include <arch/io.h>
-#include <sys/thread.h>
-
 /**
- * \def BERMUDA_EVENT_WAIT_INFINITE
+ * \class Event
+ * \brief Class representing the event objects.
  * 
- * Wait for an event for an infinite amount of time.
+ * Objects of this class are events which can be triggered by other subsystems
+ * and are executable.
  */
-#define BERMUDA_EVENT_WAIT_INFINITE 0
-
-/**
- * \enum _event_type
- * \typedef EVENT_TYPE
- * \brief Event type definition.
- * \see enum _event_type
- * 
- * This enumeration defines the different types of events.
- */
-typedef enum _event_type
+class Event
 {
-        /** \brief Root event. */
-        EVENT_ROOT,
-        /** \brief Virtual event */
-        EVENT_VIRTUAL,
-        /** \brief I/O event */
-        EVENT_IO, 
-        /** \brief I2C event. Must be a child of an I/O event. */
-        EVENT_I2C,
-        /** \brief SPI event. Must be a child of an I/O event. */
-        EVENT_SPI,
-} EVENT_TYPE;
-
-/**
- * \typedef void (*action_event)(void*)
- * \brief Type for action handlers.
- * 
- * A function of this type will be called when an event triggered.
- */
-typedef void (*action_event)(void*);
-
-/**
- * \struct _event
- * \brief Event data type.
- *
- * Definies the event data structure, which can be executed by the scheduler.
- */
-struct _event
-{
+public:
         /**
-         * \brief Next pointer.
-         * \note NULL means end of list.
-         * \warning Should never point to itself.
+         * \fn signal()
+         * \brief Release the semaphore.
          * 
-         * Pointer to next entry in the list.
+         * This function releases the current semaphore.
          */
-        struct _event *next;
+        void signal();
         
         /**
-         * \brief Parent pointer.
-         * \note A NULL parent means this node is the root node.
+         * \fn wait()
+         * \brief Lock the semaphore.
          * 
-         * This points to the parent node.
+         * Lock the current counting semaphore.
          */
-        struct _event *parent;
+        void wait();
         
         /**
-         * \brief Childeren pointer.
+         * \fn GetEventState()
+         * \brief Request the current state of an event.
+         * \return The state of the event.
          * 
-         * Points to the childeren of this node.
+         * This method returns the current state of an event.
          */
-        struct _event *child;
-
+        int  GetEventState();
+        
+private:
         /**
          * \brief Maximum time to wait.
          * 
@@ -132,109 +94,3 @@ struct _event
          */
         EVENT_TYPE type;
 };
-
-/**
- * \typedef EVENT
- * \brief Type definition of struct _event.
- * \see struct _event
- */
-typedef struct _event EVENT;
-
-/**
- * \var _event_queue
- *
- * Tree of all events.
- */
-extern EVENT *_event_queue;
-
-/**
- * \def BermudaGetEventQueue
- *
- * Get the global tree of events.
- */
-#define BermudaGetEventQueue() _event_queue
-
-#define ACTION_EVENT(fn, arg0) \
-PRIVATE WEAK void fn(void * arg0); \
-PRIVATE WEAK void fn(void * arg0)
-
-
-/**
- * \fn BermudaEventTick()
- * \brief One ms tick.
- *
- * This function clocks all events.
- */
-__DECL
-extern void BermudaEventTick();
-
-/**
- * \fn BermudaEventInit()
- * \brief Initialise the event frame work.
- * \see _event_queue
- * 
- * This function will initialse the event frame work by allocating the the
- * event queue.
- */
-PRIVATE WEAK void BermudaEventInit();
-
-/**
- * \fn BermudaEventRootAdd(EVENT *e)
- * \brief Add an event to the root.
- * \param e Event to add.
- * \see BermudaEventAdd
- * 
- * The given event <i>e</i> will be added to the childeren of the root event.
- */
-extern void BermudaEventRootAdd(EVENT *e);
-
-/**
- * \fn BermudaEventAdd(EVENT *parent, EVENT *e)
- * \brief Add an event to the tree.
- * \param parent Parent node.
- * \param e      Event to add to the tree.
- * 
- * Add the given event <i>e</i> to the tree (as child to the given <i>
- * parent</i>).
- */
-PRIVATE WEAK void BermudaEventAdd(EVENT *parent, EVENT *e);
-
-/**
- * \fn BermudaEventWait(EVENT **queue, unsigned int mdt)
- * \brief Wait for an event.
- * \param queue Wait in this queue.
- * \param mdt <i>Maximum Delay Time</i>. Maximum time to wait.
- * 
- * Wait for an event in a specific time for a given amount of time. If you
- * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
- */
-extern void BermudaEventWait(EVENT **queue, unsigned int mdt);
-
-/**
- * \fn BermudaEventPost(EVENT *queue)
- * \brief Release the current event and execute the next event in the queue.
- * \param queue Event queue.
- * 
- * Release the lock of the current event and add the next event to the
- * sched queue.
- */
-extern void BermudaEventPost(EVENT *queue);
-
-/**
- * \fn signal()
- * \brief Release the semaphore.
- * 
- * This function releases the current semaphore.
- */
-PRIVATE WEAK void signal();
-
-/**
- * \fn wait()
- * \brief Lock the semaphore.
- * 
- * Lock the current counting semaphore.
- */
-PRIVATE WEAK void wait();
-__DECL_END
-
-#endif

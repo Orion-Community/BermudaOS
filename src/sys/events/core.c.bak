@@ -32,7 +32,7 @@
 #include <sys/thread.h>
 #include <sys/events/core.h>
 
-PRIVATE WEAK void dummy(void *arg);
+ACTION_EVENT_DECL(dummy, arg);
 
 /**
  * \var _event_queue
@@ -118,6 +118,24 @@ PRIVATE WEAK void BermudaEventAdd(EVENT *parent, EVENT *e)
 }
 
 /**
+ * \fn signal()
+ * \brief Release the semaphore.
+ * \param e Event to release.
+ * 
+ * This function releases the current semaphore.
+ */
+PRIVATE WEAK void signal(EVENT *e, int status)
+{}
+
+THREAD(BermudaEventExec, data)
+{
+        EVENT *e = (EVENT*)data;
+        int status = e->handle(e);
+        signal(e, status);
+        BermudaThreadExit();
+}
+
+/**
  * \fn ACTION_EVENT(dummy, arg)
  * \brief Dummy action event.
  * 
@@ -127,6 +145,6 @@ PRIVATE WEAK void BermudaEventAdd(EVENT *parent, EVENT *e)
  */
 ACTION_EVENT(dummy, arg)
 {
-        return;
+        return 0;
 }
 #endif /* __EVENTS__ */

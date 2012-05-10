@@ -38,7 +38,7 @@ __DECL
  * Initialize the main thread. If <i>stack</i> is NULL, then the current stack
  * pointer will be used.
  */
-void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
+extern void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
 
 /**
  * \fn BermudaSchedulerAddThread(THREAD *t)
@@ -47,7 +47,7 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
  *
  * This function will edit the thread list to add the new thread <i>th</i>.
  */
-void BermudaSchedulerAddThread(THREAD *t);
+extern void BermudaSchedulerAddThread(THREAD *t);
 
 /**
  * \fn BermudaSchedulerGetLastThread()
@@ -74,7 +74,7 @@ PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t);
  *
  * This function will exit the given thread and delete it from the running list.
  */
-void BermudaThreadExit();
+extern void BermudaThreadExit();
 
 /**
  * \fn BermudaSchedulerStart()
@@ -82,7 +82,7 @@ void BermudaThreadExit();
  *
  * This function will enable the scheduler and pass control to the thread head.
  */
-void BermudaSchedulerStart();
+extern void BermudaSchedulerStart();
 
 /**
  * \fn BermudaSchedulerGetNextRunnable(TRHEAD *head)
@@ -102,7 +102,7 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
  * This function is called from the timer interrupt (and thus runs in an interrupt)
  * it should not be called by any other part of the system.
  */
-void BermudaSchedulerExec();
+extern void BermudaSchedulerExec();
 
 /**
  * \fn BermudaSchedulerTick()
@@ -112,7 +112,31 @@ void BermudaSchedulerExec();
  * This function will run the scheduler. It should be called from the timer
  * interrupt running at ~1000Hz.
  */
-void BermudaSchedulerTick();
+extern void BermudaSchedulerTick();
+
+/**
+ * \fn BermudaThreadNotify(THREAD *t)
+ * \brief Notify the given thread.
+ * \param t Thread to notify.
+ * \warning Do not call this function is the thread is not in a waiting state.
+ * \note Waiting state is NOT sleeping.
+ * \see BermudaThreadNotify()
+ * 
+ * The given thread <i>t</i> will be notified and execution of the given thread
+ * will be resumed.
+ */
+extern void BermudaThreadNotify(THREAD *t);
+
+/**
+ * \fn BermudaThreadWait()
+ * \brief Stop the current thread.
+ * \return The current thread.
+ * \see BermudaThreadNotify()
+ * 
+ * The current thread will be stopped imediatly. The execution can be resumed
+ * by calling BermudaThreadNotify.
+ */
+extern THREAD *BermudaThreadWait();
 
 /**
  * \fn BermudaSchedulerDisable()

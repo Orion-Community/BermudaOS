@@ -89,7 +89,6 @@ void BermudaInitTimer2()
 
         *(timer2->output_comp_a) = 250;
         spb(*timer2->int_mask, TOIE2);
-        timer2->tick = 0;
         
         BermudaIntsRestore(ints);
 }
@@ -239,6 +238,7 @@ void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres)
 {
         *timer->controlB &= ~B111; // results in 11111000
         *timer->controlB |= pres & B111;
+        timer->prescaler = pres & B111;
 }
 #endif
 
@@ -394,7 +394,6 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 
 SIGNAL(TIMER0_OVF_vect)
 {
-        timer0->tick++;
 #ifdef __THREADS__
 #ifdef __EVENTS__
         BermudaEventTick();
@@ -411,11 +410,6 @@ SIGNAL(TIMER0_OVF_vect)
 #if (TIMERS & B100) == B100
 SIGNAL(TIMER2_OVF_vect)
 {
-        if(timer2->tick == 2000)
-        {
-//                 printf("Second passed\n");
-                timer2->tick = 0;
-        }
-        timer2->tick++;
+
 }
 #endif

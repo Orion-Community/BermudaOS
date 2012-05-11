@@ -44,13 +44,8 @@ void BermudaSpiRamInit()
         if(NULL == spiram)
                 return;
 
-        if(!BermudaSpiIsInitialized(spiram))
-                return;
-
         BermudaSpiRamDisable();
-
         spi = spiram;
-
         return;
 }
 

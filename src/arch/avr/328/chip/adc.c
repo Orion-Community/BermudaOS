@@ -48,7 +48,6 @@ void BermudaInitBaseADC()
         BermudaSafeCli(&ints);
         
         struct adc* adc = &BermADC;
-        adc->id = 0;
         BermudaInitADC(adc);
         BermudaAdcEnable(adc);
 
@@ -141,7 +140,6 @@ unsigned char aref;
                 return;
 
         *(adc->admux) = (aref << 6);
-        adc->aref = aref;
 }
 
 /**

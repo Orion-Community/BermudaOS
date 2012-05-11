@@ -44,11 +44,6 @@
  */
 PRIVATE WEAK void BermudaEventInit(EVENT *e, EVENT_TYPE type)
 {
-        if(NULL != e)
-                return;
-        
-        e = BermudaHeapAlloc(sizeof(*e)); // allocate one
-                                                                // entry.
         e->type = type;
         e->max_wait = BERMUDA_EVENT_WAIT_INFINITE;
         e->thread = BermudaSchedGetIdleThread();

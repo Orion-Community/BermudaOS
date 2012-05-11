@@ -71,8 +71,6 @@ int BermudaSpiHardwareInit(SPI *spi)
         
         BermudaSpiSetSckMode(spi, 0);
         BermudaSetSpiBitOrder(spi, 0); /* MSB first */
-        spi->name = "spi0";
-        spi->id = 0;
         spi->transact = &BermudaSpiTransmit;
         
 #ifdef THREADS
@@ -127,9 +125,6 @@ int BermudaSpiTransmitBuf(SPI *spi, void *data, size_t len)
 {
         if(NULL == spi || NULL == data)
                 return -1;
-
-        if(!BermudaSpiIsMaster(spi))
-                return -1;
         
         int i = 0;
         for(; i < len; i++)
@@ -162,7 +157,6 @@ unsigned char BermudaSpiTransmit(SPI *spi, unsigned char data)
 PRIVATE inline void BermudaSpiEnable(SPI *spi)
 {
         spb(*spi->spcr, SPE);
-        spi->flags |= (1<<SPI_INIT);
 }
 
 /**
@@ -175,7 +169,6 @@ PRIVATE inline void BermudaSpiEnable(SPI *spi)
 PRIVATE inline void BermudaSpiDisable(SPI *spi)
 {
         cpb(*spi->spcr, SPE);
-        spi->flags &= ~(1<<SPI_INIT);
 }
 
 /**
@@ -269,7 +262,6 @@ PRIVATE WEAK int BermudaSetSckPrescaler(SPI *spi, unsigned char prescaler)
                         break;
         }
         
-        spi->flags |= (X2 << 4);
         return 0;
 }
 
@@ -374,7 +366,6 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
                 BermudaDigitalPinWrite(SS, HIGH);
                 
                 spb(*spi->spcr, MSTR);
-                spi->flags |= 1 << SPI_MODE;
         }
         else
         {
@@ -389,7 +380,6 @@ PRIVATE WEAK void BermudaSetSpiMode(SPI *spi, spi_mode_t mode)
                 BermudaDigitalPinWrite(MISO, LOW);
                 
                 cpb(*spi->spcr, MSTR);
-                spi->flags &= ~( 1 << SPI_MODE);
         }
 }
 
@@ -433,7 +423,6 @@ PRIVATE WEAK unsigned char BermudaSpiTxByte(SPI *spi, unsigned char data)
 PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi)
 {
         spb(*spi->spcr, SPIE);
-        spi->flags |= (1<<SPI_IRQ);
 }
 
 /**
@@ -447,7 +436,6 @@ PRIVATE inline void BermudaAttatchSpiIRQ(SPI *spi)
 PRIVATE inline void BermudaDetachSpiIRQ(SPI *spi)
 {
         cpb(*spi->spcr, SPIE);
-        spi->flags &= ~(1<<SPI_IRQ);
 }
 #endif
 

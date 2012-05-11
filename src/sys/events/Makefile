@@ -7,8 +7,8 @@ LOCAL_LIB               = ../../../include
 TARGET                  = events.o
 ARDUINO_LIBS            =
 
-CSRCS			=
-CPPSRCS                 = core.cpp 
+CSRCS			= core.c
+CPPSRCS                 =
 ASMSRCS                 =
 
 include ../../../make/Makefile.$(BUILDSYS)

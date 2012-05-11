@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Lockable events
+ *  BermudaOS - Linked List class
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,26 +16,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __EVENTS__
-
-#include <stdlib.h>
 #include <bermuda.h>
+#include <lib/list/linkedlist.h>
 
-#include <sys/events/core.h>
-#include <sys/events/event.h>
-#include <sys/thread.h>
-#include <sys/sched.h>
-
-Event::Event()
+template <class T>
+LinkedList<T>::LinkedList()
 {
-        printf("Event has been created\n");
+        this->list = NULL;
 }
 
-extern "C" void BermudaEventDebug()
+template <class T>
+void LinkedList<T>::add(T *data)
 {
-        printf("%u\n", BermudaHeapAvailable());
-        Event *e = new Event();
-        printf("%u\n", BermudaHeapAvailable());
+       if(this->list == NULL)
+               this->list = new LinkedListNode<T>(data);
+       else
+       {
+               LinkedListNode<T> *carriage = this->list;
+               for(; carriage != NULL; carriage = carriage->next());
+       }
 }
 
-#endif
+template <class T>
+LinkedListNode<T>::LinkedListNode(T data)
+{
+        this->data = data;
+        this->next = NULL;
+}
+
+template <class T>
+LinkedListNode<T> *LinkedListNode<T>::GetNext()
+{
+        return this->next;
+}

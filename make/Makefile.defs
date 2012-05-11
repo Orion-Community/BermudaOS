@@ -28,7 +28,7 @@ CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
 LDFLAGS		= -r -Os -m avr5
 CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
 		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU) -ffunction-sections \
-		  -fdata-sections -w
+		  -fdata-sections -w $(STDDEFS)
 ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall -c 
 
 CPPOBJS		= $(CPPSRCS:.cpp=.o)

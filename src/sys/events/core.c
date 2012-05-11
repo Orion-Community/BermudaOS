@@ -32,37 +32,26 @@
 #include <sys/thread.h>
 #include <sys/events/core.h>
 
-ACTION_EVENT_DECL(dummy, arg);
-
-/**
- * \var _event_queue
- *
- * Tree of all events.
- */
-EVENT *_event_queue = NULL;
-
 /**
  * \fn BermudaEventInit()
- * \brief Initialise the event frame work.
- * \see _event_queue
+ * \brief Initialse an event.
+ * \param e The event queue.
+ * \param type The event queue type.
+ * \see struct _event
  * 
  * This function will initialse the event frame work by allocating the the
  * event queue.
  */
-PRIVATE WEAK void BermudaEventInit()
+PRIVATE WEAK void BermudaEventInit(EVENT *e, EVENT_TYPE type)
 {
-        if(NULL != _event_queue)
+        if(NULL != e)
                 return;
         
-        _event_queue = BermudaHeapAlloc(sizeof(*_event_queue)); // allocate one
+        e = BermudaHeapAlloc(sizeof(*e)); // allocate one
                                                                 // entry.
-        // initialse parents, childs and next to NULL
-        _event_queue->next = NULL; _event_queue->parent = NULL; _event_queue->child = NULL;
-        _event_queue->type = EVENT_ROOT;
-        _event_queue->max_wait = BERMUDA_EVENT_WAIT_INFINITE;
-        _event_queue->thread = BermudaSchedGetIdleThread();
-        _event_queue->handle = &dummy;
-        _event_queue->arg = NULL;
+        e->type = type;
+        e->max_wait = BERMUDA_EVENT_WAIT_INFINITE;
+        e->thread = BermudaSchedGetIdleThread();
         return;
 }
 
@@ -74,77 +63,5 @@ PRIVATE WEAK void BermudaEventInit()
  */
 void BermudaEventTick()
 {
-}
-
-/**
- * \fn BermudaEventRootAdd(EVENT *e)
- * \brief Add an event to the root.
- * \param e Event to add.
- * \see BermudaEventAdd
- * 
- * The given event <i>e</i> will be added to the childeren of the root event.
- */
-void BermudaEventRootAdd(EVENT *e)
-{
-        BermudaEventAdd(_event_queue, e);
-}
-
-/**
- * \fn BermudaEventAdd(EVENT *parent, EVENT *e)
- * \brief Add an event to the tree.
- * \param parent Parent node.
- * \param e      Event to add to the tree.
- * 
- * Add the given event <i>e</i> to the tree (as child to the given <i>
- * parent</i>).
- */
-PRIVATE WEAK void BermudaEventAdd(EVENT *parent, EVENT *e)
-{
-        if(NULL == parent->child)
-                parent->child = e;
-        else
-        { // iterate trough the childeren of parent
-                EVENT *c = parent->child;
-                for(; c != NULL && c != c->next; c = c->next)
-                {
-                        if(c->next == NULL)
-                        {
-                                c->next = e;
-                                break;
-                        }
-                }
-        }
-        return;
-}
-
-/**
- * \fn signal()
- * \brief Release the semaphore.
- * \param e Event to release.
- * 
- * This function releases the current semaphore.
- */
-PRIVATE WEAK void signal(EVENT *e, int status)
-{}
-
-THREAD(BermudaEventExec, data)
-{
-        EVENT *e = (EVENT*)data;
-        int status = e->handle(e);
-        signal(e, status);
-        BermudaThreadExit();
-}
-
-/**
- * \fn ACTION_EVENT(dummy, arg)
- * \brief Dummy action event.
- * 
- * Preprocesses to: <i>PRIVATE WEAK void dummy(void *arg)</i>. This is the dummy
- * action event, which will be executed if there is no other action event
- * available.
- */
-ACTION_EVENT(dummy, arg)
-{
-        return 0;
 }
 #endif /* __EVENTS__ */

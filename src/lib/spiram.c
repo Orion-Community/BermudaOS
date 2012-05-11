@@ -38,6 +38,14 @@ void BermudaSpiRamDisable()
         BermudaSpiStop(SS);
 }
 
+/**
+ * \fn BermudaSpiRamInit()
+ * \brief Initialise the SPI ram.
+ * \todo Use high level SPI interface.
+ * \todo Add init check.
+ * 
+ * Initialise the SPI communication to the SPI SRAM chip.
+ */
 void BermudaSpiRamInit()
 {
         SPI *spiram = BermudaSpiGetInterface();

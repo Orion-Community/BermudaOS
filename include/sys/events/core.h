@@ -68,7 +68,7 @@ struct _event
          * 
          * Pointer to the next in the list.
          */
-        struct *_event next;
+        struct _event *next;
         
         /**
          * \brief Event timer.

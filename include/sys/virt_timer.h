@@ -23,6 +23,14 @@
 
 #include <bermuda.h>
 
+struct _vtimer;
+
+/**
+ * \typedef vtimer_callback
+ * \brief Call-back function type for virtual timers.
+ */
+typedef void (*vtimer_callback)(struct _vtimer*, void * arg);
+
 /**
  * \struct _vtimer
  * \brief Virtual timer structure.
@@ -43,7 +51,7 @@ struct _vtimer
          * 
          * Function which will be called each tick.
          */
-        void (*handle)(struct _vtimer, void * arg);
+        void (*handle)(struct _vtimer*, void * arg);
         
         /**
          * \brief Timer tick call-back argument.
@@ -57,17 +65,18 @@ struct _vtimer
          * \brief Timer interval.
          * 
          * The interval of each tick. The base interval (ie. when interval = 1)
-         * is 0.5ms (or 2000Hz).
+         * is 1ms (or 1000Hz).
          */
         unsigned long interval;
         
         /**
-         * \brief Timer ticks left.
+         * \brief Timer flags.
          * 
-         * The amount of ticks left before the timer expires. This member will
-         * be decremented each interval.
+         * Set to BERMUDA_ONE_SHOT to create a timer which will only fire once.
+         * When set to BERMUDA_PERIODIC, it will fire at every interval until
+         * stopped.
          */
-        unsigned long ticks_left; //!< Amount of ticks left
+        unsigned char flags;
 } __PACK__;
 
 /**
@@ -76,6 +85,18 @@ struct _vtimer
  * \see struct _vtimer
  */
 typedef struct _vtimer VTIMER;
+
+/**
+ * \def BERMUDA_ONE_SHOT
+ * \brief One shot timer.
+ */
+#define BERMUDA_ONE_SHOT 1
+
+/**
+ * \def BERMUDA_PERIODIC
+ * \brief Periodic timer.
+ */
+#define BERMUDA_PERIODIC 0
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,6 +110,34 @@ extern "C" {
  * function.
  */
 extern void BermudaVirtualTick();
+
+/**
+ * \fn BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
+                                     unsigned char flags)
+ * \brief Create a new virtual timer.
+ * \param ms Timer interval.
+ * \param fn Function call-back.
+ * \param arg Call-back argument.
+ * \param flags Timer flags. When set to BERMUDA_ONE_SHOT, the timer will only trigger once.
+ * \return NULL when an error occurs. The created timer object on success.
+ * \see _vtimer
+ * 
+ * This function creates a timer and the timer is started immediatly. This function
+ * will return after creation and the timer runs in the back ground.
+ */
+extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
+                                     unsigned char flags);
+
+/**
+ * \fn BermudaVTimerAdd(VTIMER *timer)
+ * \brief Add a new virtual timer to the list.
+ * \param timer The timer to add.
+ * \see _vtimer
+ * 
+ * The given virtual timer will be added to the list of virtual timers. Doing so
+ * will start the timer.
+ */
+PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer);
 
 #ifdef __cplusplus
 }

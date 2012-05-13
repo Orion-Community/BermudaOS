@@ -16,8 +16,49 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file virt_timer.c */
+
 #include <bermuda.h>
 #include <sys/virt_timer.h>
+
+PRIVATE WEAK VTIMER *head = NULL;
+
+VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
+                                     unsigned char flags)
+{
+        VTIMER *timer = BermudaHeapAlloc(sizeof(*timer));
+        if(NULL == timer)
+                return NULL;
+                
+        timer->interval = ms;
+        timer->handle = fn;
+        timer->arg = arg;
+        timer->flags = flags;
+        BermudaVTimerAdd(timer);
+        return timer;
+}
+
+PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
+{
+        timer->next = NULL;
+        
+        if(head == NULL)
+                head = timer;
+        else
+        {
+                VTIMER *c = head;
+                while(c)
+                {
+                        if(NULL == c->next)
+                                break;
+                        
+                        c = c->next;
+                }
+                c->next = timer;
+        }
+        
+        return;
+}
 
 /**
  * \fn BermudaVirtualTick()

@@ -22,7 +22,7 @@
 
 #include <sys/sched.h>
 #include <sys/thread.h>
-#include <sys/events/core.h>
+#include <sys/virt_timer.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
@@ -394,10 +394,8 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 
 SIGNAL(TIMER0_OVF_vect)
 {
+        BermudaVirtualTick();
 #ifdef __THREADS__
-#ifdef __EVENTS__
-        BermudaEventTick();
-#endif
         if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {
                 BermudaSchedulerTick();

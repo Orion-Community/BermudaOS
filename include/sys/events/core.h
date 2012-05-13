@@ -24,6 +24,7 @@
 
 #include <arch/io.h>
 #include <sys/thread.h>
+#include <sys/virt_timer.h>
 
 /**
  * \def BERMUDA_EVENT_WAIT_INFINITE
@@ -63,6 +64,22 @@ typedef int (*action_event)(void*);
 struct _event
 {
         /**
+         * \brief Next pointer.
+         * 
+         * Pointer to the next in the list.
+         */
+        struct *_event next;
+        
+        /**
+         * \brief Event timer.
+         * \see _vtimer
+         * 
+         * This timer will make sure the event returns an error when max_wait
+         * elapses.
+         */
+        VTIMER *timer;
+        
+        /**
          * \brief Maximum time to wait.
          * 
          * Maximum time the event should wait. If the event didn't take place,
@@ -93,24 +110,14 @@ struct _event
 typedef struct _event EVENT;
 
 /**
- * \fn BermudaEventTick()
- * \brief One ms tick.
- *
- * This function clocks all events.
- */
-__DECL
-extern void BermudaEventTick();
-
-/**
- * \fn BermudaEventInit()
+ * \fn BermudaEventCreate()
  * \brief Initialise the event frame work.
  * \see _event_queue
  * 
  * This function will initialse the event frame work by allocating the the
  * event queue.
  */
-PRIVATE WEAK void BermudaEventInit(EVENT *e, EVENT_TYPE type);
-
+__DECL
 /**
  * \fn BermudaEventWait(EVENT *queue, unsigned int mdt)
  * \brief Wait for an event.

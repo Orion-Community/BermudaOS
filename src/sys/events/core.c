@@ -32,31 +32,5 @@
 #include <sys/thread.h>
 #include <sys/events/core.h>
 
-/**
- * \fn BermudaEventInit()
- * \brief Initialse an event.
- * \param e The event queue.
- * \param type The event queue type.
- * \see struct _event
- * 
- * This function will initialse the event frame work by allocating the the
- * event queue.
- */
-PRIVATE WEAK void BermudaEventInit(EVENT *e, EVENT_TYPE type)
-{
-        e->type = type;
-        e->max_wait = BERMUDA_EVENT_WAIT_INFINITE;
-        e->thread = BermudaSchedGetIdleThread();
-        return;
-}
 
-/**
- * \fn BermudaEventTick()
- * \brief One ms tick.
- *
- * This function clocks all events.
- */
-void BermudaEventTick()
-{
-}
 #endif /* __EVENTS__ */

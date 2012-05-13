@@ -53,8 +53,10 @@ thread_handle_t handle;
         for(; i < 31; i++)
                 *(t->sp--) = 0;
 #if defined(__THREAD_DBG__) && (__VERBAL__)
-        printf("Stack: %p - SP: %p\n", t->stack, t->sp);
+        printf("Stack: %p - Param: %p\n", t->stack, t->param);
 #endif
+        t->sp[8] = ((unsigned short)t->param) & 0xFF;
+        t->sp[7] = (((unsigned short)t->param) >> 8) & 0xFF;
 }
 
 void BermudaStackSave(stack_t sp)

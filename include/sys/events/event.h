@@ -47,33 +47,23 @@ extern "C" {
 #endif
 
 /**
- * \fn BermudaEventQueueAdd(EVENT *queue, EVENT *e)
- * \brief Add an event to a queue.
- * \param queue The event queue.
- * \param e The event to add to the queue.
- * 
- * Add the <i>e</i> to the given queue <i>queue</i>.
- */
-PRIVATE WEAK void BermudaEventQueueAdd(EVENT *queue, EVENT *e);
-
-/**
- * \fn BermudaEventWait(EVENT *queue, unsigned int mdt)
+ * \fn BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
- * \param mdt <i>Maximum Delay Time</i>. Maximum time to wait.
+ * \param tmo <i>Time out</i>. Maximum time to wait.
  * 
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-extern void BermudaEventWait(EVENT *queue, unsigned int mdt);
+extern void BermudaEventWait(volatile EVENT *queue, unsigned int tmo);
 
 /**
- * \fn BermudaEventSignal(EVENT *)
+ * \fn BermudaEventSignal(volatile EVENT *)
  * \brief Signal the given event queue.
  * 
  * Signal the given event queue.
  */
-PRIVATE WEAK void BermudaEventSignal(EVENT *);
+extern void BermudaEventSignal(volatile EVENT *);
 
 __DECL_END
 

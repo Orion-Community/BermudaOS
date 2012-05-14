@@ -125,13 +125,11 @@ PRIVATE WEAK void setup()
 #ifdef __THREAD_DBG__
         th = BermudaHeapAlloc(sizeof(*th));
         th2 = BermudaHeapAlloc(sizeof(*th));
-        BermudaThreadInit(th, "Test Thread", TestThread, NULL, 128, 
-                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-        BermudaThreadInit(th2, "Test Thread 2", TestThread2, NULL, 128, 
-                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
         BermudaSchedulerInit(&MainT, &MainThread);
-        BermudaSchedulerAddThread(th);
-        BermudaSchedulerAddThread(th2);
+        BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+        BermudaThreadCreate(th2, "Test Thread 2", TestThread2, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 #endif
 #ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x58, 0x99);

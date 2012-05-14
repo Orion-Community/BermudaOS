@@ -24,6 +24,7 @@
 #include <sys/thread.h>
 
 extern unsigned char BermudaSchedulerEnabled;
+extern THREAD *BermudaThreadHead;
 
 __DECL
 /**
@@ -41,21 +42,21 @@ __DECL
 extern void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
 
 /**
- * \fn BermudaSchedulerAddThread(THREAD *t)
+ * \fn BermudaSchedulerAddThread(THREAD *head, THREAD *t)
  * \brief Add a new thread to the list
  * \param th Thread to add.
  *
  * This function will edit the thread list to add the new thread <i>th</i>.
  */
-extern void BermudaSchedulerAddThread(THREAD *t);
+extern void BermudaSchedulerAddThread(THREAD *head, THREAD *th);
 
 /**
- * \fn BermudaSchedulerGetLastThread()
+ * \fn BermudaSchedulerGetLastThread(THREAD *head)
  * \brief Find the last item of BermudaThreadHead.
  * \return The last entry of the thread list.
  * This function will return the last entry of the thread list.
  */
-PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread();
+PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread(THREAD *head);
 
 /**
  * \fn BermudaSchedulerDeleteThread(THREAD *t)

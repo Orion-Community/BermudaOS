@@ -41,9 +41,46 @@
 
 #define __PACK__ __attribute__((packed))
 
+/**
+ * \def PRIVATE
+ * \brief Hidden visibility.
+ * 
+ * The function is not visible outside of its own compile unit.
+ */
 #define PRIVATE __attribute__ ((visibility ("hidden")))
+
+/**
+ * \def WEAK
+ * \brief Declare a function weak.
+ * 
+ * Weak functions are not marked as global functions. Same as <i>'static'</i>.
+ */
 #define WEAK    __attribute__((weak))
+
+/**
+ * \def PUBLIC
+ * \brief Declare a function public.
+ * 
+ * Function declared public are explicitly marked visible, so other compile units
+ * can access the function.
+ */
+#define PUBLIC  __attribute__((externally_visible))
+
+/**
+ * \def __raw
+ * \brief Raw function.
+ * 
+ * Raw function have no epilogue or prologue. The programmer has to provide them.
+ * This can be useful in ISR's.
+ */
 #define __raw   __attribute__((naked))
+
+/**
+ * \def signal
+ * \brief ISR
+ * 
+ * Declare a function as an ISR.
+ */
 #define __sig   __attribute__((signal))
 
 /**

@@ -33,6 +33,4 @@
 #include <sys/events/event.h>
 
 
-
-
 #endif /* __EVENTS__ */

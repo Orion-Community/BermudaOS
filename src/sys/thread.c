@@ -56,6 +56,25 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
 }
 
 /**
+ * \fn BermudaThreadCreate(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
+ * \brief Create a new thread.
+ * \param t Main thread
+ * \param handle Main handle
+ * \param arg Arguments to the main thread
+ * \param stack_size Size of the stack
+ * \param stack Stack pointer
+ * 
+ * This function will create and start a new thread.
+ */
+void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *arg,
+                                unsigned short stack_size, void *stack,
+                                unsigned char prio)
+{
+        BermudaThreadInit(t, name, handle, arg, stack_size, stack, prio);
+        BermudaSchedulerAddThread(BermudaThreadHead, t);
+}
+
+/**
  * \fn BermudaThreadSleep(unsigned int ms)
  * \brief Sleep a thread.
  * \param ms Time in mili seconds to sleep.

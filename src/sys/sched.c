@@ -32,7 +32,7 @@
 THREAD *BermudaCurrentThread = NULL;
 THREAD *BermudaPreviousThread = NULL;
 
-static THREAD *BermudaThreadHead = NULL;
+THREAD *BermudaThreadHead = NULL;
 
 /**
  * \var BermudaIdleThread
@@ -91,19 +91,19 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
 }
 
 /**
- * \fn BermudaSchedulerAddThread(THREAD *t)
+ * \fn BermudaSchedulerAddThread(THREAD *head, THREAD *t)
  * \brief Add a new thread to the list
  * \param th Thread to add.
  *
  * This function will edit the thread list to add the new thread <i>th</i>.
  */
-void BermudaSchedulerAddThread(THREAD *t)
+void BermudaSchedulerAddThread(THREAD *head, THREAD *t)
 {
         if(NULL == t)
                 return;
         
         BermudaThreadEnterIO(BermudaCurrentThread); // stop the scheduler
-        THREAD *last = BermudaSchedulerGetLastThread();
+        THREAD *last = BermudaSchedulerGetLastThread(head);
 
         last->next = t;
         t->next = NULL;
@@ -113,14 +113,14 @@ void BermudaSchedulerAddThread(THREAD *t)
 }
 
 /**
- * \fn BermudaSchedulerGetLastThread()
+ * \fn BermudaSchedulerGetLastThread(THREAD *head)
  * \brief Find the last item of BermudaThreadHead.
  * \return The last entry of the thread list.
  * This function will return the last entry of the thread list.
  */
-PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread()
+PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread(THREAD *head)
 {
-        THREAD *carriage = BermudaThreadHead;
+        THREAD *carriage = head;
         for(; carriage != NULL && carriage != carriage->next; carriage =
                                                                 carriage->next)
         {
@@ -198,7 +198,7 @@ THREAD *BermudaThreadWait()
  */
 void BermudaThreadNotify(THREAD *t)
 {
-        BermudaSchedulerAddThread(t);
+        BermudaSchedulerAddThread(BermudaThreadHead, t);
 }
 
 /**

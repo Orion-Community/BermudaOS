@@ -16,6 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** 
+ * \file bermuda.h 
+ * \brief BermudaOS standard library header.
+ * 
+ * This header contains all basic defines, functions and types.
+ */
+
 #ifndef __BERMUDA_H
 #define __BERMUDA_H
 
@@ -39,6 +46,10 @@
 #define __raw   __attribute__((naked))
 #define __sig   __attribute__((signal))
 
+/**
+ * \typedef mutex_t
+ * \brief Mutual exclusion type.
+ */
 typedef unsigned char mutex_t;
 
 #include <sys/mem.h>

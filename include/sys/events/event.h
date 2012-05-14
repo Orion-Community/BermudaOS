@@ -28,86 +28,23 @@
 
 /**
  * \def BERMUDA_EVENT_WAIT_INFINITE
+ * \brief Wait infinite.
  * 
- * Wait for an event for an infinite amount of time.
+ * The thread will wait infinite for a passing event.
  */
 #define BERMUDA_EVENT_WAIT_INFINITE 0
 
 /**
- * \enum _event_type
- * \typedef EVENT_TYPE
- * \brief Event type definition.
- * \see enum _event_type
- * 
- * This enumeration defines the different types of events.
- */
-typedef enum _event_type
-{
-        BERMUDA_EVENT_TYPE,
-        BERMUDA_ACTION_EVENT_TYPE
-} EVENT_TYPE;
-
-/**
- * \typedef int (*action_event)(void*)
- * \brief Type for action handlers.
- * 
- * A function of this type will be called when an event triggered.
- */
-typedef int (*action_event)(void*);
-
-/**
- * \struct _event
- * \brief Event data type.
- *
- * Definies the event data structure, which can be executed by the scheduler.
- */
-struct _event
-{
-        /**
-         * \brief Next pointer.
-         * 
-         * Pointer to the next in the list.
-         */
-        struct _event *next;
-        
-        /**
-         * \brief Event timer.
-         * \see _vtimer
-         * 
-         * This timer will make sure the event returns an error when max_wait
-         * elapses.
-         */
-        VTIMER *timer;
-        
-        /**
-         * \brief Maximum time to wait.
-         * 
-         * Maximum time the event should wait. If the event didn't take place,
-         * the event will be deleted.
-         */
-        unsigned int max_wait;
-        
-        /**
-         * \brief Associated thread.
-         *
-         * The thread associated with this event.
-         */
-        THREAD *thread;
-        
-        /**
-         * \brief Type of this event.
-         * 
-         * A type describing this event.
-         */
-        EVENT_TYPE type;
-};
-
-/**
  * \typedef EVENT
- * \brief Type definition of struct _event.
- * \see struct _event
+ * \brief Event type.
+ * 
+ * Events are nothing more than a list of threads, typed as void pointers.
  */
-typedef struct _event EVENT;
+typedef void* EVENT;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * \fn BermudaEventQueueAdd(EVENT *queue, EVENT *e)
@@ -117,11 +54,10 @@ typedef struct _event EVENT;
  * 
  * Add the <i>e</i> to the given queue <i>queue</i>.
  */
-__DECL
 PRIVATE WEAK void BermudaEventQueueAdd(EVENT *queue, EVENT *e);
 
 /**
- * \fn BermudaEventWait(EVENT **queue, unsigned int mdt)
+ * \fn BermudaEventWait(EVENT *queue, unsigned int mdt)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param mdt <i>Maximum Delay Time</i>. Maximum time to wait.
@@ -129,17 +65,16 @@ PRIVATE WEAK void BermudaEventQueueAdd(EVENT *queue, EVENT *e);
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-extern void BermudaEventWait(EVENT **queue, unsigned int mdt);
+extern void BermudaEventWait(EVENT *queue, unsigned int mdt);
 
 /**
- * \fn signal()
+ * \fn BermudaEventSignal(EVENT *)
  * \brief Signal the given event queue.
  * 
  * Signal the given event queue.
  */
-PRIVATE WEAK void BermudaEventSignal(EVENT **);
+PRIVATE WEAK void BermudaEventSignal(EVENT *);
 
-extern void BermudaEventDebug();
 __DECL_END
 
 #endif

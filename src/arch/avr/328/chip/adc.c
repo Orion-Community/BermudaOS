@@ -17,7 +17,7 @@
  */
 
 /** \file adc.c */
-#ifdef __ADC__
+#if defined(__ADC__) || defined(__DOXYGEN__)
 
 #include <stdlib.h>
 #include <stdio.h>

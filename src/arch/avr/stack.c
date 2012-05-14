@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __THREADS__
-
+#if defined(__THREADS__) || defined(__DOXYGEN__)
 #include <bermuda.h>
 #include <sys/thread.h>
 

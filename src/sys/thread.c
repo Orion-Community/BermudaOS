@@ -17,7 +17,7 @@
  */
 
 /** \file thread.c */
-#ifdef __THREADS__
+#if defined(__THREADS__) || defined(__DOXYGEN__)
 #include <stdlib.h>
 
 #include <arch/io.h>
@@ -78,6 +78,15 @@ void BermudaThreadSleep(unsigned int ms)
         return;
 }
 
+/**
+ * \fn BermudaThreadTimeout(VTIMER *timer, void *arg)
+ * \brief Thread sleep timeout.
+ * \param timer Timer object.
+ * \param arg Thread pointer.
+ * 
+ * This function is called by virtual timers on sleeping threads. The sleep_time
+ * member will be decremented by one each run.
+ */
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg)
 {
         THREAD *t = (THREAD*)arg;

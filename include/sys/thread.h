@@ -69,23 +69,33 @@ typedef enum
 /**
   * \struct struct thread
   * \brief Describes the state of a thread
+  * 
+  * The thread information structure.
   */
 struct thread
 {
         /**
          * \brief Next pointer.
+         * 
+         * Pointer to the next entry in the list.
          */
+        
         struct thread *next;
+        
         /**
          * \brief Previous pointer
+         * 
+         * Pointer to the previous entry in the list.
          */
         struct thread *prev;
+        
         /**
          * \brief Name of the thread.
          * 
          * This value identifies the thread('s purpose).
          */
         char *name;
+        
         /**
          * \brief Pointer to the end of the stack.
          * 
@@ -93,22 +103,26 @@ struct thread
          * <i>stack</i> - <i>stack_size</i> == <i>stack_start</i>
          */
         unsigned char *stack;            /* start of the stack */
+        
         /**
          * \brief The stack pointer.
          * 
          * Pointer to the current location of the stack.
          */
         unsigned char *sp;      /* stack pointer */
+        
         /**
          * \brief Size of the stack.
          */
         unsigned short stack_size;
+        
         /**
          * \brief Thread parameter.
          * 
          * Parameter passed to the thread.
          */
         void *param;            /* thread parameter */
+        
         /**
          * \brief Thread priority.
          * \see BERMUDA_DEFAULT_PRIO
@@ -123,12 +137,14 @@ struct thread
          * This members tells the scheduler how much time the thread has to sleep.
          */
         unsigned int sleep_time;
+        
         /**
          * \brief Sleep timer.
          * 
          * The timer which clocks this thread when it is asleep.
          */
         VTIMER *th_timer;
+        
         /**
          * \brief Flag member.
          * 
@@ -138,14 +154,41 @@ struct thread
                               * [0] If one, stop scheduling, IO is performing
                               * [1-2] thread_state_t
                               */
-} __attribute__((packed));
+} __PACK__;
+
+/**
+ * \typedef THREAD
+ * \brief Type definition of a thread.
+ */
 typedef struct thread THREAD;
 
+/**
+ * \fn BermudaSwitchTask(void *sp)
+ * \brief Switch context.
+ * \param sp New stack pointer.
+ * \warning May only be called from ISR context or by the scheduling algorithm.
+ * 
+ * This function switches the thread context.
+ */
 __DECL
+extern void BermudaSwitchTask(void *sp);
+
+/**
+ * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
+ * \brief Initialize the scheduler with main thread.
+ * \param t Main thread
+ * \param handle Main handle
+ * \param arg Arguments to the main thread
+ * \param stack_size Size of the stack
+ * \param stack Stack pointer
+ * 
+ * Initialize the main thread. If <i>stack</i> is NULL, then the current stack
+ * pointer will be used.
+ */
 extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, 
                              void *arg, unsigned short stack_size, void *stack,
                                 unsigned char prio);
-extern void BermudaSwitchTask(void *sp);
+
 
 /**
  * \fn BermudaThreadSleep(unsigned int ms)

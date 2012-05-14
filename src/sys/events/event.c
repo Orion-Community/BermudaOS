@@ -18,7 +18,7 @@
 
 /** \file event.c */
 
-#ifdef __EVENTS__
+#if defined(__EVENTS__) || defined(__DOXYGEN__)
 
 #ifndef __THREADS__
 #       error Handling of events is not possible without threading.
@@ -31,6 +31,8 @@
 #include <sys/sched.h>
 #include <sys/thread.h>
 #include <sys/events/event.h>
+
+
 
 
 #endif /* __EVENTS__ */

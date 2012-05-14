@@ -17,7 +17,7 @@
  */
 
 /** \file sched.c */
-#ifdef __THREADS__
+#if defined(__THREADS__) || defined(__DOXYGEN__)
 
 #include <stdlib.h>
 #include <bermuda.h>

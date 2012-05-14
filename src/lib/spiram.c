@@ -17,7 +17,7 @@
  */
 
 /** \file spiram.c */
-#if defined(__SPI__) && defined(__SPIRAM__)
+#if (defined(__SPI__) && defined(__SPIRAM__)) || defined(__DOXYGEN__)
 
 #include <stdlib.h>
 #include <arch/spi.h>

@@ -70,6 +70,15 @@ struct _vtimer
         unsigned long interval;
         
         /**
+         * \brief Timer ticks.
+         * \see interval
+         * 
+         * The amount of counted ticks. Each interval, this member will be increased
+         * by one.
+         */
+        unsigned long ticks;
+        
+        /**
          * \brief Timer flags.
          * 
          * Set to BERMUDA_ONE_SHOT to create a timer which will only fire once.

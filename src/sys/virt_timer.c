@@ -60,6 +60,33 @@ PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
         return;
 }
 
+void BermudaTimerDestroy(VTIMER *timer)
+{
+        if(head != NULL)
+                BermudaHeapFree(timer);
+        else
+        {
+               VTIMER *c = head;
+               VTIMER *prev = NULL;
+               while(c)
+               {
+                       if(c == timer)
+                       {
+                               prev->next = c->next;
+                               break;
+                       }
+                       if(NULL == c->next)
+                               break; // node wasn't found
+                       
+                       prev = c;
+                       c = c->next;
+               }
+               BermudaHeapFree(timer);
+        }
+        
+        return;
+}
+
 /**
  * \fn BermudaVirtualTick()
  * \brief Virtual timer tick.
@@ -69,5 +96,21 @@ PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
  */
 void BermudaVirtualTick()
 {
+        if(head == NULL)
+                return;
         
+        VTIMER *c = head;
+        while(c)
+        {
+                c->ticks++;
+                if((c->ticks % c->interval) == 0)
+                        c->handle(c, c->arg);
+                
+                if(NULL == c->next)
+                        break;
+                else if(c != c->next)
+                        c = c->next;
+                else
+                        break;
+        }
 }

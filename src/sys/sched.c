@@ -132,22 +132,23 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread(THREAD *head)
 }
 
 /**
- * \fn BermudaSchedulerDeleteThread(THREAD *t)
+ * \fn BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t)
  * \brief Delete a given thread from the list.
  * \param t Thread to delete.
+ * \param queue Thread queue.
  * \warning This function has not been tested yet!
  *
  * This function will delete the <i>THREAD t</i> from the linked list and fix
  * the list.
  */
-PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t)
+PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t)
 {
         BermudaThreadEnterIO(BermudaCurrentThread);
 
         if(t->prev == NULL) // we're at the list head
         {
                 t->next->prev = NULL;
-                BermudaThreadHead = t->next;
+                *queue = t->next;
         }
         else if(t->next == NULL) // we're at the tail of the list
         {
@@ -180,7 +181,7 @@ THREAD *BermudaThreadWait()
         THREAD *ret = BermudaCurrentThread;
         BermudaThreadExitIO(BermudaCurrentThread);
         
-        BermudaSchedulerDeleteThread(ret);
+        BermudaThreadQueueRemove(&BermudaThreadHead, ret);
         
         return ret;
 }
@@ -213,7 +214,7 @@ void BermudaThreadExit()
         THREAD *t = BermudaCurrentThread;
         if(t->next == NULL && t->prev == NULL)
                 return;
-        BermudaSchedulerDeleteThread(t);
+        BermudaThreadQueueRemove(&BermudaThreadHead, t);
         BermudaHeapFree(t->stack);
         BermudaHeapFree(t);
         BermudaSchedulerExec();

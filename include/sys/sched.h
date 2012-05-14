@@ -59,14 +59,16 @@ extern void BermudaSchedulerAddThread(THREAD *head, THREAD *th);
 PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread(THREAD *head);
 
 /**
- * \fn BermudaSchedulerDeleteThread(THREAD *t)
+ * \fn BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t)
  * \brief Delete a given thread from the list.
  * \param t Thread to delete.
+ * \param queue Thread queue.
+ * \warning This function has not been tested yet!
  *
  * This function will delete the <i>THREAD t</i> from the linked list and fix
  * the list.
  */
-PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t);
+PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t);
 
 /**
  * \fn BermudaThreadExit()

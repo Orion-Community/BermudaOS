@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file core.h */
+/** \file event.h */
 #ifndef __EVENT_H_
 #define __EVENT_H_
 

@@ -43,12 +43,11 @@ PRIVATE WEAK int fn(void * arg0);
 struct _action_event
 {
         /**
-         * \brief Base event.
+         * \brief Next pointer.
          * 
-         * The event which contains all basic event information. The action event
-         * will extend this structure.
+         * Pointer to the next node in the action event list/queue.
          */
-        EVENT event;
+        struct _action_event *next;
 
         /**
          * \brief Event handler.
@@ -65,6 +64,13 @@ struct _action_event
          * Arguments to pass to the action event handler.
          */
         void *arg;
+        
+        /**
+         * \brief Associated thread.
+         * 
+         * The thread which is associated with this action event.
+         */
+        THREAD *thread;
 };
 
 #endif

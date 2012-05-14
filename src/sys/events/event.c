@@ -30,7 +30,7 @@
 
 #include <sys/sched.h>
 #include <sys/thread.h>
-#include <sys/events/core.h>
+#include <sys/events/event.h>
 
 
 #endif /* __EVENTS__ */

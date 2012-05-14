@@ -7,7 +7,7 @@ LOCAL_LIB               = ../../../include
 TARGET                  = events.o
 ARDUINO_LIBS            =
 
-CSRCS			= core.c
+CSRCS			= event.c
 CPPSRCS                 =
 ASMSRCS                 =
 

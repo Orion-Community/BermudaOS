@@ -23,7 +23,6 @@
 
 #include <sys/thread.h>
 #include <sys/sched.h>
-#include <sys/events/core.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>

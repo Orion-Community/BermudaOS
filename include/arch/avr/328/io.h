@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file io.h */
+
 #ifndef __IO328_H
 #define __IO328_H
 
@@ -80,7 +82,8 @@ extern inline void BermudaSafeCli(unsigned char *ints);
  * When interrupts are disabled with BermudaSafeCli(unsigned char *ints), then
  * you can restore the original state with BermudaIntsRestore(x).
  */
-#define BermudaIntsRestore(x) (*(AvrIO->sreg) | x)
+#define BermudaIntsRestore(x) (*(AvrIO->sreg) | x); \
+                              x = 0
 
 #ifdef __cplusplus
 }

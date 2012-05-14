@@ -29,9 +29,31 @@
 #include <sys/thread.h>
 #include <sys/mem.h>
 
+/**
+ * \var BermudaCurrentThread
+ * \brief Current running thread.
+ * 
+ * All actions on the currently running thread should be done atomicly, since
+ * the scheduler can change the location where this pointer points to.
+ */
 THREAD *BermudaCurrentThread = NULL;
+
+/**
+ * \var BermudaPreviousThread
+ * \brief Previous thread.
+ * \note Actions on and or with BermudaPreviousThread should be atommicly.
+ * \see BermudaCurrentThread
+ * 
+ * Pointer to the thread which ran before BermudaCurrentThread.
+ */
 THREAD *BermudaPreviousThread = NULL;
 
+/**
+ * \var BermudaThreadHead
+ * \brief Scheduling queue head.
+ * 
+ * Root of the scheduling queue.
+ */
 THREAD *BermudaThreadHead = NULL;
 
 /**
@@ -45,8 +67,30 @@ THREAD *BermudaThreadHead = NULL;
  */
 static THREAD *BermudaIdleThread = NULL;
 
+/**
+ * \var BermudaIdleThreadStack
+ * \brief Stack for the idle thread.
+ * 
+ * Allocated space for the stack of the idle thread.
+ */
 static char BermudaIdleThreadStack[64];
+
+/**
+ * \fn IdleThread(void *arg)
+ * \brief Idle thread handler.
+ * 
+ * When there are no other threads ready to run, the scheduler will automaticly
+ * execute this thread, until another thread is ready to run.
+ */
 PRIVATE WEAK void IdleThread(void *arg);
+
+/**
+ * \var BermudaSchedulerEnabled
+ * \brief Enable boolean.
+ * 
+ * When set to 0 the scheduler will not run. When set to 1 the scheduler will run
+ * and (try to) switch tasks every interval.
+ */
 unsigned char BermudaSchedulerEnabled = 0;
 
 /**
@@ -100,9 +144,6 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
  */
 PUBLIC void BermudaThreadQueueAdd(THREAD *volatile*head, THREAD *t)
 {
-        if(NULL == t)
-                return;
-        
         BermudaThreadEnterIO(BermudaCurrentThread); // stop the scheduler
         if(*head == NULL)
         {

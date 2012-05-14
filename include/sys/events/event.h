@@ -35,6 +35,15 @@
 #define BERMUDA_EVENT_WAIT_INFINITE 0
 
 /**
+ * \def SIGNALED
+ * \brief Signaled state.
+ * 
+ * A queue will have the signaled state when an event is posted to the queue
+ * when there are no events waiting.
+ */
+#define SIGNALED ((void*)-1)
+
+/**
  * \typedef EVENT
  * \brief Event type.
  * 

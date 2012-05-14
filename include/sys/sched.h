@@ -25,6 +25,18 @@
 
 extern unsigned char BermudaSchedulerEnabled;
 extern THREAD *BermudaThreadHead;
+extern THREAD *BermudaCurrentThread;
+extern THREAD *BermudaPreviousThread;
+
+/**
+ * \def BermudaThreadYield()
+ * \brief This will yield the current thread and pass control to the next one.
+ * \warning This has not been tested yet!
+ *
+ * This define calls the function BermudaSchedulerExec, which will execute the
+ * schedule algorithm immediately.
+ */
+#define BermudaThreadYield() BermudaSchedulerExec()
 
 __DECL
 /**
@@ -134,7 +146,7 @@ extern THREAD *BermudaThreadWait();
 
 /**
  * \fn BermudaSchedulerDisable()
- * \brief This function will disable.
+ * \brief Disable the scheduler.
  *
  * This function will stop the scheduler and pass control to the main thread.
  */
@@ -164,15 +176,5 @@ static inline void BermudaSchedulerEnable()
 extern inline THREAD *BermudaSchedGetIdleThread();
 
 __DECL_END
-
-/**
- * \def BermudaThreadYield()
- * \brief This will yield the current thread and pass control to the next one.
- * \warning This has not been tested yet!
- *
- * This define calls the function BermudaSchedulerExec, which will execute the
- * schedule algorithm immediately.
- */
-#define BermudaThreadYield() BermudaSchedulerExec()
 
 #endif

@@ -43,7 +43,26 @@
  */
 PUBLIC void BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
 {
+        unsigned char ints = 0;
+        THREAD *th;
         
+        // get queue root
+        BermudaSafeCli(&ints);
+        th = *queue;
+        BermudaIntsRestore(ints);
+        
+        if(th == SIGNALED)
+        {
+                BermudaSafeCli(&ints);
+                *queue = 0;
+                BermudaIntsRestore(ints);
+                return 0;
+        }
+        
+        // if the thread is not signaled
+        BermudaThreadQueueRemove(&BermudaThreadHead, BermudaCurrentThread);
+        BermudaThreadQueueAdd((THREAD**)queue, BermudaCurrentThread);
+               
 }
 
 

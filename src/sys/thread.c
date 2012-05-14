@@ -71,7 +71,7 @@ void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *ar
                                 unsigned char prio)
 {
         BermudaThreadInit(t, name, handle, arg, stack_size, stack, prio);
-        BermudaSchedulerAddThread(BermudaThreadHead, t);
+        BermudaThreadQueueAdd(&BermudaThreadHead, t);
 }
 
 /**

@@ -91,24 +91,31 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
 }
 
 /**
- * \fn BermudaSchedulerAddThread(THREAD *head, THREAD *t)
+ * \fn BermudaThreadQueueAdd(THREAD *volatile *head, THREAD *t)
  * \brief Add a new thread to the list
- * \param th Thread to add.
+ * \param t Thread to add.
+ * \param head The thread queue.
  *
  * This function will edit the thread list to add the new thread <i>th</i>.
  */
-void BermudaSchedulerAddThread(THREAD *head, THREAD *t)
+PUBLIC void BermudaThreadQueueAdd(THREAD *volatile*head, THREAD *t)
 {
         if(NULL == t)
                 return;
         
         BermudaThreadEnterIO(BermudaCurrentThread); // stop the scheduler
-        THREAD *last = BermudaSchedulerGetLastThread(head);
+        if(*head == NULL)
+        {
+                *head = t;
+        }
+        else
+        {
+                THREAD *last = BermudaSchedulerGetLastThread(*head);
+                last->next = t;
+                t->next = NULL;
+                t->prev = last;
+        }
 
-        last->next = t;
-        t->next = NULL;
-        t->prev = last;
-        
         BermudaThreadExitIO(BermudaCurrentThread); // continue scheduling
 }
 
@@ -199,7 +206,7 @@ THREAD *BermudaThreadWait()
  */
 void BermudaThreadNotify(THREAD *t)
 {
-        BermudaSchedulerAddThread(BermudaThreadHead, t);
+        BermudaThreadQueueAdd(&BermudaThreadHead, t);
 }
 
 /**

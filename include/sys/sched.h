@@ -42,13 +42,14 @@ __DECL
 extern void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
 
 /**
- * \fn BermudaSchedulerAddThread(THREAD *head, THREAD *t)
+ * \fn BermudaThreadQueueAdd(THREAD *volatile *head, THREAD *t)
  * \brief Add a new thread to the list
- * \param th Thread to add.
+ * \param t Thread to add.
+ * \param head The thread queue.
  *
  * This function will edit the thread list to add the new thread <i>th</i>.
  */
-extern void BermudaSchedulerAddThread(THREAD *head, THREAD *th);
+extern void BermudaThreadQueueAdd(THREAD *volatile*head, THREAD *t);
 
 /**
  * \fn BermudaSchedulerGetLastThread(THREAD *head)

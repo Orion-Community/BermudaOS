@@ -110,16 +110,18 @@ struct _event
 typedef struct _event EVENT;
 
 /**
- * \fn BermudaEventCreate()
- * \brief Initialise the event frame work.
- * \see _event_queue
+ * \fn BermudaEventQueueAdd(EVENT *queue, EVENT *e)
+ * \brief Add an event to a queue.
+ * \param queue The event queue.
+ * \param e The event to add to the queue.
  * 
- * This function will initialse the event frame work by allocating the the
- * event queue.
+ * Add the <i>e</i> to the given queue <i>queue</i>.
  */
 __DECL
+PRIVATE WEAK void BermudaEventQueueAdd(EVENT *queue, EVENT *e);
+
 /**
- * \fn BermudaEventWait(EVENT *queue, unsigned int mdt)
+ * \fn BermudaEventWait(EVENT **queue, unsigned int mdt)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param mdt <i>Maximum Delay Time</i>. Maximum time to wait.
@@ -127,7 +129,7 @@ __DECL
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-extern void BermudaEventWait(EVENT *queue, unsigned int mdt);
+extern void BermudaEventWait(EVENT **queue, unsigned int mdt);
 
 /**
  * \fn signal()
@@ -135,7 +137,7 @@ extern void BermudaEventWait(EVENT *queue, unsigned int mdt);
  * 
  * Signal the given event queue.
  */
-PRIVATE WEAK void BermudaEventSignal(EVENT *);
+PRIVATE WEAK void BermudaEventSignal(EVENT **);
 
 extern void BermudaEventDebug();
 __DECL_END

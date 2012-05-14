@@ -22,6 +22,7 @@
 #define __THREAD_H
 
 #include <lib/binary.h>
+#include <sys/virt_timer.h>
 
 typedef void (*thread_handle_t)(void *data);
 
@@ -71,16 +72,68 @@ typedef enum
   */
 struct thread
 {
+        /**
+         * \brief Next pointer.
+         */
         struct thread *next;
+        /**
+         * \brief Previous pointer
+         */
         struct thread *prev;
-        unsigned int id;
+        /**
+         * \brief Name of the thread.
+         * 
+         * This value identifies the thread('s purpose).
+         */
         char *name;
+        /**
+         * \brief Pointer to the end of the stack.
+         * 
+         * The end is the start, since the stack grows down.
+         * <i>stack</i> - <i>stack_size</i> == <i>stack_start</i>
+         */
         unsigned char *stack;            /* start of the stack */
+        /**
+         * \brief The stack pointer.
+         * 
+         * Pointer to the current location of the stack.
+         */
         unsigned char *sp;      /* stack pointer */
-        void *param;            /* thread parameter */
-        unsigned char prio;
+        /**
+         * \brief Size of the stack.
+         */
         unsigned short stack_size;
+        /**
+         * \brief Thread parameter.
+         * 
+         * Parameter passed to the thread.
+         */
+        void *param;            /* thread parameter */
+        /**
+         * \brief Thread priority.
+         * \see BERMUDA_DEFAULT_PRIO
+         * 
+         * This member identifies the priority of this thread.
+         */
+        unsigned char prio;
+
+        /**
+         * \brief Amount of time to sleep left.
+         * 
+         * This members tells the scheduler how much time the thread has to sleep.
+         */
         unsigned int sleep_time;
+        /**
+         * \brief Sleep timer.
+         * 
+         * The timer which clocks this thread when it is asleep.
+         */
+        VTIMER *th_timer;
+        /**
+         * \brief Flag member.
+         * 
+         * Scheduling flags.
+         */
         unsigned char flags; /*
                               * [0] If one, stop scheduling, IO is performing
                               * [1-2] thread_state_t

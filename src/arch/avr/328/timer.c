@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file timer.c */
 #include <lib/binary.h>
 
 #include <avr/interrupt.h>

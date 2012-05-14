@@ -32,5 +32,19 @@
 #include <sys/thread.h>
 #include <sys/events/event.h>
 
+/**
+ * \fn BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
+ * \brief Wait for an event.
+ * \param queue Wait in this queue.
+ * \param tmo <i>Time out</i>. Maximum time to wait.
+ * 
+ * Wait for an event in a specific time for a given amount of time. If you
+ * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
+ */
+PUBLIC void BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
+{
+        
+}
+
 
 #endif /* __EVENTS__ */

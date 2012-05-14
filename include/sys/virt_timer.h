@@ -107,6 +107,17 @@ typedef struct _vtimer VTIMER;
  */
 #define BERMUDA_PERIODIC 0
 
+/**
+ * \def BermudaTimerDelete(t)
+ * \brief Mark a timer as done.
+ * \warning The timer will not be deleted, but it should not be considered as
+ * existing after using BermudaTimerDelete.
+ * 
+ * This def will not actually delete the timer, but it will mark it as deletable.
+ * The actual deletion will be done by BermudaVirtualTick.
+ */
+#define BermudaTimerDelete(t) (t->interval = 0)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -147,16 +158,6 @@ extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg
  * will start the timer.
  */
 PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer);
-
-/**
- * \fn BermudaTimerDelete(VTIMER *timer)
- * \brief Delete the given timer.
- * \param timer The timer to delete.
- * 
- * The given timer will be marked as deletable and will be free'd on the next
- * run. This way the timer list is not corrupted.
- */
-extern void BermudaTimerDelete(VTIMER *timer);
 
 #ifdef __cplusplus
 }

@@ -60,14 +60,10 @@ PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
         return;
 }
 
-void BermudaTimerDelete(VTIMER *timer)
-{
-        timer->interval = 0;
-}
-
 /**
  * \fn BermudaVirtualTick()
  * \brief Virtual timer tick.
+ * \todo Add support for one shot timers.
  * 
  * Give all registered virtual timers one system tick, and call their call back
  * function.

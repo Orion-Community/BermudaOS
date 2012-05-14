@@ -91,36 +91,6 @@ void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
 }
 
 /**
- * \fn BermudaSchedulerTick()
- * \brief Run the scheduler.
- * \warning Should only be called from the timer interrupt!
- * 
- * This function will run the scheduler. It should be called from the timer
- * interrupt running at ~1000Hz.
- */
-void BermudaSchedulerTick()
-{
-        THREAD *t = BermudaThreadHead;
-        for(; t != NULL && t != t->next; t = t->next)
-        {
-                if((t->flags & BERMUDA_TH_STATE_MASK) == (THREAD_SLEEPING << 
-                                                        BERMUDA_TH_STATE_BITS))
-                {
-                        t->sleep_time--;
-                        
-                        if(t->sleep_time == 0)
-                        { // make them runnable if the timer expired
-                                t->flags &= ~BERMUDA_TH_STATE_MASK;
-                                                        
-                                t->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
-                        }
-                }
-                if(t->next == NULL)
-                        break;
-        }
-}
-
-/**
  * \fn BermudaSchedulerAddThread(THREAD *t)
  * \brief Add a new thread to the list
  * \param th Thread to add.

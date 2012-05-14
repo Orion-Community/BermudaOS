@@ -148,6 +148,16 @@ extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg
  */
 PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer);
 
+/**
+ * \fn BermudaTimerDelete(VTIMER *timer)
+ * \brief Delete the given timer.
+ * \param timer The timer to delete.
+ * 
+ * The given timer will be marked as deletable and will be free'd on the next
+ * run. This way the timer list is not corrupted.
+ */
+extern void BermudaTimerDelete(VTIMER *timer);
+
 #ifdef __cplusplus
 }
 #endif

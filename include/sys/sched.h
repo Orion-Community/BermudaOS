@@ -105,16 +105,6 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
 extern void BermudaSchedulerExec();
 
 /**
- * \fn BermudaSchedulerTick()
- * \brief Run the scheduler.
- * \warning Should only be called from the timer interrupt!
- * 
- * This function will run the scheduler. It should be called from the timer
- * interrupt running at ~1000Hz.
- */
-extern void BermudaSchedulerTick();
-
-/**
  * \fn BermudaThreadNotify(THREAD *t)
  * \brief Notify the given thread.
  * \param t Thread to notify.

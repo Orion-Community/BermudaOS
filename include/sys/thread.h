@@ -146,7 +146,27 @@ extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle,
                              void *arg, unsigned short stack_size, void *stack,
                                 unsigned char prio);
 extern void BermudaSwitchTask(void *sp);
+
+/**
+ * \fn BermudaThreadSleep(unsigned int ms)
+ * \brief Sleep a thread.
+ * \param ms Time in mili seconds to sleep.
+ * 
+ * For the given time <i>ms</i> the current thread will not be executed. When
+ * ms expires the thread will be executed automaticly.
+ */
 extern void BermudaThreadSleep(unsigned int ms);
+
+/**
+ * \fn BermudaThreadTimeout(VTIMER *timer, void *arg)
+ * \brief Thread sleep timeout.
+ * \param timer Timer object.
+ * \param arg Thread pointer.
+ * 
+ * This function is called by virtual timers on sleeping threads. The sleep_time
+ * member will be decremented by one each run.
+ */
+PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
 
 __DECL_END
 

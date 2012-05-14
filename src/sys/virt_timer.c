@@ -60,31 +60,9 @@ PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
         return;
 }
 
-void BermudaTimerDestroy(VTIMER *timer)
+void BermudaTimerDelete(VTIMER *timer)
 {
-        if(head != NULL)
-                BermudaHeapFree(timer);
-        else
-        {
-               VTIMER *c = head;
-               VTIMER *prev = NULL;
-               while(c)
-               {
-                       if(c == timer)
-                       {
-                               prev->next = c->next;
-                               break;
-                       }
-                       if(NULL == c->next)
-                               break; // node wasn't found
-                       
-                       prev = c;
-                       c = c->next;
-               }
-               BermudaHeapFree(timer);
-        }
-        
-        return;
+        timer->interval = 0;
 }
 
 /**
@@ -100,17 +78,36 @@ void BermudaVirtualTick()
                 return;
         
         VTIMER *c = head;
+        VTIMER *prev = NULL;
         while(c)
         {
                 c->ticks++;
                 if((c->ticks % c->interval) == 0)
+                {
                         c->handle(c, c->arg);
+                        if(c->interval == 0)
+                        { // delete the timer
+                                if(prev == NULL)
+                                {
+                                        head = c->next;
+                                        BermudaHeapFree(c);
+                                        c = head;
+                                        continue;
+                                }
+                                else
+                                {
+                                        prev->next = c->next;
+                                        BermudaHeapFree(c);
+                                        c = prev->next;
+                                        continue;
+                                }
+                        }
+                }
                 
-                if(NULL == c->next)
+                prev = c;
+                if(c->next == NULL)
                         break;
-                else if(c != c->next)
-                        c = c->next;
                 else
-                        break;
+                        c = c->next;
         }
 }

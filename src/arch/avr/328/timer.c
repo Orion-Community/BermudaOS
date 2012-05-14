@@ -39,8 +39,8 @@ PRIVATE WEAK TIMER *timer2 = NULL;
  * 
  * * ISR type:                  Overflow
  * * Prescaler:                 64
- * * TOP:                       244
- * * Generated frequency:       1024Hz
+ * * TOP:                       250
+ * * Generated frequency:       100Hz
  * 
  * The main function of this timer is to provide sleep support and generate a
  * timer feed to the scheduler.
@@ -57,7 +57,7 @@ void BermudaInitTimer0()
         BermudaTimerInit(timer0, B111, B11, B0);
         
         /* Set the top to 244 */
-        *(timer0->output_comp_a) = 244;
+        *(timer0->output_comp_a) = 250;
         
         /* Enable the overflow interrupt */
         spb(*timer0->int_mask, TOIE0);
@@ -398,7 +398,6 @@ SIGNAL(TIMER0_OVF_vect)
 #ifdef __THREADS__
         if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {
-                BermudaSchedulerTick();
                 BermudaSchedulerExec(); // this function returns from the isr
                                         // all code below is unreachable
         }

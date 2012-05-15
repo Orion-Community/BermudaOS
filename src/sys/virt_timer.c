@@ -81,7 +81,7 @@ void BermudaVirtualTick()
                 if((c->ticks % c->interval) == 0)
                 {
                         c->handle(c, c->arg);
-                        if(c->interval == 0)
+                        if(c->interval == 0 || c->flags == BERMUDA_ONE_SHOT)
                         { // delete the timer
                                 if(prev == NULL)
                                 {

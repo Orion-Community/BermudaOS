@@ -148,6 +148,8 @@ PUBLIC void BermudaThreadQueueAdd(THREAD *volatile*head, THREAD *t)
         if(*head == NULL)
         {
                 *head = t;
+                t->next = NULL;
+                t->prev = NULL;
         }
         else
         {
@@ -297,14 +299,10 @@ void BermudaSchedulerExec()
         }
                 
         BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
-        if(BermudaCurrentThread->sleep_time == 0)
-                BermudaCurrentThread->flags |= (THREAD_READY << 
-                                                        BERMUDA_TH_STATE_BITS);
-        else
-        { // flag as sleeping when sleep_time != 0
+        if(BermudaCurrentThread->sleep_time != 0)
                 BermudaCurrentThread->flags |= (THREAD_SLEEPING << 
                                                         BERMUDA_TH_STATE_BITS);
-        }
+
         
         next->flags &= ~BERMUDA_TH_STATE_MASK;
         next->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);

@@ -50,21 +50,24 @@ PRIVATE WEAK void fn(void *param)
 typedef enum
 {
         /**
-         * \enum RUNNING
+         * \enum THREAD_RUNNING
          * \brief The thread is currently running.
          */
         THREAD_RUNNING,
         /**
-         * \enum READY
+         * \enum THREAD_READY
          * \brief The thread is ready to be scheduled.
          */
         THREAD_READY,
         /**
-         * \enum SLEEPING
+         * \enum THREAD_SLEEPING
          * \brief A thread having this state is not ready to run yet.
          */
         THREAD_SLEEPING,
 } thread_state_t;
+
+#define BERMUDA_THREAD_SLEEPING (THREAD_SLEEPING << BERMUDA_TH_STATE_BITS)
+#define BERMUDA_THREAD_READY    (THREAD_READY << BERMUDA_TH_STATE_BITS)
 
 /**
   * \struct struct thread

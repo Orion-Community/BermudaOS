@@ -80,6 +80,14 @@ extern inline void BermudaMutexRelease(unsigned char *lock);
  */
 extern void BermudaMutexEnter(unsigned char *lock);
 
+#define BermudaEnterCritical() __asm__ __volatile__( \
+                               "in __tmp_reg__, __SREG__" "\n\t" \
+                               "cli"                      "\n\t" \
+                               "push __tmp_reg__"         "\n\t")
+#define BermudaExitCritical() __asm__ __volatile__( \
+                              "pop __tmp_reg__"           "\n\t" \
+                              "out __SREG__, __tmp_reg__" "\n\t")
+
 #define BermudaGetIOPort(pin) BermudaReadPGMByte((unsigned short) \
                                 BermudaPinToPort+(pin))
 #define BermudaGetIOMask(pin) BermudaReadPGMByte((unsigned short) \

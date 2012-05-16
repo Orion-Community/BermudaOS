@@ -27,27 +27,25 @@ extern THREAD *BermudaThreadHead;
 extern THREAD *BermudaCurrentThread;
 extern THREAD *BermudaRunQueue;
 
-/**
- * \def BermudaThreadYield()
- * \brief This will yield the current thread and pass control to the next one.
- * \warning This has not been tested yet!
- *
- * This define calls the function BermudaSchedulerExec, which will execute the
- * schedule algorithm immediately.
- */
-#define BermudaThreadYield() BermudaSchedulerExec()
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * \fn BermudaSwitchTask(void *sp)
+ * \brief Switch context.
+ * \param sp New stack pointer.
+ * \warning Interrupts should be disabled before calling this function.
+ * \note Application function threads usualy don't call this function, but use
+ *       BermudaThreadYield instead.
+ * 
+ * This function switches the thread context.
+ */
+extern void BermudaSwitchTask(void *sp);
 extern void BermudaSchedulerInit(thread_handle_t handle);
-extern void BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THREAD *t);
+extern void BermudaThreadQueueAddPrio(THREAD * volatile *tqpp, THREAD *t);
 extern void BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t);
-extern void BermudaThreadExit();
 extern void BermudaSchedulerExec();
-extern void BermudaThreadNotify(THREAD *t);
-extern THREAD *BermudaThreadWait();
 
 PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
 

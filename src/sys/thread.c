@@ -19,6 +19,7 @@
 /** \file thread.c */
 #if defined(__THREADS__) || defined(__DOXYGEN__)
 #include <stdlib.h>
+#include <string.h>
 
 #include <arch/io.h>
 #include <arch/stack.h>
@@ -79,30 +80,20 @@ void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *ar
         // add the thread on top of the full thread list
         t->q_next = BermudaThreadHead;
         BermudaThreadHead = t;
-        BermudaThreadAddPriQueue(&BermudaRunQueue, t);
+        BermudaThreadQueueAddPrio(&BermudaRunQueue, t);
 }
 
 /**
  * \fn BermudaThreadSleep(unsigned int ms)
  * \brief Sleep a thread.
  * \param ms Time in mili seconds to sleep.
+ * \todo Not yet implemented!
  * 
  * For the given time <i>ms</i> the current thread will not be executed. When
  * ms expires the thread will be executed automaticly.
  */
 void BermudaThreadSleep(unsigned int ms)
 {
-        unsigned char ints = 0;
-        BermudaSafeCli(&ints);
-        
-        BermudaCurrentThread->sleep_time = ms;
-        BermudaCurrentThread->th_timer = BermudaTimerCreate(1, &BermudaThreadTimeout,
-                                                            BermudaCurrentThread,
-                                                            BERMUDA_PERIODIC);
-        BermudaSchedulerExec();
-        
-        BermudaIntsRestore(ints);
-        return;
 }
 
 /**
@@ -131,6 +122,7 @@ PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg)
  * \param prio New priority.
  * \note The scheduler will check if there are new threads which have a higher
  *       priority. If so, CPU time will be given to that thread if it is available.
+ * \todo Use BermudaSchedulerExec
  * 
  * Change the priority level of the current thread.
  */
@@ -140,7 +132,7 @@ PUBLIC unsigned char BermudaThreadSetPrio(unsigned char prio)
         BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
         BermudaCurrentThread->prio = prio;
         if(prio < BERMUDA_LOWEST_PRIO)
-                BermudaThreadAddPriQueue(&BermudaRunQueue, BermudaCurrentThread);
+                BermudaThreadQueueAddPrio(&BermudaRunQueue, BermudaCurrentThread);
         else
                 BermudaThreadExit();
         
@@ -154,4 +146,101 @@ PUBLIC unsigned char BermudaThreadSetPrio(unsigned char prio)
         }
         return ret;
 }
+
+/**
+ * \brief Check if there is another thread ready to run.
+ * \see BermudaThreadExec
+ * \note The current might resume if there is no other thread ready to schedule.
+ * 
+ * The scheduler will check for threads with an higher or equal priority compared
+ * to the current thread. If they are available, a context switch will be done,
+ * otherwise the function will return to the current thread.
+ */
+PUBLIC void BermudaThreadYield()
+{
+        if(BermudaCurrentThread->next)
+        { // only do so if the current thread IS NOT the idle thread.
+                BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
+                BermudaThreadQueueAddPrio(&BermudaRunQueue, BermudaCurrentThread);
+        }
+        
+        BermudaSchedulerExec();
+}
+
+/**
+ * \fn BermudaThreadWait()
+ * \brief Stop the current thread.
+ * \see BermudaThreadNotify()
+ * 
+ * The current thread will be stopped imediatly. The execution can be resumed
+ * by calling BermudaThreadNotify.
+ */
+PUBLIC void BermudaThreadWait()
+{
+        BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
+        BermudaCurrentThread->state = THREAD_WAITING;
+
+        BermudaSchedulerExec();
+}
+
+/**
+ * \fn BermudaThreadNotify(THREAD *t)
+ * \brief Notify the given thread.
+ * \param t Thread to notify.
+ * \note Can be called on sleeping or waiting threads. This includes threads which
+ * are waiting for an event.
+ * \see BermudaThreadNotify()
+ * 
+ * The given thread <i>t</i> will be notified and execution of the given thread
+ * will be resumed.
+ */
+PUBLIC void BermudaThreadNotify(THREAD *t)
+{
+        if(t != NULL)
+        {
+                if(t->state == THREAD_WAITING || t->state == THREAD_SLEEPING)
+                { // not if the thread notifies itself or the thread the thread
+                  // is already in the ready state.
+                        t->state = THREAD_READY;
+                        BermudaThreadQueueAddPrio(&BermudaRunQueue, t);
+                }
+        }
+        BermudaThreadYield();
+}
+
+/**
+ * \fn BermudaThreadExit()
+ * \brief Exit the current thread.
+ * \todo Make sure the task that the deleted thread is not being used anymore.
+ *
+ * This function will exit the given thread and delete it from the running list.
+ */
+PUBLIC void BermudaThreadExit()
+{
+}
+
+/**
+ * \brief Return the first thread which equals the given name.
+ * \param name Name to search for.
+ * \return The first thread which carries the name.
+ * \note NULL is returned when there are no correspondending threads found.
+ */
+PUBLIC THREAD *BermudaThreadGetByName(char *name)
+{
+        THREAD *ret = NULL;
+        
+        THREAD *c = BermudaThreadHead;
+        while(c)
+        {
+                if(!memcmp(name, c->name, strlen(c->name)))
+                {
+                        ret = c;
+                        break;
+                }
+                c = c->q_next;
+        }
+        
+        return ret;
+}
+
 #endif

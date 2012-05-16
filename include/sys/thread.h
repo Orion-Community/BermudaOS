@@ -221,16 +221,9 @@ struct thread
  */
 typedef struct thread THREAD;
 
-/**
- * \fn BermudaSwitchTask(void *sp)
- * \brief Switch context.
- * \param sp New stack pointer.
- * \warning May only be called from ISR context or by the scheduling algorithm.
- * 
- * This function switches the thread context.
- */
-__DECL
-extern void BermudaSwitchTask(void *sp);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, 
                              void *arg, unsigned short stack_size, void *stack,
@@ -243,6 +236,13 @@ extern void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, v
 
 extern void BermudaThreadSleep(unsigned int ms);
 extern unsigned char BermudaThreadSetPrio(unsigned char prio);
+extern void BermudaThreadNotify(THREAD *t);
+extern void BermudaThreadWait();
+extern void BermudaThreadExit();
+extern void BermudaThreadYield();
+extern THREAD *BermudaThreadGetByName(char *name);
+
+// internal functions
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
 
 __DECL_END

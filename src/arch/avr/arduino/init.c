@@ -63,7 +63,8 @@ THREAD(TestThread, data)
 #else
                 BermudaDigitalPinWrite(12, led);
                 led ^= 1;
-                _delay_ms(1000);
+//                 _delay_ms(1000);
+                BermudaThreadWait();
 #endif
                 
                 
@@ -100,7 +101,7 @@ THREAD(TestThread2, data)
 THREAD(MainThread, data)
 {
         unsigned char led = 1;
-
+        
         while(1)
         {
                 BermudaDigitalPinWrite(13, led);
@@ -108,7 +109,7 @@ THREAD(MainThread, data)
 //                        *AvrIO->sreg);
                 led ^= 1;
                 _delay_ms(200);
-                BermudaThreadSetPrio(200);
+                BermudaThreadNotify(BermudaThreadGetByName("Test Thread"));
         }
 }
 
@@ -162,7 +163,7 @@ int main(void)
         
         BermudaSchedulerInit(&MainThread);
         BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
-                          BermudaHeapAlloc(128), 155);
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 //         BermudaThreadCreate(th2, "Test Thread 2", TestThread2, NULL, 128, 
 //                           BermudaHeapAlloc(128), 155);
         

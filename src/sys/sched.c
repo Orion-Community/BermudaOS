@@ -108,7 +108,7 @@ void BermudaSchedulerInit(thread_handle_t handle)
         // initialise the thread
         THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
         BermudaThreadCreate(t_main, "Main Thread", handle, NULL, 64, NULL,
-                                        100);
+                                        BERMUDA_DEFAULT_PRIO);
         
         // initialise the idle thread
         BermudaIdleThread = BermudaHeapAlloc(sizeof(*BermudaIdleThread));
@@ -118,16 +118,18 @@ void BermudaSchedulerInit(thread_handle_t handle)
 }
 
 /**
- * \fn BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THREAD *t)
+ * \fn BermudaThreadQueueAddPrio(THREAD * volatile *tqpp, THREAD *t)
  * \brief Add a thread to the given priority queue.
  * \param tqpp Thread Queue Pointer Pointer
  * \param t Thread to add.
  * \note The lower the priority the more important the thread is.
+ * \todo Check if the thread is yet in the current queue. If it is, do not add
+ *       it.
  * 
  * Add the given thread <i>t</i> to the priority descending queue <i>tqpp</i>. The 
  * thread will be added after the last thread with a lower priority setting.
  */
-PUBLIC void BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THREAD *t)
+PUBLIC void BermudaThreadQueueAddPrio(THREAD * volatile *tqpp, THREAD *t)
 {
         THREAD *tqp;
         
@@ -195,46 +197,6 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
 }
 
 /**
- * \fn BermudaThreadWait()
- * \brief Stop the current thread.
- * \return The current thread.
- * \see BermudaThreadNotify()
- * 
- * The current thread will be stopped imediatly. The execution can be resumed
- * by calling BermudaThreadNotify.
- */
-THREAD *BermudaThreadWait()
-{
-        return NULL;
-}
-
-/**
- * \fn BermudaThreadNotify(THREAD *t)
- * \brief Notify the given thread.
- * \param t Thread to notify.
- * \note Can be called on sleeping or waiting threads. This includes threads which
- * are waiting for an event.
- * \see BermudaThreadNotify()
- * 
- * The given thread <i>t</i> will be notified and execution of the given thread
- * will be resumed.
- */
-void BermudaThreadNotify(THREAD *t)
-{
-}
-
-/**
- * \fn BermudaThreadExit()
- * \brief Exit the current thread.
- * \todo Make sure the task that the deleted thread is not being used anymore.
- *
- * This function will exit the given thread and delete it from the running list.
- */
-void BermudaThreadExit()
-{
-}
-
-/**
  * \fn BermudaSchedulerExec()
  * \brief Run the scheduler.
  * \note BermudaSchedulerExec works in the following order: \n
@@ -280,6 +242,9 @@ PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 
 THREAD(IdleThread, arg)
 {
-        while(1);
+        while(1)
+        {
+                BermudaThreadYield();
+        }
 }
 #endif

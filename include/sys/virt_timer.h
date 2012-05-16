@@ -123,7 +123,7 @@ extern "C" {
 #endif
 
 extern void BermudaTimerProcess();
-extern void BermudaTimerDelete(VTIMER *timer);
+extern void BermudaTimerExit(VTIMER *timer);
 extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
                                      unsigned char flags);
 

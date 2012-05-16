@@ -68,7 +68,7 @@ PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
  * When a timer expired or is not needed anymore, it can be stopped and deleted
  * by this thread.
  */
-void BermudaTimerDelete(VTIMER *timer)
+void BermudaTimerExit(VTIMER *timer)
 {
 }
 

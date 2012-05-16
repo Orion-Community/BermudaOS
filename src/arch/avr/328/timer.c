@@ -393,16 +393,12 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 }
 #endif
 
+static unsigned long tick = 0;
+
 SIGNAL(TIMER0_OVF_vect)
 {
-        BermudaVirtualTick();
-#ifdef __THREADS__
-        if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
-        {
-                BermudaSchedulerExec(); // this function returns from the isr
-                                        // all code below is unreachable
-        }
-#endif
+        tick++;
+//         BermudaVirtualTick();
 }
 
 #if (TIMERS & B100) == B100

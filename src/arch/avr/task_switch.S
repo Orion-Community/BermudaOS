@@ -119,5 +119,5 @@ BermudaSwitchTask:
 
         out  SREG,r0
         pop  r0
-        reti
+        ret
 #endif

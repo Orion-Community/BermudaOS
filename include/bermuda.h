@@ -39,6 +39,12 @@
 
 #endif
 
+/**
+ * \def __PACK__
+ * \brief Packed attribute.
+ * 
+ * Used to counter compiler optimizations on structures.
+ */
 #define __PACK__ __attribute__((packed))
 
 /**
@@ -90,5 +96,6 @@
 typedef unsigned char mutex_t;
 
 #include <sys/mem.h>
+#include <lib/list/list.h>
 
 #endif

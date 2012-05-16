@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file src/arch/avr/stack.c */
+
 #if defined(__THREADS__) || defined(__DOXYGEN__)
 #include <bermuda.h>
 #include <sys/thread.h>
@@ -23,7 +25,19 @@
 #include <arch/avr/stack.h>
 #include <arch/avr/io.h>
 
-void BermudaStackInit(t, sp, stack_size, handle)
+/**
+ * \brief Stack init.
+ * \param t Associated thread.
+ * \param sp Pointer to the lowest memory location of the allocated stack.
+ * \param stack_size Memory region size of sp.
+ * \param handle Thread handle
+ * \see BermudaThreadCreate
+ * \see BermudaThreadInit
+ * 
+ * Initialize a new stack location. The stack is ready to be used when this
+ * function returns.
+ */
+PUBLIC void BermudaStackInit(t, sp, stack_size, handle)
 THREAD *t;
 stack_t sp;
 unsigned short stack_size;
@@ -58,12 +72,37 @@ thread_handle_t handle;
         t->sp[7] = (((unsigned short)t->param) >> 8) & 0xFF;
 }
 
-void BermudaStackSave(stack_t sp)
+/**
+ * \brief Save the stack pointer.
+ * \param sp Stack pointer to save.
+ * \see BermudaSwitchTask
+ * \warning Applications should NEVER call this function.
+ * 
+ * Used to save the stack in the current thread and switch the context after
+ * that.
+ */
+PUBLIC void BermudaStackSave(stack_t sp)
 {
-        if(BermudaPreviousThread == NULL)
+        if(BermudaCurrentThread == NULL)
                 return;
 
         sp += 2;
-        BermudaPreviousThread->sp = sp;
+        BermudaCurrentThread->sp = sp;
+        // switch the current thread pointer
+        BermudaCurrentThread = BermudaRunQueue;
+        BermudaCurrentThread->state = THREAD_RUNNING;
+}
+
+/**
+ * \brief Free a stack pointer.
+ * \param t Thread whom stack should be deleted.
+ * \see BermudaThreadExit
+ * \note Applications generally don't use this function.
+ * 
+ * Free the stack of the given thread.
+ */
+PUBLIC void BermudaStackFree(THREAD *t)
+{
+        BermudaHeapFree(t->stack);
 }
 #endif

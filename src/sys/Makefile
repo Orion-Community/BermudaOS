@@ -14,7 +14,7 @@ ASMSRCS			=
 include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
 
-OBJS 			+= events.o
+# OBJS 			+= events.o
 
 .PHONY: all clean $(TARGET)
 all: $(TARGET)

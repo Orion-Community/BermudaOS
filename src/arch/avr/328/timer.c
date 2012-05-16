@@ -394,7 +394,6 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 
 SIGNAL(TIMER0_OVF_vect)
 {
-        BermudaVirtualTick();
 #ifdef __THREADS__
         if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
         {

@@ -62,52 +62,16 @@ PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
 
 void BermudaTimerDelete(VTIMER *timer)
 {
-        timer->interval = 0;
 }
 
 /**
- * \fn BermudaVirtualTick()
- * \brief Virtual timer tick.
+ * \fn BermudaTimerProcess()
+ * \brief Process all virtual timers.
  * 
- * Give all registered virtual timers one system tick, and call their call back
- * function.
+ * Update all virtual timers. This action is done before switching context by
+ * default.
  */
-void BermudaVirtualTick()
+void BermudaTimerProcess()
 {
-        if(head == NULL)
-                return;
-        
-        VTIMER *c = head;
-        VTIMER *prev = NULL;
-        while(c)
-        {
-                c->ticks++;
-                if((c->ticks % c->interval) == 0)
-                {
-                        c->handle(c, c->arg);
-                        if(c->interval == 0)
-                        { // delete the timer
-                                if(prev == NULL)
-                                {
-                                        head = c->next;
-                                        BermudaHeapFree(c);
-                                        c = head;
-                                        continue;
-                                }
-                                else
-                                {
-                                        prev->next = c->next;
-                                        BermudaHeapFree(c);
-                                        c = prev->next;
-                                        continue;
-                                }
-                        }
-                }
-                
-                prev = c;
-                if(c->next == NULL)
-                        break;
-                else
-                        c = c->next;
-        }
+
 }

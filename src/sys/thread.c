@@ -51,7 +51,8 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
         t->flags = 0 | (THREAD_READY << BERMUDA_TH_STATE_BITS);
         t->name = name;
         t->sleep_time = 0;
-        
+        t->q_next = NULL;
+        t->next = NULL;
         return 0;
 }
 
@@ -71,7 +72,11 @@ void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *ar
                                 unsigned char prio)
 {
         BermudaThreadInit(t, name, handle, arg, stack_size, stack, prio);
-        BermudaThreadQueueAdd(&BermudaThreadHead, t);
+        
+        // add the thread on top of the full thread list
+        t->q_next = BermudaThreadHead;
+        BermudaThreadHead = t;
+        BermudaThreadAddPriQueue(&BermudaRunQueue, t);
 }
 
 /**

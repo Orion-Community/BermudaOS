@@ -24,9 +24,11 @@
 #include <sys/thread.h>
 
 extern unsigned char BermudaSchedulerEnabled;
+
 extern THREAD *BermudaThreadHead;
 extern THREAD *BermudaCurrentThread;
 extern THREAD *BermudaPreviousThread;
+extern THREAD *BermudaRunQueue;
 
 /**
  * \def BermudaThreadYield()
@@ -40,28 +42,27 @@ extern THREAD *BermudaPreviousThread;
 
 __DECL
 /**
- * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
- * \brief Initialize the scheduler with main thread.
- * \param t Main thread
- * \param handle Main handle
- * \param arg Arguments to the main thread
- * \param stack_size Size of the stack
- * \param stack Stack pointer
+ * \fn BermudaSchedulerInit(thread_handle_t handle)
+ * \brief Initialise the scheduler.
+ * \param handle Main thread handle.
+ * \note The main and idle thread will be created by this function.
  *
  * Initialize the main thread. If <i>stack</i> is NULL, then the current stack
- * pointer will be used.
+ * pointer will be used. The idle thread will be taken care of internally.
  */
-extern void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
+extern void BermudaSchedulerInit(thread_handle_t handle);
 
 /**
- * \fn BermudaThreadQueueAdd(THREAD *volatile *head, THREAD *t)
- * \brief Add a new thread to the list
+ * \fn BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THEAD *t)
+ * \brief Add a thread to the given priority queue.
+ * \param tqpp Thread Queue Pointer Pointer
  * \param t Thread to add.
- * \param head The thread queue.
- *
- * This function will edit the thread list to add the new thread <i>th</i>.
+ * \note The lower the priority the more important the thread is.
+ * 
+ * Add the given thread <i>t</i> to the priority descending queue <i>tqpp</i>.
+ * The thread will be added after the last thread with a lower priority setting.
  */
-extern void BermudaThreadQueueAdd(THREAD *volatile*head, THREAD *t);
+PUBLIC void BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THREAD *t);
 
 /**
  * \fn BermudaSchedulerGetLastThread(THREAD *head)

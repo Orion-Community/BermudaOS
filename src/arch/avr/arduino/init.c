@@ -27,6 +27,7 @@
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
 #include <arch/avr/timer.h>
+#include <arch/avr/stack.h>
 
 #include <lib/spiram.h>
 #include <lib/binary.h>
@@ -37,17 +38,12 @@
 #define LED      PINB5
 
 #ifdef __THREAD_DBG__
-static THREAD MainT;
 static THREAD *th = NULL;
 static THREAD *th2 = NULL;
 #endif
 
 extern unsigned int __heap_start;
 
-#ifdef __THREAD_DBG__
-#ifndef __THREADS__
-        #error Thread debugging not possible without threads
-#endif
 THREAD(TestThread, data)
 {
 
@@ -118,7 +114,6 @@ THREAD(MainThread, data)
                 BermudaThreadSleep(500);
         }
 }
-#endif
 
 PRIVATE WEAK void setup()
 {
@@ -160,12 +155,35 @@ int main(void)
         BermudaSpiRamInit();
 #endif
 #endif
+        STACK_L = (MEM-256) & 0xFF;
+        STACK_H = ((MEM-256) >> 8) & 0xFF;
         sei();
         setup();
-#ifdef __THREADS__
-        BermudaSchedulerStart();
-#endif
+        
+        THREAD *th = BermudaHeapAlloc(sizeof(*th));
+        THREAD *th2 = BermudaHeapAlloc(sizeof(*th2));
+        
+        BermudaSchedulerInit(&MainThread);
+        BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+        BermudaThreadCreate(th2, "Test Thread 2", TestThread2, NULL, 128, 
+                          BermudaHeapAlloc(128), 101);
+        
+        THREAD *tqp;
+        printf("Free memory %u\n", BermudaHeapAvailable());
+        int x = 1;
         while(1)
-        {}
+        {
+                tqp = BermudaThreadHead;
+                while(tqp)
+                {
+                        printf("%s\n", tqp->name);
+                        tqp = tqp->q_next;
+                }
+                if(x)
+                        BermudaThreadQueueRemove(&BermudaRunQueue, th);
+                x = 0;
+                _delay_ms(1000);
+        }
         return 0;
 }

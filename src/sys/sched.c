@@ -17,7 +17,7 @@
  */
 
 /** \file sched.c */
-#if defined(__THREADS__) || defined(__DOXYGEN__)
+#if (defined(__THREADS__) || defined(__DOXYGEN__))
 
 #include <stdlib.h>
 #include <bermuda.h>
@@ -28,6 +28,7 @@
 #include <sys/sched.h>
 #include <sys/thread.h>
 #include <sys/mem.h>
+#include <sys/events/event.h>
 
 /**
  * \var BermudaCurrentThread
@@ -55,6 +56,15 @@ THREAD *BermudaPreviousThread = NULL;
  * Root of the scheduling queue.
  */
 THREAD *BermudaThreadHead = NULL;
+
+/**
+ * \var BermudaRunQueue
+ * \brief List of ready to run threads.
+ * 
+ * Queue, sorted by priority - from high to low. The highest priority thread, and
+ * thus the queue head, is always running.
+ */
+THREAD *BermudaRunQueue = NULL;
 
 /**
  * \var BermudaIdleThread
@@ -113,72 +123,59 @@ inline THREAD *BermudaSchedGetIdleThread()
  *
  * This function will initialise the scheduler and the main thread.
  */
-void BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
+void BermudaSchedulerInit(thread_handle_t handle)
 {
-        /* initialise the thread list head */
-        if(NULL == th)
-                BermudaThreadHead = BermudaHeapAlloc(sizeof(*BermudaThreadHead));
-        else
-                BermudaThreadHead = th;
-        
-        BermudaThreadHead->next = NULL;
-        BermudaThreadHead->prev = NULL;
-
         // initialise the thread
-        BermudaThreadInit(BermudaThreadHead, "Main Thread", handle, NULL, 64, NULL,
-                                        BERMUDA_DEFAULT_PRIO);
+        THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
+        BermudaThreadCreate(t_main, "Main Thread", handle, NULL, 64, NULL,
+                                        100);
+//         BermudaThreadAddPriQueue(&BermudaRunQueue, t_main);
         
         // initialise the idle thread
         BermudaIdleThread = BermudaHeapAlloc(sizeof(*BermudaIdleThread));
-        BermudaThreadInit(BermudaIdleThread, "Idle Thread", &IdleThread, NULL, 64,
-                                &BermudaIdleThreadStack[0], BERMUDA_DEFAULT_PRIO);
+        BermudaThreadCreate(BermudaIdleThread, "Idle Thread", &IdleThread, NULL, 64,
+                                &BermudaIdleThreadStack[0], 255);
 }
 
 /**
- * \fn BermudaThreadQueueAdd(THREAD *volatile *head, THREAD *t)
- * \brief Add a new thread to the list
+ * \fn BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THEAD *t)
+ * \brief Add a thread to the given priority queue.
+ * \param tqpp Thread Queue Pointer Pointer
  * \param t Thread to add.
- * \param head The thread queue.
- *
- * This function will edit the thread list to add the new thread <i>th</i>.
+ * \note The lower the priority the more important the thread is.
+ * 
+ * Add the given thread <i>t</i> to the priority descending queue <i>tqpp</i>.
+ * The thread will be added after the last thread with a lower priority setting.
  */
-PUBLIC void BermudaThreadQueueAdd(THREAD *volatile*head, THREAD *t)
+PUBLIC void BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THREAD *t)
 {
-        BermudaThreadEnterIO(BermudaCurrentThread); // stop the scheduler
-        if(*head == NULL)
+        THREAD *tqp;
+        
+        BermudaEnterCritical();
+        tqp = *tqpp;
+        
+        if(tqp == SIGNALED)
         {
-                *head = t;
-                t->next = NULL;
-                t->prev = NULL;
+                tqp = 0;
         }
-        else
+        else if(tqp)
         {
-                THREAD *last = BermudaSchedulerGetLastThread(*head);
-                last->next = t;
-                t->next = NULL;
-                t->prev = last;
+                BermudaExitCritical();
+                foreach(tqp, tqp)
+                {
+                        if(tqp->prio > t->prio)
+                                break;
+                        tqpp = &tqp->next;
+                }
+                BermudaEnterCritical();
         }
-
-        BermudaThreadExitIO(BermudaCurrentThread); // continue scheduling
-}
-
-/**
- * \fn BermudaSchedulerGetLastThread(THREAD *head)
- * \brief Find the last item of BermudaThreadHead.
- * \return The last entry of the thread list.
- * This function will return the last entry of the thread list.
- */
-PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread(THREAD *head)
-{
-        THREAD *carriage = head;
-        for(; carriage != NULL && carriage != carriage->next; carriage =
-                                                                carriage->next)
-        {
-                if(carriage->next == NULL)
-                        break;
-        }
-        // carriage points now to the last block of the thread list
-        return carriage;
+        
+        // tqp points to a thread with a lower priority then t
+        t->next = tqp; // put t before tqp
+        *tqpp = t; // same as prev->next = t
+        
+        BermudaExitCritical();
+        return;
 }
 
 /**
@@ -191,29 +188,30 @@ PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread(THREAD *head)
  * This function will delete the <i>THREAD t</i> from the linked list and fix
  * the list.
  */
-PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t)
+PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
 {
-        BermudaThreadEnterIO(BermudaCurrentThread);
-
-        if(t->prev == NULL) // we're at the list head
-        {
-                t->next->prev = NULL;
-                *queue = t->next;
-        }
-        else if(t->next == NULL) // we're at the tail of the list
-        {
-                t->prev->next = NULL;
-        }
-        else // we're somewhere in the middle of nowhere
-        {
-                t->prev->next = t->next;
-                t->next->prev = t->next;
-        }
-
-        t->next = NULL;
-        t->prev = NULL;
+        THREAD *tqp;
         
-        BermudaThreadExitIO(BermudaCurrentThread);
+        BermudaEnterCritical();
+        tqp = *tqpp;
+        BermudaExitCritical();
+        
+        if(tqp != SIGNALED)
+        {
+                foreach(tqp, tqp)
+                {
+                        if(tqp == t)
+                        {
+                                BermudaEnterCritical();
+                                *tqpp = t->next;
+                                BermudaExitCritical();
+                                t->next = NULL;
+                                break;
+                        }
+                        tqpp = &tqp->next;
+                        continue;
+                }
+        }
 }
 
 /**
@@ -249,7 +247,7 @@ THREAD *BermudaThreadWait()
  */
 void BermudaThreadNotify(THREAD *t)
 {
-        BermudaThreadQueueAdd(&BermudaThreadHead, t);
+        BermudaThreadAddPriQueue(&BermudaThreadHead, t);
 }
 
 /**

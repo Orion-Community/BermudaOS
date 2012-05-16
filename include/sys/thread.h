@@ -38,7 +38,6 @@ PRIVATE WEAK void fn(void *param)
 #define BermudaThreadEnterIO(th) (th->flags |= BERMUDA_TH_IO_MASK)
 #define BermudaThreadExitIO(th)  (th->flags &= (~BERMUDA_TH_IO_MASK))
 
-#ifndef RTSCHED
 #define BERMUDA_DEFAULT_PRIO 150
 
 /**
@@ -70,23 +69,33 @@ typedef enum
 #define BERMUDA_THREAD_READY    (THREAD_READY << BERMUDA_TH_STATE_BITS)
 
 /**
-  * \struct struct thread
-  * \brief Describes the state of a thread
-  * 
-  * The thread information structure.
-  */
+ * \struct struct thread
+ * \brief Describes the state of a thread
+ *  
+ * The thread information structure.
+ */
 struct thread
 {
         /**
-         * \brief Next pointer.
+         * \brief Queue pointer.
+         * \see BermudaRunQueue
          * 
          * Pointer to the next entry in the list.
          */
-        
         struct thread *next;
         
         /**
+         * \brief Next pointer to total list of threads.
+         * \note Should only be changed by BermudaThreadExit.
+         * \see BermudaThreadHead
+         * 
+         * Points to the next thread in the total list of threads.
+         */
+        struct thread *q_next;
+        
+        /**
          * \brief Previous pointer
+         * \deprecated Single linked list is used now, will be removed soon.
          * 
          * Pointer to the previous entry in the list.
          */
@@ -153,10 +162,13 @@ struct thread
          * 
          * Scheduling flags.
          */
-        unsigned char flags; /*
-                              * [0] If one, stop scheduling, IO is performing
-                              * [1-2] thread_state_t
-                              */
+        unsigned char state;
+        
+        /**
+         * \brief Flag member.
+         * \deprecated Since cooprative scheduling, removed soon.
+         */
+        unsigned char flags;
 } __PACK__;
 
 /**
@@ -232,7 +244,5 @@ __DECL_END
 
 extern THREAD *BermudaCurrentThread;
 extern THREAD *BermudaPreviousThread;
-
-#endif
 
 #endif

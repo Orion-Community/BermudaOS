@@ -28,6 +28,15 @@
 #include <sys/sched.h>
 
 /**
+ * \addtogroup tmAPI Thread Management API
+ * \brief Thread management.
+ * 
+ * All functions related to thread management are found in this module.
+ * 
+ * @{
+ */
+
+/**
  * \brief Initialise a thread.
  * \param t Main thread
  * \param name Name of the thread.
@@ -271,5 +280,9 @@ PUBLIC THREAD *BermudaThreadGetByName(char *name)
         
         return ret;
 }
+
+/**
+ * @}
+ */
 
 #endif

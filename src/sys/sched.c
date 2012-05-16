@@ -31,6 +31,11 @@
 #include <sys/events/event.h>
 
 /**
+ * \addtogroup tmAPI
+ * @{
+ */
+
+/**
  * \var BermudaCurrentThread
  * \brief Current running thread.
  * 
@@ -238,4 +243,8 @@ THREAD(IdleThread, arg)
                 BermudaThreadYield();
         }
 }
+
+/**
+ * @}
+ */
 #endif

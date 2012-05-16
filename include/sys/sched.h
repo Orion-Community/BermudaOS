@@ -25,6 +25,11 @@
 #include <arch/io.h>
 
 /**
+ * \addtogroup tmAPI
+ * @{
+ */
+
+/**
  * \def BermudaSchedulerStart
  * \brief Start the scheduler.
  * \warning Has to be called AFTER BermudaSchedulerInit!
@@ -66,5 +71,9 @@ extern void BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t);
 extern void BermudaSchedulerExec();
 
 __DECL_END
+
+/**
+ * @}
+ */
 
 #endif

@@ -26,6 +26,11 @@
 #include <sys/virt_timer.h>
 
 /**
+ * \addtogroup tmAPI
+ * @{
+ */
+
+/**
  * \typedef thread_handle_t
  * \brief Thread handle function type.
  */
@@ -117,7 +122,7 @@ typedef enum
 } thread_state_t;
 
 /**
- * \struct struct thread
+ * \struct thread
  * \brief Describes the state of a thread
  *  
  * The thread information structure.
@@ -245,13 +250,14 @@ extern void BermudaThreadFree();
 
 // internal functions
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
-
-
 __DECL_END
 
 extern THREAD *BermudaCurrentThread;
 extern THREAD *BermudaRunQueue;
-extern THREAD *BermudaQueueHead;
+extern THREAD *BermudaThreadHead;
 extern THREAD *BermudaKillQueue;
 
+/**
+ * @}
+ */
 #endif

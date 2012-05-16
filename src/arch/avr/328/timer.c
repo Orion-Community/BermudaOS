@@ -398,7 +398,6 @@ static unsigned long tick = 0;
 SIGNAL(TIMER0_OVF_vect)
 {
         tick++;
-//         BermudaVirtualTick();
 }
 
 #if (TIMERS & B100) == B100

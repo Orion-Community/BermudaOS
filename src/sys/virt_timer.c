@@ -61,49 +61,24 @@ PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
 }
 
 /**
- * \fn BermudaVirtualTick()
- * \brief Virtual timer tick.
- * \todo Add support for one shot timers.
+ * \brief Delete a timer.
+ * \param timer Timer to delete.
+ * \see BermudaTimerProcess
  * 
- * Give all registered virtual timers one system tick, and call their call back
- * function.
+ * When a timer expired or is not needed anymore, it can be stopped and deleted
+ * by this thread.
  */
-void BermudaVirtualTick()
+void BermudaTimerDelete(VTIMER *timer)
 {
-        if(head == NULL)
-                return;
-        
-        VTIMER *c = head;
-        VTIMER *prev = NULL;
-        while(c)
-        {
-                c->ticks++;
-                if((c->ticks % c->interval) == 0)
-                {
-                        c->handle(c, c->arg);
-                        if(c->interval == 0 || c->flags == BERMUDA_ONE_SHOT)
-                        { // delete the timer
-                                if(prev == NULL)
-                                {
-                                        head = c->next;
-                                        BermudaHeapFree(c);
-                                        c = head;
-                                        continue;
-                                }
-                                else
-                                {
-                                        prev->next = c->next;
-                                        BermudaHeapFree(c);
-                                        c = prev->next;
-                                        continue;
-                                }
-                        }
-                }
-                
-                prev = c;
-                if(c->next == NULL)
-                        break;
-                else
-                        c = c->next;
-        }
+}
+
+/**
+ * \fn BermudaTimerProcess()
+ * \brief Process all virtual timers.
+ * 
+ * Update all virtual timers. This action is done before switching context by
+ * default.
+ */
+void BermudaTimerProcess()
+{
 }

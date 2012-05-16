@@ -77,6 +77,8 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
  * \param stack Stack pointer
  * \param prio Thread priority.
  * \todo Remove the <i>t</i> argument and allocate the thread in this function.
+ * \todo Call a thread yield to check if the just created thread has a higher
+ *       priority.
  * 
  * This function will create and start a new thread.
  */

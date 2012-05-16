@@ -63,6 +63,7 @@ void BermudaStackSave(stack_t sp)
         if(BermudaCurrentThread == NULL)
                 return;
 
+        printf("%s\n", BermudaCurrentThread->name);
         sp += 2;
         BermudaCurrentThread->sp = sp;
         // switch the current thread pointer

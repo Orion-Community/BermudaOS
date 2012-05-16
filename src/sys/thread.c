@@ -125,4 +125,33 @@ PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg)
                 BermudaTimerDelete(timer);
         }
 }
+
+/**
+ * \brief Change the priority of the current thread.
+ * \param prio New priority.
+ * \note The scheduler will check if there are new threads which have a higher
+ *       priority. If so, CPU time will be given to that thread if it is available.
+ * 
+ * Change the priority level of the current thread.
+ */
+PUBLIC unsigned char BermudaThreadSetPrio(unsigned char prio)
+{
+        unsigned char ret = BermudaCurrentThread->prio;
+        BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
+        BermudaCurrentThread->prio = prio;
+        if(prio < BERMUDA_LOWEST_PRIO)
+                BermudaThreadAddPriQueue(&BermudaRunQueue, BermudaCurrentThread);
+        else
+                BermudaThreadExit();
+        
+        if(BermudaCurrentThread != BermudaRunQueue)
+        {
+                BermudaCurrentThread->state = THREAD_READY;
+                
+                BermudaEnterCritical();
+                BermudaSwitchTask(BermudaRunQueue->sp);
+                BermudaExitCritical();
+        }
+        return ret;
+}
 #endif

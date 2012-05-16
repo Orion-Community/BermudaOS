@@ -46,9 +46,6 @@ extern unsigned int __heap_start;
 
 THREAD(TestThread, data)
 {
-
-        unsigned char x = 0;
-
 #ifdef __SPIRAM__
         unsigned int rd = 0;
 #else
@@ -66,11 +63,9 @@ THREAD(TestThread, data)
 #else
                 BermudaDigitalPinWrite(12, led);
                 led ^= 1;
+                _delay_ms(1000);
 #endif
-                BermudaThreadSleep(200);
-                x++;
-                if((x % 10) == 0)
-                        BermudaThreadExit();
+                
                 
         }
 }
@@ -109,9 +104,11 @@ THREAD(MainThread, data)
         while(1)
         {
                 BermudaDigitalPinWrite(13, led);
-                
+//                 printf("Available mem: %u - SREG %X\n", BermudaHeapAvailable(),
+//                        *AvrIO->sreg);
                 led ^= 1;
-                BermudaThreadSleep(500);
+                _delay_ms(200);
+                BermudaThreadSetPrio(200);
         }
 }
 
@@ -161,29 +158,16 @@ int main(void)
         setup();
         
         THREAD *th = BermudaHeapAlloc(sizeof(*th));
-        THREAD *th2 = BermudaHeapAlloc(sizeof(*th2));
+//         THREAD *th2 = BermudaHeapAlloc(sizeof(*th2));
         
         BermudaSchedulerInit(&MainThread);
         BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
-                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-        BermudaThreadCreate(th2, "Test Thread 2", TestThread2, NULL, 128, 
-                          BermudaHeapAlloc(128), 101);
+                          BermudaHeapAlloc(128), 155);
+//         BermudaThreadCreate(th2, "Test Thread 2", TestThread2, NULL, 128, 
+//                           BermudaHeapAlloc(128), 155);
         
-        THREAD *tqp;
-        printf("Free memory %u\n", BermudaHeapAvailable());
-        int x = 1;
+        BermudaSchedulerExec();
         while(1)
-        {
-                tqp = BermudaThreadHead;
-                while(tqp)
-                {
-                        printf("%s\n", tqp->name);
-                        tqp = tqp->q_next;
-                }
-                if(x)
-                        BermudaThreadQueueRemove(&BermudaRunQueue, th);
-                x = 0;
-                _delay_ms(1000);
-        }
+        {}
         return 0;
 }

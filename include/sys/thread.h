@@ -242,6 +242,7 @@ extern void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, v
                                 unsigned char prio);
 
 extern void BermudaThreadSleep(unsigned int ms);
+extern unsigned char BermudaThreadSetPrio(unsigned char prio);
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
 
 __DECL_END

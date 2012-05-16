@@ -99,6 +99,7 @@ inline THREAD *BermudaSchedGetIdleThread()
 /**
  * \brief Init scheduling
  * \param handle The main thread handler.
+ * \todo Fix current thread initialization.
  *
  * This function will initialise the scheduler and the main thread.
  */
@@ -113,6 +114,7 @@ void BermudaSchedulerInit(thread_handle_t handle)
         BermudaIdleThread = BermudaHeapAlloc(sizeof(*BermudaIdleThread));
         BermudaThreadCreate(BermudaIdleThread, "Idle Thread", &IdleThread, NULL, 64,
                                 &BermudaIdleThreadStack[0], 255);
+        BermudaCurrentThread = BermudaIdleThread;
 }
 
 /**

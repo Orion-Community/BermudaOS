@@ -21,6 +21,7 @@
 #ifndef __THREAD_H
 #define __THREAD_H
 
+#include <arch/io.h>
 #include <lib/binary.h>
 #include <sys/virt_timer.h>
 
@@ -62,6 +63,26 @@ PRIVATE WEAK void fn(void *param)
  * \brief Lowest available priority.
  */
 #define BERMUDA_LOWEST_PRIO 255
+
+/**
+ * \def BermudaThreadEnterIO
+ * \brief Enter IO safe state.
+ * \param x Depricated argument.
+ * \deprecated Was used by the round robin scheduler. Use BermudaEnterCritical
+ *             instead.
+ * \see BermudaEnterCritical
+ */
+#define BermudaThreadEnterIO(x) BermudaEnterCritical()
+
+/**
+ * \def BermudaThreadExitIO
+ * \brief Exit IO safe state.
+ * \param x Deprecated argument.
+ * \deprecated Was used by the round robin scheduler. Use BermudaExitCritical
+ *             instead.
+ * \see BermudaExitCritical
+ */
+#define BermudaThreadExitIO(x)  BermudaExitCritical()
 
 /**
  * \typedef thread_state_t
@@ -226,5 +247,7 @@ PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
 __DECL_END
 
 extern THREAD *BermudaCurrentThread;
+extern THREAD *BermudaRunQueue;
+extern THREAD *BermudaQueueHead;
 
 #endif

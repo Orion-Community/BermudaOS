@@ -65,5 +65,8 @@ void BermudaStackSave(stack_t sp)
 
         sp += 2;
         BermudaCurrentThread->sp = sp;
+        // switch the current thread pointer
+        BermudaCurrentThread = BermudaRunQueue;
+        BermudaCurrentThread->state = THREAD_RUNNING;
 }
 #endif

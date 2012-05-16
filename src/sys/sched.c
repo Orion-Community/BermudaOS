@@ -251,6 +251,15 @@ void BermudaSchedulerExec()
         /*
          * point 3 - execute new thread, if needed
          */
+        if(BermudaCurrentThread != BermudaRunQueue) 
+        { // if the current thread lost its top position
+                if(BermudaCurrentThread->state == THREAD_RUNNING)
+                        BermudaCurrentThread->state = THREAD_READY;
+                
+                BermudaEnterCritical();
+                BermudaSwitchTask(BermudaRunQueue->sp);
+                BermudaExitCritical();
+        }
 }
 
 /**

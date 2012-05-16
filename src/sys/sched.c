@@ -40,16 +40,6 @@
 THREAD *BermudaCurrentThread = NULL;
 
 /**
- * \var BermudaPreviousThread
- * \brief Previous thread.
- * \note Actions on and or with BermudaPreviousThread should be atommicly.
- * \see BermudaCurrentThread
- * 
- * Pointer to the thread which ran before BermudaCurrentThread.
- */
-THREAD *BermudaPreviousThread = NULL;
-
-/**
  * \var BermudaThreadHead
  * \brief Scheduling queue head.
  * 
@@ -95,15 +85,6 @@ static char BermudaIdleThreadStack[64];
 PRIVATE WEAK void IdleThread(void *arg);
 
 /**
- * \var BermudaSchedulerEnabled
- * \brief Enable boolean.
- * 
- * When set to 0 the scheduler will not run. When set to 1 the scheduler will run
- * and (try to) switch tasks every interval.
- */
-unsigned char BermudaSchedulerEnabled = 0;
-
-/**
  * \fn BermudaSchedGetIdleThread()
  * \brief Get the idle thread.
  * \see BermudaIdleThread
@@ -116,9 +97,7 @@ inline THREAD *BermudaSchedGetIdleThread()
 }
 
 /**
- * \fn BermudaSchedulerInit(THREAD *th, thread_handle_t handle)
  * \brief Init scheduling
- * \param th The main thread.
  * \param handle The main thread handler.
  *
  * This function will initialise the scheduler and the main thread.
@@ -129,7 +108,6 @@ void BermudaSchedulerInit(thread_handle_t handle)
         THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
         BermudaThreadCreate(t_main, "Main Thread", handle, NULL, 64, NULL,
                                         100);
-//         BermudaThreadAddPriQueue(&BermudaRunQueue, t_main);
         
         // initialise the idle thread
         BermudaIdleThread = BermudaHeapAlloc(sizeof(*BermudaIdleThread));
@@ -138,14 +116,14 @@ void BermudaSchedulerInit(thread_handle_t handle)
 }
 
 /**
- * \fn BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THEAD *t)
+ * \fn BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THREAD *t)
  * \brief Add a thread to the given priority queue.
  * \param tqpp Thread Queue Pointer Pointer
  * \param t Thread to add.
  * \note The lower the priority the more important the thread is.
  * 
- * Add the given thread <i>t</i> to the priority descending queue <i>tqpp</i>.
- * The thread will be added after the last thread with a lower priority setting.
+ * Add the given thread <i>t</i> to the priority descending queue <i>tqpp</i>. The 
+ * thread will be added after the last thread with a lower priority setting.
  */
 PUBLIC void BermudaThreadAddPriQueue(THREAD * volatile *tqpp, THREAD *t)
 {
@@ -225,21 +203,15 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
  */
 THREAD *BermudaThreadWait()
 {
-        BermudaThreadEnterIO(BermudaCurrentThread);
-        THREAD *ret = BermudaCurrentThread;
-        BermudaThreadExitIO(BermudaCurrentThread);
-        
-        BermudaThreadQueueRemove(&BermudaThreadHead, ret);
-        
-        return ret;
+        return NULL;
 }
 
 /**
  * \fn BermudaThreadNotify(THREAD *t)
  * \brief Notify the given thread.
  * \param t Thread to notify.
- * \warning Do not call this function is the thread is not in a waiting state.
- * \note Waiting state is NOT sleeping.
+ * \note Can be called on sleeping or waiting threads. This includes threads which
+ * are waiting for an event.
  * \see BermudaThreadNotify()
  * 
  * The given thread <i>t</i> will be notified and execution of the given thread
@@ -247,7 +219,6 @@ THREAD *BermudaThreadWait()
  */
 void BermudaThreadNotify(THREAD *t)
 {
-        BermudaThreadAddPriQueue(&BermudaThreadHead, t);
 }
 
 /**
@@ -259,69 +230,27 @@ void BermudaThreadNotify(THREAD *t)
  */
 void BermudaThreadExit()
 {
-        THREAD *t = BermudaCurrentThread;
-        if(t->next == NULL && t->prev == NULL)
-                return;
-        BermudaThreadQueueRemove(&BermudaThreadHead, t);
-        BermudaHeapFree(t->stack);
-        BermudaHeapFree(t);
-        BermudaSchedulerExec();
 }
 
 /**
  * \fn BermudaSchedulerExec()
  * \brief Run the scheduler.
+ * \note BermudaSchedulerExec works in the following order: \n
+ *       1. Check the total thread list for posted events. If a thread has received an event,
+ *          post it. \n
+ *       2. Secondly, it will destroy all elapsed timers. \n
+ *       3. Last, but centainly not least - it will check if a new thread has to
+ *          be executed.
+ * \todo Implement point 1 and 2.
  * 
- * This function is called from the timer interrupt (and thus runs in an interrupt)
- * it should not be called by any other part of the system.
+ * Execute the thread with the highest priority. This might or might not be the
+ * thread which is currently running.
  */
 void BermudaSchedulerExec()
 {
-        unsigned char ints = 0;
-        BermudaSafeCli(&ints);
-        
-        THREAD *next = NULL;
-        if(BermudaCurrentThread == BermudaIdleThread)
-                next = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
-                // start at the head when idle has ran
-        else
-                next = BermudaSchedulerGetNextRunnable(BermudaCurrentThread);
-        
-        if(NULL == next)
-                next = BermudaIdleThread; // idle if there is no runnable thread
-        
-        if(BermudaCurrentThread == next)
-        { // just return if the next thread is the same as the current one
-                *(AvrIO->sreg) |= ints;
-                return;
-        }
-                
-        BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
-        if(BermudaCurrentThread->sleep_time != 0)
-                BermudaCurrentThread->flags |= (THREAD_SLEEPING << 
-                                                        BERMUDA_TH_STATE_BITS);
-
-        
-        next->flags &= ~BERMUDA_TH_STATE_MASK;
-        next->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
-
-        /* do the actual swap of threads */
-        BermudaPreviousThread = BermudaCurrentThread;
-        BermudaCurrentThread = next;
-
-        BermudaSwitchTask(BermudaCurrentThread->sp);
-        BermudaIntsRestore(ints);
-        return;
-}
-
-void BermudaSchedulerStart()
-{
-        BermudaCurrentThread = BermudaThreadHead;
-        BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
-        BermudaCurrentThread->flags |= (THREAD_RUNNING << BERMUDA_TH_STATE_BITS);
-        BermudaPreviousThread = NULL;
-        BermudaSchedulerEnable();
-        BermudaSwitchTask(BermudaCurrentThread->sp);
+        /*
+         * point 3 - execute new thread, if needed
+         */
 }
 
 /**
@@ -335,31 +264,7 @@ void BermudaSchedulerStart()
  */
 PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
 {
-        BermudaThreadEnterIO(BermudaCurrentThread);
-        THREAD *c = head;
-        
-        for(; c != NULL && c->next != c; c = c->next)
-        {
-                if((c->flags & BERMUDA_TH_STATE_MASK) == 2) // if ready
-                        break;
-                if(c->next == NULL) // if we're at the end (begin from start)
-                {
-                        if(head == BermudaThreadHead)
-                        {
-                                c = NULL;
-                                goto out;
-                        }
-                        c = BermudaSchedulerGetNextRunnable(BermudaThreadHead);
-                        if(c == NULL) // run only one recursive round
-                                goto out;
-                        break;
-                }
-                
-        }
-        
-        out:
-        BermudaThreadExitIO(BermudaCurrentThread);
-        return c;
+        return NULL;
 }
 
 THREAD(IdleThread, arg)

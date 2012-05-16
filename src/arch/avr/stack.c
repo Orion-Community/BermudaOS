@@ -60,10 +60,10 @@ thread_handle_t handle;
 
 void BermudaStackSave(stack_t sp)
 {
-        if(BermudaPreviousThread == NULL)
+        if(BermudaCurrentThread == NULL)
                 return;
 
         sp += 2;
-        BermudaPreviousThread->sp = sp;
+        BermudaCurrentThread->sp = sp;
 }
 #endif

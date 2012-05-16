@@ -27,16 +27,17 @@
 #include <sys/sched.h>
 
 /**
- * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
- * \brief Initialize the scheduler with main thread.
+ * \brief Initialise a thread.
  * \param t Main thread
- * \param handle Main handle
- * \param arg Arguments to the main thread
+ * \param name Name of the thread.
+ * \param handle Thread handle.
+ * \param arg Thread argument.
  * \param stack_size Size of the stack
  * \param stack Stack pointer
+ * \param prio Thead priority.
  * 
- * Initialize the main thread. If <i>stack</i> is NULL, then the current stack
- * pointer will be used.
+ * The given thread will be initialised, but not added to any queue. Apps won't
+ * usually call this function.
  */
 int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
                                 unsigned short stack_size, void *stack,
@@ -48,7 +49,7 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
         BermudaStackInit(t, stack, stack_size, handle);
         t->param = arg;
         t->prio = prio;
-        t->flags = 0 | (THREAD_READY << BERMUDA_TH_STATE_BITS);
+        t->state = THREAD_READY;
         t->name = name;
         t->sleep_time = 0;
         t->q_next = NULL;
@@ -57,13 +58,15 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
 }
 
 /**
- * \fn BermudaThreadCreate(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
  * \brief Create a new thread.
  * \param t Main thread
+ * \param name Name of the thread. Can be used to identify a thread later.
  * \param handle Main handle
  * \param arg Arguments to the main thread
  * \param stack_size Size of the stack
  * \param stack Stack pointer
+ * \param prio Thread priority.
+ * \todo Remove the <i>t</i> argument and allocate the thread in this function.
  * 
  * This function will create and start a new thread.
  */
@@ -118,8 +121,7 @@ PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg)
         
         if(t->sleep_time == 0)
         {
-                t->flags &= ~BERMUDA_TH_STATE_MASK;
-                t->flags |= (THREAD_READY << BERMUDA_TH_STATE_BITS);
+                t->state = THREAD_READY;
                 BermudaTimerDelete(timer);
         }
 }

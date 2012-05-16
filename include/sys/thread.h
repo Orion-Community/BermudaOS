@@ -241,14 +241,17 @@ extern void BermudaThreadWait();
 extern void BermudaThreadExit();
 extern void BermudaThreadYield();
 extern THREAD *BermudaThreadGetByName(char *name);
+extern void BermudaThreadFree();
 
 // internal functions
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
+
 
 __DECL_END
 
 extern THREAD *BermudaCurrentThread;
 extern THREAD *BermudaRunQueue;
 extern THREAD *BermudaQueueHead;
+extern THREAD *BermudaKillQueue;
 
 #endif

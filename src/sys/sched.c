@@ -57,6 +57,18 @@ THREAD *BermudaThreadHead = NULL;
 THREAD *BermudaRunQueue = NULL;
 
 /**
+ * \var BermudaKillQueue
+ * \brief Threads ready to be killed.
+ * \see BermudaThreadExit
+ * \see BermudaThreadExit
+ * \warning Applications should not use this thread manually. Use with care!
+ * 
+ * This list will be emptied every time BermudaSchedulerExec is executed. Every
+ * thread in this list will be killed.
+ */
+THREAD *BermudaKillQueue = NULL;
+
+/**
  * \var BermudaIdleThread
  * \brief The idle thread.
  * \see IdleThread
@@ -85,18 +97,6 @@ static char BermudaIdleThreadStack[64];
 PRIVATE WEAK void IdleThread(void *arg);
 
 /**
- * \fn BermudaSchedGetIdleThread()
- * \brief Get the idle thread.
- * \see BermudaIdleThread
- * 
- * Return the idle thread, which does nothing.
- */
-inline THREAD *BermudaSchedGetIdleThread()
-{
-        return BermudaIdleThread;
-}
-
-/**
  * \brief Init scheduling
  * \param handle The main thread handler.
  * \todo Fix current thread initialization.
@@ -104,21 +104,18 @@ inline THREAD *BermudaSchedGetIdleThread()
  * This function will initialise the scheduler and the main thread.
  */
 void BermudaSchedulerInit(thread_handle_t handle)
-{
-        // initialise the thread
-        THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
-        BermudaThreadCreate(t_main, "Main Thread", handle, NULL, 64, NULL,
-                                        BERMUDA_DEFAULT_PRIO);
-        
+{    
         // initialise the idle thread
         BermudaIdleThread = BermudaHeapAlloc(sizeof(*BermudaIdleThread));
-        BermudaThreadCreate(BermudaIdleThread, "Idle Thread", &IdleThread, NULL, 64,
-                                &BermudaIdleThreadStack[0], 255);
+        BermudaThreadCreate(BermudaIdleThread, "Idle Thread", &IdleThread, 
+                            (void*)handle, 64, &BermudaIdleThreadStack[0], 255);
+        
+        // switch to the idle thread
         BermudaCurrentThread = BermudaIdleThread;
 }
 
 /**
- * \fn BermudaThreadQueueAddPrio(THREAD * volatile *tqpp, THREAD *t)
+ * \fn BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t)
  * \brief Add a thread to the given priority queue.
  * \param tqpp Thread Queue Pointer Pointer
  * \param t Thread to add.
@@ -129,7 +126,7 @@ void BermudaSchedulerInit(thread_handle_t handle)
  * Add the given thread <i>t</i> to the priority descending queue <i>tqpp</i>. The 
  * thread will be added after the last thread with a lower priority setting.
  */
-PUBLIC void BermudaThreadQueueAddPrio(THREAD * volatile *tqpp, THREAD *t)
+PUBLIC void BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t)
 {
         THREAD *tqp;
         
@@ -203,7 +200,8 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
  *       1. Check the total thread list for posted events. If a thread has received an event,
  *          post it. \n
  *       2. Secondly, it will destroy all elapsed timers. \n
- *       3. Last, but centainly not least - it will check if a new thread has to
+ *       3. Kill all threads which are ready to kill.
+ *       4. Last, but centainly not least - it will check if a new thread has to
  *          be executed.
  * \todo Implement point 1 and 2.
  * 
@@ -211,9 +209,9 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
  * thread which is currently running.
  */
 void BermudaSchedulerExec()
-{
+{        
         /*
-         * point 3 - execute new thread, if needed
+         * point 4 - execute new thread, if needed
          */
         if(BermudaCurrentThread != BermudaRunQueue) 
         { // if the current thread lost its top position
@@ -224,24 +222,17 @@ void BermudaSchedulerExec()
                 BermudaSwitchTask(BermudaRunQueue->sp);
                 BermudaExitCritical();
         }
-}
-
-/**
- * \fn BermudaSchedulerGetNextRunnable(THREAD *head)
- * \brief Get the next runnable thread from the given head list.
- * \param head The thread head to check.
- * \return The next runnable thread in the list.
- * 
- * This function will search for the next runnable thread. If there aren't anymore
- * runnable threads this function returns NULL.
- */
-PRIVATE WEAK THREAD *BermudaSchedulerGetNextRunnable(THREAD *head)
-{
-        return NULL;
+        
+        // point 3 - kill all ready to kill threads
+        BermudaThreadFree();
 }
 
 THREAD(IdleThread, arg)
 {
+        // initialise the thread
+        THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
+        BermudaThreadCreate(t_main, "Main Thread", arg, NULL, 64, NULL,
+                                        BERMUDA_DEFAULT_PRIO);
         while(1)
         {
                 BermudaThreadYield();

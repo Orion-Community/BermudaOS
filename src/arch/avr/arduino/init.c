@@ -37,11 +37,6 @@
 #define LED_PIN  BermudaGetPINB()
 #define LED      PINB5
 
-#ifdef __THREAD_DBG__
-static THREAD *th = NULL;
-static THREAD *th2 = NULL;
-#endif
-
 extern unsigned int __heap_start;
 
 THREAD(TestThread, data)
@@ -63,24 +58,26 @@ THREAD(TestThread, data)
 #else
                 BermudaDigitalPinWrite(12, led);
                 led ^= 1;
-//                 _delay_ms(1000);
-                BermudaThreadWait();
+                BermudaThreadExit();
 #endif
                 
                 
         }
 }
 
-THREAD(TestThread2, data)
+THREAD(MainThread, data)
 {
-#ifdef __ADC__
-        struct adc *adc = BermudaGetADC();
-        int temperature = 0;
-        float raw_temp = 0;
-#endif
-   
+        unsigned char led = 1;
+        THREAD *th = BermudaHeapAlloc(sizeof(*th));
+        BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
+                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
         while(1)
-        {
+        { 
+#ifdef __ADC__
+                struct adc *adc = BermudaGetADC();
+                int temperature = 0;
+                float raw_temp = 0;
+#endif
 #ifdef __ADC__
                 raw_temp = adc->read(A0);
                 temperature = raw_temp / 1024 * 5000;
@@ -91,20 +88,9 @@ THREAD(TestThread2, data)
                 );
 #endif
 #endif
-
-
-                BermudaThreadSleep(1000);
-        }
-}
-
-
-THREAD(MainThread, data)
-{
-        unsigned char led = 1;
-        
-        while(1)
-        {
+#ifndef __SPI__
                 BermudaDigitalPinWrite(13, led);
+#endif
 //                 printf("Available mem: %u - SREG %X\n", BermudaHeapAvailable(),
 //                        *AvrIO->sreg);
                 led ^= 1;
@@ -115,15 +101,6 @@ THREAD(MainThread, data)
 
 PRIVATE WEAK void setup()
 {
-#ifdef __THREAD_DBG__
-        th = BermudaHeapAlloc(sizeof(*th));
-        th2 = BermudaHeapAlloc(sizeof(*th));
-        BermudaSchedulerInit(&MainT, &MainThread);
-        BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
-                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-        BermudaThreadCreate(th2, "Test Thread 2", TestThread2, NULL, 128, 
-                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-#endif
 #ifdef __SPIRAM__
         BermudaSpiRamWriteByte(0x58, 0x99);
 #else
@@ -158,16 +135,9 @@ int main(void)
         sei();
         setup();
         
-        THREAD *th = BermudaHeapAlloc(sizeof(*th));
-//         THREAD *th2 = BermudaHeapAlloc(sizeof(*th2));
-        
         BermudaSchedulerInit(&MainThread);
-        BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
-                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-//         BermudaThreadCreate(th2, "Test Thread 2", TestThread2, NULL, 128, 
-//                           BermudaHeapAlloc(128), 155);
+        BermudaSchedulerStart();
         
-        BermudaSchedulerExec();
         while(1)
         {}
         return 0;

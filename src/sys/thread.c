@@ -80,7 +80,7 @@ void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *ar
         // add the thread on top of the full thread list
         t->q_next = BermudaThreadHead;
         BermudaThreadHead = t;
-        BermudaThreadQueueAddPrio(&BermudaRunQueue, t);
+        BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
 }
 
 /**
@@ -132,7 +132,7 @@ PUBLIC unsigned char BermudaThreadSetPrio(unsigned char prio)
         BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
         BermudaCurrentThread->prio = prio;
         if(prio < BERMUDA_LOWEST_PRIO)
-                BermudaThreadQueueAddPrio(&BermudaRunQueue, BermudaCurrentThread);
+                BermudaThreadPrioQueueAdd(&BermudaRunQueue, BermudaCurrentThread);
         else
                 BermudaThreadExit();
         
@@ -161,7 +161,7 @@ PUBLIC void BermudaThreadYield()
         if(BermudaCurrentThread->next)
         { // only do so if the current thread IS NOT the idle thread.
                 BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
-                BermudaThreadQueueAddPrio(&BermudaRunQueue, BermudaCurrentThread);
+                BermudaThreadPrioQueueAdd(&BermudaRunQueue, BermudaCurrentThread);
         }
         
         BermudaSchedulerExec();
@@ -202,7 +202,7 @@ PUBLIC void BermudaThreadNotify(THREAD *t)
                 { // not if the thread notifies itself or the thread the thread
                   // is already in the ready state.
                         t->state = THREAD_READY;
-                        BermudaThreadQueueAddPrio(&BermudaRunQueue, t);
+                        BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
                 }
         }
         BermudaThreadYield();
@@ -211,12 +211,41 @@ PUBLIC void BermudaThreadNotify(THREAD *t)
 /**
  * \fn BermudaThreadExit()
  * \brief Exit the current thread.
- * \todo Make sure the task that the deleted thread is not being used anymore.
  *
  * This function will exit the given thread and delete it from the running list.
  */
 PUBLIC void BermudaThreadExit()
 {
+        if(BermudaCurrentThread != BermudaThreadGetByName("Main Thread"))
+        {
+                BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
+                BermudaThreadQueueRemove(&BermudaThreadHead, BermudaCurrentThread);
+                BermudaThreadPrioQueueAdd(&BermudaKillQueue, BermudaCurrentThread);
+        }
+        BermudaThreadYield();
+}
+
+/**
+ * \brief Free the threads in the kill queue.
+ * \todo Delete added timers.
+ * \see BermudaThreadExit
+ * \see BermudaKillQueue
+ * \note Applications don't call this function usually, but you can try to do so
+ *       to win some memory and spare some cycles next context switch.
+ * 
+ * All the components of the threads in the kill queue will be released, then 
+ * all threads structures will be free'd.
+ */
+PUBLIC void BermudaThreadFree()
+{
+        THREAD *kill = NULL;
+        while(BermudaKillQueue)
+        {
+                kill = BermudaKillQueue;
+                BermudaThreadQueueRemove(&BermudaKillQueue, kill);
+                BermudaStackFree(kill);
+                BermudaHeapFree(kill);
+        }
 }
 
 /**

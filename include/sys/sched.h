@@ -22,6 +22,20 @@
 
 #include <bermuda.h>
 #include <sys/thread.h>
+#include <arch/io.h>
+
+/**
+ * \def BermudaSchedulerStart
+ * \brief Start the scheduler.
+ * \warning Has to be called AFTER BermudaSchedulerInit!
+ * \see BermudaSchedulerInit
+ * 
+ * Kick off the first thread switch.
+ */
+#define BermudaSchedulerStart() \
+BermudaEnterCritical();                      \
+BermudaSwitchTask(BermudaCurrentThread->sp); \
+BermudaExitCritical()
 
 extern THREAD *BermudaThreadHead;
 extern THREAD *BermudaCurrentThread;
@@ -38,16 +52,18 @@ extern "C" {
  * \warning Interrupts should be disabled before calling this function.
  * \note Application function threads usualy don't call this function, but use
  *       BermudaThreadYield instead.
+ * \todo Split up the function in multiple functions: \n
+ *       * BermudaThreadSaveContext(stack_t sp) // should be naked \n
+ *       * BermudaStackSave -> already existing \n
+ *       * BermudaLoadContext(stack_t sp)
  * 
  * This function switches the thread context.
  */
 extern void BermudaSwitchTask(void *sp);
 extern void BermudaSchedulerInit(thread_handle_t handle);
-extern void BermudaThreadQueueAddPrio(THREAD * volatile *tqpp, THREAD *t);
+extern void BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t);
 extern void BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t);
 extern void BermudaSchedulerExec();
-
-PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
 
 __DECL_END
 

@@ -33,7 +33,7 @@
 #include <sys/events/event.h>
 
 /**
- * \fn BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
+ * \fn BermudaEventWait(volatile THREAD **queue, unsigned int tmo)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param tmo <i>Time out</i>. Maximum time to wait.
@@ -41,49 +41,9 @@
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-PUBLIC int BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
+PUBLIC int BermudaEventWait(volatile THREAD **queue, unsigned int tmo)
 {
-        unsigned char ints = 0;
-        THREAD *th;
-        
-        // get queue root
-        BermudaSafeCli(&ints);
-        th = *queue;
-        BermudaIntsRestore(ints);
-        
-        if(th == SIGNALED)
-        {
-                BermudaSafeCli(&ints);
-                *queue = 0;
-                BermudaIntsRestore(ints);
-                return 0;
-        }
-        
-        // if the thread is not signaled
-        th = BermudaCurrentThread->next;
-        if(tmo)
-                BermudaCurrentThread->th_timer = BermudaTimerCreate(tmo,
-                                                                    &BermudaEventTMO
-                                                                    BermudaCurrentThread,
-                                                                    BERMUDA_ONE_SHOT);
-        else
-                BermudaCurrentThread->th_timer = NULL;
-        
-        BermudaSchedulerDisable();
-        BermudaCurrentThread->flags &= ~BERMUDA_TH_STATE_MASK;
-        BermudaCurrentThread->flags |= BERMUDA_THREAD_SLEEPING // mark as sleeping
-        BermudaThreadQueueRemove(&BermudaThreadHead, BermudaCurrentThread);
-        BermudaThreadQueueAdd((THREAD**)queue, (void*)queue);
-        BermudaSchedulerResume(th); // resume scheduling
-        
-        /* Thread is signaled */
-        if(BermudaCurrentThread->th_timer == SIGNALED)
-        {
-                BermudaCurrentThread->th_timer = NULL;
-                return -1;
-        }
-        
-        return 0;
+
 }
 
 /**
@@ -98,31 +58,7 @@ PUBLIC int BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
  */
 PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg)
 {
-        THREAD *volatile *pQueue = arg;
-        
-        BermudaEnterCritical();
-        THREAD *thq = *pQueue;
-        BermudaExitCritical();
-        
-        if(thq != SIGNALED)
-        {
-                while(thq)
-                {
-                        if(thq->th_timer == timer)
-                        {
-                                THREAD *next = thq->next;
-                                BermudaThreadQueueRemove(pQueue, thq);
-                                if(next == NULL)
-                                {
-                                        BermudaEnterCritical();
-                                        *pQueue = SIGNALED;
-                                        BermudaExitCritical();
-                                }
-                                BermudaThreadQueueAdd(&BermudaThreadHead, thq);
-                        }
-                        thq = thq->next;
-                }
-        }
+
 }
 
 

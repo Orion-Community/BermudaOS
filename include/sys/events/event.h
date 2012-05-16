@@ -56,7 +56,7 @@ extern "C" {
 #endif
 
 /**
- * \fn BermudaEventWait(volatile EVENT *queue, unsigned int tmo)
+ * \fn BermudaEventWait(volatile THREAD **queue, unsigned int tmo)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param tmo <i>Time out</i>. Maximum time to wait.
@@ -64,7 +64,7 @@ extern "C" {
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-extern int BermudaEventWait(volatile EVENT *queue, unsigned int tmo);
+extern int BermudaEventWait(volatile THREAD **queue, unsigned int tmo);
 
 /**
  * \fn BermudaEventSignal(volatile EVENT *)

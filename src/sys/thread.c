@@ -29,9 +29,37 @@
 
 /**
  * \addtogroup tmAPI Thread Management API
- * \brief Thread management.
+ * \brief The thread management module contains all functions needed to schedule
+ *        threads.
  * 
- * All functions related to thread management are found in this module.
+ * \section algo Scheduling algorithm
+ * 
+ * The schedule algorithm implemented by BermudaOS, is a cooperative single queue
+ * priority based algorithm.
+ * 
+ * \section usage Usage
+ * All functions related to thread management are found in this module.\n \n
+ * Example of a thread definition: \n
+ * \code{.c}
+ * THREAD(ExampleThread, t_arg)
+ * {
+ *      ExampleSetup();
+ *      while(1)
+ *      {
+ *              BermudaThreadSleep(1000);
+ *      }
+ * }
+ * \endcode
+ * 
+ * The use of BermudaThreadSleep at the end of the thread loop is essential since
+ * BermudaOS implements an cooperative scheduler without a time slice. If you
+ * run a thread at high priority without forcing a context switch by BermudaThreadSleep
+ * or BermudaThreadWait, the system will be locked up in the thread. \n
+ * The example thread can be started with this snippet:
+ * \code{.c}
+ * BermudaThreadCreate(th, "name" &ExampleThread, arg, stack_size, stack_p, prio);
+ * \endcode
+ * The first argument is an allocated pointer to an uninitialised THREAD structure.
  * 
  * @{
  */

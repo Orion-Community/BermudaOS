@@ -118,14 +118,6 @@ void BermudaThreadSleep(unsigned int ms)
  */
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg)
 {
-        THREAD *t = (THREAD*)arg;
-        t->sleep_time--;
-        
-        if(t->sleep_time == 0)
-        {
-                t->state = THREAD_READY;
-                BermudaTimerDelete(timer);
-        }
 }
 
 /**

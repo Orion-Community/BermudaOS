@@ -23,6 +23,9 @@
 
 #include <bermuda.h>
 
+//! \addtogroup vtimers
+// @{
+
 struct _vtimer;
 
 /**
@@ -62,16 +65,15 @@ struct _vtimer
         void *arg;
         
         /**
-         * \brief Timer interval.
+         * \brief Amount of ticks left.
          * 
-         * The interval of each tick. The base interval (ie. when interval = 1)
-         * is 1ms (or 1000Hz).
+         * The timer has <i>tick_left</i> ticks left before it expires.
          */
-        unsigned long interval;
+        unsigned long ticks_left;
         
         /**
          * \brief Timer ticks.
-         * \see interval
+         * \see ticks_left
          * 
          * The amount of counted ticks. Each interval, this member will be increased
          * by one.
@@ -128,10 +130,12 @@ extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg
                                      unsigned char flags);
 
 // internal functions
-PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer);
+PRIVATE WEAK void BermudaTimerAdd(VTIMER *timer);
 
 #ifdef __cplusplus
 }
 #endif
+
+// @}
 
 #endif /* __VTIMER_H */

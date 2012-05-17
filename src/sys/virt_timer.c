@@ -21,43 +21,85 @@
 #include <bermuda.h>
 #include <sys/virt_timer.h>
 
-PRIVATE WEAK VTIMER *head = NULL;
+/**
+ * \addtogroup vtimers Timer Management API
+ * \brief Timer management API.
+ * 
+ * API to handle timers which run in the back ground. An example of the use of
+ * these timers is in the BermudaThreadSleep function. The scheduler uses them
+ * to clock sleep time's.
+ * 
+ * @{
+ */
 
-VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
+/**
+ * \var BermudaTimerList
+ * \brief Timer linked list.
+ * \see BermudaTimerAdd
+ * \private
+ * 
+ * Linked list of timer objects. The list is in control of the timer module.
+ */
+PRIVATE WEAK VTIMER *BermudaTimerList = NULL;
+
+/**
+ * \brief Create a new timer.
+ * \param ms Time until it will fire in milli seconds.
+ * \param fn Fire function.
+ * \param arg Argument passed to <b>fn</b>.
+ * \param flags Can be set to either BERMUDA_PERIODIC or BERMUDA_ONE_SHOT
+ * \return The created timer object.
+ * \see BERMUDA_ONE_SHOT
+ * \see BERMUDA_PERIODIC
+ * \see BermudaSchedulerExec
+ * \note Each time BermudaSchedulerExec is called the timer list is processed.
+ *       If threads are not available, they will be handled in the timer interrupt.
+ * 
+ * Create's a new timer object based on the given parameters. When the timer
+ * expires it will call the given function <b>fn</b>.
+ */
+PUBLIC VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
                                      unsigned char flags)
 {
         VTIMER *timer = BermudaHeapAlloc(sizeof(*timer));
         if(NULL == timer)
                 return NULL;
                 
-        timer->interval = ms;
         timer->handle = fn;
         timer->arg = arg;
         timer->flags = flags;
-        BermudaVTimerAdd(timer);
+        BermudaTimerAdd(timer);
         return timer;
 }
 
-PRIVATE WEAK void BermudaVTimerAdd(VTIMER *timer)
+/**
+ * \brief Add the given timer to the list.
+ * \param timer New timer to add.
+ * \warning Be careful not to add a timer twice.
+ * \see _vtimer
+ * \private
+ * \todo Fix head == NULL cases
+ * 
+ * The timer will be added to the list of timers. The list is ordered by the
+ * <b>ticks_left</b> field.
+ */
+PRIVATE WEAK void BermudaTimerAdd(VTIMER *timer)
 {
-        timer->next = NULL;
+        VTIMER **vtpp = &BermudaTimerList, *vtp = BermudaTimerList;
         
-        if(head == NULL)
-                head = timer;
-        else
+        foreach(vtp, vtp)
         {
-                VTIMER *c = head;
-                while(c)
+                if(timer->ticks_left < vtp->ticks_left)
                 {
-                        if(NULL == c->next)
-                                break;
-                        
-                        c = c->next;
+                        timer->next = vtp;
+                        *vtpp = timer;
+                        vtp->ticks_left -= timer->ticks_left;
+                        break;
                 }
-                c->next = timer;
+                vtpp = &vtp->next;
         }
-        
-        return;
+        if(timer->next)
+                timer->ticks_left -= vtp->ticks_left;
 }
 
 /**
@@ -82,3 +124,5 @@ void BermudaTimerExit(VTIMER *timer)
 void BermudaTimerProcess()
 {
 }
+
+// @}

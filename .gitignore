@@ -3,7 +3,9 @@
 *.hex
 *.lst
 build-cli/
+lib/
 *.geany
 .cproject
 .project
 .settings/
+

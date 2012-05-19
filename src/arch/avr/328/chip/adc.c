@@ -84,6 +84,7 @@ struct adc* adc;
  * \brief Read the ADC.
  * \param pin The ADC pin to read from.
  * \return The converted value.
+ * \todo Make it board independent.
  *
  * This function starts the analog to digital conversion and returns the
  * result.

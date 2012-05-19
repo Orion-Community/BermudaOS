@@ -121,7 +121,7 @@ PRIVATE WEAK void BermudaTimerAdd(VTIMER *timer)
  * \private
  * 
  * Execute the timer handle and remove the timer from the list, if the timer also
- * expired (i.e. the timer is a one-shot timer)
+ * expired (i.e. the timer is a one-shot timer).s
  */
 PRIVATE WEAK void BermudaTimerExec(VTIMER *timer)
 {

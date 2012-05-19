@@ -10,6 +10,7 @@ ARDUINO_LIBS		=
 CSRCS			= thread.c sched.c mem.c virt_timer.c
 CPPSRCS			=
 ASMSRCS			=
+LIBDIR			= ../../lib
 
 include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
@@ -28,6 +29,7 @@ events.o:
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
+	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(@:.o=.a) $@
 
 %o: %cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<

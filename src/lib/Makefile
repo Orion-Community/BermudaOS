@@ -8,7 +8,7 @@ TARGET			= lib.o
 ARDUINO_LIBS		=
 
 CSRCS			= spiram.c
-CPPSRCS			=
+# CPPSRCS			= linkedlist.cpp
 
 include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs

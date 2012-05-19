@@ -17,7 +17,7 @@
  */
 
 /** \file spiram.c */
-#if defined(__SPI__) && defined(__SPIRAM__)
+#if (defined(__SPI__) && defined(__SPIRAM__)) || defined(__DOXYGEN__)
 
 #include <stdlib.h>
 #include <arch/spi.h>
@@ -38,19 +38,22 @@ void BermudaSpiRamDisable()
         BermudaSpiStop(SS);
 }
 
+/**
+ * \fn BermudaSpiRamInit()
+ * \brief Initialise the SPI ram.
+ * \todo Use high level SPI interface.
+ * \todo Add init check.
+ * 
+ * Initialise the SPI communication to the SPI SRAM chip.
+ */
 void BermudaSpiRamInit()
 {
         SPI *spiram = BermudaSpiGetInterface();
         if(NULL == spiram)
                 return;
 
-        if(!BermudaSpiIsInitialized(spiram))
-                return;
-
         BermudaSpiRamDisable();
-
         spi = spiram;
-
         return;
 }
 

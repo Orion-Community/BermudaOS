@@ -23,15 +23,7 @@
 
 struct timer
 {
-        char *name;
-        unsigned char id;
-        
-        unsigned int tick;
-        
-        /* timer config */
         unsigned short prescaler;
-        unsigned char mode : 3;
-        unsigned short top;
         
         /* I/O registers */
         volatile unsigned char *controlA, *controlB, *countReg, *output_comp_a,

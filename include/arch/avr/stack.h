@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file include/arch/avr/stack.h */
+
 #ifndef __STACK_H
 #define __STACK_H
 
@@ -32,6 +34,8 @@ typedef unsigned char* stack_t;
 __DECL
 extern void BermudaStackInit(THREAD *t, stack_t stack, 
                              unsigned short stack_size, thread_handle_t handle);
+extern void BermudaStackFree(THREAD *t);
+extern void BermudaStackSave(stack_t stack);
 __DECL_END
 
 #endif

@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file binary.h */
 #ifndef Binary_h
 #define Binary_h
 
@@ -24,6 +25,15 @@
 #define BIT(x) (1<<x)
 
 __DECL
+/**
+ * \fn BermudaIsPowerOfTwo(unsigned int x)
+ * \brief Check if a number is a power of two.
+ * \param x int to check.
+ * \return 1 when power of two, 0 otherwise.
+ * 
+ * The function will perform a binary and to check the if the given value is
+ * a power of two.
+ */
 static inline unsigned char BermudaIsPowerOfTwo(unsigned int x)
 {
         return !(x & (x-1));

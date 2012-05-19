@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - AVR timer functions
+ *  BermudaOS - C++ Linked List
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,34 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <arch/avr/io.h>
+#ifndef __LINKED_LIST_H
+#define __LINKED_LIST_H
 
+#include <bermuda.h>
 
+template <class T>
+class LinkedListNode
+{
+public:
+        LinkedListNode(T *data);
+        LinkedListNode();
+        
+        LinkedListNode<T> *GetNext();
+        
+private:
+        T *data;
+        LinkedListNode<T> *next;
+};
 
+template <class T> 
+class LinkedList
+{
+public:
+        LinkedList();
+        void add(T *value);
+        
+private:
+        LinkedListNode<T> *list;
+};
+
+#endif

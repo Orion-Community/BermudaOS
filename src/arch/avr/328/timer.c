@@ -16,20 +16,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file timer.c */
 #include <lib/binary.h>
 
 #include <avr/interrupt.h>
 
-#include <util/delay.h>
-
 #include <sys/sched.h>
 #include <sys/thread.h>
+#include <sys/virt_timer.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/328/timer.h>
 
 PRIVATE WEAK TIMER *timer0 = NULL;
+PRIVATE WEAK TIMER *timer2 = NULL;
 
 /**
  * \fn BermudaInitTimer0()
@@ -39,8 +40,8 @@ PRIVATE WEAK TIMER *timer0 = NULL;
  * 
  * * ISR type:                  Overflow
  * * Prescaler:                 64
- * * TOP:                       244
- * * Generated frequency:       1024Hz
+ * * TOP:                       250
+ * * Generated frequency:       100Hz
  * 
  * The main function of this timer is to provide sleep support and generate a
  * timer feed to the scheduler.
@@ -57,11 +58,42 @@ void BermudaInitTimer0()
         BermudaTimerInit(timer0, B111, B11, B0);
         
         /* Set the top to 244 */
-        *(timer0->output_comp_a) = 244;
+        *(timer0->output_comp_a) = 250;
         
         /* Enable the overflow interrupt */
         spb(*timer0->int_mask, TOIE0);
 }
+
+#if (TIMERS & B100) == B100
+/**
+ * \fn BermudaInitTimer2()
+ * \brief Initialize timer 2.
+ *
+ * This function initializes timer 2 with the following properties:
+ *
+ * * ISR type:                  Overflow
+ * * Prescaler:                 32
+ * * TOP:                       250
+ * * Generated frequency:       2000Hz
+ *
+ * The main function of this timer is to provide sleep support and generate a
+ * timer feed to the scheduler.
+ */
+void BermudaInitTimer2()
+{
+        unsigned char ints = 0;
+        BermudaSafeCli(&ints);
+
+        timer2 = BermudaHeapAlloc(sizeof(*timer2));
+        BermudaTimer2InitRegs(timer2);
+        BermudaTimerInit(timer2, B111, B11, B0);
+
+        *(timer2->output_comp_a) = 250;
+        spb(*timer2->int_mask, TOIE2);
+        
+        BermudaIntsRestore(ints);
+}
+#endif
 
 void BermudaTimerInit(timer, waveform, prescaler, ocm)
 unsigned char waveform, prescaler, ocm;
@@ -95,8 +127,27 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 #endif
 
 #if (TIMERS & B100) == B100
-#error No support for timer 2 yet!
-PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+// #error No support for timer 2 yet!
+PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer)
+{
+        timer->controlA      = &BermudaGetTCCR2A();
+        timer->controlB      = &BermudaGetTCCR2B();
+        timer->int_mask      = &BermudaGetTIMSK2();
+        timer->int_flag      = &BermudaGetTIFR2();
+        timer->output_comp_a = &BermudaGetOCR2A();
+        timer->output_comp_b = &BermudaGetOCR2B();
+        timer->countReg      = &BermudaGetTCNT2();
+}
+#endif
+
+#if (TIMERS & B100) == B100
+// #error No support for timer 2 yet!
+PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
+                                                     unsigned char sr)
+{
+        TIMER2_ASYC_SR &= B10000011;
+        TIMER2_ASYC_SR |= sr;
+}
 #endif
 
 #ifdef __LAZY__
@@ -188,6 +239,7 @@ void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres)
 {
         *timer->controlB &= ~B111; // results in 11111000
         *timer->controlB |= pres & B111;
+        timer->prescaler = pres & B111;
 }
 #endif
 
@@ -341,24 +393,16 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 }
 #endif
 
-static short timer_count;
+static unsigned long tick = 0;
 
 SIGNAL(TIMER0_OVF_vect)
 {
-#ifdef __THREADS__
-        if(!BermudaThreadDoesIO(BermudaCurrentThread) && BermudaSchedulerEnabled)
-        {
-                BermudaSchedulerTick();
-                BermudaSchedulerExec();
-                timer_count = 0;
-        }
-#endif
-        
-        timer0->tick++;
-        timer_count++;
+        tick++;
 }
 
-inline unsigned long BermudaGetTimerCount()
+#if (TIMERS & B100) == B100
+SIGNAL(TIMER2_OVF_vect)
 {
-        return timer_count;
+
 }
+#endif

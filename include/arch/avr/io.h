@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file io.h */
+/** \file include/arch/avr/io.h */
 
 #ifndef __PORT_IO_H
 #define __PORT_IO_H
@@ -27,6 +27,45 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * \fn BermudaMutexRelease(unsigned char *lock)
+ * \brief Release the mutex lock from <i>lock</i>.
+ * \param lock Lock pointer.
+ * 
+ * This function releases the lock from <i>lock</i> mutually exclusive.
+ */
+extern inline void BermudaMutexRelease(unsigned char *lock);
+
+/**
+ * \fn BermudaMutexEnter(unsigned char *lock)
+ * \brief Enter locking state.
+ * \param lock Lock pointer.
+ * 
+ * This function locks a variable mutually exclusive.
+ */
+extern void BermudaMutexEnter(unsigned char *lock);
+
+/**
+ * \def BermudaEnterCritical
+ * \brief Enter IO safe state.
+ * \note Disables interrupts.
+ * \warning System might get corrupted when BermudaExitCritical is not called.
+ */
+#define BermudaEnterCritical() __asm__ __volatile__( \
+                               "in __tmp_reg__, __SREG__" "\n\t" \
+                               "cli"                      "\n\t" \
+                               "push __tmp_reg__"         "\n\t")
+                               
+/**
+ * \def BermudaExitCritical
+ * \brief Leave IO safe state.
+ * \note Restores interrupts to saved state.
+ * \warning Do not call without calling BermudaEnterCritical before.
+ */
+#define BermudaExitCritical() __asm__ __volatile__( \
+                              "pop __tmp_reg__"           "\n\t" \
+                              "out __SREG__, __tmp_reg__" "\n\t")
 
 #define spb(port, bit) (port |= (1<<bit))
 #define cpb(port, bit) (port &= ~(1<<bit))
@@ -61,24 +100,6 @@ extern inline unsigned short BermudaReadPGMWord(unsigned short);
 extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
 extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);
 extern unsigned char BermudaDigitalPinRead(unsigned char pin);
-
-/**
- * \fn BermudaMutexRelease(unsigned char *lock)
- * \brief Release the mutex lock from <i>lock</i>.
- * \param lock Lock pointer.
- * 
- * This function releases the lock from <i>lock</i> mutually exclusive.
- */
-extern inline void BermudaMutexRelease(unsigned char *lock);
-
-/**
- * \fn BermudaMutexEnter(unsigned char *lock)
- * \brief Enter locking state.
- * \param lock Lock pointer.
- * 
- * This function locks a variable mutually exclusive.
- */
-extern void BermudaMutexEnter(unsigned char *lock);
 
 #define BermudaGetIOPort(pin) BermudaReadPGMByte((unsigned short) \
                                 BermudaPinToPort+(pin))

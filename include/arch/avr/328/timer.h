@@ -34,9 +34,39 @@
 #define BermudaGetTIMSK0() MEM_IO8(0x6E)
 #define BermudaGetTIFR0()  SFR_IO8(0x15)
 
+/* timer 2 */
+#define BermudaGetTCCR2A() MEM_IO8(0xB0)
+#define BermudaGetTCCR2B() MEM_IO8(0xB1)
+
+#define BermudaGetTCNT2() MEM_IO8(0xB2)
+
+#define BermudaGetOCR2A() MEM_IO8(0xB3)
+#define BermudaGetOCR2B() MEM_IO8(0xB4)
+
+#define BermudaGetTIMSK2() MEM_IO8(0x70)
+#define BermudaGetTIFR2()  SFR_IO8(0x17)
+
+#define TIMER2_ASYC_SR MEM_IO8(0xB6)
+#define TIMER2_GEN_TCCR SFR_IO8(0x23)
+
 __DECL
 extern void BermudaInitTimer0();
-extern inline unsigned long BermudaGetTimerCount();
+
+/**
+ * \fn BermudaInitTimer2()
+ * \brief Initialize timer 2.
+ *
+ * This function initializes timer 2 with the following properties:
+ *
+ * * ISR type:                  Overflow
+ * * Prescaler:                 32
+ * * TOP:                       250
+ * * Generated frequency:       2000Hz
+ *
+ * The main function of this timer is to provide sleep support and generate a
+ * timer feed to the scheduler.
+ */
+extern void BermudaInitTimer2();
 
 #ifdef __LAZY__
 PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode);
@@ -57,11 +87,14 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 #endif
 
 #if (TIMERS & B100) == B100
-#error No support for timer 2 yet!
-PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);
+// #error No support for timer 2 yet!
+extern void BermudaInitTimer2();
+PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer);
+PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
+                                                     unsigned char sr);
 #endif
 
-void BermudaTimerInit(TIMER *timer, unsigned char waveform,
+extern void BermudaTimerInit(TIMER *timer, unsigned char waveform,
                       unsigned char prescaler, unsigned char ocm);
 
 static inline void BermudaTimerDisable(TIMER *timer)

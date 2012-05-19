@@ -22,130 +22,58 @@
 
 #include <bermuda.h>
 #include <sys/thread.h>
+#include <arch/io.h>
 
-extern unsigned char BermudaSchedulerEnabled;
-
-__DECL
 /**
- * \fn BermudaThreadInit(THREAD *t, thread_handle_t handle, void *arg, unsigned short stack_size, void *stack)
- * \brief Initialize the scheduler with main thread.
- * \param t Main thread
- * \param handle Main handle
- * \param arg Arguments to the main thread
- * \param stack_size Size of the stack
- * \param stack Stack pointer
- *
- * Initialize the main thread. If <i>stack</i> is NULL, then the current stack
- * pointer will be used.
+ * \addtogroup tmAPI
+ * @{
  */
-void BermudaSchedulerInit(THREAD *th, thread_handle_t handle);
 
 /**
- * \fn BermudaSchedulerAddThread(THREAD *t)
- * \brief Add a new thread to the list
- * \param th Thread to add.
- *
- * This function will edit the thread list to add the new thread <i>th</i>.
- */
-void BermudaSchedulerAddThread(THREAD *t);
-
-/**
- * \fn BermudaSchedulerGetLastThread()
- * \brief Find the last item of BermudaThreadHead.
- * \return The last entry of the thread list.
- * This function will return the last entry of the thread list.
- */
-PRIVATE WEAK THREAD* BermudaSchedulerGetLastThread();
-
-/**
- * \fn BermudaSchedulerDeleteThread(THREAD *t)
- * \brief Delete a given thread from the list.
- * \param t Thread to delete.
- *
- * This function will delete the <i>THREAD t</i> from the linked list and fix
- * the list.
- */
-PRIVATE WEAK void BermudaSchedulerDeleteThread(THREAD *t);
-
-/**
- * \fn BermudaThreadExit()
- * \brief Exit the current thread.
- * \todo Make sure the task that the deleted thread is not being used anymore.
- *
- * This function will exit the given thread and delete it from the running list.
- */
-void BermudaThreadExit();
-
-/**
- * \fn BermudaSchedulerStart()
+ * \def BermudaSchedulerStart
  * \brief Start the scheduler.
- *
- * This function will enable the scheduler and pass control to the thread head.
- */
-void BermudaSchedulerStart();
-
-/**
- * \fn BermudaSchedulerGetNextRunnable(TRHEAD *head)
- * \brief Get the next runnable thread from the given head list.
- * \param head The thread head to check.
- * \return The next runnable thread in the list.
+ * \warning Has to be called AFTER BermudaSchedulerInit!
+ * \see BermudaSchedulerInit
  * 
- * This function will search for the next runnable thread. If there aren't anymore
- * runnable threads this function returns NULL.
+ * Kick off the first thread switch.
  */
-PRIVATE WEAK THREAD* BermudaSchedulerGetNextRunnable(THREAD *head);
+#define BermudaSchedulerStart() \
+BermudaEnterCritical();                      \
+BermudaSwitchTask(BermudaCurrentThread->sp); \
+BermudaExitCritical()
+
+extern THREAD *BermudaThreadHead;
+extern THREAD *BermudaCurrentThread;
+extern THREAD *BermudaRunQueue;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
- * \fn BermudaSchedulerExec()
- * \brief Run the scheduler.
+ * \fn BermudaSwitchTask(void *sp)
+ * \brief Switch context.
+ * \param sp New stack pointer.
+ * \warning Interrupts should be disabled before calling this function.
+ * \note Application function threads usualy don't call this function, but use
+ *       BermudaThreadYield instead.
+ * \todo Split up the function in multiple functions: \n
+ *       * BermudaThreadSaveContext(stack_t sp) // should be naked \n
+ *       * BermudaStackSave -> already existing \n
+ *       * BermudaLoadContext(stack_t sp)
  * 
- * This function is called from the timer interrupt (and thus runs in an interrupt)
- * it should not be called by any other part of the system.
+ * This function switches the thread context.
  */
-void BermudaSchedulerExec();
-
-/**
- * \fn BermudaSchedulerTick()
- * \brief Run the scheduler.
- * \warning Should only be called from the timer interrupt!
- * 
- * This function will run the scheduler. It should be called from the timer
- * interrupt running at ~1000Hz.
- */
-void BermudaSchedulerTick();
-
-/**
- * \fn BermudaSchedulerDisable()
- * \brief This function will disable.
- *
- * This function will stop the scheduler and pass control to the main thread.
- */
-static inline void BermudaSchedulerDisable()
-{
-        BermudaSchedulerEnabled = 0;
-}
-
-/**
- * \fn BermudaSchedulerEnable()
- * \brief Enable the scheduler.
- * 
- * This function will start the scheduler
- */
-static inline void BermudaSchedulerEnable()
-{
-        BermudaSchedulerEnabled = 1;
-}
+extern void BermudaSwitchTask(void *sp);
+extern void BermudaSchedulerInit(thread_handle_t handle);
+extern void BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t);
+extern void BermudaThreadQueueRemove(THREAD * volatile *queue, THREAD *t);
+extern void BermudaSchedulerExec();
 
 __DECL_END
 
 /**
- * \def BermudaThreadYield()
- * \brief This will yield the current thread and pass control to the next one.
- * \warning This has not been tested yet!
- *
- * This define calls the function BermudaSchedulerExec, which will execute the
- * schedule algorithm immediately.
+ * @}
  */
-#define BermudaThreadYield() BermudaSchedulerExec()
 
 #endif

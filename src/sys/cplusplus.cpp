@@ -17,17 +17,16 @@
  */
 
 #include <cplusplus.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <bermuda.h>
 
-void * operator new(size_t size)
+void *operator new(size_t size)
 {
-        return malloc(size);
+        return BermudaHeapAlloc(size);
 }
 
 void operator delete(void * ptr)
 {
-        free(ptr);
+        BermudaHeapFree(ptr);
 }
 
 int __cxa_guard_acquire(__guard *g) {return !*(char *)(g);};

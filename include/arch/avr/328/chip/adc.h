@@ -42,11 +42,8 @@ typedef void (*adc_write_t)(struct adc*, unsigned short);
 
 struct adc
 {
-        uint8_t id;
-
         adc_read_t read;
         adc_write_t write;
-        void (*update)(struct adc*);
 
         unsigned char prescaler, aref;
         

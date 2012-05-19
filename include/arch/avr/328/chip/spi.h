@@ -42,19 +42,8 @@
 typedef struct spi SPI;
 
 struct spi
-{
-        char *name;
-        unsigned char id;
-        
+{        
         unsigned char (*transact)(SPI *spi, unsigned char data);
-        unsigned char flags; /*
-                              * 0   -> set to one when initialized
-                              * 1   -> ISR enabled
-                              * 2   -> Sleep when waiting for transfer
-                              * 3   -> SPI is in master mode when 1
-                              * 4   -> SPI 2X
-                              */
-        unsigned char prescaler;
         volatile unsigned char *spcr, *spsr, *spdr;
 } __PACK__;
 
@@ -80,14 +69,14 @@ extern unsigned char BermudaSpiRead(SPI *spi);
 extern void BermudaSpiWrite(SPI *spi, unsigned char data);
 
 /**
- * \fn BermudaSpiInit(SPI *spi)
+ * \fn BermudaSpiHardwareInit(SPI *spi)
  * \brief Initialise the Serial Peripheral Interface.
  * \param spi SPI instance
  *
  * The parameter <i>spi</i> has to be allocated before passed to this function.
  * When this function returns the SPI is ready to use.
  */
-extern int BermudaSpiInit(SPI *spi);
+extern int BermudaSpiHardwareInit(SPI *spi);
 extern int BermudaSpiDestroy(SPI *spi);
 
 /**

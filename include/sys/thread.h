@@ -16,27 +16,78 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** \file thread.h */
+
 #ifndef __THREAD_H
 #define __THREAD_H
 
+#include <arch/io.h>
 #include <lib/binary.h>
+#include <sys/virt_timer.h>
 
+/**
+ * \addtogroup tmAPI
+ * @{
+ */
+
+/**
+ * \typedef thread_handle_t
+ * \brief Thread handle function type.
+ */
 typedef void (*thread_handle_t)(void *data);
 
+/**
+ * \def THREAD
+ * \brief Thread handle definition.
+ * \param fn Function name.
+ * \param param Parameter name.
+ * 
+ * A function which serves a thread should be declared with this macro.
+ */
 #define THREAD(fn, param) \
 PRIVATE WEAK void fn(void *param); \
 PRIVATE WEAK void fn(void *param)
 
-#define BERMUDA_TH_STATE_BITS 1
-#define BERMUDA_TH_STATE_MASK (B11 << BERMUDA_TH_STATE_BITS)
-#define BERMUDA_TH_IO_MASK 0x1
+/**
+ * \def BERMUDA_DEFAULT_PRIO
+ * \brief Default priority.
+ */
 
-#define BermudaThreadDoesIO(th)  (th->flags & BERMUDA_TH_IO_MASK)
-#define BermudaThreadEnterIO(th) (th->flags |= BERMUDA_TH_IO_MASK)
-#define BermudaThreadExitIO(th)  (th->flags &= (~BERMUDA_TH_IO_MASK))
-
-#ifndef RTSCHED
 #define BERMUDA_DEFAULT_PRIO 150
+
+/**
+ * \def BERMUDA_HIGHEST_PRIO
+ * \brief Highest priority available.
+ * 
+ * Threads running with BERMUDA_HIGHEST_PRIO are always ran when they are available.
+ */
+#define BERMUDA_HIGHEST_PRIO 0
+
+/**
+ * \def BERMUDA_LOWEST_PRIO
+ * \brief Lowest available priority.
+ */
+#define BERMUDA_LOWEST_PRIO 255
+
+/**
+ * \def BermudaThreadEnterIO
+ * \brief Enter IO safe state.
+ * \param x Depricated argument.
+ * \deprecated Was used by the round robin scheduler. Use BermudaEnterCritical
+ *             instead.
+ * \see BermudaEnterCritical
+ */
+#define BermudaThreadEnterIO(x) BermudaEnterCritical()
+
+/**
+ * \def BermudaThreadExitIO
+ * \brief Exit IO safe state.
+ * \param x Deprecated argument.
+ * \deprecated Was used by the round robin scheduler. Use BermudaExitCritical
+ *             instead.
+ * \see BermudaExitCritical
+ */
+#define BermudaThreadExitIO(x)  BermudaExitCritical()
 
 /**
  * \typedef thread_state_t
@@ -47,57 +98,166 @@ PRIVATE WEAK void fn(void *param)
 typedef enum
 {
         /**
-         * \enum RUNNING
          * \brief The thread is currently running.
          */
         THREAD_RUNNING,
         /**
-         * \enum READY
          * \brief The thread is ready to be scheduled.
          */
         THREAD_READY,
         /**
-         * \enum SLEEPING
          * \brief A thread having this state is not ready to run yet.
          */
         THREAD_SLEEPING,
+        
+        /**
+         * \brief Waiting thread.
+         * \see BermudaThreadNotify
+         * 
+         * A thread in the waiting state acts like a sleeping thread. The only
+         * difference is that a waiting thread will not resume automaticly. It
+         * must be waken up by BermudaThreadNotify.
+         */
+        THREAD_WAITING,
 } thread_state_t;
 
 /**
-  * \struct struct thread
-  * \brief Describes the state of a thread
-  */
+ * \struct thread
+ * \brief Describes the state of a thread
+ *  
+ * The thread information structure.
+ */
 struct thread
 {
+        /**
+         * \brief Queue pointer.
+         * \see BermudaRunQueue
+         * 
+         * Pointer to the next entry in the list.
+         */
         struct thread *next;
-        struct thread *prev;
-        unsigned int id;
+        
+        /**
+         * \brief Next pointer to total list of threads.
+         * \note Should only be changed by BermudaThreadExit.
+         * \see BermudaThreadHead
+         * 
+         * Points to the next thread in the total list of threads.
+         */
+        struct thread *q_next;
+        
+        /**
+         * \brief Name of the thread.
+         * 
+         * This value identifies the thread('s purpose).
+         */
         char *name;
+        
+        /**
+         * \brief Pointer to the end of the stack.
+         * 
+         * The end is the start, since the stack grows down.
+         * <i>stack</i> - <i>stack_size</i> == <i>stack_start</i>
+         */
         unsigned char *stack;            /* start of the stack */
+        
+        /**
+         * \brief The stack pointer.
+         * 
+         * Pointer to the current location of the stack.
+         */
         unsigned char *sp;      /* stack pointer */
-        void *param;            /* thread parameter */
-        unsigned char prio;
+        
+        /**
+         * \brief Size of the stack.
+         */
         unsigned short stack_size;
+        
+        /**
+         * \brief Thread parameter.
+         * 
+         * Parameter passed to the thread.
+         */
+        void *param;            /* thread parameter */
+        
+        /**
+         * \brief Thread priority.
+         * \see BERMUDA_DEFAULT_PRIO
+         * 
+         * This member identifies the priority of this thread.
+         */
+        unsigned char prio;
+
+        /**
+         * \brief Amount of time to sleep left.
+         * 
+         * This members tells the scheduler how much time the thread has to sleep.
+         */
         unsigned int sleep_time;
-        unsigned char flags; /*
-                              * [0] If one, stop scheduling, IO is performing
-                              * [1-2] thread_state_t
-                              */
-} __attribute__((packed));
+        
+        /**
+         * \brief Sleep timer.
+         * 
+         * The timer which clocks this thread when it is asleep.
+         */
+        VTIMER *th_timer;
+        
+        /**
+         * \brief Flag member.
+         * 
+         * Scheduling flags.
+         */
+        unsigned char state;
+        
+        /**
+         * \brief Event counter.
+         * \see BermudaSchedulerExec
+         * 
+         * When an event is posted to a from interrupt context, this counter
+         * will be increased by one. BermudaSchedulerExec will decrease it by one
+         * and handle the event.
+         */
+        unsigned char ec;
+} __PACK__;
+
+/**
+ * \typedef THREAD
+ * \brief Type definition of a thread.
+ */
 typedef struct thread THREAD;
 
-__DECL
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, 
                              void *arg, unsigned short stack_size, void *stack,
                                 unsigned char prio);
-extern void BermudaSwitchTask(void *sp);
-extern void BermudaThreadSleep(unsigned int ms);
 
+
+extern void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *arg,
+                                unsigned short stack_size, void *stack,
+                                unsigned char prio);
+
+extern void BermudaThreadSleep(unsigned int ms);
+extern unsigned char BermudaThreadSetPrio(unsigned char prio);
+extern void BermudaThreadNotify(THREAD *t);
+extern void BermudaThreadWait();
+extern void BermudaThreadExit();
+extern void BermudaThreadYield();
+extern THREAD *BermudaThreadGetByName(char *name);
+extern void BermudaThreadFree();
+
+// internal functions
+PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
 __DECL_END
 
 extern THREAD *BermudaCurrentThread;
-extern THREAD *BermudaPreviousThread;
+extern THREAD *BermudaRunQueue;
+extern THREAD *BermudaThreadHead;
+extern THREAD *BermudaKillQueue;
 
-#endif
-
+/**
+ * @}
+ */
 #endif

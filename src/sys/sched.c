@@ -28,6 +28,7 @@
 #include <sys/sched.h>
 #include <sys/thread.h>
 #include <sys/mem.h>
+#include <sys/virt_timer.h>
 #include <sys/events/event.h>
 
 /**
@@ -215,6 +216,11 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
  */
 void BermudaSchedulerExec()
 {        
+        /*
+         * Point 2 - process all timers
+         */
+        BermudaTimerProcess();
+        
         /*
          * point 4 - execute new thread, if needed
          */

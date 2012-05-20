@@ -49,6 +49,19 @@
 #define TIMER2_ASYC_SR MEM_IO8(0xB6)
 #define TIMER2_GEN_TCCR SFR_IO8(0x23)
 
+// general defs
+/**
+ * \def BermudaTimerGetTickFreq
+ * \brief Default frequency in Hertz.
+ */
+#define BermudaTimerGetTickFreq() 0x400
+
+/**
+ * \def BermudaTimerTicksToMillis
+ * \brief Convert milli seconds to ticks.
+ */
+#define BermudaTimerMillisToTicks(ms) ((ms * BermudaTimerGetTickFreq) / 1000)
+
 __DECL
 extern void BermudaInitTimer0();
 

@@ -133,13 +133,20 @@ PUBLIC void BermudaDelay(unsigned char ms)
 PUBLIC VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
                                      unsigned char flags)
 {
-        VTIMER *timer = BermudaHeapAlloc(sizeof(*timer));
-        if(NULL == timer)
-                return NULL;
+        VTIMER *timer;
+        if((timer = BermudaHeapAlloc(sizeof(*timer))) != NULL)
+        {
+                unsigned long ticks = BermudaTimerMillisToTicks(ms);
+                if(flags & BERMUDA_ONE_SHOT)
+                        timer->ticks = 0;
+                else
+                        timer->ticks = ticks;
                 
-        timer->handle = fn;
-        timer->arg = arg;
-        BermudaTimerAdd(timer);
+                timer->ticks_left = ticks+BermudaTimerGetSysTick()-last_sys_tick;
+                timer->handle = fn;
+                timer->arg = arg;
+                BermudaTimerAdd(timer);
+        }
         return timer;
 }
 

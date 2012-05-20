@@ -19,10 +19,10 @@
 #include <stdlib.h>
 
 #include <avr/interrupt.h>
-#include <util/delay.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
+#include <sys/virt_timer.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
@@ -94,7 +94,7 @@ THREAD(MainThread, data)
 //                 printf("Available mem: %u - SREG %X\n", BermudaHeapAvailable(),
 //                        *AvrIO->sreg);
                 led ^= 1;
-                _delay_ms(200);
+                BermudaDelay(200);
                 BermudaThreadNotify(BermudaThreadGetByName("Test Thread"));
         }
 }
@@ -108,6 +108,7 @@ PRIVATE WEAK void setup()
         BermudaSetPinMode(12, OUTPUT);
         BermudaSetPinMode(A0, INPUT);
 #endif
+        BermudaTimerInit();
 }
 
 int main(void)

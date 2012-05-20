@@ -128,6 +128,9 @@ extern void BermudaTimerProcess();
 extern void BermudaTimerExit(VTIMER *timer);
 extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
                                      unsigned char flags);
+extern void BermudaTimerInit();
+extern void BermudaDelay(unsigned char ms);
+extern void BermudaDelay_us(unsigned long us);
 
 // internal functions
 PRIVATE WEAK void BermudaTimerAdd(VTIMER *timer);

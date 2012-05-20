@@ -67,6 +67,30 @@ extern void BermudaMutexEnter(unsigned char *lock);
                               "pop __tmp_reg__"           "\n\t" \
                               "out __SREG__, __tmp_reg__" "\n\t")
 
+/**
+ * \def BermudaInterruptsSave
+ * \brief Save interrupt settings.
+ * 
+ * The interrupt settings will be saved on the stack.
+ */
+#define BermudaInterruptsSave() __asm__ __volatile__( \
+"in __tmp_reg__, __SREG__" "\n\t" \
+"push __tmp_reg__")
+
+/**
+ * \def BermudaInterruptsRestore
+ * \brief Restore the interrupts settings.
+ * \warning Only call after calling BermudaInterruptsSave.
+ * \note Please keep in mind that BermudaInterruptsSave will push the IRQ settings
+ *       on the stack.
+ * \see BermudaInterruptsSave
+ * 
+ * Pop the saved interrupt settings form the stack.
+ */
+#define BermudaInterruptsRestore() __asm__ __volatile__( \
+"pop __tmp_reg__" "\n\t" \
+"out __SREG__, __tmp_reg__")
+
 #define spb(port, bit) (port |= (1<<bit))
 #define cpb(port, bit) (port &= ~(1<<bit))
 

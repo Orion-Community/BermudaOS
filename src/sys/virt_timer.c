@@ -20,6 +20,7 @@
 
 #include <bermuda.h>
 #include <sys/virt_timer.h>
+#include <arch/io.h>
 
 /**
  * \addtogroup vtimers Timer Management API
@@ -41,6 +42,74 @@
  * Linked list of timer objects. The list is in control of the timer module.
  */
 PRIVATE WEAK VTIMER *BermudaTimerList = NULL;
+
+/**
+ * \var delay_loop_count
+ * \brief Delay loops.
+ * \see BermudaTimerInit
+ * \private
+ * 
+ * Amount of loops per system tick.
+ */
+PRIVATE WEAK unsigned long delay_loop_count = 0;
+
+/**
+ * \brief Initialise the timer module.
+ * \note Called by the BermudaOS initialisation sequence.
+ * \warning Should never be called by any user application.
+ * \see delay_loop_count
+ * 
+ * Registrates and starts a hardware timer. Also the delay_loop_count will
+ * be intialised.
+ */
+PUBLIC void BermudaTimerInit()
+{
+        BermudaInterruptsSave();
+        sei();
+        
+        unsigned long count = BermudaTimerGetTickCount();
+        while(count == BermudaTimerGetTickCount())
+                delay_loop_count++;
+        
+        BermudaInterruptsRestore();
+        /*
+         * The loop above takes more cycles due to the function call in the
+         * while loop. So a correction has to be applied.
+         */
+#ifdef __AVR__
+        delay_loop_count *= 103UL;
+        delay_loop_count /= 26UL;
+#else
+        delay_loop_count *= 137UL;
+        delay_loop_count /= 25UL;
+#endif
+}
+
+/**
+ * \brief Delay for given amount of micro seconds.
+ * \param us Amount of micro seconds to delay.
+ * \todo Create a NOP definition for arch independency.
+ * 
+ * The CPU will busy wait for the given amount of micro seconds.
+ */
+PUBLIC void BermudaDelay_us(unsigned long us)
+{
+        register unsigned long count = delay_loop_count * us / 1000;
+        
+        while(count--)
+                __asm__ __volatile__("mov r0, r0");
+}
+
+/**
+ * \brief Delay for given amount of mili seconds.
+ * \param us Amount of mili seconds to delay.
+ * 
+ * The CPU will busy wait for the given amount of mili seconds.
+ */
+PUBLIC void BermudaDelay(unsigned char ms)
+{
+        BermudaDelay_us((unsigned long)ms * 1000);
+}
 
 /**
  * \brief Create a new timer.
@@ -108,7 +177,7 @@ PRIVATE WEAK void BermudaTimerAdd(VTIMER *timer)
  * \see BermudaTimerProcess
  * 
  * When a timer expired or is not needed anymore, it can be stopped and deleted
- * by this thread.
+ * by this function.
  */
 void BermudaTimerExit(VTIMER *timer)
 {

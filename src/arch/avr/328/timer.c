@@ -55,7 +55,7 @@ void BermudaInitTimer0()
 
         // fast pwm, TOP = OCR0A, prescaler 64, com disconnected
         BermudaTimer0InitRegs(timer0);
-        BermudaTimerInit(timer0, B111, B11, B0);
+        BermudaHardwareTimerInit(timer0, B111, B11, B0);
         
         /* Set the top to 244 */
         *(timer0->output_comp_a) = 250;
@@ -86,7 +86,7 @@ void BermudaInitTimer2()
 
         timer2 = BermudaHeapAlloc(sizeof(*timer2));
         BermudaTimer2InitRegs(timer2);
-        BermudaTimerInit(timer2, B111, B11, B0);
+        BermudaHardwareTimerInit(timer2, B111, B11, B0);
 
         *(timer2->output_comp_a) = 250;
         spb(*timer2->int_mask, TOIE2);
@@ -95,7 +95,7 @@ void BermudaInitTimer2()
 }
 #endif
 
-void BermudaTimerInit(timer, waveform, prescaler, ocm)
+void BermudaHardwareTimerInit(timer, waveform, prescaler, ocm)
 unsigned char waveform, prescaler, ocm;
 TIMER *timer;
 {
@@ -394,6 +394,15 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 #endif
 
 static unsigned long tick = 0;
+
+inline unsigned long BermudaTimerGetTickCount()
+{
+        register unsigned long ret;
+        BermudaEnterCritical();
+        ret = tick;
+        BermudaExitCritical();
+        return ret;
+}
 
 SIGNAL(TIMER0_OVF_vect)
 {

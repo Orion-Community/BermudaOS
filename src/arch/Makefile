@@ -9,6 +9,7 @@ ARDUINO_LIBS		=
 
 CSRCS			=
 CPPSRCS			=
+LIBDIR			= ../../lib
 
 include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
@@ -20,6 +21,7 @@ all: $(TARGET)
 
 $(TARGET): $(ARCH).o $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(ARCH).o
+	$(AR) $(ARFLAGS) $(LIBDIR)/libarch.a $(ARCH).o
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<

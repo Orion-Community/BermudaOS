@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file timer.c */
+/** \file src/arch/avr/328/timer.c */
 #include <lib/binary.h>
 
 #include <avr/interrupt.h>
@@ -36,13 +36,13 @@ PRIVATE WEAK TIMER *timer2 = NULL;
  * \fn BermudaInitTimer0()
  * \brief Initialize timer 0.
  * 
- * This function initializes timer 0 with the following properties:
- * 
- * * ISR type:                  Overflow
- * * Prescaler:                 64
- * * TOP:                       250
- * * Generated frequency:       100Hz
- * 
+ * This function initializes timer 0 with the following properties: \n
+ * \n
+ * * ISR type:                  Overflow \n
+ * * Prescaler:                 64 \n
+ * * TOP:                       250 \n
+ * * Generated frequency:       1000Hz \n
+ * \n
  * The main function of this timer is to provide sleep support and generate a
  * timer feed to the scheduler.
  */
@@ -393,20 +393,35 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
 }
 #endif
 
-static unsigned long tick = 0;
+/**
+ * \var BermudaSystemTick
+ * \brief System ticks.
+ * \see BermudaTimerGetSysTick
+ * 
+ * Amount of system ticks.
+ */
+static unsigned long BermudaSystemTick = 0;
 
-inline unsigned long BermudaTimerGetTickCount()
+/**
+ * \brief Return the amount of system ticks.
+ * \return Amount of system ticks.
+ * \see BermudaSystemTick
+ * \note This function will safely get the value of system ticks by disabling and
+ *       re-enabling the interrupts.
+ */
+PUBLIC inline unsigned long BermudaTimerGetSysTick()
 {
-        register unsigned long ret;
+        unsigned long ret;
+        
         BermudaEnterCritical();
-        ret = tick;
+        ret = BermudaSystemTick;
         BermudaExitCritical();
         return ret;
 }
 
 SIGNAL(TIMER0_OVF_vect)
 {
-        tick++;
+        BermudaSystemTick++;
 }
 
 #if (TIMERS & B100) == B100

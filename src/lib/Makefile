@@ -8,7 +8,8 @@ TARGET			= lib.o
 ARDUINO_LIBS		=
 
 CSRCS			= spiram.c
-# CPPSRCS			= linkedlist.cpp
+CPPSRCS			= 
+LIBDIR			= ../../lib
 
 include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
@@ -22,6 +23,7 @@ $(TARGET): $(OBJS)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
+	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(@:.o=.a) $@
 
 %o: %cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<

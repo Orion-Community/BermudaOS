@@ -24,6 +24,8 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
+extern unsigned long BermudaTimerGetSysTick();
+
 #ifdef __cplusplus
 extern "C" {
 #endif

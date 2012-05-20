@@ -67,27 +67,19 @@ struct _vtimer
         /**
          * \brief Amount of ticks left.
          * 
-         * The timer has <i>tick_left</i> ticks left before it expires.
+         * Amount of system ticks left before the handle will be called.
          */
         unsigned long ticks_left;
         
         /**
          * \brief Timer ticks.
          * \see ticks_left
+         * \note This member will be set to 0 when it is a one-shot timer.
          * 
-         * The amount of counted ticks. Each interval, this member will be increased
-         * by one.
+         * Interval of the timer.
          */
         unsigned long ticks;
         
-        /**
-         * \brief Timer flags.
-         * 
-         * Set to BERMUDA_ONE_SHOT to create a timer which will only fire once.
-         * When set to BERMUDA_PERIODIC, it will fire at every interval until
-         * stopped.
-         */
-        unsigned char flags;
 } __PACK__;
 
 /**
@@ -125,7 +117,7 @@ extern "C" {
 #endif
 
 extern void BermudaTimerProcess();
-extern void BermudaTimerExit(VTIMER *timer);
+extern void BermudaTimerExec(VTIMER *timer);
 extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
                                      unsigned char flags);
 extern void BermudaTimerInit();

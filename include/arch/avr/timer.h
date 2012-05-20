@@ -58,6 +58,8 @@ extern int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres);
 #else
 extern void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres);
 #endif
+
+extern inline unsigned long BermudaTimerGetSysTick();
 __DECL_END
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)

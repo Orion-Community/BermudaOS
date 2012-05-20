@@ -126,13 +126,25 @@ void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *ar
  * \fn BermudaThreadSleep(unsigned int ms)
  * \brief Sleep a thread.
  * \param ms Time in mili seconds to sleep.
- * \todo Not yet implemented!
+ * \todo Fix thread->queue reset on timer init failure.
  * 
  * For the given time <i>ms</i> the current thread will not be executed. When
  * ms expires the thread will be executed automaticly.
  */
 void BermudaThreadSleep(unsigned int ms)
 {
+        BermudaCurrentThread->state = THREAD_SLEEPING;
+        BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
+        BermudaCurrentThread->th_timer = BermudaTimerCreate(ms, &BermudaThreadTimeout,
+                BermudaCurrentThread, BERMUDA_ONE_SHOT);
+        if(BermudaCurrentThread->th_timer)
+                BermudaThreadYield();
+        else
+        {
+                BermudaCurrentThread->state = THREAD_RUNNING;
+                BermudaCurrentThread->next = BermudaRunQueue;
+                BermudaRunQueue = BermudaCurrentThread;
+        }
 }
 
 /**
@@ -146,6 +158,10 @@ void BermudaThreadSleep(unsigned int ms)
  */
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg)
 {
+        THREAD *t = (THREAD*)arg;
+        t->state = THREAD_READY;
+        t->th_timer = NULL;
+        BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
 }
 
 /**

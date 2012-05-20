@@ -22,6 +22,8 @@
 #include <sys/virt_timer.h>
 #include <arch/io.h>
 
+static unsigned long last_sys_tick;
+
 /**
  * \addtogroup vtimers Timer Management API
  * \brief Timer management API.
@@ -67,8 +69,8 @@ PUBLIC void BermudaTimerInit()
         BermudaInterruptsSave();
         sei();
         
-        unsigned long count = BermudaTimerGetTickCount();
-        while(count == BermudaTimerGetTickCount())
+        unsigned long count = BermudaTimerGetSysTick();
+        while(count == BermudaTimerGetSysTick())
                 delay_loop_count++;
         
         BermudaInterruptsRestore();
@@ -123,6 +125,7 @@ PUBLIC void BermudaDelay(unsigned char ms)
  * \see BermudaSchedulerExec
  * \note Each time BermudaSchedulerExec is called the timer list is processed.
  *       If threads are not available, they will be handled in the timer interrupt.
+ * \todo Rewrite for new implementation.
  * 
  * Create's a new timer object based on the given parameters. When the timer
  * expires it will call the given function <b>fn</b>.
@@ -136,7 +139,6 @@ PUBLIC VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg
                 
         timer->handle = fn;
         timer->arg = arg;
-        timer->flags = flags;
         BermudaTimerAdd(timer);
         return timer;
 }
@@ -154,33 +156,51 @@ PUBLIC VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg
  */
 PRIVATE WEAK void BermudaTimerAdd(VTIMER *timer)
 {
-        VTIMER **vtpp = &BermudaTimerList, *vtp = BermudaTimerList;
+        VTIMER *vtp = BermudaTimerList, *prev = NULL;
         
-        foreach(vtp, vtp)
+        while(vtp)
         {
                 if(timer->ticks_left < vtp->ticks_left)
                 {
-                        timer->next = vtp;
-                        *vtpp = timer;
                         vtp->ticks_left -= timer->ticks_left;
                         break;
                 }
-                vtpp = &vtp->next;
+                
+                timer->ticks_left -= vtp->ticks_left;;
+                
+                prev = vtp;
+                vtp = vtp->next;
         }
-        if(timer->next)
-                timer->ticks_left -= vtp->ticks_left;
+        
+        timer->next = vtp;
+        
+        if(prev)
+                prev->next = timer;
+        else
+                BermudaTimerList = timer;
 }
 
 /**
- * \brief Delete a timer.
- * \param timer Timer to delete.
+ * \brief Execute an elapsed timer.
+ * \param timer Timer to execute.
  * \see BermudaTimerProcess
+ * \todo Generalize the function or remove the argument and use the BermudaTimerList
+ *       variable.
+ * \private
  * 
- * When a timer expired or is not needed anymore, it can be stopped and deleted
- * by this function.
+ * Execute the timer handle and remove the timer from the list, if the timer also
+ * expired (i.e. the timer is a one-shot timer).s
  */
-void BermudaTimerExit(VTIMER *timer)
+PRIVATE WEAK void BermudaTimerExec(VTIMER *timer)
 {
+        timer->handle(timer, timer->handle);
+        
+        BermudaTimerList = timer->next; // remove from the list
+        
+        if((timer->ticks_left = timer->ticks) == 0)                
+                BermudaHeapFree(timer);
+        else // timer != one-shot -> insert the timer again
+                BermudaTimerAdd(timer);
 }
 
 /**
@@ -190,8 +210,37 @@ void BermudaTimerExit(VTIMER *timer)
  * Update all virtual timers. This action is done before switching context by
  * default.
  */
-void BermudaTimerProcess()
+PUBLIC void BermudaTimerProcess()
 {
+        VTIMER *timer = NULL;
+        unsigned long new_ticks = BermudaTimerGetSysTick(); // save cycles by
+                                                           // saving in a local var
+        unsigned long diff = new_ticks - last_sys_tick;
+        last_sys_tick = new_ticks;
+        
+        /*
+         * Loop trough the list of timers. As long as there is a timer list and
+         * there are ticks left to distribute.
+         */
+        while(diff && BermudaTimerList)
+        {
+                timer = BermudaTimerList;
+                
+                if(timer->ticks_left < diff)
+                {
+                        diff -= timer->ticks_left;
+                        timer->ticks_left = 0;
+                }
+                else
+                {
+                        timer->ticks_left -= diff;
+                        diff = 0;
+                }
+                
+                // timer elapsed when ticks_left == 0
+                if(timer->ticks_left == 0)
+                        BermudaTimerExec(timer);
+        }
 }
 
 // @}

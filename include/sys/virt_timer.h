@@ -34,6 +34,9 @@ struct _vtimer;
  */
 typedef void (*vtimer_callback)(struct _vtimer*, void * arg);
 
+#define TIMER_DEF(fn, arg1, arg2) \
+PUBLIC void fn(struct _vtimer *arg1, void *arg2)
+
 /**
  * \struct _vtimer
  * \brief Virtual timer structure.
@@ -117,7 +120,6 @@ extern "C" {
 #endif
 
 extern void BermudaTimerProcess();
-extern void BermudaTimerExec(VTIMER *timer);
 extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
                                      unsigned char flags);
 extern void BermudaTimerInit();

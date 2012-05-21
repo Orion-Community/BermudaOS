@@ -209,7 +209,7 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
  *       3. Kill all threads which are ready to kill.
  *       4. Last, but centainly not least - it will check if a new thread has to
  *          be executed.
- * \todo Implement point 1 and 2.
+ * \todo Implement point 1.
  * 
  * Execute the thread with the highest priority. This might or might not be the
  * thread which is currently running.

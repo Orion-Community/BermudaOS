@@ -421,6 +421,7 @@ PUBLIC inline unsigned long BermudaTimerGetSysTick()
 
 SIGNAL(TIMER0_OVF_vect)
 {
+//         printf("ticking");
         BermudaSystemTick++;
 }
 

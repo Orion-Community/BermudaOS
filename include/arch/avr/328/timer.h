@@ -60,7 +60,8 @@
  * \def BermudaTimerTicksToMillis
  * \brief Convert milli seconds to ticks.
  */
-#define BermudaTimerMillisToTicks(ms) ((ms * BermudaTimerGetTickFreq) / 1000)
+#define BermudaTimerMillisToTicks(ms) (((unsigned long)ms * (unsigned long) \
+BermudaTimerGetTickFreq()) / 1000)
 
 __DECL
 extern void BermudaInitTimer0();

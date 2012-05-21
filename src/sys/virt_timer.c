@@ -66,14 +66,10 @@ PRIVATE WEAK unsigned long delay_loop_count = 0;
  */
 PUBLIC void BermudaTimerInit()
 {
-        BermudaInterruptsSave();
-        sei();
-        
         unsigned long count = BermudaTimerGetSysTick();
         while(count == BermudaTimerGetSysTick())
                 delay_loop_count++;
         
-        BermudaInterruptsRestore();
         /*
          * The loop above takes more cycles due to the function call in the
          * while loop. So a correction has to be applied.
@@ -188,29 +184,6 @@ PRIVATE WEAK void BermudaTimerAdd(VTIMER *timer)
 }
 
 /**
- * \brief Execute an elapsed timer.
- * \param timer Timer to execute.
- * \see BermudaTimerProcess
- * \todo Generalize the function or remove the argument and use the BermudaTimerList
- *       variable.
- * \private
- * 
- * Execute the timer handle and remove the timer from the list, if the timer also
- * expired (i.e. the timer is a one-shot timer).s
- */
-PRIVATE WEAK void BermudaTimerExec(VTIMER *timer)
-{
-        timer->handle(timer, timer->handle);
-        
-        BermudaTimerList = timer->next; // remove from the list
-        
-        if((timer->ticks_left = timer->ticks) == 0)                
-                BermudaHeapFree(timer);
-        else // timer != one-shot -> insert the timer again
-                BermudaTimerAdd(timer);
-}
-
-/**
  * \fn BermudaTimerProcess()
  * \brief Process all virtual timers.
  * 
@@ -225,6 +198,7 @@ PUBLIC void BermudaTimerProcess()
         unsigned long diff = new_ticks - last_sys_tick;
         last_sys_tick = new_ticks;
         
+        
         /*
          * Loop trough the list of timers. As long as there is a timer list and
          * there are ticks left to distribute.
@@ -232,7 +206,6 @@ PUBLIC void BermudaTimerProcess()
         while(diff && BermudaTimerList)
         {
                 timer = BermudaTimerList;
-                
                 if(timer->ticks_left < diff)
                 {
                         diff -= timer->ticks_left;
@@ -246,7 +219,15 @@ PUBLIC void BermudaTimerProcess()
                 
                 // timer elapsed when ticks_left == 0
                 if(timer->ticks_left == 0)
-                        BermudaTimerExec(timer);
+                {
+                        timer->handle(timer, timer->arg);
+                        BermudaTimerList = timer->next;
+                        timer->ticks_left = timer->ticks;
+                        if(timer->ticks_left == 0)
+                                BermudaHeapFree(timer);
+                        else
+                                BermudaTimerAdd(timer);
+                }
         }
 }
 

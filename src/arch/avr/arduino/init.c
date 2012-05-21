@@ -46,7 +46,6 @@ THREAD(TestThread, data)
 #else
         unsigned char led = 1;
 #endif
-
         while(1)
         {
 
@@ -58,7 +57,7 @@ THREAD(TestThread, data)
 #else
                 BermudaDigitalPinWrite(12, led);
                 led ^= 1;
-                BermudaThreadExit();
+                BermudaThreadSleep(100);
 #endif
                 
                 
@@ -94,8 +93,7 @@ THREAD(MainThread, data)
 //                 printf("Available mem: %u - SREG %X\n", BermudaHeapAvailable(),
 //                        *AvrIO->sreg);
                 led ^= 1;
-                BermudaDelay(200);
-                BermudaThreadNotify(BermudaThreadGetByName("Test Thread"));
+                BermudaThreadSleep(200);
         }
 }
 
@@ -139,7 +137,7 @@ int main(void)
         BermudaSchedulerInit(&MainThread);
         BermudaSchedulerStart();
         
-        while(1)
-        {}
+        while(1);
+        
         return 0;
 }

@@ -50,7 +50,6 @@ THREAD(MainThread, data)
         while(1)
         {
                 loop();
-                BermudaThreadYield();
         }
 }
 #endif

@@ -99,10 +99,10 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
  * \brief Create a new thread.
  * \param t Main thread
  * \param name Name of the thread. Can be used to identify a thread later.
- * \param handle Main handle
- * \param arg Arguments to the main thread
- * \param stack_size Size of the stack
- * \param stack Stack pointer
+ * \param handle Main handle.
+ * \param arg Arguments to the main thread.
+ * \param stack_size Size of the stack.
+ * \param stack Stack pointer.
  * \param prio Thread priority.
  * \todo Remove the <i>t</i> argument and allocate the thread in this function.
  * \todo Call a thread yield to check if the just created thread has a higher

@@ -40,85 +40,26 @@
 extern unsigned int __heap_start;
 
 #ifdef __THREADS__
-THREAD(TestThread, data)
-{
-#ifdef __SPIRAM__
-        unsigned int rd = 0;
-#else
-        unsigned char led = 1;
-#endif
-        while(1)
-        {
 
-#ifdef __SPIRAM__
-                rd = (unsigned int)BermudaSpiRamReadByte(0x58);
-#ifdef __VERBAL__
-                printf("Data byte readback: %x\n", rd);
-#endif
-#else
-                BermudaDigitalPinWrite(12, led);
-                led ^= 1;
-                BermudaThreadSleep(100);
-#endif
-                
-                
-        }
-}
+extern void loop();
+extern void setup();
 
 THREAD(MainThread, data)
 {
-        unsigned char led = 1;
-        THREAD *th = BermudaHeapAlloc(sizeof(*th));
-        BermudaThreadCreate(th, "Test Thread", TestThread, NULL, 128, 
-                          BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+        setup();
         while(1)
-        { 
-#ifdef __ADC__
-                struct adc *adc = BermudaGetADC();
-                int temperature = 0;
-                float raw_temp = 0;
-#endif
-#ifdef __ADC__
-                raw_temp = adc->read(A0);
-                temperature = raw_temp / 1024 * 5000;
-                temperature /= 10;
-#ifdef __VERBAL__
-                printf("Temperature: %i - Free memory: %i\n", temperature,
-                        BermudaHeapAvailable()
-                );
-#endif
-#endif
-#ifndef __SPI__
-                BermudaDigitalPinWrite(13, led);
-#endif
-//                 printf("Available mem: %u - SREG %X\n", BermudaHeapAvailable(),
-//                        *AvrIO->sreg);
-                led ^= 1;
-                BermudaThreadSleep(200);
+        {
+                loop();
+                BermudaThreadYield();
         }
 }
 #endif
-
-PRIVATE WEAK void setup()
-{
-#ifdef __SPIRAM__
-        BermudaSpiRamWriteByte(0x58, 0x99);
-#else
-        BermudaSetPinMode(13, OUTPUT);
-        BermudaSetPinMode(12, OUTPUT);
-        BermudaSetPinMode(A0, INPUT);
-#endif
-        BermudaTimerInit();
-}
 
 PUBLIC int BermudaInit(void)
 {       
         BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
         BermudaInitUART();
         BermudaInitTimer0();
-#if (TIMERS & B100) == B100
-        BermudaInitTimer2();
-#endif
 
 #ifdef __ADC__
         BermudaInitBaseADC();
@@ -126,22 +67,23 @@ PUBLIC int BermudaInit(void)
         
 #ifdef __SPI__
         SPI *spi_if = BermudaHeapAlloc(sizeof(*spi_if));
-        BermudaSpiHardwareInit(spi_if);
-#ifdef __SPIRAM__
-        BermudaSpiRamInit();
+        BermudaSpiHardwareInit(spi_if);  
 #endif
-#endif
+        
         STACK_L = (MEM-256) & 0xFF;
         STACK_H = ((MEM-256) >> 8) & 0xFF;
         sei();
-        setup();
+        BermudaTimerInit();
         
 #ifdef __THREADS__
         BermudaSchedulerInit(&MainThread);
         BermudaSchedulerStart();
+#else
+        while(1)
+        {
+                loop();
+        }
 #endif
-        
-        while(1);
         
         return 0;
 }

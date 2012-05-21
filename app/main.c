@@ -17,6 +17,10 @@
  */
 
 #include <bermuda.h>
+#include <sys/thread.h>
+#include <arch/io.h>
+#include <lib/spiram.h>
+#include <stdlib.h>
 
 int main(void)
 {
@@ -24,4 +28,18 @@ int main(void)
 
 	while(1);
 	return 0;
+}
+
+void setup()
+{
+	BermudaSpiRamInit();
+	BermudaSpiRamWriteByte(0x58, 0x99);
+}
+
+void loop()
+{
+	unsigned char data = BermudaSpiRamReadByte(0x58);
+	printf("SPI RAM read back: %X\n", data);
+	BermudaThreadSleep(200);
+	return;
 }

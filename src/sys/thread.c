@@ -160,7 +160,7 @@ PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg)
 {
         THREAD *t = (THREAD*)arg;
         t->state = THREAD_READY;
-//         t->th_timer = NULL;
+        t->th_timer = NULL;
         BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
 }
 

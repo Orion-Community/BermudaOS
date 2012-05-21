@@ -246,8 +246,11 @@ THREAD(IdleThread, arg)
         THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
         BermudaThreadCreate(t_main, "Main Thread", arg, NULL, 64, NULL,
                                         BERMUDA_DEFAULT_PRIO);
+        unsigned long last_tick;
         while(1)
         {
+                last_tick = BermudaTimerGetSysTick();
+                while(last_tick == BermudaTimerGetSysTick());
                 BermudaThreadYield();
         }
 }

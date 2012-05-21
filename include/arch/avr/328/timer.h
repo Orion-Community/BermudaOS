@@ -54,7 +54,7 @@
  * \def BermudaTimerGetTickFreq
  * \brief Default frequency in Hertz.
  */
-#define BermudaTimerGetTickFreq() 0x400
+#define BermudaTimerGetTickFreq() 1000
 
 /**
  * \def BermudaTimerTicksToMillis

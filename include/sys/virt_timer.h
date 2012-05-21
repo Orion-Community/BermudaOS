@@ -120,8 +120,9 @@ extern "C" {
 #endif
 
 extern void BermudaTimerProcess();
-extern VTIMER *BermudaTimerCreate(unsigned int ms, vtimer_callback fn, void *arg,
+extern VTIMER *BermudaTimerCreate(unsigned long ms, vtimer_callback fn, void *arg,
                                      unsigned char flags);
+extern void BermudaTimerStop(VTIMER *timer);
 extern void BermudaTimerInit();
 extern void BermudaDelay(unsigned char ms);
 extern void BermudaDelay_us(unsigned long us);

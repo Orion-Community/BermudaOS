@@ -18,9 +18,12 @@
 
 #include <bermuda.h>
 #include <sys/thread.h>
+#include <sys/virt_timer.h>
 #include <arch/io.h>
 #include <lib/spiram.h>
 #include <stdlib.h>
+
+static VTIMER *timer;
 
 THREAD(TemperatureThread, arg)
 {
@@ -33,9 +36,17 @@ THREAD(TemperatureThread, arg)
 		tmp = adc->read(A0);
 		temperature = tmp / 1024 * 5000;
 		temperature /= 10;
-		printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+		//printf("The temperature is: %u :: Free mem: %X\n", temperature, index);
 		BermudaThreadSleep(500);
 	}
+}
+
+static unsigned char led = 1;
+
+PUBLIC void TestTimer(VTIMER *timer, void *arg)
+{
+	BermudaDigitalPinWrite(5, led);
+	led ^= 1;
 }
 
 int main(void)
@@ -51,14 +62,17 @@ void setup()
 	BermudaSpiRamInit();
 	BermudaSpiRamWriteByte(0x58, 0x99);
 	BermudaSetPinMode(A0, INPUT);
+	BermudaSetPinMode(5, OUTPUT);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
 			BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
+	timer = BermudaTimerCreate(1000, &TestTimer, NULL, BERMUDA_PERIODIC);
 }
 
 void loop()
 {
 	unsigned char data = BermudaSpiRamReadByte(0x58);
 	printf("SPI RAM read back: %X\n", data);
+
 	BermudaThreadSleep(500);
 	return;
 }

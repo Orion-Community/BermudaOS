@@ -4,6 +4,7 @@
 #
 
 LOCAL_LIB               = ../../../include
+LIBDIR			= ../../../lib
 TARGET                  = events.o
 ARDUINO_LIBS            =
 
@@ -16,7 +17,7 @@ include ../../../make/Makefile.defs
 
 .PHONY: all clean $(TARGET)
 all: $(TARGET)
-	-mv -fv $(TARGET) ../
+	$(AR) $(ARFLAGS) $(LIBDIR)/libEvents.a $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)

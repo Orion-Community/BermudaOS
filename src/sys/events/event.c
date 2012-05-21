@@ -33,7 +33,7 @@
 #include <sys/events/event.h>
 
 /**
- * \fn BermudaEventWait(volatile THREAD **queue, unsigned int tmo)
+ * \fn BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param tmo <i>Time out</i>. Maximum time to wait.
@@ -41,9 +41,51 @@
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
  */
-PUBLIC int BermudaEventWait(volatile THREAD **queue, unsigned int tmo)
+PUBLIC int BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
 {
-
+        THREAD *tqp;
+        
+        BermudaEnterCritical();
+        tqp = *tqpp;
+        BermudaExitCritical();
+        
+        if(tqp == SIGNALED)
+        { // queue is empty
+                BermudaEnterCritical();
+                *tqpp = 0;
+                BermudaExitCritical();
+                
+                BermudaThreadYield(); // give other threads a chance
+                return 0;
+        }
+        
+        /*
+         * The queue is currently locked, this means the current thread has
+         * to wait. Remove it from the running queue and add it to the event
+         * queue.
+         */
+        BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
+        BermudaThreadPriQueueAdd(tqpp, BermudaCurrentThread);
+        BermudaCurrentThread->state = THREAD_SLEEPING;
+        
+        if(ms)
+                BermudaCurrentThread->th_timer = BermudaTimerCreate(ms, &BermudaEventTMO,
+                                                                    (void*)tqp,
+                                                                    BERMUDA_ONE_SHOT
+                                                 );
+        else
+                BermudaCurrentThread->th_timer = NULL;
+        
+        BermudaSchedulerExec(); // DO NOT USE THREAD YIELDING! -> queue's are editted
+        
+        // When the thread returns
+        if(BermudaCurrentThread->th_timer == SIGNALED)
+        { // event timed out
+                BermudaCurrentThread->th_timer = NULL;
+                return -1;
+        }
+        
+        return 0; // event posted succesfuly
 }
 
 /**
@@ -59,6 +101,52 @@ PUBLIC int BermudaEventWait(volatile THREAD **queue, unsigned int tmo)
 PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg)
 {
 
+}
+
+PUBLIC int BermudaEventPost(volatile THREAD **tqpp)
+{
+        THREAD *t;
+        BermudaEnterCritical();
+        t = *tqpp;
+        BermudaExitCritical();
+        
+        if(t != SIGNALED)
+        {
+                if(t)
+                {
+                        BermudaEnterCritical();
+                        *tqpp = t->next;
+                        if(t->ec)
+                        {
+                                if(t->next)
+                                        t->next->ec += t->ec;
+                                else
+                                        *tqpp = SIGNALED;
+                                
+                                t->ec = 0;
+                        }
+                        BermudaExitCritical();
+                        
+                        if(t->th_timer)
+                        {
+//                                 BermudaTimerStop(t->th_timer);
+                                t->th_timer = NULL;
+                        }
+                        
+                        t->state = THREAD_READY;
+                        BermudaThreadPriQueueAdd(&BermudaRunQueue, t);
+                        BermudaThreadYield();
+                        
+                        return 0; // post done succesfuly
+                }
+                else
+                {
+                        BermudaEnterCritical();
+                        *tqpp = SIGNALED;
+                        BermudaExitCritical();
+                }
+        }
+        return 1; // could not post
 }
 
 

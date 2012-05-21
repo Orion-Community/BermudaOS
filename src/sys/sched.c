@@ -158,8 +158,9 @@ PUBLIC void BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t)
         // tqp points to a thread with a lower priority then t
         t->next = tqp; // put t before tqp
         *tqpp = t; // same as prev->next = t
-        
         BermudaExitCritical();
+        
+        t->queue = tqpp;
         return;
 }
 
@@ -197,6 +198,7 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
                         continue;
                 }
         }
+        t->queue = NULL;
 }
 
 /**

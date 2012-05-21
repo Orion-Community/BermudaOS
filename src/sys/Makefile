@@ -15,13 +15,11 @@ LIBDIR			= ../../lib
 include ../../make/Makefile.$(BUILDSYS)
 include ../../make/Makefile.defs
 
-# OBJS 			+= events.o
-
 .PHONY: all clean $(TARGET)
 all: $(TARGET)
 	-mv -fv $(TARGET) ../
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) events.o
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
 
 events.o:

@@ -147,6 +147,12 @@ struct thread
         struct thread *q_next;
         
         /**
+         * \brief Current queue pointer pointer.
+         * \see BermudaPriQueueAdd
+         */
+        struct thread *volatile*queue;
+        
+        /**
          * \brief Name of the thread.
          * 
          * This value identifies the thread('s purpose).

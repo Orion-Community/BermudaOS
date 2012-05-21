@@ -33,6 +33,23 @@
 #include <sys/events/event.h>
 
 /**
+ * \addtogroup event_management Event Management API
+ * \brief Thread synchronization principles.
+ * 
+ * A thread may wait for a certain event by using the function BermudaEventWait
+ * . Another thread can wakeup the event by using the function BermudaEventPost. \n
+ * 
+ * The function BermudaEventPost may <b>NEVER</b> used from interrupt context. When
+ * an event has to be posted from interrupt context, one can use the function
+ * BermudaEventPostIrq. \n
+ * \n
+ * If an event is posted, the signaled thread takes over the CPU (if its priority
+ * is higher or equal to the one running.
+ * 
+ * @{
+ */
+
+/**
  * \fn BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
  * \brief Wait for an event.
  * \param queue Wait in this queue.
@@ -103,7 +120,16 @@ PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg)
 
 }
 
-PUBLIC int BermudaEventPost(volatile THREAD **tqpp)
+/**
+ * \brief Post an event.
+ * \param tqpp Queue to post an event to.
+ * \see BermudaEventWait
+ * 
+ * The given queue will be signaled and the thread with the highest priority will
+ * become runnable again. When the queue is signaled BermudaThreadYield will be
+ * called - the posting thread may lose the CPU.
+ */
+PUBLIC int BermudaEventSignal(volatile THREAD **tqpp)
 {
         THREAD *t;
         BermudaEnterCritical();
@@ -149,5 +175,5 @@ PUBLIC int BermudaEventPost(volatile THREAD **tqpp)
         return 1; // could not post
 }
 
-
+// @}
 #endif /* __EVENTS__ */

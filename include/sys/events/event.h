@@ -26,6 +26,9 @@
 #include <sys/thread.h>
 #include <sys/virt_timer.h>
 
+//! \addtogroup event_management
+// @{
+
 /**
  * \def BERMUDA_EVENT_WAIT_INFINITE
  * \brief Wait infinite.
@@ -55,37 +58,13 @@ typedef void* EVENT;
 extern "C" {
 #endif
 
-/**
- * \fn BermudaEventWait(volatile THREAD **queue, unsigned int tmo)
- * \brief Wait for an event.
- * \param queue Wait in this queue.
- * \param tmo <i>Time out</i>. Maximum time to wait.
- * 
- * Wait for an event in a specific time for a given amount of time. If you
- * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
- */
 extern int BermudaEventWait(volatile THREAD **queue, unsigned int tmo);
+extern int BermudaEventSignal(volatile THREAD **tqpp);
 
-/**
- * \fn BermudaEventSignal(volatile EVENT *)
- * \brief Signal the given event queue.
- * 
- * Signal the given event queue.
- */
-extern void BermudaEventSignal(volatile EVENT *);
-
-/**
- * \fn BermudaEventTMO(VTIMER *timer, void *arg)
- * \brief Timeout function.
- * \param timer Timer object which called this function.
- * \param arg Void casted argument of the event queue, where a thread received a
- * timeout in.
- * 
- * When a thread timeouts waiting for an event, the wait function will return with
- * an error.
- */
+// private functions
 PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg);
 
 __DECL_END
 
+// @}
 #endif

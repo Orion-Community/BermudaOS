@@ -41,7 +41,7 @@ static inline volatile HEAPNODE *BermudaHeapInitHeader(volatile HEAPNODE *node,
  * This function will search for a fitting block of memory. If no fitting block
  * is found it will return <i><b>NULL</b></i>.
  */
-__attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size) 
+PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size) 
 {
         BermudaMutexEnter(&mem_lock);
         if(size > MEM)

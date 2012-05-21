@@ -3,9 +3,10 @@
 # Created by Michel Megens on 9th of March 2012
 #
 
-LOCAL_LIB		= ../../../include
+LOCAL_LIB		= ../include
+LIBDIR			= ../lib
 RAW_TARGET		= raw.elf
-TARGET			= bermuda.hex
+TARGET			= Bermuda
 ARDUINO_LIBS		=
 
 CSRCS			=
@@ -19,15 +20,15 @@ include ../make/Makefile.defs
 
 
 .PHONY: all clean $(TARGET) upload
-all: $(TARGET)
+all: $(DEPS)
+	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(TARGET).a arch.o sys.o
 
-
-$(RAW_TARGET): $(DEPS) $(OBJS)
-	$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o $(RAW_TARGET) $(DEPS)
-
-$(TARGET): $(RAW_TARGET)
-	$(STRIP) --strip-all $(RAW_TARGET)
-	$(OBJCOPY) -R .eeprom -O ihex $(RAW_TARGET) $(TARGET)
+# $(RAW_TARGET): $(DEPS) $(OBJS)
+# 	$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o $(RAW_TARGET) $(DEPS)
+# 
+# $(TARGET): $(RAW_TARGET)
+# 	$(STRIP) --strip-all $(RAW_TARGET)
+# 	$(OBJCOPY) -R .eeprom -O ihex $(RAW_TARGET) $(TARGET)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<

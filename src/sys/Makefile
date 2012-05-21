@@ -29,7 +29,6 @@ events.o:
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
-	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(@:.o=.a) $@
 
 %o: %cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<

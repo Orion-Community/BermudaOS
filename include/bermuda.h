@@ -95,6 +95,16 @@
  */
 typedef unsigned char mutex_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern int BermudaInit();
+
+#ifdef __cplusplus
+}
+#endif
+
 #include <sys/mem.h>
 #include <lib/list/list.h>
 

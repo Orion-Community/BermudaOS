@@ -39,6 +39,7 @@
 
 extern unsigned int __heap_start;
 
+#ifdef __THREADS__
 THREAD(TestThread, data)
 {
 #ifdef __SPIRAM__
@@ -96,6 +97,7 @@ THREAD(MainThread, data)
                 BermudaThreadSleep(200);
         }
 }
+#endif
 
 PRIVATE WEAK void setup()
 {
@@ -109,7 +111,7 @@ PRIVATE WEAK void setup()
         BermudaTimerInit();
 }
 
-int main(void)
+PUBLIC int BermudaInit(void)
 {       
         BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
         BermudaInitUART();
@@ -134,8 +136,10 @@ int main(void)
         sei();
         setup();
         
+#ifdef __THREADS__
         BermudaSchedulerInit(&MainThread);
         BermudaSchedulerStart();
+#endif
         
         while(1);
         

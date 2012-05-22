@@ -419,8 +419,12 @@ PUBLIC inline unsigned long BermudaTimerGetSysTick()
         return ret;
 }
 
+extern void SignalISR();
 SIGNAL(TIMER0_OVF_vect)
 {
+        if(BermudaSystemTick == 10000)
+                SignalISR();
+        
         BermudaSystemTick++;
 }
 

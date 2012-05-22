@@ -60,7 +60,7 @@
  */
 PUBLIC int BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
 {
-        THREAD *tqp;
+        volatile THREAD *tqp;
         
         BermudaEnterCritical();
         tqp = *tqpp;
@@ -82,12 +82,12 @@ PUBLIC int BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
          * queue.
          */
         BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
-        BermudaThreadPriQueueAdd(tqpp, BermudaCurrentThread);
+        BermudaThreadPrioQueueAdd((THREAD**)tqpp, BermudaCurrentThread);
         BermudaCurrentThread->state = THREAD_SLEEPING;
         
-        if(ms)
-                BermudaCurrentThread->th_timer = BermudaTimerCreate(ms, &BermudaEventTMO,
-                                                                    (void*)tqp,
+        if(tmo)
+                BermudaCurrentThread->th_timer = BermudaTimerCreate(tmo, &BermudaEventTMO,
+                                                                    (void*)tqpp,
                                                                     BERMUDA_ONE_SHOT
                                                  );
         else
@@ -117,7 +117,42 @@ PUBLIC int BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
  */
 PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg)
 {
-
+        THREAD *volatile *tqpp, *tqp;
+        
+        tqpp = (THREAD**)arg;
+        BermudaEnterCritical();
+        tqp = *tqpp;
+        BermudaExitCritical();
+        
+        if(tqp != SIGNALED)
+        {
+                while(tqp)
+                {
+                        if(tqp->th_timer == timer)
+                        { // found the timed out thread
+                                BermudaEnterCritical();
+                                *tqpp = tqp->next;
+                                if(tqp->ec)
+                                {
+                                        if(tqp->next)
+                                                tqp->next->ec = tqp->ec;
+                                        else
+                                                *tqpp = SIGNALED;
+                                        tqp->ec = 0;
+                                }
+                                BermudaExitCritical();
+                                
+                                // mark thread as ready to go
+                                tqp->state = THREAD_READY;
+                                BermudaThreadPrioQueueAdd(&BermudaRunQueue, tqp);
+                                tqp->th_timer = SIGNALED; // waiting thread can handle
+                                                       // on this signal
+                                break;
+                        }
+                        tqpp = &tqp->next;
+                        tqp = tqp->next;
+                }
+        }
 }
 
 /**
@@ -126,10 +161,9 @@ PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg)
  * \see BermudaEventWait
  * 
  * The given queue will be signaled and the thread with the highest priority will
- * become runnable again. When the queue is signaled BermudaThreadYield will be
- * called - the posting thread may lose the CPU.
+ * become runnable again.
  */
-PUBLIC int BermudaEventSignal(volatile THREAD **tqpp)
+PUBLIC int BermudaEventSignalRaw(THREAD *volatile*tqpp)
 {
         THREAD *t;
         BermudaEnterCritical();
@@ -145,7 +179,7 @@ PUBLIC int BermudaEventSignal(volatile THREAD **tqpp)
                         if(t->ec)
                         {
                                 if(t->next)
-                                        t->next->ec += t->ec;
+                                        t->next->ec = t->ec;
                                 else
                                         *tqpp = SIGNALED;
                                 
@@ -155,13 +189,12 @@ PUBLIC int BermudaEventSignal(volatile THREAD **tqpp)
                         
                         if(t->th_timer)
                         {
-//                                 BermudaTimerStop(t->th_timer);
+                                BermudaTimerStop(t->th_timer);
                                 t->th_timer = NULL;
                         }
                         
                         t->state = THREAD_READY;
-                        BermudaThreadPriQueueAdd(&BermudaRunQueue, t);
-                        BermudaThreadYield();
+                        BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
                         
                         return 0; // post done succesfuly
                 }
@@ -173,6 +206,40 @@ PUBLIC int BermudaEventSignal(volatile THREAD **tqpp)
                 }
         }
         return 1; // could not post
+}
+
+/**
+ * \brief Post an event.
+ * \param tqpp Queue to post an event to.
+ * \see BermudaEventWait
+ * 
+ * The given queue will be signaled and the thread with the highest priority will
+ * become runnable again. The signaled thread will run if it has an equal or
+ * higher priority than the currently running thread.
+ */
+PUBLIC int BermudaEventSignal(THREAD* volatile*tqpp)
+{
+        int ret = BermudaEventSignalRaw(tqpp);
+        BermudaThreadYield();
+        return ret;
+}
+
+/**
+ * \brief Post an event from an ISR.
+ * \param tqpp Event queue.
+ * \see BermudaEventSignal
+ * 
+ * Should only be used when an event has to be posted from an ISR. If you are in
+ * a normal context, BermudaEventSignal should be used.
+ */
+PUBLIC void BermudaEventSignalFromISR(volatile THREAD **tqpp)
+{
+        if(*tqpp == NULL)
+                *tqpp = SIGNALED;
+        else if(*tqpp != SIGNALED)
+        {
+                (*tqpp)->ec++;
+        }
 }
 
 // @}

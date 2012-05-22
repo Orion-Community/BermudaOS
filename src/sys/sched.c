@@ -216,8 +216,30 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
  * Execute the thread with the highest priority. This might or might not be the
  * thread which is currently running.
  */
-void BermudaSchedulerExec()
+PUBLIC void BermudaSchedulerExec()
 {        
+        unsigned char ec;
+        THREAD *tqp, *volatile*qhp, *t;
+        
+        t = BermudaThreadHead;
+        while(t)
+        {
+                BermudaEnterCritical();
+                ec = t->ec;
+                BermudaExitCritical();
+                
+                if(ec)
+                {
+                        qhp = t->queue;
+                        BermudaEnterCritical();
+                        t->ec--;
+                        tqp = *qhp;
+                        BermudaExitCritical();
+                        if(tqp != SIGNALED)
+                                BermudaEventSignalRaw(qhp);
+                }
+                t = t->q_next;
+        }
         /*
          * Point 2 - process all timers
          */

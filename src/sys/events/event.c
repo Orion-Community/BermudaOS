@@ -37,14 +37,19 @@
  * \brief Thread synchronization principles.
  * 
  * A thread may wait for a certain event by using the function BermudaEventWait
- * . Another thread can wakeup the event by using the function BermudaEventPost. \n
+ * . Another thread can wakeup the event by using the function BermudaEventSignal. \n
  * 
  * The function BermudaEventPost may <b>NEVER</b> used from interrupt context. When
  * an event has to be posted from interrupt context, one can use the function
- * BermudaEventPostIrq. \n
+ * BermudaEventSignalFromISR. \n
  * \n
  * If an event is posted, the signaled thread takes over the CPU (if its priority
- * is higher or equal to the one running.
+ * is higher or equal to the one running).\n
+ * \n
+ * An event queue needs the following definition:
+ * \code{.c}
+ * volatile THREAD *QueueName;
+ * \endcode
  * 
  * @{
  */
@@ -54,6 +59,8 @@
  * \brief Wait for an event.
  * \param queue Wait in this queue.
  * \param tmo <i>Time out</i>. Maximum time to wait.
+ * \see BermudaEventSignal
+ * \see BermudaEventSignalFromISR
  * 
  * Wait for an event in a specific time for a given amount of time. If you
  * want to wait infinite use <i>BERMUDA_EVENT_WAIT_INFINITE</i>.
@@ -217,9 +224,9 @@ PUBLIC int BermudaEventSignalRaw(THREAD *volatile*tqpp)
  * become runnable again. The signaled thread will run if it has an equal or
  * higher priority than the currently running thread.
  */
-PUBLIC int BermudaEventSignal(THREAD* volatile*tqpp)
+PUBLIC int BermudaEventSignal(volatile THREAD **tqpp)
 {
-        int ret = BermudaEventSignalRaw(tqpp);
+        int ret = BermudaEventSignalRaw((THREAD*volatile*)tqpp);
         BermudaThreadYield();
         return ret;
 }

@@ -61,6 +61,15 @@
  * \endcode
  * The first argument is an allocated pointer to an uninitialised THREAD structure.
  * 
+ * \todo Looping BermudaThreadYield() will cause strange behaviour. Avoid the
+ *       following loops meanwhile:
+ * \code {.c}
+ * while(1)
+ * {
+ *      BermudaThreadYield();
+ * }
+ * \endcode
+ * 
  * @{
  */
 

@@ -59,7 +59,7 @@ extern "C" {
 #endif
 
 extern int BermudaEventWait(volatile THREAD **queue, unsigned int tmo);
-extern int BermudaEventSignal(THREAD *volatile*tqpp);
+extern int BermudaEventSignal(volatile THREAD **tqpp);
 extern int BermudaEventSignalRaw(THREAD *volatile*tqpp);
 extern void BermudaEventSignalFromISR(volatile THREAD **tqpp);
 

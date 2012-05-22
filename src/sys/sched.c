@@ -211,7 +211,8 @@ PUBLIC void BermudaThreadQueueRemove(THREAD * volatile *tqpp, THREAD *t)
  *       3. Kill all threads which are ready to kill.
  *       4. Last, but centainly not least - it will check if a new thread has to
  *          be executed.
- * \todo Implement point 1.
+ * \todo Create a more elegant solution to avoid a break if the timer didn't
+ *       run between calls.
  * 
  * Execute the thread with the highest priority. This might or might not be the
  * thread which is currently running.
@@ -220,6 +221,8 @@ PUBLIC void BermudaSchedulerExec()
 {        
         unsigned char ec;
         THREAD *tqp, *volatile*qhp, *t;
+        unsigned long tick_new;
+        static unsigned long tick_resume;
         
         t = BermudaThreadHead;
         while(t)
@@ -240,6 +243,14 @@ PUBLIC void BermudaSchedulerExec()
                 }
                 t = t->q_next;
         }
+        
+        // ---
+        tick_new = BermudaTimerGetSysTick();
+        if(tick_new == tick_resume)
+                while(tick_new == BermudaTimerGetSysTick());
+                
+        tick_resume = BermudaTimerGetSysTick();
+        
         /*
          * Point 2 - process all timers
          */
@@ -268,11 +279,11 @@ THREAD(IdleThread, arg)
         THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
         BermudaThreadCreate(t_main, "Main Thread", arg, NULL, 64, NULL,
                                         BERMUDA_DEFAULT_PRIO);
-        unsigned long last_tick;
+//         unsigned long last_tick;
         while(1)
         {
-                last_tick = BermudaTimerGetSysTick();
-                while(last_tick == BermudaTimerGetSysTick());
+//                 last_tick = BermudaTimerGetSysTick();
+//                 while(last_tick == BermudaTimerGetSysTick());
                 BermudaThreadYield();
         }
 }

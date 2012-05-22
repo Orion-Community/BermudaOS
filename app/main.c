@@ -72,7 +72,7 @@ void setup()
 	BermudaSetPinMode(5, OUTPUT);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
 			BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
-	timer = BermudaTimerCreate(1000, &TestTimer, NULL, BERMUDA_PERIODIC);
+	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 }
 
 void loop()

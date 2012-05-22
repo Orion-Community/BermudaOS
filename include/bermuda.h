@@ -34,12 +34,12 @@
 #define __DECL extern "C" {
 #define __DECL_END }
 
-#else
+#else /* !__cplusplus */
 
 #define __DECL
 #define __DECL_END
 
-#endif
+#endif /* __cplusplus */
 
 /**
  * \def __PACK__

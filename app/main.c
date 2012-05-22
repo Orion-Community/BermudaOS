@@ -38,7 +38,7 @@ THREAD(TemperatureThread, arg)
 		tmp = adc->read(A0);
 		temperature = tmp / 1024 * 5000;
 		temperature /= 10;
-		//printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+		printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
 		BermudaThreadSleep(5000);
 	}
 }
@@ -79,7 +79,7 @@ void loop()
 {
 	BermudaEventWait(&TestQueue, 12000);
 	unsigned char data = BermudaSpiRamReadByte(0x58);
-	//printf("SPI RAM read back: %X\n", data);
+	printf("SPI RAM read back: %X\n", data);
 
 	BermudaThreadSleep(500);
 	return;

@@ -24,6 +24,8 @@
 #include <arch/avr/io.h>
 #include <avr/io.h>
 
+typedef unsigned long uint32_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -26,6 +26,8 @@
 #ifndef __BERMUDA_H
 #define __BERMUDA_H
 
+#include <arch/types.h>
+
 #ifdef __cplusplus
 #include <cplusplus.h>
 
@@ -94,6 +96,10 @@
  * \brief Mutual exclusion type.
  */
 typedef unsigned char mutex_t;
+
+typedef unsigned char*   reg8_t;
+typedef unsigned short*  reg16_t;
+typedef uint32_t*        reg32_t;
 
 #ifdef __cplusplus
 extern "C" {

@@ -34,11 +34,7 @@
  * This define will look for files with the given name. If a file is found,
  * the associated device will be returned.
  */
-#define dev_open(name)             \
-{                                  \
-        BermudaDeviceLoopup(name); \
-}
-
+#define dev_open(name) BermudaDeviceLoopup((const char*)name)
 /**
  * \def dev_write
  * \brief Write to a device.
@@ -119,31 +115,9 @@ typedef struct _device DEVICE;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * \brief Register a device.
- * \param dev Device to register.
- * 
- * Registers a device in the device administration.
- */
+	
 extern int BermudaDeviceRegister(DEVICE *dev, void *ioctl);
-
-/**
- * \brief Unregister a device.
- * \param dev Device to unregister.
- * \note It might be wise to flush the I/O file associated witht this device. If
- *       you do so, you are sure that all data which was ready to be written to
- *       the device is written to the device.
- */
-extern void BermudaDeviceUnregister(DEVICE *dev);
-
-/**
- * \brief Lookup a device.
- * \param name Name of the device.
- * \return Found device. If no device is found, NULL is returned.
- * 
- * Searches for the given name in the device root list.
- */
+extern int BermudaDeviceUnregister(DEVICE *dev);
 extern DEVICE *BermudaDeviceLoopup(const char *name);
 #ifdef __cplusplus
 }

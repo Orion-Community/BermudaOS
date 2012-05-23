@@ -25,13 +25,6 @@
 #include <arch/types.h>
 
 /**
- * \typedef SPINODE
- * \brief SPI node type.
- * \see _spinode
- */
-typedef struct _spinode SPINODE;
-
-/**
  * \typedef SPIBUS
  * \brief SPI bus type.
  * \see _spibus
@@ -39,49 +32,58 @@ typedef struct _spinode SPINODE;
 typedef struct _spibus SPIBUS;
 
 /**
- * \struct _spinode
- * \brief SPI node structure.
+ * \typedef SPICTRL
+ * \brief SPI bus type.
+ * \see _spictrl
  */
-struct _spinode
-{
-        unsigned char cs; //!< Chip select pin.
-        SPIBUS *bus; //!< SPI bus controller \see _spibus
-        void   *spi_ctr; //!< SPI interface control */
-        uint32_t mode; //!< SPI mode select.
-        uint32_t rate; //!< SPI rate select.
-        
-        /**
-         * \brief Change the chip select before transfer.
-         * \param node SPI node to change chip select for.
-         * \param pin  MCU pin. See the package description of the used CPU.
-         * \warning The bus has to be allocated before selecting it.
-         */
-        void (*select)(SPINODE *node, unsigned char pin);
-};
+typedef struct _spictrl SPICTRL;
+
+/**
+ * \def BermudaSpiSelect
+ * \brief Shortcut to select a chip using the given select line.
+ * \note It will not actualy select the chip, it will set the select line. The
+ *       actual select will be done by the SPI driver on reads and writes.
+ * \warning The device has to be allocated before using the define!
+ */
+#define BermudaSpiDevSelect(dev, cs) \
+{ \
+        ((SPIBUS*)dev->data)->cs = cs; \
+}
+
+#ifndef BERMUDA_SPI_TMO
+/**
+ * \def BERMUDA_SPI_TMO
+ * \brief SPI time-out time in milli seconds.
+ * \note Can be configured.
+ */
+#define BERMUDA_SPI_TMO 200
+#endif
 
 /**
  * \struct _spibus
  * \brief SPI bus structure.
- * 
- * SPI bus control.
  */
 struct _spibus
 {
-        void *iobase; //!< I/O base address.
-        void *mutex; //!< Bus mutex.
         void *queue; //!< Transfer waiting queue.
-        
-        /**
-         * \brief Initialise a node.
-         * \param node Node to initialise.
-         * 
-         * Function pointer to the SPI bus init function.
-         */
-        void (*init_node)  (SPINODE* node);
-        
+        SPICTRL *ctrl; //!< SPI bus controller \see _spibus
+        void *io; //!< SPI interface control */
+        uint32_t mode; //!< SPI mode select.
+        uint32_t rate; //!< SPI rate select.
+        unsigned char cs; //!< Chip select pin.
+};
+
+/**
+ * \struct _spictrl
+ * \brief SPI bus structure.
+ * 
+ * SPI bus control.
+ */
+struct _spictrl
+{        
         /**
          * \brief Transfer data.
-         * \param node SPI node.
+         * \param bus SPI bus.
          * \param tx Transmit buffer.
          * \param rx Receive buffer.
          * \param len Data length.
@@ -90,42 +92,64 @@ struct _spibus
          * Transfer data over the SPI bus from the transmit buffer, while receiving
          * data in the receive buffer.
          */
-        int  (*transfer)(SPINODE* node, const void* tx, void* rx, int len, int tmo);
+        int  (*transfer)(SPIBUS* bus, const void* tx, void* rx, int len, int tmo);
         
         /**
-         * \brief Lock the bus.
-         * \param tmo Time-out.
+         * \brief Transfer the SPI TX buffer.
+         * \param bus SPI bus.
+         * \warning Call this before reading.
          * 
-         * Lock the bus. If the bus is already locked, it will wait for <b>tmo</b>
-         * milli seconds to receive a release from another node holding it.
+         * Internal buffers will be flushed to the SPI interface. If you want to
+         * read certain data back, make sure to flush the interface before
+         * reading information back.
          */
-        int  (*bus_alloc)  (SPINODE*, unsigned int tmo);
-        
-        /**
-         * \brief Release the bus.
-         * \param node Bus node to release.
-         * 
-         * The bus associated to the given node is released.
-         */
-        void (*bus_release)(SPINODE* node);
-        
+        int (*flush)(SPIBUS *bus);
+              
         /**
          * \brief Set data mode.
-         * \param node SPI node.
+         * \param bus SPI bus.
          * \param mode Mode to set.
          * 
          * Set the given mode to this bus.
          */
-        void (*set_mode)   (SPINODE* node, unsigned short mode);
+        void (*set_mode)   (SPIBUS* bus, unsigned short mode);
         
         /**
          * \brief Set the clock rate.
-         * \param node SPI node.
+         * \param bus SPI bus.
          * \param rate Rate in Hertz.
          * 
          * Set the given clock rate in the spi bus.
          */
-        void (*set_rate)   (SPINODE* node, uint32_t rate)
+        void (*set_rate)   (SPIBUS* bus, uint32_t rate);
+
+        /**
+         * \brief Change the chip select before transfer.
+         * \param bus SPI bus to change chip select for.
+         * \param pin  MCU pin. See the package description of the used CPU.
+         * \warning The bus has to be allocated before selecting it.
+         */
+        void (*select)(SPIBUS *bus, unsigned char pin);
+        
+        /**
+         * \brief Deselct a chip.
+         * \param bus SPI bus to deselect.
+         * \param pin CPU pin.
+         * \warning The bus has to be allocated.
+         * \see _device::alloc
+         */
+        void (*deselect)(SPIBUS *bus, unsigned char pin);
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern int BermudaSPIWrite(VFILE *file, void *tx, size_t len);
+extern int BermudaSPIRead(VFILE *file, void *rx, size_t len);
+extern int BermudaSPIFlush(VFILE *file);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SPIBUS_H_ */

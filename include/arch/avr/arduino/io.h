@@ -71,8 +71,6 @@ extern "C" {
 #define MISO 12
 #define SCK  13
 
-#define SPI_POUT (*(BermudaGetAvrIO()->portb))
-#define SPI_DDR  (*(BermudaGetAvrIO()->ddrb))
 #else
 #error Other arduino boards are not supported yet!
 #endif

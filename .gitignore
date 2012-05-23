@@ -8,5 +8,5 @@ lib/
 .cproject
 .project
 .settings/
-
-/nbproject/private/
+nbproject/
+nbproject/private/

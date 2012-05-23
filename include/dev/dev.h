@@ -94,6 +94,7 @@ struct _device
         VFILE *io; //!< Virtual file I/O member.
         void *data; //!< Device specific data.
         void *ioctl; //!< Device I/O control block.
+	void *mutex; //!< Device mutex.
         
         /**
          * \brief Init this device.
@@ -104,6 +105,20 @@ struct _device
          * Initialise the device driver and device structure.
          */
         void (*init)(struct _device *dev);
+
+        /**
+         * \brief Allocate the device.
+         * \param dev 'This' device.
+         * \return Returns 0 on success, -1 if the device could not be allocated.
+         */
+        int (*alloc)(struct _device *dev);
+
+        /**
+         * \brief Release the device.
+         * \param dev 'This' device.
+         * \return 0 on success, -1 when the device couldn't be released.
+         */
+        int (*release)(struct _device *dev);
 };
 
 /**
@@ -118,6 +133,9 @@ extern "C" {
 	
 extern int BermudaDeviceRegister(DEVICE *dev, void *ioctl);
 extern int BermudaDeviceUnregister(DEVICE *dev);
+extern int BermudaDeviceAlloc(DEVICE *dev);
+extern int BermudaDeviceAlloc(DEVICE *dev);
+
 extern DEVICE *BermudaDeviceLoopup(const char *name);
 #ifdef __cplusplus
 }

@@ -1,14 +1,16 @@
 #
 # Makefile definitions
-# Created by Michel Megens on 9th of March 2012
+# Created by Michel Megens on 23th of May 2012
 #
 
 LOCAL_LIB		= ../../../../../include
-TARGET			= chip.o
+TARGET			= dev.o
 ARDUINO_LIBS		=
 
-CSRCS			= adc.c uart.c
+CSRCS			= spibus.c
 CPPSRCS			=
+ASMSRCS			=
+LIBDIR			= ../../../../../lib
 
 include ../../../../../make/Makefile.$(BUILDSYS)
 include ../../../../../make/Makefile.defs
@@ -19,6 +21,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
+	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(TARGET:.o=.a) $(OBJS)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
@@ -27,4 +30,4 @@ $(TARGET): $(OBJS)
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 clean:
-	-rm -vf $(OBJS) $(TARGET)
+	-rm -vf $(OBJS)

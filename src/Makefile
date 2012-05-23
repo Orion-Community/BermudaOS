@@ -61,4 +61,5 @@ clean:
 	$(MAKE) -C arch/ clean ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C lib/ clean BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C sys/ clean BUILDSYS=$(BUILDSYS)
+	$(MAKE) -C dev/ clean BUILDSYS=$(BUILDSYS)
 

@@ -21,6 +21,9 @@
 #include <string.h>
 #include <bermuda.h>
 
+#include <sys/thread.h>
+#include <sys/events/event.h>
+
 #include <dev/dev.h>
 
 /**
@@ -63,6 +66,9 @@ PUBLIC int BermudaDeviceRegister(DEVICE *dev, void *ioctl)
  *       the device is written to the device.
  * \note This function does not free the memory the device (driver) has in use.
  * \return 0 on success, -1 otherwise.
+ * \see BermudaDeviceRoot
+ * 
+ * The given device, if registered, will be removed from the device list.
  */
 PUBLIC int BermudaDeviceUnregister(DEVICE *dev)
 {
@@ -103,4 +109,50 @@ PUBLIC DEVICE *BermudaDeviceLoopup(const char *name)
                         break;
         }
         return ret;
+}
+
+/**
+ * \brief Allocate the device.
+ * \param dev Device to allocate.
+ * \return 0 success, -1 otherwise.
+ * 
+ * The device will be locked for other threads. If the device is already locked,
+ * it will wait for max. 500 milli seconds to receive a release from the holding
+ * thread. 
+ */
+PUBLIC int BermudaDeviceAlloc(DEVICE *dev)
+{
+        int rc = -1;
+        if(dev != NULL)
+        {
+#ifdef __EVENTS__
+                rc = BermudaEventWait((volatile THREAD**)dev->mutex, 500);
+#else
+                rc = 0;
+#endif
+        }
+        
+        return rc;
+}
+
+/**
+ * \brief Release the device lock.
+ * \param dev Device to lock.
+ * \return 0 on success, -1 on failure (i.e. the device wasn't locked). 
+ * 
+ * The device mutex will be released - the device can be used by other threads
+ * again.
+ */
+PUBLIC int BermudaDeviceRelease(DEVICE *dev)
+{
+        int rc = -1;
+        if(NULL != dev)
+        {
+#ifdef __EVENTS__
+                rc = BermudaEventSignal((volatile THREAD**)dev->mutex);
+#else
+                rc = 0;
+#endif
+        }
+        return rc;
 }

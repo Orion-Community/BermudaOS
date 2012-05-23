@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../include
 TARGET			= dev.o
 ARDUINO_LIBS		=
 
-CSRCS			= devreg.c
+CSRCS			= devreg.c spibus.c
 CPPSRCS			=
 ASMSRCS			=
 LIBDIR			= ../../lib
@@ -21,10 +21,10 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
-	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(TARGET:.o=.a) $(OBJS)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<
+	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(@:.o=.a) $@
 
 %o: %cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<

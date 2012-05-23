@@ -26,44 +26,10 @@
 #include <arch/avr/io.h>
 
 /**
- * \def SPI_DDR
- * \brief DDR for hardware SPI.
+ * \def SPI0
+ * \brief Definition of the SPI0 hardware initialization routine.
  */
-#define SPI_DDR (*(AvrIO->ddrb))
-
-/**
- * \def SPI_PORT
- * \brief SPI I/O port.
- */
-#define SPI_PORT (*(AvrIO->portb))
-
-/**
- * \def SPI_SCK
- * \brief SCK pin.
- */
-#define SPI_SCK  5
-
-/**
- * \def SPI_MISO
- * \brief MISO pin.
- */
-#define SPI_MISO 4
-
-/**
- * \def SPI_MOSI
- * \brief MOSI pin.
- */
-#define SPI_MOSI 3
-
-/**
- * \def SPI_SS
- * \brief SS pin.
- */
-#define SPI_SS   2
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define SPI0 BermudaSPI0HarwareInit
 
 /**
  * \struct _hwspi
@@ -77,6 +43,14 @@ struct _hwspi
         reg8_t spsr; //!< Status register.
         reg8_t spdr; //!< SPI data transfer register.
 } __PACK__;
+
+typedef struct _hwspi HWSPI;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev);
 
 #ifdef __cplusplus
 }

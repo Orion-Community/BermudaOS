@@ -100,6 +100,7 @@ typedef unsigned char mutex_t;
 typedef unsigned char*   reg8_t;
 typedef unsigned short*  reg16_t;
 typedef uint32_t*        reg32_t;
+// typedef unsigned long    size_t;
 
 #ifdef __cplusplus
 extern "C" {

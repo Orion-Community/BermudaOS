@@ -12,7 +12,7 @@ ARDUINO_LIBS		=
 CSRCS			=
 CPPSRCS			=
 ARCH			= avr
-DEPS			= arch.o lib.o sys.o
+DEPS			= arch.o lib.o sys.o dev.o
 BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)
@@ -44,6 +44,9 @@ lib.o:
 
 sys.o:
 	$(MAKE) -C sys/ BUILDSYS=$(BUILDSYS)
+
+dev.o:
+	$(MAKE) -C dev/ BUILDSYS=$(BUILDSYS)
 
 upload: $(TARGET)
 	$(AVRDUDE) $(AVRDUDE_COM_OPTS) -U flash:w:$(TARGET):i

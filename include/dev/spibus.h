@@ -16,8 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/dev/spibus.h
+
 #ifndef __SPIBUS_H_
 #define __SPIBUS_H_
+
+#include <bermuda.h>
+#include <arch/types.h>
 
 /**
  * \typedef SPINODE
@@ -39,16 +44,19 @@ typedef struct _spibus SPIBUS;
  */
 struct _spinode
 {
-        /**
-         * \brief Node ID.
-         * 
-         * Used to identify the SPI bus, if there is more than one.
-         */
-        unsigned char id;
+        unsigned char cs; //!< Chip select pin.
         SPIBUS *bus; //!< SPI bus controller \see _spibus
         void   *spi_ctr; //!< SPI interface control */
         uint32_t mode; //!< SPI mode select.
         uint32_t rate; //!< SPI rate select.
+        
+        /**
+         * \brief Change the chip select before transfer.
+         * \param node SPI node to change chip select for.
+         * \param pin  MCU pin. See the package description of the used CPU.
+         * \warning The bus has to be allocated before selecting it.
+         */
+        void (*select)(SPINODE *node, unsigned char pin);
 };
 
 /**

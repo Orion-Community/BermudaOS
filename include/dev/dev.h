@@ -39,9 +39,48 @@
         BermudaDeviceLoopup(name); \
 }
 
+/**
+ * \def dev_write
+ * \brief Write to a device.
+ * \param dev Device to write to.
+ * \param tx Transmit buffer.
+ * \param len Length of tx.
+ * 
+ * This define will write to the I/O file associated with the given device.
+ */
 #define dev_write(dev, tx, len) dev->io->write(dev->io, tx, len)
+
+/**
+ * \def dev_read
+ * \brief Read from a device.
+ * \param dev Device to read from.
+ * \param rx Receive buffer.
+ * \param len Length of rx.
+ * 
+ * Writes to the I/O file associated with the given device.
+ */
 #define dev_read (dev, rx, len) dev->io->read (dev->io, rx, len)
+
+/**
+ * \def dev_flush
+ * \brief Flush a device.
+ * \param dev Device to flush.
+ * \note Most device drivers reset their internal buffers when the flush function
+ *       is called. Be you have read all bytes from the receive buffer before
+ *       flushing the device.
+ * 
+ * Flush the I/O file associated with the given device.
+ */
 #define dev_flush(dev)          dev->io->flush(dev->io)
+
+/**
+ * \def dev_close
+ * \brief Close a device.
+ * \param dev Device to close.
+ * \note In most cases, before the device is closed, the device will be flushed.
+ * 
+ * Flush the I/O file associated with the given device.
+ */
 #define dev_close(dev)          dev->io->close(dev->io)
 
 /**

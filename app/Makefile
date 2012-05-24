@@ -5,7 +5,7 @@ ARDUINO_LIBS		=
 CSRCS			= main.c
 CPPSRCS			= 
 LIBDIR			= ../lib
-LIBS			= -lBermuda -lspiram -lEvents
+LIBS			= -lBermuda -ldevreg -lspibus -lEvents
 BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)
@@ -14,7 +14,7 @@ include ../make/Makefile.defs
 .PHONY: all clean upload $(TARGET)
 
 all: $(TARGET) $(OBJS)
-	$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o temp.elf $(OBJS) -L$(LIBDIR) $(LIBS)
+	$(CC) -mmcu=$(MCU) -fprofile-use -lm -Wl,--gc-sections -Os -o temp.elf $(OBJS) -L$(LIBDIR) $(LIBS)
 	$(OBJCOPY) -R .eeprom -O ihex temp.elf $(TARGET)
 	-rm -fv temp.elf
 

@@ -51,8 +51,9 @@ PUBLIC int BermudaDeviceRegister(DEVICE *dev, void *ioctl)
                 dev->next = BermudaDeviceRoot;
                 BermudaDeviceRoot = dev;
                 dev->ioctl = ioctl;
-                if(dev)
-                        dev->init(dev);
+                dev->init(dev);
+                dev->alloc = &BermudaDeviceAlloc;
+                dev->release = &BermudaDeviceRelease;
                 rc = 0;
         }
         return rc;
@@ -114,19 +115,20 @@ PUBLIC DEVICE *BermudaDeviceLoopup(const char *name)
 /**
  * \brief Allocate the device.
  * \param dev Device to allocate.
+ * \param tmo Time-out
  * \return 0 success, -1 otherwise.
  * 
  * The device will be locked for other threads. If the device is already locked,
- * it will wait for max. 500 milli seconds to receive a release from the holding
- * thread. 
+ * it will wait for max. It waits for tmo milli seconds if the device is already
+ * locked.
  */
-PUBLIC int BermudaDeviceAlloc(DEVICE *dev)
+PUBLIC int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo)
 {
         int rc = -1;
         if(dev != NULL)
         {
 #ifdef __EVENTS__
-                rc = BermudaEventWait((volatile THREAD**)dev->mutex, 500);
+                rc = BermudaEventWait((volatile THREAD**)dev->mutex, tmo);
 #else
                 rc = 0;
 #endif

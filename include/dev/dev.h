@@ -104,14 +104,15 @@ struct _device
          * 
          * Initialise the device driver and device structure.
          */
-        void (*init)(struct _device *dev);
+        int (*init)(struct _device *dev);
 
         /**
          * \brief Allocate the device.
          * \param dev 'This' device.
+         * \param tmo Time out value in milli seconds.
          * \return Returns 0 on success, -1 if the device could not be allocated.
          */
-        int (*alloc)(struct _device *dev);
+        int (*alloc)(struct _device *dev, unsigned int tmo);
 
         /**
          * \brief Release the device.
@@ -133,8 +134,8 @@ extern "C" {
 	
 extern int BermudaDeviceRegister(DEVICE *dev, void *ioctl);
 extern int BermudaDeviceUnregister(DEVICE *dev);
-extern int BermudaDeviceAlloc(DEVICE *dev);
-extern int BermudaDeviceAlloc(DEVICE *dev);
+extern int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo);
+extern int BermudaDeviceRelease(DEVICE *dev);
 
 extern DEVICE *BermudaDeviceLoopup(const char *name);
 #ifdef __cplusplus

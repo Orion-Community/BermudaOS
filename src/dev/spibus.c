@@ -53,9 +53,9 @@ PUBLIC int BermudaSPIRead(VFILE *file, void *rx, size_t len)
 {
         int rc = -1;
         SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
-        spi->ctrl->select(spi, spi->cs);
+        spi->ctrl->select(spi);
         rc = spi->ctrl->transfer(spi, NULL, rx, len, BERMUDA_SPI_TMO);
-        spi->ctrl->deselect(spi, spi->cs);
+        spi->ctrl->deselect(spi);
         return rc;
 }
 
@@ -69,8 +69,8 @@ PUBLIC int BermudaSPIFlush(VFILE *file)
 {
         int rc = -1;
         SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
-        spi->ctrl->select(spi, spi->cs);
-        rc = spi->ctrl->flush(spi);
-        spi->ctrl->select(spi, spi->cs);
+        spi->ctrl->select(spi);
+//         rc = spi->ctrl->flush(spi);
+        spi->ctrl->deselect(spi);
         return rc;
 }

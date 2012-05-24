@@ -17,70 +17,89 @@
  */
 
 #include <bermuda.h>
+#include <stdlib.h>
+
 #include <sys/thread.h>
 #include <sys/virt_timer.h>
-#include <arch/io.h>
-#include <lib/spiram.h>
-#include <stdlib.h>
 #include <sys/events/event.h>
 
+#include <lib/spiram.h>
+
+#include <dev/dev.h>
+
+#include <arch/io.h>
+#include <arch/avr/328/dev/spibus.h>
+
 static VTIMER *timer;
-volatile THREAD *TestQueue = NULL;
+static DEVICE *spi;
+
+int EventDbg(char x)
+{
+        if(spi->alloc(spi, 200) == -1)
+                return -1;
+        
+        BermudaSpiDevSelect(spi, 10);
+        dev_flush(spi);
+        
+        printf("Free interface! %c\n", x);
+        spi->release(spi);
+        return 0;
+}
 
 THREAD(TemperatureThread, arg)
 {
-	struct adc *adc = BermudaGetADC();
-	float tmp = 0;
-	int temperature = 0;
+        struct adc *adc = BermudaGetADC();
+        float tmp = 0;
+        int temperature = 0;
 
-	while(1)
-	{
-		tmp = adc->read(A0);
-		temperature = tmp / 1024 * 5000;
-		temperature /= 10;
-		printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-		BermudaThreadSleep(5000);
-	}
+        while(1)
+        {                
+                tmp = adc->read(A0);
+                temperature = tmp / 1024 * 5000;
+                temperature /= 10;
+                printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+                EventDbg('T');
+                BermudaThreadSleep(5000);
+        }
 }
 
 void SignalISR()
 {
-	BermudaEventSignalFromISR(&TestQueue);
+//         BermudaEventSignalFromISR(&TestQueue);
 }
 
 static unsigned char led = 1;
 
 PUBLIC void TestTimer(VTIMER *timer, void *arg)
 {
-	BermudaDigitalPinWrite(5, led);
-	led ^= 1;
+        BermudaDigitalPinWrite(5, led);
+        led ^= 1;
 }
 
 int main(void)
 {
-	BermudaInit();
+        BermudaInit();
 
-	while(1);
-	return 0;
+        while(1);
+        return 0;
 }
 
 void setup()
 {
-	BermudaSpiRamInit();
-	BermudaSpiRamWriteByte(0x58, 0x99);
-	BermudaSetPinMode(A0, INPUT);
-	BermudaSetPinMode(5, OUTPUT);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
-			BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
-	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
+        spi = BermudaHeapAlloc(sizeof(*spi));
+        spi->init = &BermudaSPI0HardwareInit;
+        BermudaDeviceRegister(spi, NULL);
+        
+        BermudaSetPinMode(A0, INPUT);
+        BermudaSetPinMode(5, OUTPUT);
+        BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
+                        BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
+        timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 }
 
 void loop()
 {
-	BermudaEventWait(&TestQueue, 12000);
-	unsigned char data = BermudaSpiRamReadByte(0x58);
-	printf("SPI RAM read back: %X\n", data);
-
-	BermudaThreadSleep(500);
-	return;
+        printf("Dbg: %i\n",EventDbg('M'));
+        BermudaThreadSleep(2000);
+        return;
 }

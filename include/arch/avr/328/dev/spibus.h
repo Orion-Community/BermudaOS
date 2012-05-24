@@ -50,7 +50,11 @@ typedef struct _hwspi HWSPI;
 extern "C" {
 #endif
 
-PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev);
+extern int BermudaSPI0HardwareInit(DEVICE *dev);
+
+// internal functions
+PRIVATE WEAK void select(SPIBUS *bus);
+PRIVATE WEAK void deselect(SPIBUS *bus);
 
 #ifdef __cplusplus
 }

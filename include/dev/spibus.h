@@ -39,15 +39,15 @@ typedef struct _spibus SPIBUS;
 typedef struct _spictrl SPICTRL;
 
 /**
- * \def BermudaSpiSelect
+ * \def BermudaSpiDevSelect
  * \brief Shortcut to select a chip using the given select line.
  * \note It will not actualy select the chip, it will set the select line. The
  *       actual select will be done by the SPI driver on reads and writes.
  * \warning The device has to be allocated before using the define!
  */
-#define BermudaSpiDevSelect(dev, cs) \
+#define BermudaSpiDevSelect(dev, pin) \
 { \
-        ((SPIBUS*)dev->data)->cs = cs; \
+        ((SPIBUS*)dev->data)->cs = pin; \
 }
 
 #ifndef BERMUDA_SPI_TMO
@@ -68,6 +68,7 @@ struct _spibus
         void *queue; //!< Transfer waiting queue.
         SPICTRL *ctrl; //!< SPI bus controller \see _spibus
         void *io; //!< SPI interface control */
+        void *buff; //!< Used for internal buffering.
         uint32_t mode; //!< SPI mode select.
         uint32_t rate; //!< SPI rate select.
         unsigned char cs; //!< Chip select pin.
@@ -126,19 +127,19 @@ struct _spictrl
         /**
          * \brief Change the chip select before transfer.
          * \param bus SPI bus to change chip select for.
-         * \param pin  MCU pin. See the package description of the used CPU.
          * \warning The bus has to be allocated before selecting it.
          */
-        void (*select)(SPIBUS *bus, unsigned char pin);
+        void (*select)(SPIBUS *bus);
         
         /**
          * \brief Deselct a chip.
          * \param bus SPI bus to deselect.
-         * \param pin CPU pin.
          * \warning The bus has to be allocated.
+         * \note When the deselect signal is given, it is save to remove the bus
+         *       mutex.
          * \see _device::alloc
          */
-        void (*deselect)(SPIBUS *bus, unsigned char pin);
+        void (*deselect)(SPIBUS *bus);
 };
 
 #ifdef __cplusplus

@@ -32,7 +32,8 @@
 #include <arch/avr/328/dev/spibus.h>
 
 #ifdef __EVENTS__
-THREAD *BermudaSPI0TransferQueue = NULL;
+THREAD *BermudaSPI0TransferQueue = SIGNALED;
+THREAD *BermudaSPI0Mutex = SIGNALED;
 #endif
 
 static HWSPI BermudaSPI0HardwareIO = {
@@ -41,13 +42,13 @@ static HWSPI BermudaSPI0HardwareIO = {
         .spdr = &SPI_DATA,
 };
 
-static SPICTRL BermudaSpi0HardwareCtrl = {
+static SPICTRL BermudaSpiHardwareCtrl = {
         .transfer = NULL,
         .flush    = NULL,
         .set_mode = NULL,
         .set_rate = NULL,
-        .select   = NULL,
-        .deselect = NULL,
+        .select   = &select,
+        .deselect = &deselect,
 };
 
 static SPIBUS BermudaSpi0HardwareBus = {
@@ -56,7 +57,7 @@ static SPIBUS BermudaSpi0HardwareBus = {
 #else
         .queue = NULL,
 #endif
-        .ctrl  = &BermudaSpi0HardwareCtrl,
+        .ctrl  = &BermudaSpiHardwareCtrl,
         .io    = &BermudaSPI0HardwareIO,
         .mode  = 0,
         .rate  = 0,
@@ -90,6 +91,32 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
         dev->io->data = (void*)dev;
         
         dev->data = &BermudaSpi0HardwareBus;
+        dev->mutex = (void*)&BermudaSPI0Mutex;
         
         return rc;
+}
+
+/**
+ * \brief Select a chip.
+ * \param bus SPI bus.
+ * \todo Update SPI configuration.
+ * \note The SPI bus needs to be set for a specific device first.
+ * 
+ * It will not only select the given pin, it will also update the SPI configuration,
+ * if needed.
+ */
+PRIVATE WEAK void select(SPIBUS *bus)
+{
+        BermudaSetPinMode(bus->cs, OUTPUT);
+        BermudaDigitalPinWrite(bus->cs, LOW);
+}
+
+/**
+ * \brief Deselect a chip.
+ * \param bus SPI bus.
+ * \note It is save to remove the bus/device mutex after the deselect signal.
+ */
+PRIVATE WEAK void deselect(SPIBUS *bus)
+{
+        BermudaDigitalPinWrite(bus->cs, HIGH);
 }

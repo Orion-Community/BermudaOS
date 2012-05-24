@@ -59,8 +59,8 @@ static SPIBUS BermudaSpi0HardwareBus = {
 #endif
         .ctrl  = &BermudaSpiHardwareCtrl,
         .io    = &BermudaSPI0HardwareIO,
-        .mode  = 0,
-        .rate  = 0,
+        .mode  = BERMUDA_SPI_MODE0 | BERMUDA_SPI_MODE_UPDATE,
+        .rate  = F_CPU/128,
         .cs    = 0,
 };
 
@@ -107,6 +107,14 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
  */
 PRIVATE WEAK void select(SPIBUS *bus)
 {
+        if(bus->mode & BERMUDA_SPI_MODE_UPDATE)
+        {
+                if(bus->rate > SPI_MAX_DIV)
+                        bus->rate = SPI_MAX_DIV;
+                else if(!BermudaIsPowerOfTwo(bus->rate))
+                        bus->rate = (bus->rate | (bus->rate << 1)) ^ bus->rate;
+                bus->mode &= ~BERMUDA_SPI_MODE_UPDATE
+        }
         BermudaSetPinMode(bus->cs, OUTPUT);
         BermudaDigitalPinWrite(bus->cs, LOW);
 }

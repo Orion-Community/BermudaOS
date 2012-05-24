@@ -22,6 +22,9 @@
 #define __SPIBUS_H_
 
 #include <bermuda.h>
+
+#include <lib/binary.h>
+
 #include <arch/types.h>
 
 /**
@@ -58,6 +61,12 @@ typedef struct _spictrl SPICTRL;
  */
 #define BERMUDA_SPI_TMO 200
 #endif
+
+#define BERMUDA_SPI_MODE0 B0
+#define BERMUDA_SPI_MODE1 B1
+#define BERMUDA_SPI_MODE2 B10
+#define BERMUDA_SPI_MODE3 B11
+#define BERMUDA_SPI_MODE_UPDATE 0x8000
 
 /**
  * \struct _spibus

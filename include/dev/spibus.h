@@ -66,7 +66,21 @@ typedef struct _spictrl SPICTRL;
 #define BERMUDA_SPI_MODE1 B1
 #define BERMUDA_SPI_MODE2 B10
 #define BERMUDA_SPI_MODE3 B11
+
+/**
+ * \def BERMUDA_SPI_MODE_UPDATE
+ * \brief SPI hardware update flag.
+ */
 #define BERMUDA_SPI_MODE_UPDATE 0x8000
+
+/**
+ * \def BERMUDA_SPI_RATE2X
+ * \brief Rate X2 hardware configuration.
+ */
+#define BERMUDA_SPI_RATE2X 0x80
+
+// priv defs
+#define BERMUDA_SPI_X2_SHIFT 5
 
 /**
  * \struct _spibus

@@ -20,6 +20,7 @@
 #define SPI_CTRL   SFR_IO8(0x2C)
 #define SPI_STATUS SFR_IO8(0x2D)
 #define SPI_DATA   SFR_IO8(0x2E)
+#define SPI_MAX_DIV 128
 
 /**
  * \def SPI_SCK

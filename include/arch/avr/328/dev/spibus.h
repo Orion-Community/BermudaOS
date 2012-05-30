@@ -55,7 +55,7 @@ extern int BermudaSPI0HardwareInit(DEVICE *dev);
 // internal functions
 PRIVATE WEAK void select(SPIBUS *bus);
 PRIVATE WEAK void deselect(SPIBUS *bus);
-PRIVATE WEAK void BermudaSpiPrescalerToHwBits(unsigned long *rate_select, unsigned char spi2x);
+PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned char spi2x);
 
 #ifdef __cplusplus
 }

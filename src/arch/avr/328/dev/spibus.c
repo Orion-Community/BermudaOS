@@ -118,7 +118,7 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
 PRIVATE WEAK void select(SPIBUS *bus)
 {
 	if(bus->mode & BERMUDA_SPI_MODE_UPDATE) {
-		BermudaSpiPrescalerToHwBits(&bus->rate, (bus->mode & BERMUDA_SPI_RATE2X) >> BERMUDA_SPI_X2_SHIFT);
+		BermudaSpiRateToHwBits(&bus->rate, (bus->mode & BERMUDA_SPI_RATE2X) >> BERMUDA_SPI_X2_SHIFT);
 		bus->mode &= ~(BERMUDA_SPI_MODE_UPDATE | BERMUDA_SPI_RATE2X);
 		HWSPI *hw = (HWSPI*)bus->io;
 
@@ -145,6 +145,14 @@ PRIVATE WEAK void deselect(SPIBUS *bus)
      BermudaDigitalPinWrite(bus->cs, HIGH);
 }
 
+/**
+ * \brief Write data to the given SPI bus.
+ * \param bus SPI bus to write to.
+ * \param data Data to write.
+ * \note If events are enabled, the system will wait inactive for an interrupt.
+ *
+ * The given data will be written to the SPI bus.
+ */
 PRIVATE WEAK unsigned char BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char data)
 {
 	HWSPI *io = bus->io;
@@ -159,7 +167,12 @@ PRIVATE WEAK unsigned char BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char da
 	return *(io->spdr);
 }
 
-PRIVATE WEAK void BermudaSpiPrescalerToHwBits(unsigned long *rate_select, unsigned char spi2x)
+/**
+ * \brief Converts an SPI rate to hardware configure bits.
+ * \param rate_select Pointer to the desired rate.
+ * \param spi2x When spi2x != 0, the SPI bus will be confiured with a 2X rate.
+ */
+PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned char spi2x)
 {
 	unsigned long pres = BermudaSpiRateToPrescaler(F_CPU, *rate_select, SPI_MAX_PRES);
 	unsigned char hw = 0;

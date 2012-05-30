@@ -53,6 +53,8 @@ extern "C" {
 extern int BermudaSPI0HardwareInit(DEVICE *dev);
 
 // internal functions
+PRIVATE WEAK void BermudaSpiSetRate(SPIBUS *bus, uint32_t rate);
+PRIVATE WEAK void BermudaSpiSetMode(SPIBUS *bus, uint32_t mode);
 PRIVATE WEAK void select(SPIBUS *bus);
 PRIVATE WEAK void deselect(SPIBUS *bus);
 PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned char spi2x);

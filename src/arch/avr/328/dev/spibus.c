@@ -46,8 +46,8 @@ static HWSPI BermudaSPI0HardwareIO = {
 static SPICTRL BermudaSpiHardwareCtrl = {
         .transfer = NULL,
         .flush    = NULL,
-        .set_mode = NULL,
-        .set_rate = NULL,
+        .set_mode = &BermudaSpiSetMode,
+        .set_rate = &BermudaSpiSetRate,
         .select   = &select,
         .deselect = &deselect,
 };
@@ -205,6 +205,34 @@ PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned ch
 
 	hw |= spi2x;
 	*rate_select = hw;
+}
+
+/**
+ * \brief Update the SPI rate.
+ * \param bus SPI bus to update.
+ * \param rate New SPI rate.
+ * \note The rate will not be synchronized with the hardware. The
+ *       next SPI select call, with this bus, will sync with the hardware.
+ * \warning It is wise to allocate the associated SPI device first.
+ */
+PRIVATE WEAK void BermudaSpiSetRate( SPIBUS *bus, uint32_t rate )
+{
+	bus->rate = rate;
+	bus->mode |= BERMUDA_SPI_MODE_UPDATE;
+}
+
+/**
+ * \brief Update the SPI mode settings.
+ * \param bus SPI bus to update.
+ * \param mode New SPI mode setting.
+ * \note The mode will not be synchronized with the hardware. The
+ *       next SPI select call, with this bus, will sync with the hardware.
+ * \warning It is wise to allocate the associated SPI device first.
+ */
+PRIVATE WEAK void BermudaSpiSetMode( SPIBUS *bus, uint32_t mode )
+{
+	bus->mode = mode;
+	bus->mode |= BERMUDA_SPI_MODE_UPDATE;
 }
 
 #ifdef __EVENTS__

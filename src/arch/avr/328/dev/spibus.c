@@ -77,33 +77,33 @@ static SPIBUS BermudaSpi0HardwareBus = {
  */
 PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
 {
-        int rc = -1;
-		HWSPI *hwio = &BermudaSPI0HardwareIO;
+	int rc = -1;
+	HWSPI *hwio = &BermudaSPI0HardwareIO;
         
-        if((dev->io = BermudaHeapAlloc(sizeof(*dev->io))) == NULL)
-                return rc;
-        rc = 0;
+	if((dev->io = BermudaHeapAlloc(sizeof(*dev->io))) == NULL)
+			return rc;
+	rc = 0;
         
-        // initialize the file
-        dev->io->write = &BermudaSPIWrite;
-        dev->io->read = &BermudaSPIRead;
-        dev->io->flush = &BermudaSPIFlush;
-        dev->io->close = NULL;
-        dev->io->mode = 0;
-        dev->io->data = (void*)dev;
+	// initialize the file
+	dev->io->write = &BermudaSPIWrite;
+	dev->io->read = &BermudaSPIRead;
+	dev->io->flush = &BermudaSPIFlush;
+	dev->io->close = NULL;
+	dev->io->mode = 0;
+	dev->io->data = (void*)dev;
         
-        dev->data = &BermudaSpi0HardwareBus;
-        dev->mutex = (void*)&BermudaSPI0Mutex;
+	dev->data = &BermudaSpi0HardwareBus;
+	dev->mutex = (void*)&BermudaSPI0Mutex;
 
-		// enable the spi interface
+	// enable the spi interface
 
 #ifdef __EVENTS__
-		*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE | SPI_IRQ_ENABLE;
+	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE | SPI_IRQ_ENABLE;
 #else
-		*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE
+	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE
 #endif
         
-        return rc;
+	return rc;
 }
 
 /**
@@ -140,7 +140,7 @@ PRIVATE WEAK void select(SPIBUS *bus)
  */
 PRIVATE WEAK void deselect(SPIBUS *bus)
 {
-     BermudaDigitalPinWrite(bus->cs, HIGH);
+	BermudaDigitalPinWrite(bus->cs, HIGH);
 }
 
 /**

@@ -58,8 +58,8 @@ THREAD(TemperatureThread, arg)
                 tmp = adc->read(A0);
                 temperature = tmp / 1024 * 5000;
                 temperature /= 10;
-                printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-                //EventDbg('T');
+                //printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+                EventDbg('T');
                 BermudaThreadSleep(5000);
         }
 }
@@ -100,7 +100,7 @@ void setup()
 
 void loop()
 {
-        printf("Dbg: %i\n",EventDbg('M'));
+        //printf("Dbg: %i\n",EventDbg('M'));
         BermudaThreadSleep(1000);
         return;
 }

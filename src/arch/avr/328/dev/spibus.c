@@ -122,8 +122,6 @@ PRIVATE WEAK void select(SPIBUS *bus)
 		bus->mode &= ~(BERMUDA_SPI_MODE_UPDATE | BERMUDA_SPI_RATE2X);
 		HWSPI *hw = (HWSPI*)bus->io;
 
-		printf("prescaler: %lX\n", bus->rate);
-
 		// config rate to hardware
 		*(hw->spcr) = (*(hw->spcr) & (~B11)) | (bus->rate & B11);
 		*(hw->spsr) = (*(hw->spsr) & (~B1)) | ((bus->rate & B100) >> 2);

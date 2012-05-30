@@ -19,7 +19,7 @@ include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs
 
 
-.PHONY: all clean $(TARGET) upload
+.PHONY: all clean doc $(TARGET) upload
 all: $(DEPS)
 	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(TARGET).a arch.o sys.o
 
@@ -51,11 +51,7 @@ dev.o:
 upload: $(TARGET)
 	$(AVRDUDE) $(AVRDUDE_COM_OPTS) -U flash:w:$(TARGET):i
 
-doc:
-	$(DOXY) -DSx ../doc/Doxy
-
 clean:
-
 	-rm -fv $(TARGET) $(DEPS) $(RAW_TARGET)
 	-rm -Rfv ../doc/html/
 	$(MAKE) -C arch/ clean ARCH=$(ARCH) BUILDSYS=$(BUILDSYS)
@@ -63,3 +59,5 @@ clean:
 	$(MAKE) -C sys/ clean BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C dev/ clean BUILDSYS=$(BUILDSYS)
 
+doc:
+	-doxygen ../Doxyfile

@@ -10,3 +10,17 @@ lib/
 .settings/
 nbproject/
 nbproject/private/
+BermudaOS.ico
+BermudaOS.rc
+BermudaOS.vcxproj
+BermudaOS.vcxproj.filters
+BermudaOS.vcxproj.user
+Debug/
+ReadMe.txt
+Release/
+Resource.h
+app/make.exe.stackdump
+small.ico
+.goutputstream-CJV7EW
+.goutputstream-HWGFFW
+.goutputstream-T01BFW

@@ -23,7 +23,7 @@ STDDEFS		= -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ -D __EVENTS__ \
 AVR_LIBC=$(AVRLIB)
 LOCAL_INC=$(LOCAL_LIB)
 
-CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -fprofile-use -I$(AVR_LIBC) -I$(LOCAL_INC) \
+CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
 		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS)
 LDFLAGS		= -r -Os -m avr5
 CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \

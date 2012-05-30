@@ -40,8 +40,9 @@ int EventDbg(char x)
         
         BermudaSpiDevSelect(spi, 10);
         dev_flush(spi);
+		BermudaSpiDevDeselect(spi);
         
-        printf("Free interface! %c\n", x);
+        //printf("Free interface! %c\n", x);
         spi->release(spi);
         return 0;
 }
@@ -58,7 +59,7 @@ THREAD(TemperatureThread, arg)
                 temperature = tmp / 1024 * 5000;
                 temperature /= 10;
                 printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-                EventDbg('T');
+                //EventDbg('T');
                 BermudaThreadSleep(5000);
         }
 }
@@ -100,6 +101,6 @@ void setup()
 void loop()
 {
         printf("Dbg: %i\n",EventDbg('M'));
-        BermudaThreadSleep(2000);
+        BermudaThreadSleep(1000);
         return;
 }

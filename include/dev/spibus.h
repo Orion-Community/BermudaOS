@@ -53,18 +53,46 @@ typedef struct _spictrl SPICTRL;
         ((SPIBUS*)dev->data)->cs = pin; \
 }
 
+#define BermudaSpiDevDeselect(dev) \
+{ \
+	(((SPIBUS*)dev->data)->ctrl)->deselect((SPIBUS*)dev->data); \
+}
+
 #ifndef BERMUDA_SPI_TMO
 /**
  * \def BERMUDA_SPI_TMO
- * \brief SPI time-out time in milli seconds.
+ * \brief SPI time-out time in milliseconds.
  * \note Can be configured.
  */
 #define BERMUDA_SPI_TMO 200
 #endif
 
+/**
+ * \brief SPI mode 0.
+ *
+ * SCK is low on idle and data is sampled on the leading edge.
+ */
 #define BERMUDA_SPI_MODE0 B0
+
+/**
+ * \brief SPI mode 1.
+ *
+ * SCK is low on idle and data is sampled on the trailing edge.
+ */
 #define BERMUDA_SPI_MODE1 B1
+
+/**
+ * \brief SPI mode 2.
+ *
+ * SCK is high on idle and data is sampled on the leading edge.
+ */
 #define BERMUDA_SPI_MODE2 B10
+
+/**
+ * \brief SPI mode 0.
+ *
+ * SCK is low on high and data is sampled on the trailing edge.
+ */
 #define BERMUDA_SPI_MODE3 B11
 
 /**
@@ -91,10 +119,12 @@ struct _spibus
         void *queue; //!< Transfer waiting queue.
         SPICTRL *ctrl; //!< SPI bus controller \see _spibus
         void *io; //!< SPI interface control */
-        void *buff; //!< Used for internal buffering.
+        volatile void *rx; //!< Used for internal receive buffering.
+		volatile void *tx; //!< Used for internal transmit buffering.
         uint32_t mode; //!< SPI mode select.
         uint32_t rate; //!< SPI rate select.
         unsigned char cs; //!< Chip select pin.
+		unsigned int tmo; //!< Transfer timeout.
 };
 
 /**
@@ -172,6 +202,7 @@ extern "C" {
 extern int BermudaSPIWrite(VFILE *file, void *tx, size_t len);
 extern int BermudaSPIRead(VFILE *file, void *rx, size_t len);
 extern int BermudaSPIFlush(VFILE *file);
+extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigned int max);
 #ifdef __cplusplus
 }
 #endif

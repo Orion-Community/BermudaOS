@@ -67,10 +67,29 @@ PUBLIC int BermudaSPIRead(VFILE *file, void *rx, size_t len)
  */
 PUBLIC int BermudaSPIFlush(VFILE *file)
 {
-        int rc = -1;
-        SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
-        spi->ctrl->select(spi);
-//         rc = spi->ctrl->flush(spi);
-        spi->ctrl->deselect(spi);
-        return rc;
+	int rc = -1;
+	SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
+	spi->ctrl->select(spi);
+	//rc = spi->ctrl->flush(spi);
+	spi->ctrl->deselect(spi);
+	return rc;
+}
+
+/**
+ * \brief Convert a clock rate to a SPI prescaler.
+ * \param clock Base clock speed.
+ * \param rate Desired rate.
+ * \param max Maximum prescaler
+ * \return Clock prescaler.
+ * \note Clock should be a power of two.
+ *
+ * Calculates the divider to get the given rate.
+ */
+PUBLIC uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigned int max)
+{
+	uint32_t pres = clock / rate;
+	if(pres > max) {
+		pres = max;
+	}
+	return pres;
 }

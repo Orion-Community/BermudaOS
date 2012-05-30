@@ -30,6 +30,7 @@
 #include <arch/avr/io.h>
 #include <arch/avr/328/dev/spireg.h>
 #include <arch/avr/328/dev/spibus.h>
+#include <avr/interrupt.h>
 
 #ifdef __EVENTS__
 THREAD *BermudaSPI0TransferQueue = SIGNALED;
@@ -59,7 +60,7 @@ static SPIBUS BermudaSpi0HardwareBus = {
 #endif
         .ctrl  = &BermudaSpiHardwareCtrl,
         .io    = &BermudaSPI0HardwareIO,
-        .mode  = BERMUDA_SPI_MODE1 | BERMUDA_SPI_MODE_UPDATE,
+        .mode  = BERMUDA_SPI_MODE0 | BERMUDA_SPI_MODE_UPDATE,
         .rate  = F_CPU/128,
         .cs    = 0,
 };
@@ -77,6 +78,7 @@ static SPIBUS BermudaSpi0HardwareBus = {
 PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
 {
         int rc = -1;
+		HWSPI *hwio = &BermudaSPI0HardwareIO;
         
         if((dev->io = BermudaHeapAlloc(sizeof(*dev->io))) == NULL)
                 return rc;
@@ -92,6 +94,14 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
         
         dev->data = &BermudaSpi0HardwareBus;
         dev->mutex = (void*)&BermudaSPI0Mutex;
+
+		// enable the spi interface
+
+#ifdef __EVENTS__
+		*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE | SPI_IRQ_ENABLE;
+#else
+		*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE
+#endif
         
         return rc;
 }
@@ -107,21 +117,20 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
  */
 PRIVATE WEAK void select(SPIBUS *bus)
 {
-        if(bus->mode & BERMUDA_SPI_MODE_UPDATE)
-        {
-                //TODO: Add rate to prescaler.
-                if(bus->rate > SPI_MAX_DIV)
-                        bus->rate = SPI_MAX_DIV;
-                else if(!BermudaIsPowerOfTwo(bus->rate))
-                        bus->rate = (bus->rate | (bus->rate << 1)) ^ bus->rate;
-                bus->mode &= ~BERMUDA_SPI_MODE_UPDATE;
-                HWSPI *hw = (HWSPI*)bus->io;
-                
-                // config rate to hardware
-                *(hw->spcr) = (*(hw->spcr) & (~B11)) | (bus->rate & B11);
-                *(hw->spsr) = (*(hw->spsr) & (~B1)) | (bus->rate &
-                              (bus->mode & BERMUDA_SPI_RATE2X) >> BERMUDA_SPI_X2_SHIFT);
-        }
+	if(bus->mode & BERMUDA_SPI_MODE_UPDATE) {
+		BermudaSpiPrescalerToHwBits(&bus->rate, (bus->mode & BERMUDA_SPI_RATE2X) >> BERMUDA_SPI_X2_SHIFT);
+		bus->mode &= ~(BERMUDA_SPI_MODE_UPDATE | BERMUDA_SPI_RATE2X);
+		HWSPI *hw = (HWSPI*)bus->io;
+
+		printf("prescaler: %lX\n", bus->rate);
+
+		// config rate to hardware
+		*(hw->spcr) = (*(hw->spcr) & (~B11)) | (bus->rate & B11);
+		*(hw->spsr) = (*(hw->spsr) & (~B1)) | ((bus->rate & B100) >> 2);
+
+		// set the mode
+		*(hw->spcr) = (*(hw->spcr) & (~B1100)) | ((bus->mode & B11) << SPI_MODE_SHIFT);
+	}
         BermudaSetPinMode(bus->cs, OUTPUT);
         BermudaDigitalPinWrite(bus->cs, LOW);
 }
@@ -133,5 +142,63 @@ PRIVATE WEAK void select(SPIBUS *bus)
  */
 PRIVATE WEAK void deselect(SPIBUS *bus)
 {
-        BermudaDigitalPinWrite(bus->cs, HIGH);
+     BermudaDigitalPinWrite(bus->cs, HIGH);
 }
+
+PRIVATE WEAK unsigned char BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char data)
+{
+	HWSPI *io = bus->io;
+	*(io->spdr) = data;
+#ifdef __EVENTS__
+	if(BermudaEventWait((volatile THREAD**)bus->queue, bus->tmo) == -1) {
+		return 0;
+	}
+#else
+	while(!(*(io->spsr) & BIT(SPIF)));
+#endif
+	return *(io->spdr);
+}
+
+PRIVATE WEAK void BermudaSpiPrescalerToHwBits(unsigned long *rate_select, unsigned char spi2x)
+{
+	unsigned long pres = BermudaSpiRateToPrescaler(F_CPU, *rate_select, SPI_MAX_PRES);
+	unsigned char hw = 0;
+
+	switch(pres) {
+	case 8:
+	case 16:
+		hw = B1;
+		break;
+		
+	case 32:
+		hw = B10;
+		break;
+
+	case 64:
+		if(spi2x) {
+			hw = B11;
+		}
+		else {
+			hw = B10;
+		}
+		break;
+
+	case 128:
+		hw = B11;
+		break;
+
+	default:
+		hw = 0;
+		break;
+	}
+
+	hw |= spi2x;
+	*rate_select = hw;
+}
+
+#ifdef __EVENTS__
+SIGNAL(SPI_STC_vect)
+{
+	BermudaEventSignalFromISR((volatile THREAD**)(&BermudaSpi0HardwareBus)->queue);
+}
+#endif

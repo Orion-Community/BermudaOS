@@ -7,7 +7,7 @@ LOCAL_LIB		= ../include
 LIBDIR			= ../lib
 RAW_TARGET		= raw.elf
 TARGET			= Bermuda
-ARDUINO_LIBS		=
+ARDUINO_LIBS	=
 
 CSRCS			=
 CPPSRCS			=

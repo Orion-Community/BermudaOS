@@ -137,7 +137,6 @@ struct _spibus
         uint16_t mode; //!< SPI mode select.
         uint32_t rate; //!< SPI rate select.
         unsigned char cs; //!< Chip select pin.
-		unsigned int tmo; //!< Transfer timeout.
 };
 
 /**
@@ -159,7 +158,8 @@ struct _spictrl
          * Transfer data over the SPI bus from the transmit buffer, while receiving
          * data in the receive buffer.
          */
-        int  (*transfer)(SPIBUS* bus, const void* tx, void* rx, int len, int tmo);
+        int  (*transfer)(SPIBUS* bus, const void* tx, void* rx, unsigned int len, 
+			             unsigned int tmo);
         
         /**
          * \brief Transfer the SPI TX buffer.

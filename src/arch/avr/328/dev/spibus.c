@@ -147,6 +147,48 @@ PRIVATE WEAK void deselect(SPIBUS *bus)
 }
 
 /**
+ * \brief Transfer data buffers to the hardware.
+ * \param bus SPI bus to use for the transfer.
+ * \param tx Transmit buffer.
+ * \param rx Receive buffer.
+ * \param len Length of tx and/or rx.
+ * \param tmo Transmit timeout waiting time in milliseconds.
+ * \note <b>tx</b> or <b>rx</b> may be NULL, depending on the desired operation.
+ * \todo Unit test this function.
+ * 
+ * If a read only is desired, the <b>tx</b> parameter should be set to NULL. When a write only
+ * is needed, <b>rx</b> can be set to NULL.
+ */
+PRIVATE WEAK int BermudaHardwareSpiTransfer( SPIBUS *bus, const void *tx, void *rx, unsigned short len, 
+                                              unsigned int tmo )
+{
+	int ret = 0;
+	unsigned short idx = 0;
+	unsigned char data_val = 0, dummy = 0xFF;
+
+	for(; idx < len; idx++) {
+		if(tx) { // if data is available
+			ret = BermudaHardwareSpiWrite(bus, &((unsigned char*)tx)[idx], tmo);
+			if(ret == -1) {
+				return ret;
+			}
+		}
+		else { // provide clock to read data
+			ret = BermudaHardwareSpiWrite(bus, &dummy, tmo);
+			if(ret == -1) {
+				return ret;
+			}
+			dummy = 0xFF;
+		}
+		if(rx) { // if data storage is available
+			((unsigned char*)rx)[idx] = data_val;
+		}
+	}
+
+	return ret;
+}
+
+/**
  * \brief Write data to the given SPI bus.
  * \param bus SPI bus to write to.
  * \param data Data to write.
@@ -154,18 +196,20 @@ PRIVATE WEAK void deselect(SPIBUS *bus)
  *
  * The given data will be written to the SPI bus.
  */
-PRIVATE WEAK unsigned char BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char data)
+PRIVATE WEAK int BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char *data,
+	unsigned int tmo)
 {
 	HWSPI *io = bus->io;
-	*(io->spdr) = data;
+	*(io->spdr) = *data;
 #ifdef __EVENTS__
-	if(BermudaEventWait((volatile THREAD**)bus->queue, bus->tmo) == -1) {
-		return 0;
+	if(BermudaEventWait((volatile THREAD**)bus->queue, tmo) == -1) {
+		return -1;
 	}
 #else
 	while(!(*(io->spsr) & BIT(SPIF)));
 #endif
-	return *(io->spdr);
+	*data = *(io->spdr);
+	return 0;
 }
 
 /**

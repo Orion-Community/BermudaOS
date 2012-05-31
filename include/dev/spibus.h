@@ -212,7 +212,7 @@ struct _spictrl
 extern "C" {
 #endif
 
-extern int BermudaSPIWrite(VFILE *file, void *tx, size_t len);
+extern int BermudaSPIWrite(VFILE *file, const void *tx, size_t len);
 extern int BermudaSPIRead(VFILE *file, void *rx, size_t len);
 extern int BermudaSPIFlush(VFILE *file);
 extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigned int max);

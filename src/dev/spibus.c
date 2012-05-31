@@ -34,12 +34,15 @@
  * \note This function writes to the back ground buffers, not to the actual
  *       interface.
  */
-PUBLIC int BermudaSPIWrite(VFILE *file, void *tx, size_t len)
+PUBLIC int BermudaSPIWrite(VFILE *file, const void *tx, size_t len)
 {
         int rc = -1;
         SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
         
+		spi->ctrl->select(spi);
         rc = spi->ctrl->transfer(spi, tx, NULL, len, BERMUDA_SPI_TMO);
+		spi->ctrl->deselect(spi);
+
         return rc;
 }
 

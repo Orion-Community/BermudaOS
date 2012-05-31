@@ -57,7 +57,7 @@ struct _vfile
          * Writes the given data byte by byte (until <b>len</b> is reached to the
          * file (driver). A flush might be necessary.
          */
-        int (*write)(struct _vfile *f, void *buf, size_t len);
+        int (*write)(struct _vfile *f, const void *buf, size_t len);
         
         /**
          * \brief File read.

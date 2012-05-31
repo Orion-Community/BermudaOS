@@ -19,24 +19,14 @@
 /** \file spiram.c */
 #if (defined(__SPI__) && defined(__SPIRAM__)) || defined(__DOXYGEN__)
 
-#include <stdlib.h>
-#include <arch/spi.h>
+#include <dev/dev.h>
+#include <dev/spibus.h>
+
 #include <arch/io.h>
 #include <lib/spiram.h>
-#include <util/delay.h>
 
-PRIVATE WEAK SPI *spi = NULL;
+static unsigned char ram_select = 0;
 PRIVATE WEAK unsigned char _current_mode = 0xff;
-
-void BermudaSpiRamEnable()
-{
-        BermudaSpiStart(SS);
-}
-
-void BermudaSpiRamDisable()
-{
-        BermudaSpiStop(SS);
-}
 
 /**
  * \fn BermudaSpiRamInit()
@@ -46,45 +36,42 @@ void BermudaSpiRamDisable()
  * 
  * Initialise the SPI communication to the SPI SRAM chip.
  */
-void BermudaSpiRamInit()
+PUBLIC void BermudaSpiRamInit()
 {
-        SPI *spiram = BermudaSpiGetInterface();
-        if(NULL == spiram)
-                return;
 
-        BermudaSpiRamDisable();
-        spi = spiram;
-        return;
 }
 
-void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte)
+/**
+ * \brief Select an SPI ram chip using the chip select line.
+ * \param cs Chip select pin.
+ */
+PUBLIC inline void BermudaSpiRamChipSelect(unsigned char cs)
 {
-        BermudaSpiRamSetMode(SPI_RAM_BYTE);
-        BermudaSpiRamEnable();
-        spi->transact(spi, WRDA);
-        spi->transact(spi, (unsigned char)(address>>8));
-        spi->transact(spi, (unsigned char)(address & 0xff));
-        spi->transact(spi, byte);
-        BermudaSpiRamDisable();
-        return;
+	ram_select = cs;
 }
 
-unsigned char BermudaSpiRamReadByte(unsigned int address)
+PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 {
-        unsigned char byte = 0;
-        BermudaSpiRamSetMode(SPI_RAM_BYTE);
+	uint8_t write_seq[] = {
+		WRDA, (address >> 8) & 0xFF, address & 0xFF, byte,
+	};
+	DEVICE *spidev = dev_open("SPI0");
 
-        BermudaSpiRamEnable();
-        spi->transact(spi, RDDA);
-        spi->transact(spi, (unsigned char)(address>>8));
-        spi->transact(spi, (unsigned char)(address & 0xff));
-        byte = spi->transact(spi, 0xff);
-        BermudaSpiRamDisable();
-        return byte;
+	if(spidev->alloc(spidev, BERMUDA_SPI_TMO) == -1) {
+		return -1;
+	}
+
+	BermudaSpiRamSetMode(SPI_RAM_BYTE);
+	BermudaSpiDevSelect(spidev, ram_select);
+	dev_write(spidev, (const void*)write_seq, BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
+	BermudaSpiDevDeselect(spidev);
+	return 0;
 }
 
-void BermudaSpiRamSetMode(spiram_t mode)
+PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
 {
+	DEVICE *spidev = dev_open("SPI0");
+	unsigned char *buff = BermudaHeapAlloc(2);
         if(mode <= SPI_RAM_BUF)
         {
                 unsigned char status = HOLD;
@@ -107,10 +94,12 @@ void BermudaSpiRamSetMode(spiram_t mode)
                                 break;
                 }
                 
-                BermudaSpiRamEnable();
-                spi->transact(spi, WRSR);
-                spi->transact(spi, status);
-                BermudaSpiRamDisable();
+				buff[0] = WRSR; buff[1] = status;
+
+                BermudaSpiDevSelect(spidev, ram_select);
+                dev_write(spidev, buff, 2);
         }
+
+		BermudaHeapFree(buff);
 }
 #endif /* __SPI__ && __SPIRAM__*/

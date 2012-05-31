@@ -22,5 +22,7 @@
 #include <bermuda.h>
 
 typedef unsigned long int uint32_t;
+typedef unsigned int uint16_t;
+typedef unsigned char uint8_t;
 
 #endif /* __AVR_TYPES_H */

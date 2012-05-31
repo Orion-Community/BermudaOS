@@ -97,13 +97,19 @@ PUBLIC int BermudaDeviceUnregister(DEVICE *dev)
  */
 PUBLIC DEVICE *BermudaDeviceLoopup(const char *name)
 {
-	DEVICE *ret = BermudaDeviceRoot;
+	DEVICE *carriage = BermudaDeviceRoot;
+	DEVICE *ret = NULL;
 
-	while(ret) {
-		if(strcmp(ret->name, name) == 0) {
-				break;
+	if(carriage == NULL) {
+		return ret;
+	}
+
+	while(carriage) {
+		if(strcmp(carriage->name, name) != 0) {
+			ret = carriage;
+			break;
 		}
-		ret = ret->next;
+		carriage = carriage->next;
 	}
 	return ret;
 }

@@ -31,6 +31,9 @@
 
 #define HOLD 0x1
 
+// general defines
+#define BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN 4
+
 typedef enum
 {
         SPI_RAM_BYTE,
@@ -40,11 +43,10 @@ typedef enum
 
 __DECL
 extern void BermudaSpiRamInit();
-extern void BermudaSpiRamWriteByte(unsigned int address, unsigned char byte);
+extern inline void BermudaSpiRamChipSelect(unsigned char cs);
+extern int BermudaSpiRamWriteByte(const unsigned int address, unsigned char byte);
 extern void BermudaSpiRamSetMode(spiram_t mode);
 extern unsigned char BermudaSpiRamReadByte(unsigned int address);
-extern void BermudaSpiRamEnable();
-extern void BermudaSpiRamDisable();
 __DECL_END
 
 #endif /* __SPIRAM_H */

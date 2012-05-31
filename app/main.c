@@ -81,6 +81,7 @@ void setup()
 {
 	spi = BermudaHeapAlloc(sizeof(*spi));
 	spi->init = &BermudaSPI0HardwareInit;
+	spi->name = "SPI0";
 	BermudaDeviceRegister(spi, NULL);
         
 	BermudaSetPinMode(A0, INPUT);
@@ -93,6 +94,6 @@ void setup()
 void loop()
 {
 	printf("Dbg: %i\n",EventDbg('M'));
-	BermudaThreadSleep(10);
+	BermudaThreadSleep(1000);
 	return;
 }

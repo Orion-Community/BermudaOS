@@ -39,6 +39,7 @@ int EventDbg(char x)
 	}
 
 	BermudaSpiDevSetRate(spi, F_CPU/64);
+
 	BermudaSpiDevSelect(spi, 10);
 	dev_flush(spi);
 	BermudaSpiDevDeselect(spi);

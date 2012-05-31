@@ -19,6 +19,8 @@
 #ifndef __ARCHTYPES_H_
 #define __ARCHTYPES_H_
 
-typedef unsigned long int uint32_t;
+#ifdef __AVR__
+#include <arch/avr/types.h>
+#endif
 
 #endif /* __ARCHTYPES_H_ */

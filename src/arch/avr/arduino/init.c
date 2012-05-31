@@ -16,9 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+#include <bermuda.h>
 
 #include <avr/interrupt.h>
+
+#include <lib/spiram.h>
+#include <lib/binary.h>
+#include <dev/dev.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
@@ -26,11 +30,9 @@
 
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
+#include <arch/avr/328/dev/spibus.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/stack.h>
-
-#include <lib/spiram.h>
-#include <lib/binary.h>
 
 #define LED_DDR  BermudaGetDDRB()
 #define LED_PORT BermudaGetPORTB()
@@ -62,10 +64,11 @@ PUBLIC int BermudaInit(void)
 #ifdef __ADC__
 	BermudaInitBaseADC();
 #endif
-
 #ifdef __SPI__
-	SPI *spi_if = BermudaHeapAlloc(sizeof(*spi_if));
-	BermudaSpiHardwareInit(spi_if);  
+	DEVICE *spi = BermudaHeapAlloc(sizeof(*spi));
+	spi->init = &BermudaSPI0HardwareInit;
+	spi->name = "SPI0";
+	BermudaDeviceRegister(spi, NULL);
 #endif
 
 	STACK_L = (MEM-256) & 0xFF;

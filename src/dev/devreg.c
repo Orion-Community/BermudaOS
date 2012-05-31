@@ -105,7 +105,7 @@ PUBLIC DEVICE *BermudaDeviceLoopup(const char *name)
 	}
 
 	while(carriage) {
-		if(strcmp(carriage->name, name) != 0) {
+		if(strcmp(carriage->name, name) == 0) {
 			ret = carriage;
 			break;
 		}

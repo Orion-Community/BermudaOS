@@ -1,0 +1,41 @@
+#
+# Makefile definitions
+# Created by Michel Megens on 9th of March 2012
+#
+
+CC		= $(AVRBIN)/avr-gcc
+CPP		= $(AVRBIN)/avr-g++
+LD		= $(AVRBIN)/avr-ld
+AS		= $(AVRBIN)/avr-gcc
+STRIP		= $(AVRBIN)/avr-strip
+AR		= $(AVRBIN)/avr-ar
+DOXY		= $(BIN)/doxygen
+MAKE		= make
+OBJCOPY		= avr-objcopy
+AVRDUDE		= $(AVRBIN)/avrdude
+AVRDUDE_COM_OPTS = -q -V -p $(MCU) -c $(AVRDUDE_ARD_PROGRAMMER) -b \
+	$(AVRDUDE_ARD_BAUDRATE) -P $(ARD_PORT) $(AVRDUDE_ARD_EXTRAOPTS) \
+        $(AVRDUDE_CONF)
+
+
+STDDEFS		= -D __AVR__ -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ -D __EVENTS__ \
+		  -D TIMERS=1 -D__THREADS__ -D __ADC__ -D__SPIRAM__ -D__SPI__
+AVR_LIBC=$(AVRLIB)
+LOCAL_INC=$(LOCAL_LIB)
+
+CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
+		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS)
+LDFLAGS		= -r -Os -m avr5
+CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
+		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU) -ffunction-sections \
+		  -fdata-sections -w $(STDDEFS)
+ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall -c
+ARFLAGS		= rcsv
+
+CPPOBJS		= $(CPPSRCS:.cpp=.o)
+COBJS		= $(CSRCS:.c=.o)
+ASMOBJS		= $(ASMSRCS:.S=.o)
+OBJS		= $(COBJS)
+OBJS		+= $(CPPOBJS) $(ASMOBJS)
+
+

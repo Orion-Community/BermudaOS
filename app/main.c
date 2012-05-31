@@ -30,20 +30,6 @@
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
-static DEVICE *spi;
-
-int EventDbg(char x)
-{
-	if(spi->alloc(spi, 200) == -1) {
-		return -1;
-	}
-
-	BermudaSpiDevSelect(spi, 10);
-	dev_write(spi, &x, 1);
-
-	spi->release(spi);
-	return 0;
-}
 
 THREAD(TemperatureThread, arg)
 {
@@ -56,7 +42,6 @@ THREAD(TemperatureThread, arg)
 		temperature = tmp / 1024 * 5000;
 		temperature /= 10;
 		printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-		//EventDbg('T');
 		BermudaThreadSleep(5000);
 	}
 }
@@ -79,11 +64,6 @@ int main(void)
 
 void setup()
 {
-	spi = BermudaHeapAlloc(sizeof(*spi));
-	spi->init = &BermudaSPI0HardwareInit;
-	spi->name = "SPI0";
-	BermudaDeviceRegister(spi, NULL);
-        
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
@@ -93,7 +73,7 @@ void setup()
 
 void loop()
 {
-	printf("Dbg: %i\n",EventDbg('M'));
+	BermudaSpiRamWriteByte(0x100, 0x99);
 	BermudaThreadSleep(1000);
 	return;
 }

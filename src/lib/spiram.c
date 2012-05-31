@@ -65,6 +65,8 @@ PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 	BermudaSpiDevSelect(spidev, ram_select);
 	dev_write(spidev, (const void*)write_seq, BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
 	BermudaSpiDevDeselect(spidev);
+	spidev->release(spidev);
+
 	return 0;
 }
 
@@ -98,6 +100,7 @@ PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
 
                 BermudaSpiDevSelect(spidev, ram_select);
                 dev_write(spidev, buff, 2);
+				BermudaSpiDevDeselect(spidev);
         }
 
 		BermudaHeapFree(buff);

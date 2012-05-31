@@ -45,18 +45,17 @@ static DEVICE *BermudaDeviceRoot;
  */
 PUBLIC int BermudaDeviceRegister(DEVICE *dev, void *ioctl)
 {
-        int rc = -1;
-        if(NULL == BermudaDeviceLoopup(dev->name))
-        {
-                dev->next = BermudaDeviceRoot;
-                BermudaDeviceRoot = dev;
-                dev->ioctl = ioctl;
-                dev->init(dev);
-                dev->alloc = &BermudaDeviceAlloc;
-                dev->release = &BermudaDeviceRelease;
-                rc = 0;
-        }
-        return rc;
+	int rc = -1;
+	if(NULL == BermudaDeviceLoopup(dev->name)) {
+		dev->next = BermudaDeviceRoot;
+		BermudaDeviceRoot = dev;
+		dev->ioctl = ioctl;
+		dev->init(dev);
+		dev->alloc = &BermudaDeviceAlloc;
+		dev->release = &BermudaDeviceRelease;
+		rc = 0;
+	}
+	return rc;
 }
 
 /**
@@ -76,21 +75,17 @@ PUBLIC int BermudaDeviceUnregister(DEVICE *dev)
         DEVICE *lookup = dev_open(dev), **dlp;
         int rc = -1;
         
-        if(NULL != lookup)
-        {
-                dlp = &BermudaDeviceRoot;
-                for(; *dlp; dlp = &(*dlp)->next)
-                {
-                        if((*dlp) == dev)
-                        {
-                                *dlp = dev->next;
-                                rc = 0;
-                                break;
-                        }
-                }
-                
-        }
-        return rc;
+	if(NULL != lookup) {
+		dlp = &BermudaDeviceRoot;
+		for(; *dlp; dlp = &(*dlp)->next) {
+			if((*dlp) == dev) {
+				*dlp = dev->next;
+				rc = 0;
+				break;
+			}
+		}      
+	}
+	return rc;
 }
 
 /**
@@ -102,14 +97,15 @@ PUBLIC int BermudaDeviceUnregister(DEVICE *dev)
  */
 PUBLIC DEVICE *BermudaDeviceLoopup(const char *name)
 {
-        DEVICE *ret = BermudaDeviceRoot;
-        
-        while(ret)
-        {
-                if(strcmp(ret->name, name) == 0)
-                        break;
-        }
-        return ret;
+	DEVICE *ret = BermudaDeviceRoot;
+
+	while(ret) {
+		if(strcmp(ret->name, name) == 0) {
+				break;
+		}
+		ret = ret->next;
+	}
+	return ret;
 }
 
 /**
@@ -124,17 +120,16 @@ PUBLIC DEVICE *BermudaDeviceLoopup(const char *name)
  */
 PUBLIC int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo)
 {
-        int rc = -1;
-        if(dev != NULL)
-        {
+	int rc = -1;
+	if(dev != NULL) {
 #ifdef __EVENTS__
-                rc = BermudaEventWait((volatile THREAD**)dev->mutex, tmo);
+		rc = BermudaEventWait((volatile THREAD**)dev->mutex, tmo);
 #else
-                rc = 0;
+		rc = 0;
 #endif
-        }
-        
-        return rc;
+	}
+
+	return rc;
 }
 
 /**
@@ -147,14 +142,13 @@ PUBLIC int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo)
  */
 PUBLIC int BermudaDeviceRelease(DEVICE *dev)
 {
-        int rc = -1;
-        if(NULL != dev)
-        {
+	int rc = -1;
+	if(NULL != dev) {
 #ifdef __EVENTS__
-                rc = BermudaEventSignal((volatile THREAD**)dev->mutex);
+		rc = BermudaEventSignal((volatile THREAD**)dev->mutex);
 #else
-                rc = 0;
+		rc = 0;
 #endif
-        }
-        return rc;
+	}
+	return rc;
 }

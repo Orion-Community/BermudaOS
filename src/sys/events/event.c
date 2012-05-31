@@ -67,49 +67,48 @@
  */
 PUBLIC int BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
 {
-        volatile THREAD *tqp;
+	volatile THREAD *tqp;
+
+	BermudaEnterCritical();
+	tqp = *tqpp;
+	BermudaExitCritical();
         
-        BermudaEnterCritical();
-        tqp = *tqpp;
-        BermudaExitCritical();
-        
-        if(tqp == SIGNALED)
-        { // queue is empty
-                BermudaEnterCritical();
-                *tqpp = 0;
-                BermudaExitCritical();
+	if(tqp == SIGNALED) { // queue is empty
+		BermudaEnterCritical();
+		*tqpp = 0;
+		BermudaExitCritical();
                 
-                BermudaThreadYield(); // give other threads a chance
-                return 0;
-        }
+		BermudaThreadYield(); // give other threads a chance
+		return 0;
+	}
         
-        /*
-         * The queue is currently locked, this means the current thread has
-         * to wait. Remove it from the running queue and add it to the event
-         * queue.
-         */
-        BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
-        BermudaThreadPrioQueueAdd((THREAD**)tqpp, BermudaCurrentThread);
-        BermudaCurrentThread->state = THREAD_SLEEPING;
+	/*
+	 * The queue is currently locked, this means the current thread has
+	 * to wait. Remove it from the running queue and add it to the event
+	 * queue.
+	 */
+	BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
+	BermudaThreadPrioQueueAdd((THREAD**)tqpp, BermudaCurrentThread);
+	BermudaCurrentThread->state = THREAD_SLEEPING;
         
-        if(tmo)
-                BermudaCurrentThread->th_timer = BermudaTimerCreate(tmo, &BermudaEventTMO,
-                                                                    (void*)tqpp,
-                                                                    BERMUDA_ONE_SHOT
-                                                 );
-        else
-                BermudaCurrentThread->th_timer = NULL;
+	if(tmo) {
+		BermudaCurrentThread->th_timer = BermudaTimerCreate(tmo, &BermudaEventTMO,
+		                                                   (void*)tqpp,
+		                                                   BERMUDA_ONE_SHOT
+		);
+	}
+	else {
+		BermudaCurrentThread->th_timer = NULL;
+	}
+	BermudaSchedulerExec(); // DO NOT USE THREAD YIELDING! -> queue's are editted
         
-        BermudaSchedulerExec(); // DO NOT USE THREAD YIELDING! -> queue's are editted
+	// When the thread returns
+	if(BermudaCurrentThread->th_timer == SIGNALED) { // event timed out
+		BermudaCurrentThread->th_timer = NULL;
+		return -1;
+	}
         
-        // When the thread returns
-        if(BermudaCurrentThread->th_timer == SIGNALED)
-        { // event timed out
-                BermudaCurrentThread->th_timer = NULL;
-                return -1;
-        }
-        
-        return 0; // event posted succesfuly
+	return 0; // event posted succesfuly
 }
 
 /**
@@ -124,42 +123,41 @@ PUBLIC int BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
  */
 PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg)
 {
-        THREAD *volatile *tqpp, *tqp;
+	THREAD *volatile *tqpp, *tqp;
         
-        tqpp = (THREAD**)arg;
-        BermudaEnterCritical();
-        tqp = *tqpp;
-        BermudaExitCritical();
+	tqpp = (THREAD**)arg;
+	BermudaEnterCritical();
+	tqp = *tqpp;
+	BermudaExitCritical();
         
-        if(tqp != SIGNALED)
-        {
-                while(tqp)
-                {
-                        if(tqp->th_timer == timer)
-                        { // found the timed out thread
-                                BermudaEnterCritical();
-                                *tqpp = tqp->next;
-                                if(tqp->ec)
-                                {
-                                        if(tqp->next)
-                                                tqp->next->ec = tqp->ec;
-                                        else
-                                                *tqpp = SIGNALED;
-                                        tqp->ec = 0;
-                                }
-                                BermudaExitCritical();
+	if(tqp != SIGNALED) {
+		while(tqp) {
+			if(tqp->th_timer == timer) { 
+			// found the timed out thread
+				BermudaEnterCritical();
+				*tqpp = tqp->next;
+				if(tqp->ec) {
+					if(tqp->next) {
+						tqp->next->ec = tqp->ec;
+					}
+					else {
+						*tqpp = SIGNALED;
+					}
+					tqp->ec = 0;
+				}
+				BermudaExitCritical();
                                 
-                                // mark thread as ready to go
-                                tqp->state = THREAD_READY;
-                                BermudaThreadPrioQueueAdd(&BermudaRunQueue, tqp);
-                                tqp->th_timer = SIGNALED; // waiting thread can handle
-                                                       // on this signal
-                                break;
-                        }
-                        tqpp = &tqp->next;
-                        tqp = tqp->next;
-                }
-        }
+				// mark thread as ready to go
+				tqp->state = THREAD_READY;
+				BermudaThreadPrioQueueAdd(&BermudaRunQueue, tqp);
+				tqp->th_timer = SIGNALED; // waiting thread can handle
+										  // on this signal
+				break;
+            }
+			tqpp = &tqp->next;
+			tqp = tqp->next;
+		}
+	}
 }
 
 /**
@@ -172,47 +170,42 @@ PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg)
  */
 PUBLIC int BermudaEventSignalRaw(THREAD *volatile*tqpp)
 {
-        THREAD *t;
-        BermudaEnterCritical();
-        t = *tqpp;
-        BermudaExitCritical();
+	THREAD *t;
+	BermudaEnterCritical();
+	t = *tqpp;
+	BermudaExitCritical();
         
-        if(t != SIGNALED)
-        {
-                if(t)
-                {
-                        BermudaEnterCritical();
-                        *tqpp = t->next;
-                        if(t->ec)
-                        {
-                                if(t->next)
-                                        t->next->ec = t->ec;
-                                else
-                                        *tqpp = SIGNALED;
-                                
-                                t->ec = 0;
-                        }
-                        BermudaExitCritical();
+	if(t != SIGNALED) {
+		if(t) {
+			BermudaEnterCritical();
+			*tqpp = t->next;
+			if(t->ec) {
+				if(t->next)
+					t->next->ec = t->ec;
+				else
+					*tqpp = SIGNALED;
+
+				t->ec = 0;
+			}
+			BermudaExitCritical();
                         
-                        if(t->th_timer)
-                        {
-                                BermudaTimerStop(t->th_timer);
-                                t->th_timer = NULL;
-                        }
+			if(t->th_timer) {
+				BermudaTimerStop(t->th_timer);
+				t->th_timer = NULL;
+			}
                         
-                        t->state = THREAD_READY;
-                        BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
+			t->state = THREAD_READY;
+			BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
                         
-                        return 0; // post done succesfuly
-                }
-                else
-                {
-                        BermudaEnterCritical();
-                        *tqpp = SIGNALED;
-                        BermudaExitCritical();
-                }
-        }
-        return 1; // could not post
+			return 0; // post done succesfuly
+		}
+		else {
+			BermudaEnterCritical();
+			*tqpp = SIGNALED;
+			BermudaExitCritical();
+		}
+    }
+	return 1; // could not post
 }
 
 /**
@@ -241,12 +234,12 @@ PUBLIC int BermudaEventSignal(volatile THREAD **tqpp)
  */
 PUBLIC void BermudaEventSignalFromISR(volatile THREAD **tqpp)
 {
-        if(*tqpp == NULL)
-                *tqpp = SIGNALED;
-        else if(*tqpp != SIGNALED)
-        {
-                (*tqpp)->ec++;
-        }
+	if(*tqpp == NULL) {
+		*tqpp = SIGNALED;
+	}
+	else if(*tqpp != SIGNALED) {
+		(*tqpp)->ec++;
+	}
 }
 
 // @}

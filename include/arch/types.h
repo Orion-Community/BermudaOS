@@ -19,6 +19,6 @@
 #ifndef __ARCHTYPES_H_
 #define __ARCHTYPES_H_
 
-typedef unsigned long uint32_t;
+typedef unsigned long int uint32_t;
 
 #endif /* __ARCHTYPES_H_ */

@@ -85,41 +85,42 @@
  */
 struct _device
 {
-        struct _device *next; //!< Next pointer. Handled by device administration.
-        /**
-         * \brief Device name.
-         * \warning <b>MUST</b> be unique.
-         */
-        char *name;
-        VFILE *io; //!< Virtual file I/O member.
-        void *data; //!< Device specific data.
-        void *ioctl; //!< Device I/O control block.
+	struct _device *next; //!< Next pointer. Handled by device administration.
+	
+	/**
+	 * \brief Device name.
+	 * \warning <b>MUST</b> be unique.
+	 */
+	char *name;
+	VFILE *io; //!< Virtual file I/O member.
+	void *data; //!< Device specific data.
+	void *ioctl; //!< Device I/O control block.
 	void *mutex; //!< Device mutex.
         
-        /**
-         * \brief Init this device.
-         * \param dev 'This' device. A pointer to itself.
-         * \note Called by BermudaDeviceRegister
-         * \see BermudaDeviceRegister
-         * 
-         * Initialise the device driver and device structure.
-         */
-        int (*init)(struct _device *dev);
+	/**
+	 * \brief Init this device.
+	 * \param dev 'This' device. A pointer to itself.
+	 *  \note Called by BermudaDeviceRegister
+	 * \see BermudaDeviceRegister
+	 * 
+	 * Initialise the device driver and device structure.
+	 */
+	int (*init)(struct _device *dev);
 
-        /**
-         * \brief Allocate the device.
-         * \param dev 'This' device.
-         * \param tmo Time out value in milli seconds.
-         * \return Returns 0 on success, -1 if the device could not be allocated.
-         */
-        int (*alloc)(struct _device *dev, unsigned int tmo);
+	/**
+	 * \brief Allocate the device.
+	 * \param dev 'This' device.
+	 * \param tmo Time out value in milli seconds.
+	 * \return Returns 0 on success, -1 if the device could not be allocated.
+	 */
+	int (*alloc)(struct _device *dev, unsigned int tmo);
 
-        /**
-         * \brief Release the device.
-         * \param dev 'This' device.
-         * \return 0 on success, -1 when the device couldn't be released.
-         */
-        int (*release)(struct _device *dev);
+	/**
+	 * \brief Release the device.
+	 * \param dev 'This' device.
+	 * \return 0 on success, -1 when the device couldn't be released.
+	 */
+	int (*release)(struct _device *dev);
 };
 
 /**

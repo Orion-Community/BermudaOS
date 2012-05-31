@@ -22,10 +22,7 @@
 #define __SPIBUS_H_
 
 #include <bermuda.h>
-
 #include <lib/binary.h>
-
-#include <arch/types.h>
 
 /**
  * \typedef SPIBUS
@@ -56,6 +53,16 @@ typedef struct _spictrl SPICTRL;
 #define BermudaSpiDevDeselect(dev) \
 { \
 	(((SPIBUS*)dev->data)->ctrl)->deselect((SPIBUS*)dev->data); \
+}
+
+#define BermudaSpiDevSetMode(dev, mode) \
+{ \
+	((SPICTRL*)((SPIBUS*)(dev->data))->ctrl)->set_mode((SPIBUS*)dev->data, mode); \
+}
+
+#define BermudaSpiDevSetRate(dev, rate) \
+{ \
+	((SPICTRL*)((SPIBUS*)(dev->data))->ctrl)->set_rate((SPIBUS*)dev->data, rate); \
 }
 
 #ifndef BERMUDA_SPI_TMO
@@ -99,16 +106,22 @@ typedef struct _spictrl SPICTRL;
  * \def BERMUDA_SPI_MODE_UPDATE
  * \brief SPI hardware update flag.
  */
-#define BERMUDA_SPI_MODE_UPDATE 0x8000
+#define BERMUDA_SPI_MODE_UPDATE BIT(15)
+
+/**
+ * \def BERMUDA_SPI_RATE_UPDATE
+ * \brief SPI rate update flag.
+ */
+#define BERMUDA_SPI_RATE_UPDATE BIT(14)
 
 /**
  * \def BERMUDA_SPI_RATE2X
  * \brief Rate X2 hardware configuration.
  */
-#define BERMUDA_SPI_RATE2X 0x80
+#define BERMUDA_SPI_RATE2X BIT(13)
 
 // priv defs
-#define BERMUDA_SPI_X2_SHIFT 5
+#define BERMUDA_SPI_X2_SHIFT 11
 
 /**
  * \struct _spibus
@@ -121,7 +134,7 @@ struct _spibus
         void *io; //!< SPI interface control */
         volatile void *rx; //!< Used for internal receive buffering.
 		volatile void *tx; //!< Used for internal transmit buffering.
-        uint32_t mode; //!< SPI mode select.
+        uint16_t mode; //!< SPI mode select.
         uint32_t rate; //!< SPI rate select.
         unsigned char cs; //!< Chip select pin.
 		unsigned int tmo; //!< Transfer timeout.
@@ -166,7 +179,7 @@ struct _spictrl
          * 
          * Set the given mode to this bus.
          */
-        void (*set_mode)   (SPIBUS* bus, unsigned short mode);
+        void (*set_mode)   (SPIBUS* bus, unsigned char mode);
         
         /**
          * \brief Set the clock rate.

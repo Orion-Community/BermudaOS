@@ -60,7 +60,7 @@ static SPIBUS BermudaSpi0HardwareBus = {
 #endif
         .ctrl  = &BermudaSpiHardwareCtrl,
         .io    = &BermudaSPI0HardwareIO,
-        .mode  = BERMUDA_SPI_MODE0 | BERMUDA_SPI_MODE_UPDATE,
+        .mode  = (BERMUDA_SPI_MODE0 | BERMUDA_SPI_MODE_UPDATE | BERMUDA_SPI_RATE_UPDATE),
         .rate  = F_CPU/128,
         .cs    = 0,
 };
@@ -93,7 +93,7 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
 	dev->io->data = (void*)dev;
         
 	dev->data = &BermudaSpi0HardwareBus;
-	dev->mutex = (void*)&BermudaSPI0Mutex;
+	dev->mutex = &BermudaSPI0Mutex;
 
 	// enable the spi interface
 
@@ -117,14 +117,17 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
  */
 PRIVATE WEAK void select(SPIBUS *bus)
 {
-	if(bus->mode & BERMUDA_SPI_MODE_UPDATE) {
+	HWSPI *hw = (HWSPI*)bus->io;
+	if(bus->mode & BERMUDA_SPI_RATE_UPDATE) {
 		BermudaSpiRateToHwBits(&bus->rate, (bus->mode & BERMUDA_SPI_RATE2X) >> BERMUDA_SPI_X2_SHIFT);
-		bus->mode &= ~(BERMUDA_SPI_MODE_UPDATE | BERMUDA_SPI_RATE2X);
-		HWSPI *hw = (HWSPI*)bus->io;
+		bus->mode &= ~(BERMUDA_SPI_RATE_UPDATE | BERMUDA_SPI_RATE2X);
 
 		// config rate to hardware
 		*(hw->spcr) = (*(hw->spcr) & (~B11)) | (bus->rate & B11);
 		*(hw->spsr) = (*(hw->spsr) & (~B1)) | ((bus->rate & B100) >> 2);
+	}
+	if(bus->mode & BERMUDA_SPI_MODE_UPDATE) {
+		bus->mode &= ~BERMUDA_SPI_MODE_UPDATE;
 
 		// set the mode
 		*(hw->spcr) = (*(hw->spcr) & (~B1100)) | ((bus->mode & B11) << SPI_MODE_SHIFT);
@@ -218,7 +221,7 @@ PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned ch
 PRIVATE WEAK void BermudaSpiSetRate( SPIBUS *bus, uint32_t rate )
 {
 	bus->rate = rate;
-	bus->mode |= BERMUDA_SPI_MODE_UPDATE;
+	bus->mode |= BERMUDA_SPI_RATE_UPDATE;
 }
 
 /**
@@ -229,10 +232,9 @@ PRIVATE WEAK void BermudaSpiSetRate( SPIBUS *bus, uint32_t rate )
  *       next SPI select call, with this bus, will sync with the hardware.
  * \warning It is wise to allocate the associated SPI device first.
  */
-PRIVATE WEAK void BermudaSpiSetMode( SPIBUS *bus, uint32_t mode )
+PRIVATE WEAK void BermudaSpiSetMode( SPIBUS *bus, unsigned char mode )
 {
-	bus->mode = mode;
-	bus->mode |= BERMUDA_SPI_MODE_UPDATE;
+	bus->mode = ((bus->mode & (~0xFF)) | mode) | BERMUDA_SPI_MODE_UPDATE;
 }
 
 #ifdef __EVENTS__

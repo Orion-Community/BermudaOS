@@ -46,43 +46,40 @@ extern void setup();
 
 THREAD(MainThread, data)
 {
-        setup();
-        while(1)
-        {
-                loop();
-        }
+	setup();
+	while(1) {
+		loop();
+	}
 }
 #endif
 
 PUBLIC int BermudaInit(void)
 {       
-        BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
-        BermudaInitUART();
-        BermudaInitTimer0();
+	BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
+	BermudaInitUART();
+	BermudaInitTimer0();
 
 #ifdef __ADC__
-        BermudaInitBaseADC();
+	BermudaInitBaseADC();
 #endif
-        
+
 #ifdef __SPI__
-        SPI *spi_if = BermudaHeapAlloc(sizeof(*spi_if));
-        BermudaSpiHardwareInit(spi_if);  
+	SPI *spi_if = BermudaHeapAlloc(sizeof(*spi_if));
+	BermudaSpiHardwareInit(spi_if);  
 #endif
-        
-        STACK_L = (MEM-256) & 0xFF;
-        STACK_H = ((MEM-256) >> 8) & 0xFF;
-        sei();
-        BermudaTimerInit();
-        
+
+	STACK_L = (MEM-256) & 0xFF;
+	STACK_H = ((MEM-256) >> 8) & 0xFF;
+	sei();
+	BermudaTimerInit();
+
 #ifdef __THREADS__
-        BermudaSchedulerInit(&MainThread);
-        BermudaSchedulerStart();
+	BermudaSchedulerInit(&MainThread);
+	BermudaSchedulerStart();
 #else
-        while(1)
-        {
-                loop();
-        }
+	while(1) {
+		loop();
+	}
 #endif
-        
         return 0;
 }

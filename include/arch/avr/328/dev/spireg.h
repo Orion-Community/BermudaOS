@@ -69,25 +69,25 @@
  * \def SPI_SCK
  * \brief SCK pin.
  */
-#define SPI_SCK  5
+#define SPI_SCK  BIT(5)
 
 /**
  * \def SPI_MISO
  * \brief MISO pin.
  */
-#define SPI_MISO 4
+#define SPI_MISO BIT(4)
 
 /**
  * \def SPI_MOSI
  * \brief MOSI pin.
  */
-#define SPI_MOSI 3
+#define SPI_MOSI BIT(3)
 
 /**
  * \def SPI_SS
  * \brief SS pin.
  */
-#define SPI_SS   2
+#define SPI_SS  BIT(2)
 
 /**
  * \def SPI_MAX_PRES

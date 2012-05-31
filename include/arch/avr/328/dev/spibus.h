@@ -59,7 +59,7 @@ PRIVATE WEAK void select(SPIBUS *bus);
 PRIVATE WEAK void deselect(SPIBUS *bus);
 PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned char spi2x);
 PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS *bus, const void *tx, void *rx, 
-	                                          unsigned short len, unsigned int tmo);
+	                                          unsigned int len, unsigned int tmo);
 PRIVATE WEAK int BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char *data,
 	                                     unsigned int tmo);
 

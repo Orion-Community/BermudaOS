@@ -44,7 +44,7 @@ static HWSPI BermudaSPI0HardwareIO = {
 };
 
 static SPICTRL BermudaSpiHardwareCtrl = {
-        .transfer = NULL,
+        .transfer = &BermudaHardwareSpiTransfer,
         .flush    = NULL,
         .set_mode = &BermudaSpiSetMode,
         .set_rate = &BermudaSpiSetRate,
@@ -96,6 +96,9 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
 	dev->mutex = &BermudaSPI0Mutex;
 
 	// enable the spi interface
+	SPI_DDR |= (SPI_SCK | SPI_MOSI | SPI_SS);
+	SPI_PORT &= ~(SPI_SCK | SPI_MOSI);
+	SPI_PORT |= SPI_SS;
 
 #ifdef __EVENTS__
 	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE | SPI_IRQ_ENABLE;
@@ -132,8 +135,9 @@ PRIVATE WEAK void select(SPIBUS *bus)
 		// set the mode
 		*(hw->spcr) = (*(hw->spcr) & (~B1100)) | ((bus->mode & B11) << SPI_MODE_SHIFT);
 	}
-        BermudaSetPinMode(bus->cs, OUTPUT);
-        BermudaDigitalPinWrite(bus->cs, LOW);
+
+	BermudaSetPinMode(bus->cs, OUTPUT);
+	BermudaDigitalPinWrite(bus->cs, LOW);
 }
 
 /**
@@ -159,7 +163,7 @@ PRIVATE WEAK void deselect(SPIBUS *bus)
  * If a read only is desired, the <b>tx</b> parameter should be set to NULL. When a write only
  * is needed, <b>rx</b> can be set to NULL.
  */
-PRIVATE WEAK int BermudaHardwareSpiTransfer( SPIBUS *bus, const void *tx, void *rx, unsigned short len, 
+PRIVATE WEAK int BermudaHardwareSpiTransfer( SPIBUS *bus, const void *tx, void *rx, unsigned int len, 
                                               unsigned int tmo )
 {
 	int ret = 0;

@@ -38,11 +38,8 @@ int EventDbg(char x)
 		return -1;
 	}
 
-	BermudaSpiDevSetRate(spi, F_CPU/64);
-
 	BermudaSpiDevSelect(spi, 10);
-	dev_flush(spi);
-	BermudaSpiDevDeselect(spi);
+	dev_write(spi, &x, 1);
 
 	spi->release(spi);
 	return 0;
@@ -58,15 +55,10 @@ THREAD(TemperatureThread, arg)
 		tmp = adc->read(A0);
 		temperature = tmp / 1024 * 5000;
 		temperature /= 10;
-		//printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-		EventDbg('T');
+		printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+		//EventDbg('T');
 		BermudaThreadSleep(5000);
 	}
-}
-
-void SignalISR()
-{
-//         BermudaEventSignalFromISR(&TestQueue);
 }
 
 static unsigned char led = 1;
@@ -100,7 +92,7 @@ void setup()
 
 void loop()
 {
-	//printf("Dbg: %i\n",EventDbg('M'));
-	BermudaThreadSleep(1000);
+	printf("Dbg: %i\n",EventDbg('M'));
+	BermudaThreadSleep(10);
 	return;
 }

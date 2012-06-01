@@ -69,4 +69,46 @@
  */
 #define TWI_MT_ARB_LOST 0x38
 
+//  ********************************
+//  * Master receiver              *
+//  ********************************
+ 
+/**
+ * \brief Start has been sent.
+ */
+#define TWI_MR_START_ACK 0x8
+
+/**
+ * \brief Repeated start has been sent.
+ */
+#define TWI_MR_RSTART_ACK 0x10
+
+/**
+ * \brief Bus arbitration has been lost.
+ * \warning Transmission has to be restarted or stopped!
+ * 
+ * The bus is lost in sending the SLA+W or by sending a data byte.
+ */
+#define TWI_MR_ARB_LOST 0x38
+
+/**
+ * \brief Slave address has been sent and ACKed.
+ */
+#define TWI_MR_SLA_ACK 0x40
+
+/**
+ * \brief Slave address has been sent and NACKed.
+ */
+#define TWI_MR_SLA_NACK 0x48
+
+/**
+ * \brief Data has been received and ACK is returned.
+ */
+#define TWI_MR_DATA_ACK 0x50
+
+/**
+ * \brief Data has been received and NACK is returned.
+ */
+#define TWI_MT_DATA_NACK 0x58
+
 #endif __TWIF_H

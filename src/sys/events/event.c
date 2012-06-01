@@ -174,6 +174,7 @@ PUBLIC int BermudaEventSignalRaw(THREAD *volatile*tqpp)
 	BermudaEnterCritical();
 	t = *tqpp;
 	BermudaExitCritical();
+	int rc = -1;
         
 	if(t != SIGNALED) {
 		if(t) {
@@ -197,15 +198,16 @@ PUBLIC int BermudaEventSignalRaw(THREAD *volatile*tqpp)
 			t->state = THREAD_READY;
 			BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
                         
-			return 0; // post done succesfuly
+			rc = 0; // post done succesfuly
 		}
 		else {
 			BermudaEnterCritical();
 			*tqpp = SIGNALED;
 			BermudaExitCritical();
+			rc = 0;
 		}
     }
-	return 1; // could not post
+	return rc; // could not post
 }
 
 /**

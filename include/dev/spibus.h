@@ -135,8 +135,6 @@ struct _spibus
         void *queue; //!< Transfer waiting queue.
         SPICTRL *ctrl; //!< SPI bus controller \see _spibus
         void *io; //!< SPI interface control */
-        volatile void *rx; //!< Used for internal receive buffering.
-		volatile void *tx; //!< Used for internal transmit buffering.
         uint16_t mode; //!< SPI mode select.
         uint32_t rate; //!< SPI rate select.
         unsigned char cs; //!< Chip select pin.
@@ -206,6 +204,27 @@ extern "C" {
 
 extern int BermudaSPIWrite(VFILE *file, const void *tx, size_t len);
 extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigned int max);
+
+// inline funcs
+ 
+/**
+ * \brief Safely try to cs.
+ * \param dev Device to set the cs pin for.
+ * \param pin Chip select pin.
+ * \see BermudaSpiSetSelectPin
+ * \return 0 when set successfully, -1 otherwise.
+ * 
+ * Safely try to set the chip select pin in the SPIBUS structure.
+ */
+static inline int BermudaSpiSetSelectPinSafe(DEVICE *dev, uint8_t pin)
+{
+	if(BermudaDeviceIsLocked(dev)) {
+		return -1;
+	}
+	BermudaSpiSetSelectPin(dev, pin);
+	return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

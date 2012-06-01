@@ -129,7 +129,12 @@ PUBLIC int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo)
 	int rc = -1;
 	if(dev != NULL) {
 #ifdef __EVENTS__
-		rc = BermudaEventWait((volatile THREAD**)dev->mutex, tmo);
+		if((rc = BermudaEventWait((volatile THREAD**)dev->mutex, tmo)) == 0) {
+			dev->lock = !rc;
+		}
+		else {
+			dev->lock = rc;
+		}
 #else
 		rc = 0;
 #endif
@@ -151,7 +156,9 @@ PUBLIC int BermudaDeviceRelease(DEVICE *dev)
 	int rc = -1;
 	if(NULL != dev) {
 #ifdef __EVENTS__
-		rc = BermudaEventSignal((volatile THREAD**)dev->mutex);
+		if((rc = BermudaEventSignal((volatile THREAD**)dev->mutex)) == 0) {
+			dev->lock = !rc;
+		}
 #else
 		rc = 0;
 #endif

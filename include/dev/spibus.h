@@ -225,6 +225,43 @@ static inline int BermudaSpiSetSelectPinSafe(DEVICE *spidev, uint8_t cs)
 	return 0;
 }
 
+
+//************************************
+// Method:    BermudaSpiSetModeSafe
+// FullName:  BermudaSpiSetModeSafe
+// Access:    public static 
+// Returns:   int
+// Qualifier:
+// Parameter: DEVICE * dev
+// Parameter: uint16_t mode
+//************************************
+static inline int BermudaSpiSetModeSafe(DEVICE *dev, uint16_t mode)
+{
+	if(BermudaDeviceIsLocked(dev)) {
+		return -1;
+	}
+	BermudaSpiDevSetRate(dev, mode);
+	return 0;
+}
+
+//************************************
+// Method:    BermudaSpiSetRateSafe
+// FullName:  BermudaSpiSetRateSafe
+// Access:    public static 
+// Returns:   int
+// Qualifier:
+// Parameter: DEVICE * dev
+// Parameter: uint32_t rate
+//************************************
+static inline int BermudaSpiSetRateSafe(DEVICE *dev, uint32_t rate)
+{
+	if(BermudaDeviceIsLocked(dev)) {
+		return -1;
+	}
+	BermudaSpiDevSetRate(dev, rate);
+	return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

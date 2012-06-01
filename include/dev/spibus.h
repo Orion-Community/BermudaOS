@@ -237,7 +237,7 @@ static inline int BermudaSpiSetSelectPinSafe(DEVICE *spidev, uint8_t cs)
 //************************************
 static inline int BermudaSpiSetModeSafe(DEVICE *dev, uint16_t mode)
 {
-	if(BermudaDeviceIsLocked(dev) {
+	if(BermudaDeviceIsLocked(dev)) {
 		return -1;
 	}
 	BermudaSpiDevSetRate(dev, mode);
@@ -255,7 +255,7 @@ static inline int BermudaSpiSetModeSafe(DEVICE *dev, uint16_t mode)
 //************************************
 static inline int BermudaSpiSetRateSafe(DEVICE *dev, uint32_t rate)
 {
-	if(BermudaDeviceIsLocked(dev) {
+	if(BermudaDeviceIsLocked(dev)) {
 		return -1;
 	}
 	BermudaSpiDevSetRate(dev, rate);

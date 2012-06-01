@@ -130,10 +130,10 @@ PUBLIC int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo)
 	if(dev != NULL) {
 #ifdef __EVENTS__
 		if((rc = BermudaEventWait((volatile THREAD**)dev->mutex, tmo)) == 0) {
-			dev->lock = !rc;
+			dev->lock = rc;
 		}
 		else {
-			dev->lock = rc;
+			dev->lock = !rc;
 		}
 #else
 		rc = 0;

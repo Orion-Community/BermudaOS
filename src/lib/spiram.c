@@ -48,7 +48,7 @@ PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 	DEVICE *spidev = dev_open(devname);
 
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
-	BermudaSpiSetSelectPin(spidev, ram_select);
+	BermudaSpiSetSelectPinSafe(spidev, ram_select);
 	return dev_write(spidev, (const void*)write_seq, BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
 }
 

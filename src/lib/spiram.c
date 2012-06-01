@@ -23,7 +23,9 @@
 #include <dev/spibus.h>
 
 #include <arch/io.h>
+
 #include <lib/spiram.h>
+#include <sys/thread.h>
 
 static unsigned char ram_select = 0;
 static const char *devname;
@@ -40,6 +42,27 @@ PUBLIC void BermudaSpiRamInit(const char *dev, unsigned char cs)
 	devname = dev;
 }
 
+/**
+ * \brief Change the chip select.
+ * \param pin New chip select pin.
+ * \warning Waits in a potential forever loop until the device is unlocked.
+ */
+PUBLIC void BermudaSpiRamSetChipSelect(uint8_t pin)
+{
+	while(BermudaDeviceIsLocked(dev_open(devname))) {
+		BermudaThreadYield();
+	}
+	ram_select = pin;
+}
+
+/**
+ * \brief Write a byte.
+ * \brief address Address on the SPI chip to write to.
+ * \brief byte Byte to write.
+ * \warning Waits in a potential forever loop until the device is unlocked.
+ * 
+ * Writes a given byte to the given address on the SPI chip.
+ */
 PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 {
 	uint8_t write_seq[] = {
@@ -47,11 +70,20 @@ PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 	};
 	DEVICE *spidev = dev_open(devname);
 
+	while(BermudaSpiSetSelectPinSafe(spidev, ram_select) == -1) {
+		BermudaThreadYield();
+	}
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
-	BermudaSpiSetSelectPinSafe(spidev, ram_select);
 	return dev_write(spidev, (const void*)write_seq, BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
 }
 
+/**
+ * \brief Read a byte.
+ * \param address Address on the chip to read from.
+ * \warning Waits in a potential forever loop until the device is unlocked.
+ * 
+ * Reads a byte from the SPI chip from the given address.
+ */
 PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
 {
 	uint8_t read_seq[] = {
@@ -59,8 +91,10 @@ PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
 	};
 	DEVICE *spidev = dev_open(devname);
 
+	while(BermudaSpiSetSelectPinSafe(spidev, ram_select) == -1) {
+		BermudaThreadYield();
+	}
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
-	BermudaSpiSetSelectPin(spidev, ram_select);
 	dev_write(spidev, (const void*)read_seq, BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN);
 	return read_seq[3];
 }
@@ -93,7 +127,9 @@ PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
                 
 				buff[0] = WRSR; buff[1] = status;
 
-                BermudaSpiSetSelectPin(spidev, ram_select);
+				while(BermudaSpiSetSelectPinSafe(spidev, ram_select) == -1) {
+					BermudaThreadYield();
+				}
                 dev_write(spidev, buff, 2);
         }
 }

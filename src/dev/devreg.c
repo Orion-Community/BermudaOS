@@ -129,11 +129,8 @@ PUBLIC int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo)
 	int rc = -1;
 	if(dev != NULL) {
 #ifdef __EVENTS__
-		if((rc = BermudaEventWait((volatile THREAD**)dev->mutex, tmo)) == 0) {
-			dev->lock = rc;
-		}
-		else {
-			dev->lock = !rc;
+		if(BermudaEventWait((volatile THREAD**)dev->mutex, tmo) == 0) {
+			rc = 0;
 		}
 #else
 		rc = 0;
@@ -156,12 +153,50 @@ PUBLIC int BermudaDeviceRelease(DEVICE *dev)
 	int rc = -1;
 	if(NULL != dev) {
 #ifdef __EVENTS__
-		if((rc = BermudaEventSignal((volatile THREAD**)dev->mutex)) == 0) {
-			dev->lock = !rc;
+		if(BermudaEventSignal((volatile THREAD**)dev->mutex) == 0) {
+			rc = 0;
 		}
 #else
 		rc = 0;
 #endif
 	}
+	return rc;
+}
+
+PUBLIC int BermudaDeviceIsLocked( DEVICE *dev )
+{
+	int rc = 1;
+	volatile void *lock;
+
+	BermudaEnterCritical();
+	lock = *((volatile void**)dev->mutex);
+	BermudaExitCritical();
+
+	if(lock == SIGNALED) {
+		rc = 0;
+	}
+	return rc;
+}
+
+/**
+ * \brief Open a device.
+ * \param name Name of the device file.
+ * \param tmo Device alloc time out.
+ * \note This function will lock the device. It can be released
+ *       using BermudaDeviceClose.
+ * \see BermudaDeviceClose
+ * \return 0 on success, -1 when tmo expires or when a device file named <b>name</b> is not found.
+ * 
+ * Open a device with a device file named <b>name</b>. If no file is found, -1 is returned.
+ */
+PUBLIC int BermudaDeviceOpen(const char *name, unsigned int tmo)
+{
+	DEVICE *dev = BermudaDeviceLoopup(name);
+	int rc = -1;
+
+	if(dev) {
+		rc = dev->alloc(dev, tmo);
+	}
+
 	return rc;
 }

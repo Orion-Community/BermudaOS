@@ -57,7 +57,7 @@ THREAD(MainThread, data)
 
 PUBLIC int BermudaInit(void)
 {       
-	BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
+	BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-128);
 	BermudaInitUART();
 	BermudaInitTimer0();
 
@@ -71,8 +71,8 @@ PUBLIC int BermudaInit(void)
 	BermudaDeviceRegister(spi, NULL);
 #endif
 
-	STACK_L = (MEM-256) & 0xFF;
-	STACK_H = ((MEM-256) >> 8) & 0xFF;
+	STACK_L = (MEM-128) & 0xFF;
+	STACK_H = ((MEM-128) >> 8) & 0xFF;
 	sei();
 	BermudaTimerInit();
 

@@ -24,6 +24,7 @@
 #include <bermuda.h>
 
 #include <fs/vfile.h>
+#include <sys/events/event.h>
 
 /**
  * \def dev_open
@@ -96,7 +97,6 @@ struct _device
 	void *data; //!< Device specific data.
 	void *ioctl; //!< Device I/O control block.
 	void *mutex; //!< Device mutex.
-	int lock; //!< 0 when locked, !0 when locked
         
 	/**
 	 * \brief Init this device.
@@ -139,6 +139,8 @@ extern int BermudaDeviceUnregister(DEVICE *dev);
 extern int BermudaDeviceAlloc(DEVICE *dev, unsigned int tmo);
 extern int BermudaDeviceRelease(DEVICE *dev);
 extern DEVICE *BermudaDeviceLoopup(const char *name);
+extern int BermudaDeviceIsLocked(DEVICE *dev);
+extern int BermudaDeviceOpen(const char *name, unsigned int tmo);
 
 // inline funcs
 
@@ -154,42 +156,6 @@ static inline int BermudaDeviceClose(VFILE *file)
 	return dev->release(dev);
 }
 
-/**
- * \brief Open a device.
- * \param name Name of the device file.
- * \param tmo Device alloc time out.
- * \note This function will lock the device. It can be released
- *       using BermudaDeviceClose.
- * \see BermudaDeviceClose
- * \return 0 on success, -1 when tmo expires or when a device file named <b>name</b> is not found.
- * 
- * Open a device with a device file named <b>name</b>. If no file is found, -1 is returned.
- */
-static inline int BermudaDeviceOpen(const char *name, unsigned int tmo)
-{
-	DEVICE *dev = BermudaDeviceLoopup(name);
-	int rc = -1;
-
-	if(dev) {
-		rc = dev->alloc(dev, tmo);
-	}
-
-	return rc;
-}
-
-/**
- * \brief Check if a device is locked.
- * \param dev Device to check.
- * \return 1 when locked, 0 when not locked.
- */
-static inline int BermudaDeviceIsLocked(DEVICE *dev)
-{
-	int rc = 1;
-	if(dev->lock) {
-		rc = 0;
-	}
-	return rc;
-}
 #ifdef __cplusplus
 }
 #endif

@@ -31,19 +31,12 @@
 
 static VTIMER *timer;
 
-THREAD(TemperatureThread, arg)
+THREAD(SramThread, arg)
 {
-	struct adc *adc = BermudaGetADC();
-	float tmp = 0;
-	int temperature = 0;
-	BermudaThreadYield();
-
-	while(1) {                
-		tmp = adc->read(A0);
-		temperature = tmp / 1024 * 5000;
-		temperature /= 10;
-		printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-		BermudaThreadSleep(5000);
+	while(1) {
+		uint8_t read_back = BermudaSpiRamReadByte(0x50);
+		printf("Read back: %X\n", read_back);
+		BermudaThreadSleep(1000);
 	}
 }
 
@@ -67,17 +60,24 @@ void setup()
 {
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
-					BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
+					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	BermudaSpiRamInit(SPI0, 10);
-	BermudaSpiRamWriteByte(0x100, 0x99);
+	BermudaSpiRamWriteByte(0x50, 0x99);
 }
 
 void loop()
 {
-	uint8_t read_back = BermudaSpiRamReadByte(0x100);
-	printf("Read back: %X\n", read_back);
-	BermudaThreadSleep(1000);
+	struct adc *adc = BermudaGetADC();
+	float tmp = 0;
+	int temperature = 0;
+             
+	tmp = adc->read(A0);
+	temperature = tmp / 1024 * 5000;
+	temperature /= 10;
+	printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+
+	BermudaThreadSleep(5000);
 	return;
 }

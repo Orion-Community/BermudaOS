@@ -216,12 +216,12 @@ extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigne
  * 
  * Safely try to set the chip select pin in the SPIBUS structure.
  */
-static inline int BermudaSpiSetSelectPinSafe(DEVICE *dev, uint8_t pin)
+static inline int BermudaSpiSetSelectPinSafe(DEVICE *spidev, uint8_t cs)
 {
-	if(BermudaDeviceIsLocked(dev)) {
+	if(BermudaDeviceIsLocked(spidev)) {
 		return -1;
 	}
-	BermudaSpiSetSelectPin(dev, pin);
+	BermudaSpiSetSelectPin(spidev, cs);
 	return 0;
 }
 

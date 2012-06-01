@@ -27,9 +27,9 @@
 
 /**
  * \def SPI0
- * \brief Definition of the SPI0 hardware initialization routine.
+ * \brief Device name of hardware spi bus 0.
  */
-#define SPI0 BermudaSPI0HarwareInit
+#define SPI0 "SPI0"
 
 /**
  * \struct _hwspi

@@ -43,8 +43,7 @@ typedef enum
 } spiram_t;
 
 __DECL
-extern void BermudaSpiRamInit();
-extern inline void BermudaSpiRamChipSelect(unsigned char cs);
+extern void BermudaSpiRamInit(const char *dev, unsigned char cs);
 extern int BermudaSpiRamWriteByte(const unsigned int address, unsigned char byte);
 extern void BermudaSpiRamSetMode(spiram_t mode);
 extern uint8_t BermudaSpiRamReadByte(unsigned int address);

@@ -36,6 +36,7 @@ THREAD(TemperatureThread, arg)
 	struct adc *adc = BermudaGetADC();
 	float tmp = 0;
 	int temperature = 0;
+	BermudaThreadYield();
 
 	while(1) {                
 		tmp = adc->read(A0);
@@ -66,11 +67,11 @@ void setup()
 {
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
-	//BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
-	//				BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
+					BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
-	BermudaSpiRamChipSelect(10);
-	BermudaSpiRamWriteByte(0x100, 0xBA);
+	BermudaSpiRamInit(SPI0, 10);
+	BermudaSpiRamWriteByte(0x100, 0x99);
 }
 
 void loop()

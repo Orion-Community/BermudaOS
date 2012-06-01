@@ -26,28 +26,18 @@
 #include <lib/spiram.h>
 
 static unsigned char ram_select = 0;
-PRIVATE WEAK unsigned char _current_mode = 0xff;
+static const char *devname;
 
 /**
- * \fn BermudaSpiRamInit()
  * \brief Initialise the SPI ram.
- * \todo Use high level SPI interface.
- * \todo Add init check.
+ * \todo Add support for multiple SPI RAM chips.
  * 
  * Initialise the SPI communication to the SPI SRAM chip.
  */
-PUBLIC void BermudaSpiRamInit()
-{
-
-}
-
-/**
- * \brief Select an SPI ram chip using the chip select line.
- * \param cs Chip select pin.
- */
-PUBLIC inline void BermudaSpiRamChipSelect(unsigned char cs)
+PUBLIC void BermudaSpiRamInit(const char *dev, unsigned char cs)
 {
 	ram_select = cs;
+	devname = dev;
 }
 
 PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
@@ -55,7 +45,7 @@ PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 	uint8_t write_seq[] = {
 		WRDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), byte,
 	};
-	DEVICE *spidev = dev_open("SPI0");
+	DEVICE *spidev = dev_open(devname);
 
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
 	BermudaSpiSetSelectPin(spidev, ram_select);
@@ -67,7 +57,7 @@ PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
 	uint8_t read_seq[] = {
 		RDDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), 0xFF,
 	};
-	DEVICE *spidev = dev_open("SPI0");
+	DEVICE *spidev = dev_open(devname);
 
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
 	BermudaSpiSetSelectPin(spidev, ram_select);
@@ -77,7 +67,7 @@ PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
 
 PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
 {
-	DEVICE *spidev = dev_open("SPI0");
+	DEVICE *spidev = dev_open(devname);
 	unsigned char buff[2];
         if(mode <= SPI_RAM_BUF)
         {

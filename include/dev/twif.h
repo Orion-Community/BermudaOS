@@ -16,14 +16,47 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file dev/twif.h TWI interface
+
 #ifndef __TWIF_H
 #define __TWIF_H
 
 #include <bermuda.h>
+#include <arch/io.h>
 
-#include <sys/thread.h>
-#include <fs/vfile.h>
+/**
+ * \struct _twif
+ * \brief TWI communication interface.
+ * \see _twibus
+ * 
+ * Structure defining the communication function for a TWIBUS.
+ */
+struct _twif {
 
-#include <sys/events/event.h>
+};
 
-#endif __TWIF_H
+/**
+ * \struct _twibus
+ * \brief TWI bus structure.
+ * \see _twif
+
+ * Each different TWI bus has its own _twibus structure.
+ */
+struct _twibus {
+	struct _twif *twif; //!< TWI hardware communication interface.
+	struct _twi_hw *hwio;
+};
+
+/**
+ * \typedef TWIBUS
+ * \brief Type definition of the TWI bus.
+ */
+typedef struct _twibus TWIBUS;
+
+/**
+ * \typedef TWIF
+ * \brief Type definition of the TWI interface.
+ */
+typedef struct _twif TWIF;
+
+#endif

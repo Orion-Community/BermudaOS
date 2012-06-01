@@ -18,16 +18,11 @@
 
 //! \file arch/avr/328/dev/twibus.h
 
-#ifndef __TWIF_H
-#define __TWIF_H
+#ifndef __TWI_BUS_H
+#define __TWI_BUS_H
 
 #include <bermuda.h>
-
-#include <sys/thread.h>
-#include <fs/vfile.h>
 #include <dev/twif.h>
-
-#include <sys/events/event.h>
 
 // Master transmitter status bytes
 
@@ -109,6 +104,26 @@
 /**
  * \brief Data has been received and NACK is returned.
  */
-#define TWI_MT_DATA_NACK 0x58
+#define TWI_MR_DATA_NACK 0x58
 
-#endif __TWIF_H
+/**
+ * \brief TWI hardware I/O.
+ * 
+ * Structure containing all hardware I/O registers.
+ */
+struct _twi_hw {
+	volatile reg8_t twbr;  //!< TWI bit rate control register.
+	volatile reg8_t twcr;  //!< TWI control register.
+	volatile reg8_t twsr;  //!< TWI status register.
+	volatile reg8_t twdr;  //!< TWI data register.
+	volatile reg8_t twar;  //!< TWI (slave) address register
+	volatile reg8_t twamr; //!< TWI (slave) address mask register.
+};
+
+/**
+ * \typedef TWIHW
+ * \brief Type definition of the HW I/O structure.
+ */
+typedef struct _twi_hw TWIHW;
+
+#endif

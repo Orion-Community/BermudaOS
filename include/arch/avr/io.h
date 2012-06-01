@@ -142,7 +142,7 @@ extern unsigned char BermudaDigitalPinRead(unsigned char pin);
         #include <arch/avr/328/io.h>
         #include <arch/avr/328/chip/adc.h>
         #include <arch/avr/328/chip/uart.h>
-        #include <arch/avr/328/chip/spi.h>
+		#include <arch/avr/328/dev/twibus.h>
 #endif
 
 #ifdef __ARDUINO__

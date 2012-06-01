@@ -57,7 +57,7 @@ THREAD(MainThread, data)
 
 PUBLIC int BermudaInit(void)
 {       
-	BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-64);
+	BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-128);
 	BermudaInitUART();
 	BermudaInitTimer0();
 

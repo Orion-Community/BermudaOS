@@ -66,14 +66,17 @@ void setup()
 {
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
-					BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
+	//BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TEMP TH", &TemperatureThread, NULL, 64, 
+	//				BermudaHeapAlloc(64), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
+	BermudaSpiRamChipSelect(10);
+	BermudaSpiRamWriteByte(0x100, 0xBA);
 }
 
 void loop()
 {
-	BermudaSpiRamWriteByte(0x100, 0x99);
+	uint8_t read_back = BermudaSpiRamReadByte(0x100);
+	printf("Read back: %X\n", read_back);
 	BermudaThreadSleep(1000);
 	return;
 }

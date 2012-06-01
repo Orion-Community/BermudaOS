@@ -53,27 +53,32 @@ PUBLIC inline void BermudaSpiRamChipSelect(unsigned char cs)
 PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 {
 	uint8_t write_seq[] = {
-		WRDA, (address >> 8) & 0xFF, address & 0xFF, byte,
+		WRDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), byte,
 	};
 	DEVICE *spidev = dev_open("SPI0");
 
-	if(spidev->alloc(spidev, BERMUDA_SPI_TMO) == -1) {
-		return -1;
-	}
+	BermudaSpiRamSetMode(SPI_RAM_BYTE);
+	BermudaSpiSetSelectPin(spidev, ram_select);
+	return dev_write(spidev, (const void*)write_seq, BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
+}
+
+PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
+{
+	uint8_t read_seq[] = {
+		RDDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), 0xFF,
+	};
+	DEVICE *spidev = dev_open("SPI0");
 
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
-	BermudaSpiDevSelect(spidev, ram_select);
-	dev_write(spidev, (const void*)write_seq, BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
-	BermudaSpiDevDeselect(spidev);
-	spidev->release(spidev);
-
-	return 0;
+	BermudaSpiSetSelectPin(spidev, ram_select);
+	dev_write(spidev, (const void*)read_seq, BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN);
+	return read_seq[3];
 }
 
 PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
 {
 	DEVICE *spidev = dev_open("SPI0");
-	unsigned char *buff = BermudaHeapAlloc(2);
+	unsigned char buff[2];
         if(mode <= SPI_RAM_BUF)
         {
                 unsigned char status = HOLD;
@@ -98,11 +103,8 @@ PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
                 
 				buff[0] = WRSR; buff[1] = status;
 
-                BermudaSpiDevSelect(spidev, ram_select);
+                BermudaSpiSetSelectPin(spidev, ram_select);
                 dev_write(spidev, buff, 2);
-				BermudaSpiDevDeselect(spidev);
         }
-
-		BermudaHeapFree(buff);
 }
 #endif /* __SPI__ && __SPIRAM__*/

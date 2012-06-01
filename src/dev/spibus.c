@@ -36,45 +36,24 @@
  */
 PUBLIC int BermudaSPIWrite(VFILE *file, const void *tx, size_t len)
 {
-        int rc = -1;
-        SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
-        
-		spi->ctrl->select(spi);
-        rc = spi->ctrl->transfer(spi, tx, NULL, len, BERMUDA_SPI_TMO);
-		spi->ctrl->deselect(spi);
-
-        return rc;
-}
-
-/**
- * \brief Read from the SPI device.
- * \param file I/O file.
- * \param rx Receive buffer.
- * \param len Length of <b>rx</b>.
- */
-PUBLIC int BermudaSPIRead(VFILE *file, void *rx, size_t len)
-{
-        int rc = -1;
-        SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
-        spi->ctrl->select(spi);
-        rc = spi->ctrl->transfer(spi, NULL, rx, len, BERMUDA_SPI_TMO);
-        spi->ctrl->deselect(spi);
-        return rc;
-}
-
-/**
- * \brief Flush SPI.
- * \param file I/O file.
- * 
- * Flush function for the SPI I/O file.
- */
-PUBLIC int BermudaSPIFlush(VFILE *file)
-{
 	int rc = -1;
-	SPIBUS *spi = (SPIBUS*)((DEVICE*)file->data)->data;
-	spi->ctrl->select(spi);
-	//rc = spi->ctrl->flush(spi);
-	spi->ctrl->deselect(spi);
+	DEVICE *dev = file->data;
+	SPIBUS *bus = dev->data;
+
+#ifdef __EVENTS__
+	if(dev->alloc(dev, BERMUDA_SPI_TMO) == -1) {
+		return rc;
+	}
+#endif
+
+	bus->ctrl->select(bus);
+	rc = bus->ctrl->transfer(bus, tx, (uint8_t*)tx, (uptr)len, BERMUDA_SPI_TMO);
+	bus->ctrl->deselect(bus);
+
+#ifdef __EVENTS__
+	dev->release(dev);
+#endif
+
 	return rc;
 }
 

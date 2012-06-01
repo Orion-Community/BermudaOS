@@ -45,11 +45,10 @@ static HWSPI BermudaSPI0HardwareIO = {
 
 static SPICTRL BermudaSpiHardwareCtrl = {
         .transfer = &BermudaHardwareSpiTransfer,
-        .flush    = NULL,
         .set_mode = &BermudaSpiSetMode,
         .set_rate = &BermudaSpiSetRate,
-        .select   = &select,
-        .deselect = &deselect,
+        .select   = &BermudaHardwareSpiSelect,
+        .deselect = &BermudaHardwareSpiDeselect,
 };
 
 static SPIBUS BermudaSpi0HardwareBus = {
@@ -86,8 +85,8 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
         
 	// initialize the file
 	dev->io->write = &BermudaSPIWrite;
-	dev->io->read = &BermudaSPIRead;
-	dev->io->flush = &BermudaSPIFlush;
+	dev->io->read = NULL;
+	dev->io->flush = NULL;
 	dev->io->close = NULL;
 	dev->io->mode = 0;
 	dev->io->data = (void*)dev;
@@ -103,7 +102,7 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
 #ifdef __EVENTS__
 	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE | SPI_IRQ_ENABLE;
 #else
-	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE
+	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE;
 #endif
         
 	return rc;
@@ -118,7 +117,7 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
  * It will not only select the given pin, it will also update the SPI configuration,
  * if needed.
  */
-PRIVATE WEAK void select(SPIBUS *bus)
+PRIVATE WEAK void BermudaHardwareSpiSelect(SPIBUS *bus)
 {
 	HWSPI *hw = (HWSPI*)bus->io;
 	if(bus->mode & BERMUDA_SPI_RATE_UPDATE) {
@@ -145,51 +144,9 @@ PRIVATE WEAK void select(SPIBUS *bus)
  * \param bus SPI bus.
  * \note It is save to remove the bus/device mutex after the deselect signal.
  */
-PRIVATE WEAK void deselect(SPIBUS *bus)
+PRIVATE WEAK void BermudaHardwareSpiDeselect(SPIBUS *bus)
 {
 	BermudaDigitalPinWrite(bus->cs, HIGH);
-}
-
-/**
- * \brief Transfer data buffers to the hardware.
- * \param bus SPI bus to use for the transfer.
- * \param tx Transmit buffer.
- * \param rx Receive buffer.
- * \param len Length of tx and/or rx.
- * \param tmo Transmit timeout waiting time in milliseconds.
- * \note <b>tx</b> or <b>rx</b> may be NULL, depending on the desired operation.
- * \todo Unit test this function.
- * 
- * If a read only is desired, the <b>tx</b> parameter should be set to NULL. When a write only
- * is needed, <b>rx</b> can be set to NULL.
- */
-PRIVATE WEAK int BermudaHardwareSpiTransfer( SPIBUS *bus, const void *tx, void *rx, unsigned int len, 
-                                              unsigned int tmo )
-{
-	int ret = 0;
-	unsigned short idx = 0;
-	unsigned char data_val = 0, dummy = 0xFF;
-
-	for(; idx < len; idx++) {
-		if(tx) { // if data is available
-			ret = BermudaHardwareSpiWrite(bus, &((unsigned char*)tx)[idx], tmo);
-			if(ret == -1) {
-				return ret;
-			}
-		}
-		else { // provide clock to read data
-			ret = BermudaHardwareSpiWrite(bus, &dummy, tmo);
-			if(ret == -1) {
-				return ret;
-			}
-			dummy = 0xFF;
-		}
-		if(rx) { // if data storage is available
-			((unsigned char*)rx)[idx] = data_val;
-		}
-	}
-
-	return ret;
 }
 
 /**
@@ -200,20 +157,32 @@ PRIVATE WEAK int BermudaHardwareSpiTransfer( SPIBUS *bus, const void *tx, void *
  *
  * The given data will be written to the SPI bus.
  */
-PRIVATE WEAK int BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char *data,
-	unsigned int tmo)
+PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint8_t *rx,
+	uptr len, unsigned int tmo)
 {
+	uptr idx = 0;
 	HWSPI *io = bus->io;
-	*(io->spdr) = *data;
+	int rc = 0;
+	
+	for(; idx < len; idx++) {
+		*(io->spdr) = tx[idx];
 #ifdef __EVENTS__
-	if(BermudaEventWait((volatile THREAD**)bus->queue, tmo) == -1) {
-		return -1;
-	}
+		if(BermudaEventWait((volatile THREAD**)bus->queue, tmo) == -1) {
+			rc -= 1;
+			rx[idx] = 0xFF;
+		}
+		else {
+			rx[idx] = *(io->spdr);
+			rc += 1;
+		}
 #else
-	while(!(*(io->spsr) & BIT(SPIF)));
+		while(!(*(io->spsr) & BIT(SPIF)));
+		rx[idx] = *(io->spdr);
+		rc += 1;
 #endif
-	*data = *(io->spdr);
-	return 0;
+	}
+
+	return rc;
 }
 
 /**

@@ -39,17 +39,20 @@ typedef struct _spibus SPIBUS;
 typedef struct _spictrl SPICTRL;
 
 /**
- * \def BermudaSpiDevSelect
- * \brief Shortcut to select a chip using the given select line.
+ * \brief Set the SPI chip select line.
  * \note It will not actualy select the chip, it will set the select line. The
  *       actual select will be done by the SPI driver on reads and writes.
  * \warning The device has to be allocated before using the define!
  */
-#define BermudaSpiDevSelect(dev, pin) \
+#define BermudaSpiSetSelectPin(dev, pin) \
 { \
         ((SPIBUS*)dev->data)->cs = pin; \
 }
 
+/**
+ * \brief Deselect an SPI chip.
+ * \depricated
+ */
 #define BermudaSpiDevDeselect(dev) \
 { \
 	(((SPIBUS*)dev->data)->ctrl)->deselect((SPIBUS*)dev->data); \
@@ -158,19 +161,8 @@ struct _spictrl
          * Transfer data over the SPI bus from the transmit buffer, while receiving
          * data in the receive buffer.
          */
-        int  (*transfer)(SPIBUS* bus, const void* tx, void* rx, unsigned int len, 
+        int  (*transfer)(SPIBUS* bus, const const uint8_t *tx, uint8_t *rx, uptr len, 
 			             unsigned int tmo);
-        
-        /**
-         * \brief Transfer the SPI TX buffer.
-         * \param bus SPI bus.
-         * \warning Call this before reading.
-         * 
-         * Internal buffers will be flushed to the SPI interface. If you want to
-         * read certain data back, make sure to flush the interface before
-         * reading information back.
-         */
-        int (*flush)(SPIBUS *bus);
               
         /**
          * \brief Set data mode.
@@ -213,8 +205,6 @@ extern "C" {
 #endif
 
 extern int BermudaSPIWrite(VFILE *file, const void *tx, size_t len);
-extern int BermudaSPIRead(VFILE *file, void *rx, size_t len);
-extern int BermudaSPIFlush(VFILE *file);
 extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigned int max);
 #ifdef __cplusplus
 }

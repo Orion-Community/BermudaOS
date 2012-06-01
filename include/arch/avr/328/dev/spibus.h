@@ -55,13 +55,11 @@ extern int BermudaSPI0HardwareInit(DEVICE *dev);
 // internal functions
 PRIVATE WEAK void BermudaSpiSetRate(SPIBUS *bus, uint32_t rate);
 PRIVATE WEAK void BermudaSpiSetMode(SPIBUS *bus, unsigned char mode);
-PRIVATE WEAK void select(SPIBUS *bus);
-PRIVATE WEAK void deselect(SPIBUS *bus);
+PRIVATE WEAK void BermudaHardwareSpiSelect(SPIBUS *bus);
+PRIVATE WEAK void BermudaHardwareSpiDeselect(SPIBUS *bus);
 PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned char spi2x);
-PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS *bus, const void *tx, void *rx, 
-	                                          unsigned int len, unsigned int tmo);
-PRIVATE WEAK int BermudaHardwareSpiWrite(SPIBUS* bus, unsigned char *data,
-	                                     unsigned int tmo);
+PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint8_t *rx, uptr len,
+	unsigned int tmo);
 
 #ifdef __cplusplus
 }

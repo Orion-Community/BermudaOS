@@ -22,7 +22,6 @@
 #define __TWI_BUS_H
 
 #include <bermuda.h>
-#include <dev/twif.h>
 
 // Master transmitter status bytes
 

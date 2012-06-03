@@ -22,7 +22,9 @@
 #define __TWIF_H
 
 #include <bermuda.h>
+
 #include <arch/io.h>
+#include <lib/binary.h>
 
 /**
  * \typedef TWIMODE
@@ -43,8 +45,7 @@ typedef enum {
  * 
  * Structure defining the communication function for a TWIBUS.
  */
-struct _twif
-{
+struct _twif {
 };
 /**
  * \struct _twibus
@@ -53,11 +54,12 @@ struct _twif
 
  * Each different TWI bus has its own _twibus structure.
  */
-struct _twibus
-{
-	struct _twif *twif; //!< TWI hardware communication interface.
-	struct _twi_hw *hwio;
-	TWIMODE mode;
+struct _twibus {
+	struct _twif *twif;      //!< TWI hardware communication interface.
+	struct _twi_hw *hwio;    //!< TWI hardware I/O registers.
+	TWIMODE mode;            //!< TWI communication mode.
+	uint8_t sla;             //!< Configured slave address + R/W bit.
+	volatile uint8_t status; //!< Status of TWI after a transmission.
 };
 
 /**
@@ -71,5 +73,33 @@ typedef struct _twibus TWIBUS;
  * \brief Type definition of the TWI interface.
  */
 typedef struct _twif TWIF;
+
+/**
+ * \brief Get the TWI status register.
+ * \param twi TWI bus to get a status from.
+ * 
+ * Safely gets the status from the given TWI bus.
+ */
+static inline uint8_t BermudaTwiGetStatus(TWIBUS *twi)
+{
+	uint8_t ret = 0;
+	
+	BermudaEnterCritical();
+	ret = twi->status;
+	BermudaExitCritical();
+	return ret;
+}
+
+/**
+ * \brief Set the status register.
+ * \param twi Bus to set the new status for.
+ * \warning Should only be called from the TWI ISR.
+ * 
+ * Updates the status regsiter in the TWI bus using the hardware status register.
+ */
+static inline void BermudaTwiUpdateStatus(TWIBUS *twi)
+{
+	twi->status = (*(twi->hwio->twsr)) & B11;
+}
 
 #endif

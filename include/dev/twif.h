@@ -25,16 +25,27 @@
 #include <arch/io.h>
 
 /**
+ * \typedef TWIMODE
+ * \brief Type definition of the TWI mode.
+ * \see TWIBUS
+ */
+typedef enum {
+	TWI_MASTER_TRANSMITTER, //!< Master transmit mode.
+	TWI_MASTER_RECEIVER,    //!< Master receive mode.
+	TWI_SLAVE_TRANSMITTER,  //!< Slave transmit mode.
+	TWI_SLAVE_RECEIVER,     //!< Slave receive mode.
+} TWIMODE;
+
+/**
  * \struct _twif
  * \brief TWI communication interface.
  * \see _twibus
  * 
  * Structure defining the communication function for a TWIBUS.
  */
-struct _twif {
-
+struct _twif
+{
 };
-
 /**
  * \struct _twibus
  * \brief TWI bus structure.
@@ -42,9 +53,11 @@ struct _twif {
 
  * Each different TWI bus has its own _twibus structure.
  */
-struct _twibus {
+struct _twibus
+{
 	struct _twif *twif; //!< TWI hardware communication interface.
 	struct _twi_hw *hwio;
+	TWIMODE mode;
 };
 
 /**

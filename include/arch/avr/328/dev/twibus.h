@@ -35,7 +35,7 @@
  * \brief Initialization routine of TWI hardware interface 0.
  * \see TWI0
  */
-#define TWI0_INIT BermdudaTwi0Init
+#define TWI0_INIT BermudaTwi0Init
 
 /**
  * \def TW_TMO
@@ -148,8 +148,8 @@ struct _twi_hw {
 typedef struct _twi_hw TWIHW;
 
 __DECL
-
-PUBLIC int BermudaTwiTransfer(TWIBUS *twi, const void *tx, void *rx, 
+extern void BermudaTwi0Init(TWIBUS *bus);
+extern int BermudaTwiTransfer(TWIBUS *twi, const void *tx, void *rx, 
 							  unsigned int tmo);
 
 PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);

@@ -31,7 +31,11 @@ static volatile void *twi0_queue = SIGNALED;
 
 static TWIBUS *twibus0 = NULL;
 
-PUBLIC void BermdudaTwi0Init(TWIBUS *bus)
+/**
+ * \brief Initialize TWI bus 0.
+ * \param bus Bus structure pointer. Should not be NULL.
+ */
+PUBLIC void BermudaTwi0Init(TWIBUS *bus)
 {
 	if(bus == NULL) {
 		return;
@@ -64,6 +68,8 @@ PUBLIC inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi)
  * \param tx Transmit buffer.
  * \param rx Receive buffer.
  * \param tmo Transfer waiting time-out.
+ * \warning A TWI init routine should be called before using this function.
+ * \see BermudaTwi0Init
  * 
  * Data is transfered or received using the TWI bus. The mode this function
  * uses depends of the TWIMODE setting in the TWIBUS structure.

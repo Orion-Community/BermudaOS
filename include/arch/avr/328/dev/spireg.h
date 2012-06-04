@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file arch/avr/328/dev/spireg.h
+
 #ifndef __328SPI_REG_H
 #define __328SPI_REG_H
 

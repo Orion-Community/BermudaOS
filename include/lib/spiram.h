@@ -76,9 +76,9 @@
  */
 typedef enum
 {
-        SPI_RAM_BYTE,
-        SPI_RAM_PAGE,
-        SPI_RAM_BUF,
+        SPI_RAM_BYTE, //!< Read SPI ram byte by byte.
+        SPI_RAM_PAGE, //!< Read 32 bytes, in a row, at once.
+        SPI_RAM_BUF,  //!< Read an array of bytes in a row at once.
 } spiram_t;
 
 __DECL

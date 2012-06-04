@@ -45,6 +45,18 @@ typedef enum {
 } TWIMODE;
 
 /**
+ * \typedef TW_IOCTL_MODE
+ * \brief Type definition of I/O control modes for TWI.
+ * \see BermudaTwIoctl
+ */
+typedef enum {
+	TW_SET_RATE, //!< Set SCL rate if in master mode.
+	TW_GET_RATE, //!< Get the currently configured SCL rate.
+	TW_SET_SLA,  //!< Set new slave address.
+	TW_GET_SLA,  //!< Get the currently configured slave address.
+} TW_IOCTL_MODE;
+
+/**
  * \typedef TWIBUS
  * \brief Type definition of the TWI bus.
  */

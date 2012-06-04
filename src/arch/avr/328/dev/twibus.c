@@ -37,6 +37,7 @@ PUBLIC void BermdudaTwi0Init(TWIBUS *bus)
 		return;
 	}
 	
+	twibus0 = bus;
 	bus->twif->transfer = &BermudaTwiTransfer;
 	bus->mutex = &twi0_mutex;
 	bus->queue = &twi0_queue;
@@ -81,5 +82,53 @@ unsigned int tmo;
 
 	// TODO: implement twi
 	rc = BermudaEventSignal((volatile THREAD**)twi->mutex);
+	return rc;
+}
+
+/**
+ * \brief Do TWI I/O control.
+ * \param bus The TWI bus.
+ * \param mode I/O control mode.
+ * \param conf I/O configuration.
+ * \return 0 on success, -1 when the interface is not free. 1 is returned when
+ *         this function is called with an invalid value is the <b>mode</b>
+ *         parameter.
+ * \see TW_IOCTL_MODE
+ */
+PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
+{
+	TWIHW *hw = bus->hwio;
+	unsigned char sla;
+	int rc;
+	
+	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, TW_TMO)) == -1) {
+		goto end;
+	}
+	rc = 0;
+	
+	switch(mode) {
+		case TW_SET_RATE:
+			*(hw->twbr) = *((unsigned char*)conf);
+			break;
+		case TW_GET_RATE:
+			*((unsigned char*)conf) = *(hw->twbr);
+			break;
+		case TW_SET_SLA:
+			sla = (*((unsigned char*)conf)) << 1; // shift out the GCRE bit
+			*(hw->twar) = sla;
+			break;
+		case TW_GET_SLA:
+			sla = (*(hw->twar)) >> 1; // shift for the GCRE bit
+			*((unsigned char*)conf) = sla;
+			break;
+		default:
+			rc = 1;
+			break;
+	}
+
+	end:
+	if(rc != -1) {
+		BermudaEventSignal((volatile THREAD**)bus->mutex);
+	}
 	return rc;
 }

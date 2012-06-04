@@ -26,6 +26,7 @@
 
 #define TWI0 twibus0
 #define TWI0_INIT BermdudaTwi0Init
+#define TW_TMO 200
 
 // Master transmitter status bytes
 
@@ -135,6 +136,7 @@ PUBLIC int BermudaTwiTransfer(TWIBUS *twi, const void *tx, void *rx,
 							  unsigned int tmo);
 
 PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);
+PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 __DECL_END
 
 #endif

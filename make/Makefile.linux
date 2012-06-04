@@ -4,7 +4,7 @@
 
 MCU                     = atmega328p
 F_CPU                   = 16000000
-ARD_PORT                = /dev/serial/by-path/pci-0000:00:06.0-usb-0:2:1.0
+ARD_PORT                = /dev/ttyACM0
 AVRDUDE_ARD_BAUDRATE    = 115200
 AVRDUDE_ARD_PROGRAMMER  = arduino
 AVRLIB                  = /usr/lib/avr/include

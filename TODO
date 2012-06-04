@@ -6,9 +6,9 @@ TODO for version 0.0.2
 
 TODO for version 0.0.3
 
-* Hardware TWI
+* Hardware SPI rewrite [x]
 * Events [x]
 
 TODO for version 0.0.4
 
-* Prepare for final
+* Hardware TWI.

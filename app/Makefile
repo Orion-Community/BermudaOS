@@ -6,7 +6,7 @@ CSRCS			= main.c
 CPPSRCS			= 
 LIBDIR			= ../lib
 LIBS			= -lBermuda -ldevreg -lspibus -lEvents -lspiram
-BUILDSYS		= windows
+BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs

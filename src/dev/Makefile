@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../include
 TARGET			= dev.o
 ARDUINO_LIBS		=
 
-CSRCS			= devreg.c spibus.c
+CSRCS			= devreg.c spibus.c twif.c
 CPPSRCS			=
 ASMSRCS			=
 LIBDIR			= ../../lib

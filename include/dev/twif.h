@@ -23,8 +23,10 @@
 
 #include <bermuda.h>
 
-#include <arch/io.h>
+#include <dev/dev.h>
 #include <lib/binary.h>
+
+#define BERMUDA_TWI_RW_SHIFT 7
 
 /**
  * \typedef TWIMODE
@@ -46,17 +48,29 @@ typedef enum {
  * Structure defining the communication function for a TWIBUS.
  */
 struct _twif {
+	/**
+	 * \brief Function pointer to the transfer function.
+	 * \param bus Bus interface to use with the transfer.
+	 * \param tx Transmit buffer.
+	 * \param rx Receiving buffer.
+	 * \param tmo Transfer waiting time-out.
+	 * 
+	 * Transfer data, depending on the set TWIMODE, over the TWI interface.
+	 */
+	int (*transfer)(struct _twif *bus, const void *tx, void *rx, unsigned int tmo);
 };
+
 /**
  * \struct _twibus
  * \brief TWI bus structure.
  * \see _twif
-
+ *
  * Each different TWI bus has its own _twibus structure.
  */
 struct _twibus {
+	volatile void *queue;    //!< TWI transfer waiting queue.
 	struct _twif *twif;      //!< TWI hardware communication interface.
-	struct _twi_hw *hwio;    //!< TWI hardware I/O registers.
+	void *hwio;              //!< TWI hardware I/O registers.
 	TWIMODE mode;            //!< TWI communication mode.
 	uint8_t sla;             //!< Configured slave address + R/W bit.
 	volatile uint8_t status; //!< Status of TWI after a transmission.
@@ -90,16 +104,29 @@ static inline uint8_t BermudaTwiGetStatus(TWIBUS *twi)
 	return ret;
 }
 
+extern inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi);
+
 /**
- * \brief Set the status register.
- * \param twi Bus to set the new status for.
- * \warning Should only be called from the TWI ISR.
+ * \brief Set the slave address.
+ * \param dev TWI device.
+ * \param sla Slave address to set.
+ * \param rm R/W bit.
+ * \return 0 on success, -1 when the device is held locked by another thread.
  * 
- * Updates the status regsiter in the TWI bus using the hardware status register.
+ * Sets the slave address + the read/write bit.
  */
-static inline void BermudaTwiUpdateStatus(TWIBUS *twi)
+static inline int BermudaTwiSetSla(DEVICE *dev, uint8_t sla, uint8_t rw)
 {
-	twi->status = (*(twi->hwio->twsr)) & B11;
+	sla &= rw << BERMUDA_TWI_RW_SHIFT;
+	TWIBUS *bus = dev->data;
+	
+	if(BermudaDeviceIsLocked(dev)) {
+		return -1;
+	}
+	else {
+		bus->sla = sla;
+		return 0;
+	}
 }
 
 #endif

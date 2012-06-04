@@ -22,6 +22,7 @@
 #define __TWI_BUS_H
 
 #include <bermuda.h>
+#include <dev/twif.h>
 
 // Master transmitter status bytes
 
@@ -124,5 +125,10 @@ struct _twi_hw {
  * \brief Type definition of the HW I/O structure.
  */
 typedef struct _twi_hw TWIHW;
+
+__DECL
+
+PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);
+__DECL_END
 
 #endif

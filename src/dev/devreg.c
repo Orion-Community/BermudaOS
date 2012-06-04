@@ -163,6 +163,13 @@ PUBLIC int BermudaDeviceRelease(DEVICE *dev)
 	return rc;
 }
 
+/**
+ * \brief Check weather a device is locked or not.
+ * \param dev Device to check.
+ * \return 0 when not locked, 1 otherwise.
+ * 
+ * Checks if a device priority mutex is locked by another thread.
+ */
 PUBLIC int BermudaDeviceIsLocked( DEVICE *dev )
 {
 	int rc = 1;

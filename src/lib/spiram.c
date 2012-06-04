@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file spiram.c */
+/** \file src/lib/spiram.c 23KXXX library. */
 #if (defined(__SPI__) && defined(__SPIRAM__)) || defined(__DOXYGEN__)
 
 #include <dev/dev.h>
@@ -27,7 +27,16 @@
 #include <lib/spiram.h>
 #include <sys/thread.h>
 
+/**
+ * \var ram_select
+ * \brief Currently select chip pin.
+ */
 static unsigned char ram_select = 0;
+
+/**
+ * \var devname
+ * \brief Name of the currently used SPI device.
+ */
 static const char *devname;
 
 /**
@@ -99,6 +108,12 @@ PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
 	return read_seq[3];
 }
 
+/**
+ * \brief Change the SPI RAM mode.
+ * \param mode New mode.
+ * \note Currently only SPI_RAM_BYTE is supported.
+ * \see spiram_t
+ */
 PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
 {
 	DEVICE *spidev = dev_open(devname);

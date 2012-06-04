@@ -16,25 +16,64 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/lib/spiram.h 23KXXX definitions.
+
 #ifndef __SPIRAM_H
 
 #include <bermuda.h>
 #include <arch/spi.h>
 
 /* SPI RAM opcodes */
+/**
+ * \def WRSR
+ * \brief Write status register opcode.
+ */
 #define WRSR 0x1
+
+/**
+ * \def RDSR
+ * \brief Read status register opcode.
+ */
 #define RDSR 0x5
 
 // data opcodes
+/**
+ * \def RDDA
+ * \brief Read data opcode.
+ */
 #define RDDA 0x3
+
+/**
+ * \def WRDA
+ * \brief Write data opcode.
+ */
 #define WRDA 0x2
 
+/**
+ * \def HOLD
+ * \brief Hold pin disable bit in the status register.
+ */
 #define HOLD 0x1
 
 // general defines
+/**
+ * \def BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN
+ * \brief Length of the write byte command.
+ */
 #define BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN 4
+
+/**
+ * \def BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN
+ * \brief Length of the read byte command.
+ */
 #define BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN  4
 
+/**
+ * \typedef spiram_t
+ * \brief SPIRAM mode.
+ * 
+ * Mode selection in the SPIRAM status register.
+ */
 typedef enum
 {
         SPI_RAM_BYTE,

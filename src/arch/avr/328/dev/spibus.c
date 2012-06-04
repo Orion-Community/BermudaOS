@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file arch/avr/328/dev/spibus.c SPI hardware bus
+
 #include <bermuda.h>
 
 #include <fs/vfile.h>
@@ -37,12 +39,23 @@ THREAD *BermudaSPI0TransferQueue = SIGNALED;
 THREAD *BermudaSPI0Mutex = SIGNALED;
 #endif
 
+/**
+ * \var BermudaSPI0HardwareIO
+ * \brief SPI0 hardware registers.
+ * 
+ * Hardware I/O registers for the SPI 0 bus.
 static HWSPI BermudaSPI0HardwareIO = {
         .spcr = &SPI_CTRL,
         .spsr = &SPI_STATUS,
         .spdr = &SPI_DATA,
 };
 
+/**
+ * \var BermudaSpiHardwareCtrl
+ * \brief Hardware SPI interface.
+ * 
+ * Interface for hardware SPI on the avr ATmega328.
+ */
 static SPICTRL BermudaSpiHardwareCtrl = {
         .transfer = &BermudaHardwareSpiTransfer,
         .set_mode = &BermudaSpiSetMode,
@@ -51,6 +64,13 @@ static SPICTRL BermudaSpiHardwareCtrl = {
         .deselect = &BermudaHardwareSpiDeselect,
 };
 
+/**
+ * \var BermudaSpi0HardwareBus
+ * \brief SPI0 hardware bus.
+ * \see SPI0
+ * 
+ * Definition of the SPI hardware bus 0.
+ */
 static SPIBUS BermudaSpi0HardwareBus = {
 #ifdef __EVENTS__
         .queue = (void*)&BermudaSPI0TransferQueue,

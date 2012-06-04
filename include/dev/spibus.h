@@ -51,18 +51,28 @@ typedef struct _spictrl SPICTRL;
 
 /**
  * \brief Deselect an SPI chip.
- * \depricated
+ * \deprecated
  */
 #define BermudaSpiDevDeselect(dev) \
 { \
 	(((SPIBUS*)dev->data)->ctrl)->deselect((SPIBUS*)dev->data); \
 }
 
+/**
+ * \brief Set an SPI mode.
+ * \deprecated Use BermudaSpiSetModeSafe instead.
+ * \see BermudaSpiSetModeSafe
+ */
 #define BermudaSpiDevSetMode(dev, mode) \
 { \
 	((SPICTRL*)((SPIBUS*)(dev->data))->ctrl)->set_mode((SPIBUS*)dev->data, mode); \
 }
 
+/**
+ * \brief Set an SPI SCK rate.
+ * \deprecated Use BermudaSpiSetRateSafe instead.
+ * \see BermudaSpiSetRateSafe
+ */
 #define BermudaSpiDevSetRate(dev, rate) \
 { \
 	((SPICTRL*)((SPIBUS*)(dev->data))->ctrl)->set_rate((SPIBUS*)dev->data, rate); \
@@ -226,15 +236,14 @@ static inline int BermudaSpiSetSelectPinSafe(DEVICE *spidev, uint8_t cs)
 }
 
 
-//************************************
-// Method:    BermudaSpiSetModeSafe
-// FullName:  BermudaSpiSetModeSafe
-// Access:    public static 
-// Returns:   int
-// Qualifier:
-// Parameter: DEVICE * dev
-// Parameter: uint16_t mode
-//************************************
+/**
+ * \brief Set a SPI mode.
+ * \param dev Device to set the mode for.
+ * \param mode Mode to set.
+ * \return -1 if the device is locked 0 otherwise.
+ * 
+ * Sets the given SPI mode, but only if the device is not locked.
+ */
 static inline int BermudaSpiSetModeSafe(DEVICE *dev, uint16_t mode)
 {
 	if(BermudaDeviceIsLocked(dev)) {
@@ -244,15 +253,15 @@ static inline int BermudaSpiSetModeSafe(DEVICE *dev, uint16_t mode)
 	return 0;
 }
 
-//************************************
-// Method:    BermudaSpiSetRateSafe
-// FullName:  BermudaSpiSetRateSafe
-// Access:    public static 
-// Returns:   int
-// Qualifier:
-// Parameter: DEVICE * dev
-// Parameter: uint32_t rate
-//************************************
+/**
+ * \brief Set a SPI rate.
+ * \param dev Device to set the rate for.
+ * \param rate Rate to set.
+ * \return -1 if the device is locked.
+ * 
+ * Sets the given SPI rate, but only if the device is not locked. If the device
+ * is locked, this function will return immediatly.
+ */
 static inline int BermudaSpiSetRateSafe(DEVICE *dev, uint32_t rate)
 {
 	if(BermudaDeviceIsLocked(dev)) {

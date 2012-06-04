@@ -24,8 +24,25 @@
 #include <bermuda.h>
 #include <dev/twif.h>
 
+/**
+ * \def TWI0
+ * \brief TWI hardware interface 0 data structure.
+ */
 #define TWI0 twibus0
+
+/**
+ * \def TWI0_INIT
+ * \brief Initialization routine of TWI hardware interface 0.
+ * \see TWI0
+ */
 #define TWI0_INIT BermdudaTwi0Init
+
+/**
+ * \def TW_TMO
+ * \brief Default TWI timeout.
+ * 
+ * Time-out used for internal time-outs (aka event waits).
+ */
 #define TW_TMO 200
 
 // Master transmitter status bytes

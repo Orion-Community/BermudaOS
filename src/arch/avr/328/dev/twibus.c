@@ -20,8 +20,27 @@
 
 #include <bermuda.h>
 
+#include <sys/thread.h>
+#include <sys/events/event.h>
+
 #include <dev/twif.h>
 #include <arch/avr/328/dev/twibus.h>
+
+static volatile void *twi0_mutex = SIGNALED;
+static volatile void *twi0_queue = SIGNALED;
+
+static TWIBUS *twibus0 = NULL;
+
+PUBLIC void BermdudaTwi0Init(TWIBUS *bus)
+{
+	if(bus == NULL) {
+		return;
+	}
+	
+	bus->twif->transfer = &BermudaTwiTransfer;
+	bus->mutex = &twi0_mutex;
+	bus->queue = &twi0_queue;
+}
 
 /**
  * \brief Set the status register.
@@ -36,4 +55,31 @@ PUBLIC inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi)
 	TWIHW *hwio = twi->hwio;
 	twi->status = (*(hwio->twsr)) & B11;
 	return twi->status;
+}
+
+/**
+ * \brief Transfer data using the twi bus.
+ * \param twi Used TWI bus.
+ * \param tx Transmit buffer.
+ * \param rx Receive buffer.
+ * \param tmo Transfer waiting time-out.
+ * 
+ * Data is transfered or received using the TWI bus. The mode this function
+ * uses depends of the TWIMODE setting in the TWIBUS structure.
+ */
+PUBLIC int BermudaTwiTransfer(twi, tx, rx, tmo)
+TWIBUS       *twi;
+const void   *tx;
+void         *rx;
+unsigned int tmo;
+{
+	int rc = -1;
+	
+	if((rc = BermudaEventWait((volatile THREAD**)twi->mutex, tmo)) == -1) {
+		return rc;
+	}
+
+	// TODO: implement twi
+	rc = BermudaEventSignal((volatile THREAD**)twi->mutex);
+	return rc;
 }

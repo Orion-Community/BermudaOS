@@ -26,6 +26,10 @@
 #include <dev/dev.h>
 #include <lib/binary.h>
 
+/**
+ * \def BERMUDA_TWI_RW_SHIFT
+ * \brief Bit location of the R/W bit.
+ */
 #define BERMUDA_TWI_RW_SHIFT 7
 
 /**
@@ -39,6 +43,18 @@ typedef enum {
 	TWI_SLAVE_TRANSMITTER,  //!< Slave transmit mode.
 	TWI_SLAVE_RECEIVER,     //!< Slave receive mode.
 } TWIMODE;
+
+/**
+ * \typedef TWIBUS
+ * \brief Type definition of the TWI bus.
+ */
+typedef struct _twibus TWIBUS;
+
+/**
+ * \typedef TWIF
+ * \brief Type definition of the TWI interface.
+ */
+typedef struct _twif TWIF;
 
 /**
  * \struct _twif
@@ -57,7 +73,7 @@ struct _twif {
 	 * 
 	 * Transfer data, depending on the set TWIMODE, over the TWI interface.
 	 */
-	int (*transfer)(struct _twif *bus, const void *tx, void *rx, unsigned int tmo);
+	int (*transfer)(TWIBUS *bus, const void *tx, void *rx, unsigned int tmo);
 };
 
 /**
@@ -68,6 +84,7 @@ struct _twif {
  * Each different TWI bus has its own _twibus structure.
  */
 struct _twibus {
+	volatile void *mutex;    //!< TWI bus mutex.
 	volatile void *queue;    //!< TWI transfer waiting queue.
 	struct _twif *twif;      //!< TWI hardware communication interface.
 	void *hwio;              //!< TWI hardware I/O registers.
@@ -75,18 +92,6 @@ struct _twibus {
 	uint8_t sla;             //!< Configured slave address + R/W bit.
 	volatile uint8_t status; //!< Status of TWI after a transmission.
 };
-
-/**
- * \typedef TWIBUS
- * \brief Type definition of the TWI bus.
- */
-typedef struct _twibus TWIBUS;
-
-/**
- * \typedef TWIF
- * \brief Type definition of the TWI interface.
- */
-typedef struct _twif TWIF;
 
 /**
  * \brief Get the TWI status register.

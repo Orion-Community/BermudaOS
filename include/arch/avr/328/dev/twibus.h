@@ -24,6 +24,9 @@
 #include <bermuda.h>
 #include <dev/twif.h>
 
+#define TWI0 twibus0
+#define TWI0_INIT BermdudaTwi0Init
+
 // Master transmitter status bytes
 
 /**
@@ -127,6 +130,9 @@ struct _twi_hw {
 typedef struct _twi_hw TWIHW;
 
 __DECL
+
+PUBLIC int BermudaTwiTransfer(TWIBUS *twi, const void *tx, void *rx, 
+							  unsigned int tmo);
 
 PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);
 __DECL_END

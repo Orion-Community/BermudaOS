@@ -26,8 +26,10 @@
 #include <dev/twif.h>
 #include <arch/avr/328/dev/twibus.h>
 
+#ifdef __EVENTS__
 static volatile void *twi0_mutex = SIGNALED;
 static volatile void *twi0_queue = SIGNALED;
+#endif
 
 static TWIBUS *twibus0 = NULL;
 
@@ -43,8 +45,10 @@ PUBLIC void BermudaTwi0Init(TWIBUS *bus)
 	
 	twibus0 = bus;
 	bus->twif->transfer = &BermudaTwiTransfer;
+#ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
 	bus->queue = &twi0_queue;
+#endif
 }
 
 /**
@@ -81,23 +85,29 @@ void         *rx;
 unsigned int tmo;
 {
 	int rc = -1;
-
+#ifdef __EVENTS__
 	if((rc = BermudaEventWait((volatile THREAD**)twi->mutex, tmo)) == -1) {
 		goto out;
 	}
 	else if(tx == NULL && rx == NULL) {
 		goto out;
 	}
+#else
+	if(tx == NULL && rx == NULL) {
+		goto out;
+#endif
 	else {
 		rc = 0;
 	}
 
 	// TODO: implement twi
+	out:
+#ifdef __EVENTS__
 	if(rc != -1) {
 		BermudaEventSignal((volatile THREAD**)twi->mutex);
 	}
+#endif
 	
-	out:
 	return rc;
 }
 
@@ -116,10 +126,11 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 	TWIHW *hw = bus->hwio;
 	unsigned char sla;
 	int rc;
-	
+#ifdef __EVENTS__
 	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, TW_TMO)) == -1) {
 		goto end;
 	}
+#endif
 	rc = 0;
 	
 	switch(mode) {
@@ -143,8 +154,10 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 	}
 
 	end:
+#ifdef __EVENTS__
 	if(rc != -1) {
 		BermudaEventSignal((volatile THREAD**)bus->mutex);
 	}
+#endif
 	return rc;
 }

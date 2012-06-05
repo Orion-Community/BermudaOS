@@ -44,6 +44,7 @@ THREAD *BermudaSPI0Mutex = SIGNALED;
  * \brief SPI0 hardware registers.
  * 
  * Hardware I/O registers for the SPI 0 bus.
+ */
 static HWSPI BermudaSPI0HardwareIO = {
         .spcr = &SPI_CTRL,
         .spsr = &SPI_STATUS,

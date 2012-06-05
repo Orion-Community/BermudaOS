@@ -45,6 +45,33 @@
  */
 #define TW_TMO 200
 
+// prescaler defines
+/**
+ * \def TW_PRES_1
+ * \brief Prescaler of 1. 
+ * 
+ * This value has no effect on the prescaler value.
+ */
+#define TW_PRES_1 B0
+
+/**
+ * \def TW_PRES_4
+ * \brief Prescaler value 4.
+ */
+#define TW_PRES_4 B1
+
+/**
+ * \def TW_PRES_16
+ * \brief Prescaler value 16
+ */
+#define TW_PRES_16 B10
+
+/**
+ * \def TW_PRES_64
+ * \brief Prescaler value 64
+ */
+#define TW_PRES_64 B11
+
 // Master transmitter status bytes
 
 /**
@@ -151,6 +178,7 @@ __DECL
 extern void BermudaTwi0Init(TWIBUS *bus);
 extern int BermudaTwiTransfer(TWIBUS *twi, const void *tx, void *rx, 
 							  unsigned int tmo);
+extern unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres);
 
 PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);

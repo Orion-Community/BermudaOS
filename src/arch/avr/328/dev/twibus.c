@@ -81,13 +81,23 @@ void         *rx;
 unsigned int tmo;
 {
 	int rc = -1;
-	
+
 	if((rc = BermudaEventWait((volatile THREAD**)twi->mutex, tmo)) == -1) {
-		return rc;
+		goto out;
+	}
+	else if(tx == NULL && rx == NULL) {
+		goto out;
+	}
+	else {
+		rc = 0;
 	}
 
 	// TODO: implement twi
-	rc = BermudaEventSignal((volatile THREAD**)twi->mutex);
+	if(rc != -1) {
+		BermudaEventSignal((volatile THREAD**)twi->mutex);
+	}
+	
+	out:
 	return rc;
 }
 

@@ -196,6 +196,7 @@ unsigned int tmo;
 #else
 	if(tx == NULL && rx == NULL) {
 		goto out;
+	}
 #endif
 	else {
 		rc = 0;

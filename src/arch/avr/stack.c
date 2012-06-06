@@ -43,33 +43,35 @@ stack_t sp;
 unsigned short stack_size;
 thread_handle_t handle;
 {
-        /* if the stack pointer is NULL we will setup the main stack */
-        if(NULL == sp)
-                sp = (stack_t)MEM-stack_size-2;
+	/* if the stack pointer is NULL we will setup the main stack */
+	if(NULL == sp) {
+		sp = (stack_t)MEM-stack_size-2;
+	}
 
-        t->stack = sp;
-        t->stack_size = stack_size;
-        t->sp = &sp[stack_size-1];
-        
-        /*
-         * first we add the function pointer to the stack
-         */
-        *(t->sp--) = (unsigned short)handle & 0xff;
-        *(t->sp--) = ((unsigned short)handle >> 8) & 0xff;
-        
-        /* add the SREG register */
-        *(t->sp--) = 0x0; // location of R0 normally
-        *(t->sp--) = *AvrIO->sreg;
-        
-        /* pad the other registers */
-        int i = 0;
-        for(; i < 31; i++)
-                *(t->sp--) = 0;
+	t->stack = sp;
+	t->stack_size = stack_size;
+	t->sp = &sp[stack_size-1];
+
+	/*
+	* first we add the function pointer to the stack
+	*/
+	*(t->sp--) = (unsigned short)handle & 0xff;
+	*(t->sp--) = ((unsigned short)handle >> 8) & 0xff;
+
+	/* add the SREG register */
+	*(t->sp--) = 0x0; // location of R0 normally
+	*(t->sp--) = *AvrIO->sreg;
+
+	/* pad the other registers */
+	int i = 0;
+	for(; i < 31; i++) {
+		*(t->sp--) = 0;
+	}
 #if defined(__THREAD_DBG__) && (__VERBAL__)
-        printf("Stack: %p - Param: %p\n", t->stack, t->param);
+	printf("Stack: %p - Param: %p\n", t->stack, t->param);
 #endif
-        t->sp[8] = ((unsigned short)t->param) & 0xFF;
-        t->sp[7] = (((unsigned short)t->param) >> 8) & 0xFF;
+	t->sp[8] = ((unsigned short)t->param) & 0xFF;
+	t->sp[7] = (((unsigned short)t->param) >> 8) & 0xFF;
 }
 
 /**
@@ -83,14 +85,15 @@ thread_handle_t handle;
  */
 PUBLIC void BermudaStackSave(stack_t sp)
 {
-        if(BermudaCurrentThread == NULL)
-                return;
+	if(BermudaCurrentThread == NULL) {
+		return;
+	}
 
-        sp += 2;
-        BermudaCurrentThread->sp = sp;
-        // switch the current thread pointer
-        BermudaCurrentThread = BermudaRunQueue;
-        BermudaCurrentThread->state = THREAD_RUNNING;
+	sp += 2;
+	BermudaCurrentThread->sp = sp;
+	// switch the current thread pointer
+	BermudaCurrentThread = BermudaRunQueue;
+	BermudaCurrentThread->state = THREAD_RUNNING;
 }
 
 /**
@@ -103,6 +106,6 @@ PUBLIC void BermudaStackSave(stack_t sp)
  */
 PUBLIC void BermudaStackFree(THREAD *t)
 {
-        BermudaHeapFree(t->stack);
+	BermudaHeapFree(t->stack);
 }
 #endif

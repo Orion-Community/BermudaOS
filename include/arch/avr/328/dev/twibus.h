@@ -176,12 +176,14 @@ typedef struct _twi_hw TWIHW;
 
 __DECL
 extern void BermudaTwi0Init(TWIBUS *bus);
-extern int BermudaTwiTransfer(TWIBUS *twi, const void *tx, void *rx, 
-							  unsigned int tmo);
+extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, unsigned int txlen,  
+							  void *rx, unsigned int rxlen, unsigned char sla,
+							  uint32_t frq, unsigned int tmo);
 extern unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres);
 
 PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
+PRIVATE WEAK void BermudaTwiISR(TWIBUS *twi);
 __DECL_END
 
 #endif

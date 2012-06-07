@@ -16,7 +16,7 @@ include ../make/Makefile.defs
 all: $(TARGET) $(OBJS)
 	$(CC) -mmcu=$(MCU) -fprofile-use -lm -Wl,--gc-sections -Os -o temp.elf $(OBJS) -L$(LIBDIR) $(LIBS)
 	$(OBJCOPY) -R .eeprom -O ihex temp.elf $(TARGET)
-	-rm -fv temp.elf
+#	-rm -fv temp.elf
 
 %o: %c
 	$(CC) $(CCFLAGS) -c -o $@ $<

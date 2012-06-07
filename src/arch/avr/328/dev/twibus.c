@@ -29,6 +29,8 @@
 #include <dev/twif.h>
 #include <arch/avr/328/dev/twibus.h>
 
+#include <avr/interrupt.h>
+
 #ifdef __EVENTS__
 static volatile void *twi0_mutex = SIGNALED;
 static volatile void *twi0_queue = SIGNALED;
@@ -47,11 +49,24 @@ PUBLIC void BermudaTwi0Init(TWIBUS *bus)
 	}
 	
 	twibus0 = bus;
-	bus->twif->transfer = &BermudaTwiTransfer;
+	bus->twif->transfer = &BermudaTwiMasterTransfer;
 #ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
 	bus->queue = &twi0_queue;
 #endif
+}
+
+/**
+ * \brief TWI interrupt routine.
+ * \param twi TWI bus.
+ * \note Called by TWI_vect signal.
+ * 
+ * Handles the internal TWI communication protocol.
+ */
+PRIVATE WEAK void BermudaTwiISR(twi)
+TWIBUS *twi;
+{
+	
 }
 
 /**
@@ -64,9 +79,7 @@ PUBLIC void BermudaTwi0Init(TWIBUS *bus)
  */
 PUBLIC inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi)
 {
-	TWIHW *hwio = twi->hwio;
-	twi->status = (*(hwio->twsr)) & B11;
-	return twi->status;
+	return 0;
 }
 
 /**
@@ -141,6 +154,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
 {
 	char prescaler;
+	uint32_t twbr;
 	
 	switch(pres) {
 		case TW_PRES_1:
@@ -164,7 +178,12 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
 		return 0xFF;
 	}
 	
-	return 0;
+	twbr = F_CPU / freq;
+	twbr /= prescaler;
+	twbr -= 16;
+	twbr /= 2;
+	
+	return twbr;
 }
 
 /**
@@ -179,11 +198,15 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
  * Data is transfered or received using the TWI bus. The mode this function
  * uses depends of the TWIMODE setting in the TWIBUS structure.
  */
-PUBLIC int BermudaTwiTransfer(twi, tx, rx, tmo)
-TWIBUS       *twi;
-const void   *tx;
-void         *rx;
-unsigned int tmo;
+PUBLIC int BermudaTwiMasterTransfer(twi, tx, txlen, rx, rxlen, sla, frq, tmo)
+TWIBUS        *twi;
+const void    *tx;
+unsigned int  txlen;
+void          *rx;
+unsigned int  rxlen;
+unsigned char sla;
+uint32_t      frq;
+unsigned int  tmo;
 {
 	int rc = -1;
 #ifdef __EVENTS__
@@ -210,4 +233,9 @@ unsigned int tmo;
 #endif
 	
 	return rc;
+}
+
+SIGNAL(TWI_vect)
+{
+	BermudaTwiISR(twibus0);
 }

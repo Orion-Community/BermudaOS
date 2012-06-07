@@ -9,6 +9,7 @@ ARDUINO_LIBS		=
 
 CSRCS			= io.c timer.c
 CPPSRCS			=
+ASMSRC			=
 
 include ../../../../make/Makefile.$(BUILDSYS)
 include ../../../../make/Makefile.defs
@@ -33,6 +34,9 @@ dev.o:
 
 %o: %cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<
+
+%o: %S
+	$(AS) $(ASFLAGS) -o $@ $<
 
 clean:
 	-rm -vf $(OBJS) $(TARGET)

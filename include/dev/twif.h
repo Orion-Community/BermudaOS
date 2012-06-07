@@ -85,7 +85,9 @@ struct _twif {
 	 * 
 	 * Transfer data, depending on the set TWIMODE, over the TWI interface.
 	 */
-	int (*transfer)(TWIBUS *bus, const void *tx, void *rx, unsigned int tmo);
+	int (*transfer)(TWIBUS *twi, const void *tx, unsigned int txlen,  
+							  void *rx, unsigned int rxlen, unsigned char sla,
+							  uint32_t frq, unsigned int tmo);
 };
 
 /**
@@ -100,26 +102,18 @@ struct _twibus {
 	volatile void *queue;    //!< TWI transfer waiting queue.
 	struct _twif *twif;      //!< TWI hardware communication interface.
 	void *hwio;              //!< TWI hardware I/O registers.
+	volatile void *tx;       //!< TWI transmit buffer.
+	unsigned int txlen;      //!< Length of the tx buffer.
+	void *rx;                //!< TWI receive buffer.
+	unsigned int rxlen;      //!< Length of the rx buffer.
 	TWIMODE mode;            //!< TWI communication mode.
 	uint8_t sla;             //!< Configured slave address + R/W bit.
-	volatile uint8_t status; //!< Status of TWI after a transmission.
+	uint32_t freq;           //!< TWI transfer frequency in Hertz.
 };
 
-/**
- * \brief Get the TWI status register.
- * \param twi TWI bus to get a status from.
- * 
- * Safely gets the status from the given TWI bus.
- */
-static inline uint8_t BermudaTwiGetStatus(TWIBUS *twi)
-{
-	uint8_t ret = 0;
-	
-	BermudaEnterCritical();
-	ret = twi->status;
-	BermudaExitCritical();
-	return ret;
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi);
 
@@ -145,5 +139,9 @@ static inline int BermudaTwiSetSla(DEVICE *dev, uint8_t sla, uint8_t rw)
 		return 0;
 	}
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

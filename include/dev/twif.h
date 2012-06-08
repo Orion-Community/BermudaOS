@@ -50,8 +50,8 @@ typedef enum {
  * \see BermudaTwIoctl
  */
 typedef enum {
-	TW_SET_RATE, //!< Set SCL rate if in master mode.
-	TW_GET_RATE, //!< Get the currently configured SCL rate.
+	TW_SET_RATE, //!< Set the TWBR register.
+	TW_SET_PRES, //!< Set the SCL prescaler.
 	TW_SET_SLA,  //!< Set new slave address.
 	TW_GET_SLA,  //!< Get the currently configured slave address.
 } TW_IOCTL_MODE;

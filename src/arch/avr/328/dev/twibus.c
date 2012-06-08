@@ -32,10 +32,29 @@
 #include <avr/interrupt.h>
 
 #ifdef __EVENTS__
+/**
+ * \var twi0_mutex
+ * \brief Bus mutex.
+ * 
+ * Priority queue for bus 0.
+ */
 static volatile void *twi0_mutex = SIGNALED;
+
+/**
+ * \var twi0_queue
+ * \brief Transfer queue.
+ * 
+ * Threads are placed in this queue when they are waiting for a TW transfer to
+ * complete.
+ */
 static volatile void *twi0_queue = SIGNALED;
 #endif
 
+/**
+ * \var twibus0
+ * \brief Global pointer to the TWI0 bus.
+ * \see TWI0
+ */
 static TWIBUS *twibus0 = NULL;
 
 /**
@@ -61,29 +80,21 @@ PUBLIC void BermudaTwi0Init(TWIBUS *bus)
  * \param bus The TWI bus.
  * \param mode I/O control mode.
  * \param conf I/O configuration.
- * \return 0 on success, -1 when the interface is not free. 1 is returned when
- *         this function is called with an invalid value is the <b>mode</b>
- *         parameter.
+ * \return 0 on success, -1 when an invalid value in <b>mode</b> is given.
  * \see TW_IOCTL_MODE
  */
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 {
 	TWIHW *hw = bus->hwio;
 	unsigned char sla;
-	int rc;
-#ifdef __EVENTS__
-	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, TW_TMO)) == -1) {
-		goto end;
-	}
-#endif
-	rc = 0;
+	int rc = 0;
 	
 	switch(mode) {
 		case TW_SET_RATE:
 			*(hw->twbr) = *((unsigned char*)conf);
 			break;
-		case TW_GET_RATE:
-			*((unsigned char*)conf) = *(hw->twbr);
+		case TW_SET_PRES:
+			*(hw->twsr) = (*(hw->twsr) &(~B11)) | *((unsigned char*)conf);
 			break;
 		case TW_SET_SLA:
 			sla = (*((unsigned char*)conf)) << 1; // shift out the GCRE bit
@@ -94,16 +105,10 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			*((unsigned char*)conf) = sla;
 			break;
 		default:
-			rc = 1;
+			rc = -1;
 			break;
 	}
 
-	end:
-#ifdef __EVENTS__
-	if(rc != -1) {
-		BermudaEventSignal((volatile THREAD**)bus->mutex);
-	}
-#endif
 	return rc;
 }
 
@@ -160,6 +165,16 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
 	return twbr;
 }
 
+/**
+ * \brief Calculates the TWI prescaler value.
+ * \param frq The desired frequency.
+ * \return The prescaler value in hardware format: \n
+ *         * B0 for a prescaler of 1;
+ *         * B1 for a prescaler of 4;
+ *         * B10 for a prescaler of 16;
+ *         * B11 for a prescaler of 64
+ * Calculates the prescaler value based on the given frequency.
+ */
 unsigned char BermudaTwiCalcPres(uint32_t frq)
 {
 	unsigned char ret = 0;
@@ -219,6 +234,7 @@ unsigned int  tmo;
 		rc = 0;
 	}
 	
+	BermudaTwInit(twi, tx, txlen, rx, rxlen, sla, frq);
 	if(rx == NULL) {
 		twi->mode = TWI_MASTER_TRANSMITTER;
 	}
@@ -263,10 +279,12 @@ uint32_t      frq;
 	twi->rxlen = rxlen;
 	twi->sla = sla;
 	twi->freq = frq;
-	TWIHW *hw = twi->hwio;
 	
 	if(frq) {
-		*(hw->twbr) = BermudaTwiCalcTWBR(frq, BermudaTwiCalcPres(frq));
+		unsigned char pres = BermudaTwiCalcPres(frq);
+		unsigned char twbr = BermudaTwiCalcTWBR(frq, pres);
+		BermudaTwIoctl(twi, TW_SET_RATE, &twbr);
+		BermudaTwIoctl(twi, TW_SET_PRES, &pres);
 	}
 }
 

@@ -155,6 +155,15 @@
 #define TWI_MR_DATA_NACK 0x58
 
 /**
+ * \def TWI_FRQ
+ * \brief Calculates the TWI frequency based on the given twbr and prescaler.
+ * \param x TWBR
+ * \param n The prescaler.
+ */
+#define TWI_FRQ(x, n) \
+	(F_CPU/(16+(2*x*n)))
+
+/**
  * \brief TWI hardware I/O.
  * 
  * Structure containing all hardware I/O registers.
@@ -180,7 +189,11 @@ extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, unsigned int tx
 							  void *rx, unsigned int rxlen, unsigned char sla,
 							  uint32_t frq, unsigned int tmo);
 extern unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres);
+extern unsigned char BermudaTwiCalcPres(uint32_t pres);
 
+PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen, 
+								void *rx, unsigned int rxlen, unsigned char sla, 
+								uint32_t frq);
 PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 PRIVATE WEAK void BermudaTwiISR(TWIBUS *twi);

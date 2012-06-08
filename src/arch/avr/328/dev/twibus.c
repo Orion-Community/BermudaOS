@@ -57,32 +57,6 @@ PUBLIC void BermudaTwi0Init(TWIBUS *bus)
 }
 
 /**
- * \brief TWI interrupt routine.
- * \param twi TWI bus.
- * \note Called by TWI_vect signal.
- * 
- * Handles the internal TWI communication protocol.
- */
-PRIVATE WEAK void BermudaTwiISR(twi)
-TWIBUS *twi;
-{
-	
-}
-
-/**
- * \brief Set the status register.
- * \param twi Bus to set the new status for.
- * \warning Should only be called from the TWI ISR.
- * \return The updated status value.
- * 
- * Updates the status regsiter in the TWI bus using the hardware status register.
- */
-PUBLIC inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi)
-{
-	return 0;
-}
-
-/**
  * \brief Do TWI I/O control.
  * \param bus The TWI bus.
  * \param mode I/O control mode.
@@ -186,6 +160,26 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
 	return twbr;
 }
 
+unsigned char BermudaTwiCalcPres(uint32_t frq)
+{
+	unsigned char ret = 0;
+	
+	if(frq > TWI_FRQ(255,64) && frq < TWI_FRQ(255,16)) {
+		ret = B11;
+	}
+	else if(frq > TWI_FRQ(255,16) && frq < TWI_FRQ(255,4)) {
+		ret = B10;
+	}
+	else if(frq > TWI_FRQ(255,4) && frq < TWI_FRQ(255,1)) {
+		ret = B1;
+	}
+	else if(frq > TWI_FRQ(255,1)) {
+		ret = B0;
+	}
+	
+	return ret;
+}
+
 /**
  * \brief Transfer data using the twi bus.
  * \param twi Used TWI bus.
@@ -200,9 +194,9 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
  */
 PUBLIC int BermudaTwiMasterTransfer(twi, tx, txlen, rx, rxlen, sla, frq, tmo)
 TWIBUS        *twi;
-const void    *tx;
+const void*   tx;
 unsigned int  txlen;
-void          *rx;
+void*         rx;
 unsigned int  rxlen;
 unsigned char sla;
 uint32_t      frq;
@@ -224,6 +218,13 @@ unsigned int  tmo;
 	else {
 		rc = 0;
 	}
+	
+	if(rx == NULL) {
+		twi->mode = TWI_MASTER_TRANSMITTER;
+	}
+	else if(tx == NULL) {
+		twi->mode = TWI_MASTER_RECEIVER;
+	}
 
 	out:
 #ifdef __EVENTS__
@@ -235,7 +236,41 @@ unsigned int  tmo;
 	return rc;
 }
 
+/**
+ * \brief Initialize the TWI bus.
+ * \param twi Bus to initialize.
+ * \param tx  Transmit buffer.
+ * \param txlen Length of the transmit buffer.
+ * \param rx Receive buffer.
+ * \param rxlen Length of the received buffer.
+ * \param sla Slave address used in the coming transmission.
+ * \param frq Frequency to use in the coming transmission.
+ * 
+ * Used to initialize the TWI bus before starting a transfer.
+ */
+PRIVATE WEAK void BermudaTwInit(twi, tx, txlen, rx, rxlen, sla, frq)
+TWIBUS*       twi;
+const void*   tx;
+unsigned int  txlen;
+void*         rx;
+unsigned int  rxlen;
+unsigned char sla;
+uint32_t      frq;
+{
+	twi->tx = tx;
+	twi->txlen = txlen;
+	twi->rx = rx;
+	twi->rxlen = rxlen;
+	twi->sla = sla;
+	twi->freq = frq;
+	TWIHW *hw = twi->hwio;
+	
+	if(frq) {
+		*(hw->twbr) = BermudaTwiCalcTWBR(frq, BermudaTwiCalcPres(frq));
+	}
+}
+
 SIGNAL(TWI_vect)
 {
-	BermudaTwiISR(twibus0);
+
 }

@@ -102,7 +102,7 @@ struct _twibus {
 	volatile void *queue;    //!< TWI transfer waiting queue.
 	struct _twif *twif;      //!< TWI hardware communication interface.
 	void *hwio;              //!< TWI hardware I/O registers.
-	volatile void *tx;       //!< TWI transmit buffer.
+	const void *tx;          //!< TWI transmit buffer.
 	unsigned int txlen;      //!< Length of the tx buffer.
 	void *rx;                //!< TWI receive buffer.
 	unsigned int rxlen;      //!< Length of the rx buffer.

@@ -50,10 +50,12 @@ typedef enum {
  * \see BermudaTwIoctl
  */
 typedef enum {
-	TW_SET_RATE, //!< Set the TWBR register.
-	TW_SET_PRES, //!< Set the SCL prescaler.
-	TW_SET_SLA,  //!< Set new slave address.
-	TW_GET_SLA,  //!< Get the currently configured slave address.
+	TW_SET_RATE,   //!< Set the TWBR register.
+	TW_SET_PRES,   //!< Set the SCL prescaler.
+	TW_SET_SLA,    //!< Set new slave address.
+	TW_START,      //!< Sent the TWI start condition.
+	TW_GET_STATUS, //!< Get the status from hardware.
+	TW_SENT_SLA,   //!< Sent the slave address over the TWI bus.
 } TW_IOCTL_MODE;
 
 /**
@@ -88,6 +90,8 @@ struct _twif {
 	int (*transfer)(TWIBUS *twi, const void *tx, unsigned int txlen,  
 							  void *rx, unsigned int rxlen, unsigned char sla,
 							  uint32_t frq, unsigned int tmo);
+	int (*io)(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
+	void (*isr)(TWIBUS* BUS);
 };
 
 /**
@@ -106,9 +110,13 @@ struct _twibus {
 	unsigned int txlen;      //!< Length of the tx buffer.
 	void *rx;                //!< TWI receive buffer.
 	unsigned int rxlen;      //!< Length of the rx buffer.
+	
 	TWIMODE mode;            //!< TWI communication mode.
 	uint8_t sla;             //!< Configured slave address + R/W bit.
 	uint32_t freq;           //!< TWI transfer frequency in Hertz.
+	
+	unsigned char error;     //!< TWI error member.
+	unsigned char status;    //!< TWI status
 };
 
 #ifdef __cplusplus
@@ -116,6 +124,7 @@ extern "C" {
 #endif
 
 extern inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi);
+extern void BermudaTwISR(TWIBUS *bus);
 
 /**
  * \brief Set the slave address.

@@ -68,7 +68,10 @@ PUBLIC void BermudaTwi0Init(TWIBUS *bus)
 	}
 	
 	twibus0 = bus;
+	bus->twif = BermudaHeapAlloc(sizeof( *(bus->twif) ));
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
+	bus->twif->io = &BermudaTwIoctl;
+	bus->twif->isr = &BermudaTwISR;
 #ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
 	bus->queue = &twi0_queue;
@@ -100,10 +103,14 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			sla = (*((unsigned char*)conf)) << 1; // shift out the GCRE bit
 			*(hw->twar) = sla;
 			break;
-		case TW_GET_SLA:
-			sla = (*(hw->twar)) >> 1; // shift for the GCRE bit
-			*((unsigned char*)conf) = sla;
+		case TW_SENT_SLA:
+			*(hw->twdr) = *( (unsigned char*)conf );
 			break;
+		case TW_START:
+			*(hw->twcr) = (*(unsigned char*)conf); // sent the given start
+			break;
+		case TW_GET_STATUS:
+			bus->status = (*hw->twsr) & (~B111);
 		default:
 			rc = -1;
 			break;
@@ -218,6 +225,7 @@ uint32_t      frq;
 unsigned int  tmo;
 {
 	int rc = -1;
+	unsigned char start = TWGO;
 #ifdef __EVENTS__
 	if((rc = BermudaEventWait((volatile THREAD**)twi->mutex, tmo)) == -1) {
 		goto out;
@@ -235,12 +243,14 @@ unsigned int  tmo;
 	}
 	
 	BermudaTwInit(twi, tx, txlen, rx, rxlen, sla, frq);
-	if(rx == NULL) {
+	if(rx == NULL || tx != NULL) {
 		twi->mode = TWI_MASTER_TRANSMITTER;
 	}
-	else if(tx == NULL) {
+	else if(tx == NULL || rx != NULL) {
 		twi->mode = TWI_MASTER_RECEIVER;
 	}
+	
+	BermudaTwIoctl(twi, TW_START, &start);
 
 	out:
 #ifdef __EVENTS__
@@ -290,5 +300,6 @@ uint32_t      frq;
 
 SIGNAL(TWI_vect)
 {
-
+	twibus0->status = BermudaTwIoctl(twibus0, TW_GET_STATUS, NULL);
+	twibus0->twif->isr(twibus0);
 }

@@ -77,12 +77,12 @@
 /**
  * \brief Start has been sent.
  */
-#define TWI_MT_START_ACK 0x8
+#define TWI_START 0x8
 
 /**
  * \brief Repeated start has been sent.
  */
-#define TWI_MT_RSTART_ACK 0x10
+#define TWI_REP_START 0x10
 
 /**
  * \brief Slave address has been sent and ACKed.
@@ -115,16 +115,6 @@
 //  ********************************
 //  * Master receiver              *
 //  ********************************
- 
-/**
- * \brief Start has been sent.
- */
-#define TWI_MR_START_ACK 0x8
-
-/**
- * \brief Repeated start has been sent.
- */
-#define TWI_MR_RSTART_ACK 0x10
 
 /**
  * \brief Bus arbitration has been lost.
@@ -153,6 +143,18 @@
  * \brief Data has been received and NACK is returned.
  */
 #define TWI_MR_DATA_NACK 0x58
+
+/**
+ * \def TWGO
+ * \brief Enable the TWI interface.
+ * 
+ * The TWI interface will be enabled by setting the following bits: \n
+ * * TWEN
+ * * TWIEN
+ * * TWSTA
+ * * TWEA
+ */
+#define TWGO (BIT(0) | BIT(2) | BIT(5) | BIT(6))
 
 /**
  * \def TWI_FRQ

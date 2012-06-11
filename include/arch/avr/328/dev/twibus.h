@@ -110,19 +110,11 @@
  * 
  * The bus is lost in sending the SLA+W or by sending a data byte.
  */
-#define TWI_MT_ARB_LOST 0x38
+#define TWI_MASTER_ARB_LOST 0x38
 
 //  ********************************
 //  * Master receiver              *
 //  ********************************
-
-/**
- * \brief Bus arbitration has been lost.
- * \warning Transmission has to be restarted or stopped!
- * 
- * The bus is lost in sending the SLA+W or by sending a data byte.
- */
-#define TWI_MR_ARB_LOST 0x38
 
 /**
  * \brief Slave address has been sent and ACKed.
@@ -155,6 +147,8 @@
  * * TWEA
  */
 #define TWGO (BIT(0) | BIT(2) | BIT(5) | BIT(6))
+
+#define TW_ENABLE (BIT(0) | BIT(2) | BIT(6))
 
 /**
  * \def TWI_FRQ

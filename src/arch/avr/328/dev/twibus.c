@@ -90,6 +90,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 {
 	TWIHW *hw = bus->hwio;
 	unsigned char sla;
+	register unsigned char twcr;
 	int rc = 0;
 	
 	switch(mode) {
@@ -103,8 +104,14 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			sla = (*((unsigned char*)conf)) << 1; // shift out the GCRE bit
 			*(hw->twar) = sla;
 			break;
+
+		case TW_SENT_DATA:
 		case TW_SENT_SLA:
 			*(hw->twdr) = *( (unsigned char*)conf );
+			BermudaEnterCritical();
+			twcr = *(hw->twcr) & (~BIT(5)); // disable TW start.
+			*(hw->twcr) = TW_ENABLE | twcr;
+			BermudaExitCritical();
 			break;
 		case TW_START:
 			*(hw->twcr) = (*(unsigned char*)conf); // sent the given start
@@ -251,6 +258,7 @@ unsigned int  tmo;
 	}
 	
 	BermudaTwIoctl(twi, TW_START, &start);
+	rc = BermudaEventWait( (volatile THREAD**)twi->queue, tmo);
 
 	out:
 #ifdef __EVENTS__

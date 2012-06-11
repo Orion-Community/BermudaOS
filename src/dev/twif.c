@@ -30,6 +30,8 @@
  */
 PUBLIC void BermudaTwISR(TWIBUS *bus)
 {
+	unsigned char sla = bus->sla << 1;
+	
 	switch(bus->status) {
 		case TWI_REP_START:
 		case TWI_START:
@@ -37,12 +39,27 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			// the slave address we want to address.
 			
 			if(bus->mode == TWI_MASTER_RECEIVER) {
-				bus->sla = (bus->sla << 1) | 1; // set the R bit
+				sla |= 1;
 			}
-			else {
-				bus->sla <<= 1; // shift for W bit (0).
+
+			bus->twif->io(bus, TW_SENT_SLA, &sla);
+			break;
+			
+		case TWI_MT_SLA_ACK:
+		case TWI_MT_DATA_ACK:
+			if(bus->index < bus->txlen) {
+				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->tx[bus->index]));
+				bus->index++;
 			}
-			bus->twif->io(bus, TW_SENT_SLA, &(bus->sla));
+			else if(bus->rxlen) {
+				sla |= 1;
+				bus->twif->io(bus, TW_SENT_SLA, &sla);
+			}
+			break;
+			
+		case TWI_MASTER_ARB_LOST:
+			bus->error = TWI_MASTER_ARB_LOST;
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			break;
 			
 		default:

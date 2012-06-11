@@ -56,6 +56,7 @@ typedef enum {
 	TW_START,      //!< Sent the TWI start condition.
 	TW_GET_STATUS, //!< Get the status from hardware.
 	TW_SENT_SLA,   //!< Sent the slave address over the TWI bus.
+	TW_SENT_DATA,  //!< Sent a data byte over the TWI bus.
 } TW_IOCTL_MODE;
 
 /**
@@ -106,10 +107,11 @@ struct _twibus {
 	volatile void *queue;    //!< TWI transfer waiting queue.
 	struct _twif *twif;      //!< TWI hardware communication interface.
 	void *hwio;              //!< TWI hardware I/O registers.
-	const void *tx;          //!< TWI transmit buffer.
-	unsigned int txlen;      //!< Length of the tx buffer.
-	void *rx;                //!< TWI receive buffer.
-	unsigned int rxlen;      //!< Length of the rx buffer.
+	const unsigned char *tx; //!< TWI transmit buffer.
+	uptr txlen;              //!< Length of the tx buffer.
+	unsigned char *rx;       //!< TWI receive buffer.
+	uptr rxlen;              //!< Length of the rx buffer.
+	uptr index;              //!< Data buffer index.
 	
 	TWIMODE mode;            //!< TWI communication mode.
 	uint8_t sla;             //!< Configured slave address + R/W bit.

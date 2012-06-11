@@ -136,7 +136,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
  *       * TW_PRES_1 \n
  *       * TW_PRES_4 \n
  *       * TW_PRES_16 \n
- *       * TW_PRES_64 \n
+ *       * TW_PRES_64
  * \see TW_PRES_1
  * \see TW_PRES_4 
  * \see TW_PRES_16 
@@ -259,7 +259,7 @@ unsigned int  tmo;
 	}
 	
 	BermudaTwIoctl(twi, TW_START, NULL);
-	rc = BermudaEventWait( (volatile THREAD**)twi->queue, tmo);
+	rc = BermudaEventWaitNext( (volatile THREAD**)twi->queue, tmo);
 
 	out:
 #ifdef __EVENTS__

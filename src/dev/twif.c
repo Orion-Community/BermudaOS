@@ -26,7 +26,9 @@
  * \param bus TWI bus which raised the interrupt.
  * \warning Should only be called by hardware!
  * 
- * Generic handling of the TWI logic.
+ * Generic handling of the TWI logic. It will first sent all data in the transmit
+ * buffer, if present. Then it will receive data in the receive buffer, if a
+ * Rx buffer address is configured.
  */
 PUBLIC void BermudaTwISR(TWIBUS *bus)
 {
@@ -54,9 +56,13 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			else if(bus->rxlen) {
 				bus->mode = TWI_MASTER_RECEIVER;
 				bus->twif->io(bus, TW_START, NULL);
+				bus->index = 0;
 			}
 			else { // end of transfer
 				bus->twif->io(bus, TW_SENT_STOP, NULL);
+				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+				bus->index = 0;
+				bus->error = 0;
 			}
 			break;
 			

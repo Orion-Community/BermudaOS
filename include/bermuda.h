@@ -41,6 +41,9 @@
 
 #endif /* __cplusplus */
 
+#define E_SUCCESS 0
+#define E_GENERAL 1
+
 /**
  * \def __PACK__
  * \brief Packed attribute.

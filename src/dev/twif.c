@@ -52,8 +52,11 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 				bus->index++;
 			}
 			else if(bus->rxlen) {
-				sla |= 1;
-				bus->twif->io(bus, TW_SENT_SLA, &sla);
+				bus->mode = TWI_MASTER_RECEIVER;
+				bus->twif->io(bus, TW_START, NULL);
+			}
+			else { // end of transfer
+				bus->twif->io(bus, TW_SENT_STOP, NULL);
 			}
 			break;
 			

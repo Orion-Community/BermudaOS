@@ -114,10 +114,12 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			BermudaExitCritical();
 			break;
 		case TW_START:
-			*(hw->twcr) = (*(unsigned char*)conf); // sent the given start
+			*(hw->twcr) |= TWGO; // sent the given start
 			break;
 		case TW_GET_STATUS:
 			bus->status = (*hw->twsr) & (~B111);
+		case TW_SENT_STOP:
+			*(hw->twcr) |= BIT(4); // enable the TWSTO bit
 		default:
 			rc = -1;
 			break;
@@ -232,7 +234,6 @@ uint32_t      frq;
 unsigned int  tmo;
 {
 	int rc = -1;
-	unsigned char start = TWGO;
 #ifdef __EVENTS__
 	if((rc = BermudaEventWait((volatile THREAD**)twi->mutex, tmo)) == -1) {
 		goto out;
@@ -250,14 +251,14 @@ unsigned int  tmo;
 	}
 	
 	BermudaTwInit(twi, tx, txlen, rx, rxlen, sla, frq);
-	if(rx == NULL || tx != NULL) {
+	if(tx) {
 		twi->mode = TWI_MASTER_TRANSMITTER;
 	}
-	else if(tx == NULL || rx != NULL) {
+	else {
 		twi->mode = TWI_MASTER_RECEIVER;
 	}
 	
-	BermudaTwIoctl(twi, TW_START, &start);
+	BermudaTwIoctl(twi, TW_START, NULL);
 	rc = BermudaEventWait( (volatile THREAD**)twi->queue, tmo);
 
 	out:

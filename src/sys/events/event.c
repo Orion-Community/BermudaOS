@@ -112,6 +112,28 @@ PUBLIC int BermudaEventWait(volatile THREAD **tqpp, unsigned int tmo)
 }
 
 /**
+ * \brief Wait for the next event.
+ * \param tqpp Waiting queue.
+ * \param tmo Event waiting time-out.
+ * 
+ * Waits for the next upcoming event, even if the waiting queue is empty
+ * (SIGNALED).
+ */
+PUBLIC int BermudaEventWaitNext(volatile THREAD **tqpp, unsigned int tmo)
+{	
+	if(tqpp == NULL) {
+		return -1;
+	}
+	
+	BermudaEnterCritical();
+	if(*tqpp == SIGNALED) {
+		*tqpp = NULL;
+	}
+	BermudaExitCritical();
+	return BermudaEventWait(tqpp, tmo);
+}
+
+/**
  * \fn BermudaEventTMO(VTIMER *timer, void *arg)
  * \brief Timeout function.
  * \param timer Timer object which called this function.

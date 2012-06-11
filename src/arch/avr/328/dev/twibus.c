@@ -47,7 +47,7 @@ static volatile void *twi0_mutex = SIGNALED;
  * Threads are placed in this queue when they are waiting for a TW transfer to
  * complete.
  */
-static volatile void *twi0_queue = SIGNALED;
+static volatile void *twi0_queue;
 #endif
 
 /**

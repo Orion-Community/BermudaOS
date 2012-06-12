@@ -42,7 +42,7 @@
 #endif /* __cplusplus */
 
 #define E_SUCCESS 0
-#define E_GENERAL 1
+#define E_GENERIC 1
 
 /**
  * \def __PACK__

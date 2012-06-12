@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(__TWI__) || defined(__DOXYGEN__)
+
 /**
  * \file arch/avr/328/dev/twibus.c Hardware TWI bus controller.
  * \todo Implement TWI.
@@ -312,3 +314,4 @@ SIGNAL(TWI_vect)
 	twibus0->status = BermudaTwIoctl(twibus0, TW_GET_STATUS, NULL);
 	twibus0->twif->isr(twibus0);
 }
+#endif /* __TWI__ */

@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(__SPI__) || defined(__DOXYGEN__)
+
 //! \file arch/avr/328/dev/spibus.c SPI hardware bus
 
 #include <bermuda.h>
@@ -280,4 +282,5 @@ SIGNAL(SPI_STC_vect)
 {
 	BermudaEventSignalFromISR((volatile THREAD**)(&BermudaSpi0HardwareBus)->queue);
 }
-#endif
+#endif /* __EVENTS__ */
+#endif /* __SPI__ */

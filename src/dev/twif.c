@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(__TWI__) || defined(__DOXYGEN__)
+
 #include <bermuda.h>
 #include <sys/events/event.h>
 #include <dev/twif.h>
@@ -67,15 +69,21 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			}
 			break;
 			
+		case TWI_MT_SLA_NACK:
+		case TWI_MT_DATA_NACK:
 		case TWI_MASTER_ARB_LOST:
-			bus->error = TWI_MASTER_ARB_LOST;
+			bus->error = bus->status;
+			bus->index = 0;
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			break;
 			
 		default:
+			bus->error = E_GENERIC;
+			bus->index = 0;
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			break;
 	}
 	
 	return;
 }
+#endif /* __TWI__ */

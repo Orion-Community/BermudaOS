@@ -136,6 +136,7 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			}
 			bus->twif->io(bus, mode, NULL);
 			break;
+
 		default:
 			bus->error = E_GENERIC;
 			bus->index = 0;

@@ -53,12 +53,16 @@ typedef enum {
 	TW_SET_RATE,   //!< Set the TWBR register.
 	TW_SET_PRES,   //!< Set the SCL prescaler.
 	TW_SET_SLA,    //!< Set new slave address.
-	TW_START,      //!< Sent the TWI start condition.
+	
+	TW_RELEASE_BUS,//!< Release the bus.
 	TW_GET_STATUS, //!< Get the status from hardware.
+	
+	TW_SENT_START, //!< Sent the TWI start condition.
 	TW_SENT_SLA,   //!< Sent the slave address over the TWI bus.
 	TW_SENT_DATA,  //!< Sent a data byte over the TWI bus.
 	TW_SENT_STOP,  //!< Sent a stop condition.
-	TW_RELEASE_BUS,//!< Release the bus.
+	TW_READ_DATA,  //!< Read data from the bus.
+
 } TW_IOCTL_MODE;
 
 /**

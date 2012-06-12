@@ -95,31 +95,49 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 	int rc = 0;
 	
 	switch(mode) {
+		/* config cases */
 		case TW_SET_RATE:
 			*(hw->twbr) = *((unsigned char*)conf);
 			break;
+			
 		case TW_SET_PRES:
 			*(hw->twsr) = (*(hw->twsr) &(~B11)) | *((unsigned char*)conf);
 			break;
+			
 		case TW_SET_SLA:
 			sla = (*((unsigned char*)conf)) << 1; // shift out the GCRE bit
 			*(hw->twar) = sla;
 			break;
+		
+		/* bus control */
+		case TW_GET_STATUS:
+			bus->status = (*hw->twsr) & (~B111);
+			break;
+			
 		case TW_RELEASE_BUS:
 			*(hw->twcr) = TW_RELEASE;
 			break;
+			
+		/* I/O cases */
 		case TW_SENT_DATA:
 		case TW_SENT_SLA:
 			*(hw->twdr) = *( (unsigned char*)conf );
 			*(hw->twcr) = TW_ENABLE;
 			break;
-		case TW_START:
+			
+		case TW_SENT_START:
 			*(hw->twcr) = TWGO; // sent the given start
 			break;
-		case TW_GET_STATUS:
-			bus->status = (*hw->twsr) & (~B111);
+
 		case TW_SENT_STOP:
 			*(hw->twcr) = TW_STOP; // enable the TWSTO bit
+			break;
+			
+		case TW_READ_DATA:
+			*((unsigned char*)conf) = *(hw->twdr);
+			*(hw->twcr) = TW_ENABLE;
+			break;
+			
 		default:
 			rc = -1;
 			break;
@@ -258,7 +276,7 @@ unsigned int  tmo;
 		twi->mode = TWI_MASTER_RECEIVER;
 	}
 	
-	BermudaTwIoctl(twi, TW_START, NULL);
+	BermudaTwIoctl(twi, TW_SENT_START, NULL);
 	rc = BermudaEventWaitNext( (volatile THREAD**)twi->queue, tmo);
 
 	out:

@@ -39,6 +39,7 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 	TW_IOCTL_MODE mode;
 	
 	switch(bus->status) {
+		/* master start */
 		case TWI_REP_START:
 		case TWI_START:
 			// TWI start signal has been sent. The interface is ready to sent
@@ -50,9 +51,10 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 
 			bus->twif->io(bus, TW_SENT_SLA, &sla);
 			break;
-			
-		case TWI_MT_SLA_ACK:
-		case TWI_MT_DATA_ACK:
+		
+		/* master transmitter */
+		case TWI_MT_SLA_ACK: // slave ACKed SLA+W
+		case TWI_MT_DATA_ACK: // slave ACKed data
 			if(bus->index < bus->txlen) {
 				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->tx[bus->index]));
 				bus->index++;
@@ -60,19 +62,21 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			else if(bus->rxlen) {
 				bus->mode = TWI_MASTER_RECEIVER;
 				bus->index = 0;
-				bus->twif->io(bus, TW_START, NULL);
+				bus->twif->io(bus, TW_SENT_START, NULL); // sent repeated start
 			}
 			else { // end of transfer
 				bus->index = 0;
 				bus->error = E_SUCCESS;
 				bus->twif->io(bus, TW_SENT_STOP, NULL);
+#ifdef __EVENTS__
 				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#endif
 			}
 			break;
 			
-		case TWI_MT_SLA_NACK:
-		case TWI_MT_DATA_NACK:
-		case TWI_MASTER_ARB_LOST:
+		case TWI_MT_SLA_NACK: // slave NACKed slave address
+		case TWI_MT_DATA_NACK: // slave NACKed data byte
+		case TWI_MASTER_ARB_LOST: // lost bus control
 			if(bus->status == TWI_MASTER_ARB_LOST) {
 				mode = TW_RELEASE_BUS;
 			}
@@ -82,7 +86,26 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->error = bus->status;
 			bus->index = 0;
 			bus->twif->io(bus, mode, NULL);
+#ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#endif
+			break;
+		
+		/* master receiver */
+		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
+		case TWI_MR_DATA_ACK: // received data ACK returned
+			if(bus->index < bus->rxlen) {
+				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
+				bus->index++;
+			}
+			else {
+				bus->index = 0;
+				bus->error = bus->status;
+				bus->twif->io(bus, TW_SENT_STOP, NULL);
+#ifdef __EVENTS__
+				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#endif
+			}
 			break;
 			
 			
@@ -90,7 +113,9 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->error = E_GENERIC;
 			bus->index = 0;
 			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
+#ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#endif
 			break;
 	}
 	

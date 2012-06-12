@@ -77,12 +77,12 @@
 /**
  * \brief Start has been sent.
  */
-#define TWI_START 0x8
+#define TWI_MASTER_START 0x8
 
 /**
  * \brief Repeated start has been sent.
  */
-#define TWI_REP_START 0x10
+#define TWI_MASTER_REP_START 0x10
 
 /**
  * \brief Slave address has been sent and ACKed.
@@ -137,40 +137,51 @@
 #define TWI_MR_DATA_NACK 0x58
 
 /**
- * \def TWGO
+ * \def TW_ENABLE
  * \brief Enable the TWI interface + interrupt.
  * 
  * The TWI interface will be enabled by setting the following bits: \n
- * * TWEN
- * * TWIEN
- * * TWEA
+ * * TWEN \n
+ * * TWIE \n
+ * * TWEA \n
+ * * TWINT \n
  */
 #define TW_ENABLE (BIT(0) | BIT(2) | BIT(6) | BIT(7))
 
 /**
- * \def TWGO
+ * \def TW_STOP
  * \brief Enable the TWI interface and sent a start condition.
  * 
  * The TWI interface will be enabled by setting the following bits: \n
- * * TWEN
- * * TWIEN
- * * TWSTO
- * * TWEA
+ * * TWEN \n
+ * * TWIEN \n
+ * * TWSTO \n
+ * * TWEA \n
  */
 #define TW_STOP (TW_ENABLE | BIT(4))
 
 /**
- * \def TWGO
+ * \def TW_START
  * \brief Enable the TWI interface and sent a start condition.
  * 
  * The TWI interface will be enabled by setting the following bits: \n
- * * TWEN
- * * TWIEN
- * * TWSTA
- * * TWEA
+ * * TWEN \n
+ * * TWIEN \n
+ * * TWSTA \n
+ * * TWEA \n
  */
-#define TWGO (TW_ENABLE | BIT(5))
+#define TW_START (TW_ENABLE | BIT(5))
 
+/**
+ * \def TW_RELEASE
+ * \brief Release the TWI interface.
+ * \note Please note that this will <b>disable</b> the TWI hardware interrupt.
+ * 
+ * The following bits will be set: \n
+ * * TWEN \n
+ * * TWEA \n
+ * * TWINT \n
+ */
 #define TW_RELEASE (TW_ENABLE & (~BIT(0)))
 
 /**
@@ -213,9 +224,7 @@ extern unsigned char BermudaTwiCalcPres(uint32_t pres);
 PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen, 
 								void *rx, unsigned int rxlen, unsigned char sla, 
 								uint32_t frq);
-PRIVATE WEAK void BermudaTwiArbitrationLost(TWIBUS *twi);
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
-PRIVATE WEAK void BermudaTwiISR(TWIBUS *twi);
 __DECL_END
 
 #endif

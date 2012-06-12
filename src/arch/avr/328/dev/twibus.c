@@ -126,7 +126,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 			
 		case TW_SENT_START:
-			*(hw->twcr) = TWGO; // sent the given start
+			*(hw->twcr) = TW_START; // sent the given start
 			break;
 
 		case TW_SENT_STOP:

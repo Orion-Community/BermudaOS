@@ -131,31 +131,7 @@ struct _twibus {
 extern "C" {
 #endif
 
-extern inline uint8_t BermudaTwiUpdateStatus(TWIBUS *twi);
 extern void BermudaTwISR(TWIBUS *bus);
-
-/**
- * \brief Set the slave address.
- * \param dev TWI device.
- * \param sla Slave address to set.
- * \param rm R/W bit.
- * \return 0 on success, -1 when the device is held locked by another thread.
- * 
- * Sets the slave address + the read/write bit.
- */
-static inline int BermudaTwiSetSla(DEVICE *dev, uint8_t sla, uint8_t rw)
-{
-	sla &= rw << BERMUDA_TWI_RW_SHIFT;
-	TWIBUS *bus = dev->data;
-	
-	if(BermudaDeviceIsLocked(dev)) {
-		return -1;
-	}
-	else {
-		bus->sla = sla;
-		return 0;
-	}
-}
 
 #ifdef __cplusplus
 }

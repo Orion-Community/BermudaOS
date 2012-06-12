@@ -138,7 +138,30 @@
 
 /**
  * \def TWGO
- * \brief Enable the TWI interface.
+ * \brief Enable the TWI interface + interrupt.
+ * 
+ * The TWI interface will be enabled by setting the following bits: \n
+ * * TWEN
+ * * TWIEN
+ * * TWEA
+ */
+#define TW_ENABLE (BIT(0) | BIT(2) | BIT(6) | BIT(7))
+
+/**
+ * \def TWGO
+ * \brief Enable the TWI interface and sent a start condition.
+ * 
+ * The TWI interface will be enabled by setting the following bits: \n
+ * * TWEN
+ * * TWIEN
+ * * TWSTO
+ * * TWEA
+ */
+#define TW_STOP (TW_ENABLE | BIT(4))
+
+/**
+ * \def TWGO
+ * \brief Enable the TWI interface and sent a start condition.
  * 
  * The TWI interface will be enabled by setting the following bits: \n
  * * TWEN
@@ -146,9 +169,9 @@
  * * TWSTA
  * * TWEA
  */
-#define TWGO (BIT(0) | BIT(2) | BIT(5) | BIT(6))
+#define TWGO (TW_ENABLE | BIT(5))
 
-#define TW_ENABLE (BIT(0) | BIT(2) | BIT(6))
+#define TW_RELEASE (TW_ENABLE & (~BIT(0)))
 
 /**
  * \def TWI_FRQ

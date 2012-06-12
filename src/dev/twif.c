@@ -36,6 +36,7 @@
 PUBLIC void BermudaTwISR(TWIBUS *bus)
 {
 	unsigned char sla = bus->sla << 1;
+	TW_IOCTL_MODE mode;
 	
 	switch(bus->status) {
 		case TWI_REP_START:
@@ -58,28 +59,37 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			}
 			else if(bus->rxlen) {
 				bus->mode = TWI_MASTER_RECEIVER;
-				bus->twif->io(bus, TW_START, NULL);
 				bus->index = 0;
+				bus->twif->io(bus, TW_START, NULL);
 			}
 			else { // end of transfer
-				bus->twif->io(bus, TW_SENT_STOP, NULL);
-				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 				bus->index = 0;
 				bus->error = E_SUCCESS;
+				bus->twif->io(bus, TW_SENT_STOP, NULL);
+				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			}
 			break;
 			
 		case TWI_MT_SLA_NACK:
 		case TWI_MT_DATA_NACK:
 		case TWI_MASTER_ARB_LOST:
+			if(bus->status == TWI_MASTER_ARB_LOST) {
+				mode = TW_RELEASE_BUS;
+			}
+			else {
+				mode = TW_SENT_STOP;
+			}
 			bus->error = bus->status;
 			bus->index = 0;
+			bus->twif->io(bus, mode, NULL);
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			break;
+			
 			
 		default:
 			bus->error = E_GENERIC;
 			bus->index = 0;
+			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			break;
 	}

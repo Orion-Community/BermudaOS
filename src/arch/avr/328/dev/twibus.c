@@ -92,7 +92,6 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 {
 	TWIHW *hw = bus->hwio;
 	unsigned char sla;
-	register unsigned char twcr;
 	int rc = 0;
 	
 	switch(mode) {
@@ -106,22 +105,21 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			sla = (*((unsigned char*)conf)) << 1; // shift out the GCRE bit
 			*(hw->twar) = sla;
 			break;
-
+		case TW_RELEASE_BUS:
+			*(hw->twcr) = TW_RELEASE;
+			break;
 		case TW_SENT_DATA:
 		case TW_SENT_SLA:
 			*(hw->twdr) = *( (unsigned char*)conf );
-			BermudaEnterCritical();
-			twcr = *(hw->twcr) & (~BIT(5)); // disable TW start.
-			*(hw->twcr) = TW_ENABLE | twcr;
-			BermudaExitCritical();
+			*(hw->twcr) = TW_ENABLE;
 			break;
 		case TW_START:
-			*(hw->twcr) |= TWGO; // sent the given start
+			*(hw->twcr) = TWGO; // sent the given start
 			break;
 		case TW_GET_STATUS:
 			bus->status = (*hw->twsr) & (~B111);
 		case TW_SENT_STOP:
-			*(hw->twcr) |= BIT(4); // enable the TWSTO bit
+			*(hw->twcr) = TW_STOP; // enable the TWSTO bit
 		default:
 			rc = -1;
 			break;

@@ -136,6 +136,34 @@
  */
 #define TWI_MR_DATA_NACK 0x58
 
+/*****************************/
+/* Slave receiver            */
+/*****************************/
+
+#define TWI_SR_SLAW_ACK 0x60 //!< Own slave address has been received and ACKed.
+
+/**
+ * \brief Lost arbitration as master.
+ * 
+ * Arbitration lost in SLA+R/W as Master; own SLA+W has been 
+ * received; ACK has been returned.
+ */
+#define TWI_SR_SLAW_ARB_LOST 0x68
+#define TWI_SR_GC_ACK 0x70 //!< General call received, ACK returned.
+
+/**
+ * \brief Lost arbitration as master.
+ * 
+ * Arbitration lost in SLA+R/W as Master; General call address has 
+ * been received; ACK has been returned.
+ */
+#define TWI_SR_GC_ARB_LOST 0x78
+#define TWI_SR_SLAW_DATA_ACK 0x80 //!< Own SLA+W received, ACK returned.
+#define TWI_SR_SLAW_DATA_NACK 0x88 //!< Own SLA+W received, NACK returned.
+#define TWI_SR_GC_DATA_ACK 0x90 //!< General call received, ACK returned.
+#define TWI_SR_GC_DATA_NACK 0x98 //!< General call received, NACK returned.
+#define TWI_SR_STOP 0xA0 //!< Stop or repeated start condition received.
+
 /**
  * \def TW_ENABLE
  * \brief Enable the TWI interface + interrupt.
@@ -183,6 +211,17 @@
  * * TWINT \n
  */
 #define TW_RELEASE (TW_ENABLE & (~BIT(0)))
+
+/**
+ * \def TW_ENABLE_NACK
+ * \brief Enable the interface, but disable ACKing.
+ * 
+ * The following bits will be enabled: \n
+ * * TWEN \n
+ * * TWIE \n
+ * * TWINT \n
+ */
+#define TW_ENABLE_NACK (TW_ENABLE & (~BIT(6)))
 
 /**
  * \def TWI_FRQ

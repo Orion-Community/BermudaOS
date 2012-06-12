@@ -137,6 +137,13 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			*((unsigned char*)conf) = *(hw->twdr);
 			*(hw->twcr) = TW_ENABLE;
 			break;
+
+		case TW_SLAVE_ACK:
+			*(hw->twcr) = TW_ENABLE;
+			break;
+		case TW_SLAVE_NACK:
+			*(hw->twcr) = TW_ENABLE_NACK;
+			break;
 			
 		default:
 			rc = -1;

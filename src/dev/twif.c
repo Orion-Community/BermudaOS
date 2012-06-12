@@ -121,7 +121,21 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, TW_SENT_STOP, NULL);
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			break;
-			
+
+		/* slave receiver cases */
+		case TWI_SR_SLAW_ACK:
+		case TWI_SR_GC_ACK:
+		case TWI_SR_GC_ARB_LOST:
+		case TWI_SR_SLAW_ARB_LOST:
+			if(bus->rxlen) {
+				mode = TW_SLAVE_ACK;
+				bus->index = 0; // reset receive buffer.
+			}
+			else {
+				mode = TW_SLAVE_NACK;
+			}
+			bus->twif->io(bus, mode, NULL);
+			break;
 		default:
 			bus->error = E_GENERIC;
 			bus->index = 0;

@@ -3,7 +3,6 @@
 *.hex
 *.lst
 build-cli/
-lib/
 *.geany
 .cproject
 .project
@@ -27,3 +26,4 @@ small.ico
 make/.goutputstream-13D5EW
 make/.goutputstream-YDO9EW
 tags
+lib/

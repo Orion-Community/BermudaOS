@@ -105,7 +105,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 			
 		case TW_SET_SLA:
-			sla = (*((unsigned char*)conf)) << 1; // shift out the GCRE bit
+			sla = (*((unsigned char*)conf)) & ~(BIT(0)); // mask out the GCRE bit
 			*(hw->twar) = sla;
 			break;
 		

@@ -37,7 +37,7 @@
  */
 PUBLIC void BermudaTwISR(TWIBUS *bus)
 {
-	unsigned char sla = bus->sla << 1;
+	unsigned char sla = bus->sla & (~BIT(0));
 	TW_IOCTL_MODE mode;
 	
 	switch(bus->status) {
@@ -133,6 +133,8 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			}
 			else {
 				mode = TW_SLAVE_NACK;
+				bus->error = bus->status;
+				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 			}
 			bus->twif->io(bus, mode, NULL);
 			break;

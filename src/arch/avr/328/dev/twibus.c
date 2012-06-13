@@ -137,7 +137,6 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			
 		case TW_READ_DATA:
 			*((unsigned char*)conf) = *(hw->twdr);
-			*(hw->twcr) = TW_ENABLE;
 			break;
 
 		case TW_REPLY_ACK:

@@ -74,8 +74,9 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			}
 			break;
 			
-		case TWI_MT_SLA_NACK: // slave NACKed slave address
+		case TWI_MT_SLA_NACK: // slave NACKed SLA+W
 		case TWI_MT_DATA_NACK: // slave NACKed data byte
+		case TWI_MR_SLA_NACK: // SLA+R sent but NACKed
 		case TWI_MASTER_ARB_LOST: // lost bus control
 			if(bus->status == TWI_MASTER_ARB_LOST) {
 				mode = TW_RELEASE_BUS;
@@ -84,7 +85,6 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 				mode = TW_SENT_STOP;
 			}
 			bus->error = bus->status;
-			bus->index = 0;
 			bus->twif->io(bus, mode, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
@@ -92,18 +92,25 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			break;
 		
 		/* master receiver */
-		case TWI_MR_DATA_ACK: 
+		case TWI_MR_DATA_ACK:
+			bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
+			bus->index++;
+
 		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
+			if(bus->index + 1 < bus->rxlen) {
+				bus->twif->io(bus, TW_REPLY_ACK, NULL);
+			}
+			else {
+				bus->twif->io(bus, TW_REPLY_NACK, NULL);
+			}
 			break;
 			
-		case TWI_MR_SLA_NACK:
 		case TWI_MR_DATA_NACK:
 			if(bus->index < bus->rxlen) {
 				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
 			}
 			
 			bus->error = bus->status;
-			bus->index = 0;
 			bus->twif->io(bus, TW_SENT_STOP, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);

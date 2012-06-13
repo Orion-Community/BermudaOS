@@ -94,20 +94,8 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			break;
 		
 		/* master receiver */
+		case TWI_MR_DATA_ACK: 
 		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
-		case TWI_MR_DATA_ACK: // received data ACK returned
-			if(bus->index < bus->rxlen) {
-				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
-				bus->index++;
-			}
-			else {
-				bus->index = 0;
-				bus->error = bus->status;
-				bus->twif->io(bus, TW_SENT_STOP, NULL);
-#ifdef __EVENTS__
-				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
-#endif
-			}
 			break;
 			
 		case TWI_MR_SLA_NACK:
@@ -119,7 +107,9 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->error = bus->status;
 			bus->index = 0;
 			bus->twif->io(bus, TW_SENT_STOP, NULL);
+#ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#endif
 			break;
 
 		/* slave receiver cases */
@@ -128,13 +118,15 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 		case TWI_SR_GC_ARB_LOST:
 		case TWI_SR_SLAW_ARB_LOST:
 			if(bus->rxlen) {
-				mode = TW_SLAVE_ACK;
+				mode = TW_REPLY_ACK;
 				bus->index = 0; // reset receive buffer.
 			}
 			else {
-				mode = TW_SLAVE_NACK;
+				mode = TW_REPLY_NACK;
 				bus->error = bus->status;
+#ifdef __EVENTS__
 				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#endif
 			}
 			bus->twif->io(bus, mode, NULL);
 			break;

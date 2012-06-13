@@ -25,7 +25,20 @@
 
 static TWIBUS *eeprom_bus = NULL;
 
+/**
+ * \brief Initialize the 24C02 driver.
+ * \param bus Two Wire bus to use.
+ * \note It is very important that the bus passed to this routine
+ *       is initialized.
+ * 
+ * When this routine is called, the driver is functional and ready to use.
+ */
 PUBLIC void Bermuda24c02Init(TWIBUS *bus)
 {
 	eeprom_bus = bus;
+}
+
+PUBLIC void Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
+{
+	unsigned char tx[] { addr, data };
 }

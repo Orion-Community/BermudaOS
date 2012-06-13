@@ -57,18 +57,19 @@ static volatile void *twi0_queue;
  * \brief Global pointer to the TWI0 bus.
  * \see TWI0
  */
-static TWIBUS *twibus0 = NULL;
+TWIBUS *twibus0 = NULL;
 
 /**
  * \brief Initialize TWI bus 0.
- * \param bus Bus structure pointer. Should not be NULL.
+ * \param sla Own slave address.
  */
-PUBLIC void BermudaTwi0Init(TWIBUS *bus)
+PUBLIC void BermudaTwi0Init(unsigned char sla)
 {
-	if(bus == NULL) {
+	TWIBUS *bus;
+	if(TWI0 != NULL) { // already initialized
 		return;
 	}
-	
+	bus = BermudaHeapAlloc(sizeof(*bus));
 	twibus0 = bus;
 	bus->twif = BermudaHeapAlloc(sizeof( *(bus->twif) ));
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
@@ -78,6 +79,7 @@ PUBLIC void BermudaTwi0Init(TWIBUS *bus)
 	bus->mutex = &twi0_mutex;
 	bus->queue = &twi0_queue;
 #endif
+	bus->twif->io(bus, TW_SET_SLA, &sla);
 }
 
 /**
@@ -138,10 +140,10 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			*(hw->twcr) = TW_ENABLE;
 			break;
 
-		case TW_SLAVE_ACK:
+		case TW_REPLY_ACK:
 			*(hw->twcr) = TW_ENABLE;
 			break;
-		case TW_SLAVE_NACK:
+		case TW_REPLY_NACK:
 			*(hw->twcr) = TW_ENABLE_NACK;
 			break;
 			

@@ -164,6 +164,8 @@
 #define TWI_SR_GC_DATA_NACK 0x98 //!< General call received, NACK returned.
 #define TWI_SR_STOP 0xA0 //!< Stop or repeated start condition received.
 
+// TWI IO defines
+
 /**
  * \def TW_ENABLE
  * \brief Enable the TWI interface + interrupt.
@@ -253,7 +255,7 @@ struct _twi_hw {
 typedef struct _twi_hw TWIHW;
 
 __DECL
-extern void BermudaTwi0Init(TWIBUS *bus);
+extern void BermudaTwi0Init(unsigned char sla);
 extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, unsigned int txlen,  
 							  void *rx, unsigned int rxlen, unsigned char sla,
 							  uint32_t frq, unsigned int tmo);
@@ -265,5 +267,7 @@ PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen,
 								uint32_t frq);
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 __DECL_END
+
+extern TWIBUS *TWI0;
 
 #endif

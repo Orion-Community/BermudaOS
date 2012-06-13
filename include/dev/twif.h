@@ -66,8 +66,8 @@ typedef enum {
 	TW_SENT_STOP,  //!< Sent a stop condition.
 	TW_READ_DATA,  //!< Read data from the bus.
 
-	TW_SLAVE_ACK,  //!< Used by slave to ACK to the calling master.
-	TW_SLAVE_NACK, //!< Used by slave to disable ACKing.
+	TW_REPLY_ACK,  //!< Used by slave to ACK to the calling master.
+	TW_REPLY_NACK, //!< Used by slave to disable ACKing.
 
 } TW_IOCTL_MODE;
 
@@ -142,5 +142,4 @@ extern void BermudaTwISR(TWIBUS *bus);
 #ifdef __cplusplus
 }
 #endif
-
 #endif

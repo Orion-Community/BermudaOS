@@ -15,3 +15,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+//!< \file lib/24c02.c Serial EEPROM library
+
+#include <bermuda.h>
+
+#include <dev/twif.h>
+#include <lib/24c02.h>
+
+static TWIBUS *eeprom_bus = NULL;
+
+PUBLIC void Bermuda24c02Init(TWIBUS *bus)
+{
+	eeprom_bus = bus;
+}

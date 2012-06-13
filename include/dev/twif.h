@@ -30,7 +30,10 @@
  * \def BERMUDA_TWI_RW_SHIFT
  * \brief Bit location of the R/W bit.
  */
-#define BERMUDA_TWI_RW_SHIFT 7
+#define BERMUDA_TWI_RW_SHIFT 0
+
+#define TWI_WRITE 0 //!< TWI SLA+W bit mask.
+#define TWI_READ BIT(0) //!< TWI SLA+R bit mask.
 
 /**
  * \typedef TWIMODE

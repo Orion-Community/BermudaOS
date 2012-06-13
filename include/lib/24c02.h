@@ -15,3 +15,26 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+//!< \file lib/24c02.h Serial EEPROM library
+
+#ifndef __24C02EEPROM_H
+#define __24C02EEPROM_H
+
+#include <bermuda.h>
+#include <dev/twif.h>
+
+/**
+ * \brief 24C02 base slave address.
+ * \note Pulling an address line high will change the slave address.
+ * 
+ * The slave address of a 24C02 chip without any of the
+ * address lines selected (pulled high).
+ */
+#define 24C02_BASE_SLA 0xA0
+
+extern void Bermuda24c02Init(TWIBUS *bus);
+extern void Bermuda24c02WriteByte(unsigned char addr, unsigned char data);
+extern unsigned char Bermuda24c02ReadByte(unsigned char addr);
+
+#endif /* __24C02EEPROM_H */

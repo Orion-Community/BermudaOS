@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../include
 TARGET			= lib.o
 ARDUINO_LIBS		=
 
-CSRCS			= spiram.c
+CSRCS			= spiram.c 24c02.c
 CPPSRCS			= 
 LIBDIR			= ../../lib
 

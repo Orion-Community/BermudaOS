@@ -40,5 +40,5 @@ PUBLIC void Bermuda24c02Init(TWIBUS *bus)
 
 PUBLIC void Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 {
-	unsigned char tx[] { addr, data };
+	unsigned char tx[] = { addr, data };
 }

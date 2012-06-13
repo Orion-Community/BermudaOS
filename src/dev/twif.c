@@ -39,6 +39,7 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 {
 	unsigned char sla = bus->sla & (~BIT(0));
 	TW_IOCTL_MODE mode;
+	bus->twif->io(bus, TW_GET_STATUS, (void*)&(bus->status));
 	
 	switch(bus->status) {
 		/* master start */

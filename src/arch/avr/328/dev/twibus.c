@@ -70,7 +70,7 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 		return;
 	}
 	bus = BermudaHeapAlloc(sizeof(*bus));
-	twibus0 = bus;
+	TWI0 = bus;
 	bus->twif = BermudaHeapAlloc(sizeof( *(bus->twif) ));
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
 	bus->twif->io = &BermudaTwIoctl;
@@ -113,7 +113,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 		
 		/* bus control */
 		case TW_GET_STATUS:
-			bus->status = (*hw->twsr) & (~B111);
+			*((unsigned char*)conf) = (*hw->twsr) & (~B111);
 			break;
 			
 		case TW_RELEASE_BUS:
@@ -335,7 +335,6 @@ uint32_t      frq;
 
 SIGNAL(TWI_vect)
 {
-	twibus0->status = BermudaTwIoctl(twibus0, TW_GET_STATUS, NULL);
 	twibus0->twif->isr(twibus0);
 }
 #endif /* __TWI__ */

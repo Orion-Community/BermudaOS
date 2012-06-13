@@ -33,6 +33,7 @@
 #include <arch/avr/328/dev/spibus.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/stack.h>
+#include <arch/avr/328/dev/twibus.h>
 
 #define LED_DDR  BermudaGetDDRB()
 #define LED_PORT BermudaGetPORTB()
@@ -70,6 +71,8 @@ PUBLIC int BermudaInit(void)
 	spi->name = "SPI0";
 	BermudaDeviceRegister(spi, NULL);
 #endif
+
+	BermudaTwi0Init(0x56);
 
 	STACK_L = (MEM-128) & 0xFF;
 	STACK_H = ((MEM-128) >> 8) & 0xFF;

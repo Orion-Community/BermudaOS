@@ -31,9 +31,9 @@
  * The slave address of a 24C02 chip without any of the
  * address lines selected (pulled high).
  */
-#define 24C02_BASE_SLA 0xA0
+#define BASE_SLA_24C02 0xA0
 
-#define 24C02_SCL_FRQ 100000UL //! SCL frequency of 100.0KHz
+#define SCL_FRQ_24C02 100000UL //! SCL frequency of 100.0KHz
 
 extern void Bermuda24c02Init(TWIBUS *bus);
 extern void Bermuda24c02WriteByte(unsigned char addr, unsigned char data);

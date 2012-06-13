@@ -22,20 +22,20 @@
 #include <sys/virt_timer.h>
 #include <sys/events/event.h>
 
-#include <lib/spiram.h>
+#include <lib/24c02.h>
 
 #include <dev/dev.h>
+#include <dev/twif.h>
 
 #include <arch/io.h>
-#include <arch/avr/328/dev/spibus.h>
+#include <arch/twi.h>
 
 static VTIMER *timer;
 
 THREAD(SramThread, arg)
 {
 	while(1) {
-		uint8_t read_back = BermudaSpiRamReadByte(0x50);
-		printf("Read back: %X\n", read_back);
+		//printf("Read back: %x\n", 0);
 		BermudaThreadSleep(1000);
 	}
 }
@@ -63,8 +63,9 @@ void setup()
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
-	BermudaSpiRamInit(SPI0, 10);
-	BermudaSpiRamWriteByte(0x50, 0x99);
+	//BermudaSpiRamInit(SPI0, 10);
+	//BermudaSpiRamWriteByte(0x50, 0x99);
+	Bermuda24c02Init(TWI0);
 }
 
 void loop()
@@ -76,7 +77,7 @@ void loop()
 	tmp = adc->read(A0);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
-	printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+	//printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
 
 	BermudaThreadSleep(5000);
 	return;

@@ -5,7 +5,7 @@ ARDUINO_LIBS		=
 CSRCS			= main.c
 CPPSRCS			= 
 LIBDIR			= ../lib
-LIBS			= -lBermuda -ldevreg -lspibus -lEvents -lspiram
+LIBS			= -lBermuda -ldevreg -ltwif -lEvents -l24c02
 BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)

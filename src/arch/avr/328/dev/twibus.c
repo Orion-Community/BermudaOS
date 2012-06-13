@@ -59,6 +59,15 @@ static volatile void *twi0_queue;
  */
 TWIBUS *twibus0 = NULL;
 
+static TWIHW twi0hw = {
+	&TWBR,
+	&TWCR,
+	&TWSR,
+	&TWDR,
+	&TWAR,
+	&TWAMR,
+};
+
 /**
  * \brief Initialize TWI bus 0.
  * \param sla Own slave address.
@@ -75,10 +84,12 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
 	bus->twif->io = &BermudaTwIoctl;
 	bus->twif->isr = &BermudaTwISR;
+	bus->hwio = (void*)&twi0hw;
 #ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
 	bus->queue = &twi0_queue;
 #endif
+	bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 	bus->twif->io(bus, TW_SET_SLA, &sla);
 }
 
@@ -113,18 +124,23 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 		
 		/* bus control */
 		case TW_GET_STATUS:
-			*((unsigned char*)conf) = (*hw->twsr) & (~B111);
+			bus->status = (*hw->twsr) & (~B111);
+			*((unsigned char*)conf) = bus->status;
 			break;
 			
 		case TW_RELEASE_BUS:
 			*(hw->twcr) = TW_RELEASE;
+			break;
+
+		case TW_ENABLE_INTERFACE:
+			*(hw->twcr) = TW_ENABLE;
 			break;
 			
 		/* I/O cases */
 		case TW_SENT_DATA:
 		case TW_SENT_SLA:
 			*(hw->twdr) = *( (unsigned char*)conf );
-			*(hw->twcr) = TW_ENABLE;
+			*(hw->twcr) = TW_ACK;
 			break;
 			
 		case TW_SENT_START:
@@ -140,7 +156,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 
 		case TW_REPLY_ACK:
-			*(hw->twcr) = TW_ENABLE;
+			*(hw->twcr) = TW_ACK;
 			break;
 		case TW_REPLY_NACK:
 			*(hw->twcr) = TW_ENABLE_NACK;

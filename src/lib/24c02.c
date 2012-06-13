@@ -22,6 +22,7 @@
 
 #include <dev/twif.h>
 #include <lib/24c02.h>
+#include <arch/twi.h>
 
 static TWIBUS *eeprom_bus = NULL;
 
@@ -38,7 +39,12 @@ PUBLIC void Bermuda24c02Init(TWIBUS *bus)
 	eeprom_bus = bus;
 }
 
-PUBLIC void Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
+PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 {
 	unsigned char tx[] = { addr, data };
+	int rc =  eeprom_bus->twif->transfer(eeprom_bus, tx, 2, NULL, 0, 
+		                               BASE_SLA_24C02, SCL_FRQ_24C02, 500);
+
+	printf("TWI error code: %x\n", eeprom_bus->error);
+	return rc;
 }

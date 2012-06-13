@@ -23,6 +23,7 @@
 
 #include <bermuda.h>
 #include <dev/twif.h>
+#include <arch/avr/328/dev/twireg.h>
 
 /**
  * \def TWI0
@@ -72,102 +73,12 @@
  */
 #define TW_PRES_64 B11
 
-// Master transmitter status bytes
-
-/**
- * \brief Start has been sent.
- */
-#define TWI_MASTER_START 0x8
-
-/**
- * \brief Repeated start has been sent.
- */
-#define TWI_MASTER_REP_START 0x10
-
-/**
- * \brief Slave address has been sent and ACKed.
- */
-#define TWI_MT_SLA_ACK 0x18
-
-/**
- * \brief Slave address has been sent and NACKed.
- */
-#define TWI_MT_SLA_NACK 0x20
-
-/**
- * \brief Data has been sent and ACKed.
- */
-#define TWI_MT_DATA_ACK 0x28
-
-/**
- * \brief Data has been sent and NACKed.
- */
-#define TWI_MT_DATA_NACK 0x30
-
-/**
- * \brief Bus arbitration has been lost.
- * \warning Transmission has to be restarted or stopped!
- * 
- * The bus is lost in sending the SLA+W or by sending a data byte.
- */
-#define TWI_MASTER_ARB_LOST 0x38
-
-//  ********************************
-//  * Master receiver              *
-//  ********************************
-
-/**
- * \brief Slave address has been sent and ACKed.
- */
-#define TWI_MR_SLA_ACK 0x40
-
-/**
- * \brief Slave address has been sent and NACKed.
- */
-#define TWI_MR_SLA_NACK 0x48
-
-/**
- * \brief Data has been received and ACK is returned.
- */
-#define TWI_MR_DATA_ACK 0x50
-
-/**
- * \brief Data has been received and NACK is returned.
- */
-#define TWI_MR_DATA_NACK 0x58
-
-/*****************************/
-/* Slave receiver            */
-/*****************************/
-
-#define TWI_SR_SLAW_ACK 0x60 //!< Own slave address has been received and ACKed.
-
-/**
- * \brief Lost arbitration as master.
- * 
- * Arbitration lost in SLA+R/W as Master; own SLA+W has been 
- * received; ACK has been returned.
- */
-#define TWI_SR_SLAW_ARB_LOST 0x68
-#define TWI_SR_GC_ACK 0x70 //!< General call received, ACK returned.
-
-/**
- * \brief Lost arbitration as master.
- * 
- * Arbitration lost in SLA+R/W as Master; General call address has 
- * been received; ACK has been returned.
- */
-#define TWI_SR_GC_ARB_LOST 0x78
-#define TWI_SR_SLAW_DATA_ACK 0x80 //!< Own SLA+W received, ACK returned.
-#define TWI_SR_SLAW_DATA_NACK 0x88 //!< Own SLA+W received, NACK returned.
-#define TWI_SR_GC_DATA_ACK 0x90 //!< General call received, ACK returned.
-#define TWI_SR_GC_DATA_NACK 0x98 //!< General call received, NACK returned.
-#define TWI_SR_STOP 0xA0 //!< Stop or repeated start condition received.
-
 // TWI IO defines
 
+#define TW_ENABLE (BIT(0) | BIT(2) | BIT(6))
+
 /**
- * \def TW_ENABLE
+ * \def TW_ACK
  * \brief Enable the TWI interface + interrupt.
  * 
  * The TWI interface will be enabled by setting the following bits: \n
@@ -176,7 +87,7 @@
  * * TWEA \n
  * * TWINT \n
  */
-#define TW_ENABLE (BIT(0) | BIT(2) | BIT(6) | BIT(7))
+#define TW_ACK (BIT(0) | BIT(2) | BIT(6) | BIT(7))
 
 /**
  * \def TW_STOP
@@ -188,7 +99,7 @@
  * * TWSTO \n
  * * TWEA \n
  */
-#define TW_STOP (TW_ENABLE | BIT(4))
+#define TW_STOP (TW_ACK | BIT(4))
 
 /**
  * \def TW_START
@@ -200,7 +111,7 @@
  * * TWSTA \n
  * * TWEA \n
  */
-#define TW_START (TW_ENABLE | BIT(5))
+#define TW_START (TW_ACK | BIT(5))
 
 /**
  * \def TW_RELEASE
@@ -212,7 +123,7 @@
  * * TWEA \n
  * * TWINT \n
  */
-#define TW_RELEASE (TW_ENABLE & (~BIT(0)))
+#define TW_RELEASE (TW_ACK & (~BIT(0)))
 
 /**
  * \def TW_ENABLE_NACK
@@ -223,7 +134,7 @@
  * * TWIE \n
  * * TWINT \n
  */
-#define TW_ENABLE_NACK (TW_ENABLE & (~BIT(6)))
+#define TW_ENABLE_NACK (TW_ACK & (~BIT(6)))
 
 /**
  * \def TWI_FRQ

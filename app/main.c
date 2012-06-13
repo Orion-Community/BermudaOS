@@ -35,7 +35,7 @@ static VTIMER *timer;
 THREAD(SramThread, arg)
 {
 	while(1) {
-		//printf("Read back: %x\n", 0);
+		Bermuda24c02WriteByte(100, 0x99);
 		BermudaThreadSleep(1000);
 	}
 }

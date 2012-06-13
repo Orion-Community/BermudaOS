@@ -29,7 +29,7 @@
  * \brief Generic TWI interrupt handler.
  * \param bus TWI bus which raised the interrupt.
  * \warning Should only be called by hardware!
- * \todo Slave transmitter and slave receiver.
+ * \todo Master receiver, slave transmitter and slave receiver.
  * 
  * Generic handling of the TWI logic. It will first sent all data in the transmit
  * buffer, if present. Then it will receive data in the receive buffer, if a
@@ -46,7 +46,7 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 		case TWI_MASTER_START:
 			// TWI start signal has been sent. The interface is ready to sent
 			// the slave address we want to address.
-			
+			bus->index = 0;
 			if(bus->mode == TWI_MASTER_RECEIVER) {
 				sla |= 1;
 			}
@@ -63,11 +63,9 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			}
 			else if(bus->rxlen) {
 				bus->mode = TWI_MASTER_RECEIVER;
-				bus->index = 0;
 				bus->twif->io(bus, TW_SENT_START, NULL); // sent repeated start
 			}
 			else { // end of transfer
-				bus->index = 0;
 				bus->error = E_SUCCESS;
 				bus->twif->io(bus, TW_SENT_STOP, NULL);
 #ifdef __EVENTS__

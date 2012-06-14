@@ -115,8 +115,10 @@ PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
 	dev->io->data = (void*)dev;
         
 	dev->data = &BermudaSpi0HardwareBus;
-	dev->mutex = &BermudaSPI0Mutex;
 
+#ifdef __EVENTS__
+	dev->mutex = &BermudaSPI0Mutex;
+#endif
 	// enable the spi interface
 	SPI_DDR |= (SPI_SCK | SPI_MOSI | SPI_SS);
 	SPI_PORT &= ~(SPI_SCK | SPI_MOSI);

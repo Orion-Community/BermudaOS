@@ -29,6 +29,8 @@
 #include <sys/events/event.h>
 
 #include <dev/twif.h>
+
+#include <arch/avr/io.h>
 #include <arch/avr/328/dev/twibus.h>
 
 #include <avr/interrupt.h>
@@ -227,10 +229,11 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
  * \brief Calculates the TWI prescaler value.
  * \param frq The desired frequency.
  * \return The prescaler value in hardware format: \n
- *         * B0 for a prescaler of 1;
- *         * B1 for a prescaler of 4;
- *         * B10 for a prescaler of 16;
+ *         * B0 for a prescaler of 1; \n
+ *         * B1 for a prescaler of 4; \n
+ *         * B10 for a prescaler of 16; \n
  *         * B11 for a prescaler of 64
+ *
  * Calculates the prescaler value based on the given frequency.
  */
 unsigned char BermudaTwiCalcPres(uint32_t frq)
@@ -265,8 +268,8 @@ unsigned char BermudaTwiCalcPres(uint32_t frq)
  * Data is transfered or received using the TWI bus. The mode this function
  * uses depends of the TWIMODE setting in the TWIBUS structure.
  */
-PUBLIC int BermudaTwiMasterTransfer(twi, tx, txlen, rx, rxlen, sla, frq, tmo)
-TWIBUS        *twi;
+PUBLIC int BermudaTwiMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
+TWIBUS        *bus;
 const void*   tx;
 unsigned int  txlen;
 void*         rx;
@@ -277,13 +280,16 @@ unsigned int  tmo;
 {
 	int rc = -1;
 #ifdef __EVENTS__
-	if((rc = BermudaEventWait((volatile THREAD**)twi->mutex, tmo)) == -1) {
+	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
 		goto out;
 	}
 	else if(tx == NULL && rx == NULL) {
 		goto out;
 	}
 #else
+#ifdef __THREADS__
+	BermudaMutexEnter(&(bus->mutex));
+#endif
 	if(tx == NULL && rx == NULL) {
 		goto out;
 	}
@@ -292,22 +298,26 @@ unsigned int  tmo;
 		rc = 0;
 	}
 	
-	BermudaTwInit(twi, tx, txlen, rx, rxlen, sla, frq);
+	BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq);
 	if(tx) {
-		twi->mode = TWI_MASTER_TRANSMITTER;
+		bus->mode = TWI_MASTER_TRANSMITTER;
 	}
 	else {
-		twi->mode = TWI_MASTER_RECEIVER;
+		bus->mode = TWI_MASTER_RECEIVER;
 	}
 	
-	BermudaTwIoctl(twi, TW_SENT_START, NULL);
-	rc = BermudaEventWaitNext( (volatile THREAD**)twi->queue, tmo);
+	BermudaTwIoctl(bus, TW_SENT_START, NULL);
+#ifdef __EVENTS__
+	rc = BermudaEventWaitNext( (volatile THREAD**)bus->queue, tmo);
+#endif
 
 	out:
 #ifdef __EVENTS__
 	if(rc != -1) {
-		BermudaEventSignal((volatile THREAD**)twi->mutex);
+		BermudaEventSignal((volatile THREAD**)bus->mutex);
 	}
+#elif __THREADS__
+	BermudaMutexRelease(&(bus->mutex));
 #endif
 	
 	return rc;
@@ -325,8 +335,8 @@ unsigned int  tmo;
  * 
  * Used to initialize the TWI bus before starting a transfer.
  */
-PRIVATE WEAK void BermudaTwInit(twi, tx, txlen, rx, rxlen, sla, frq)
-TWIBUS*       twi;
+PRIVATE WEAK void BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq)
+TWIBUS*       bus;
 const void*   tx;
 unsigned int  txlen;
 void*         rx;
@@ -334,18 +344,18 @@ unsigned int  rxlen;
 unsigned char sla;
 uint32_t      frq;
 {
-	twi->tx = tx;
-	twi->txlen = txlen;
-	twi->rx = rx;
-	twi->rxlen = rxlen;
-	twi->sla = sla;
-	twi->freq = frq;
+	bus->tx = tx;
+	bus->txlen = txlen;
+	bus->rx = rx;
+	bus->rxlen = rxlen;
+	bus->sla = sla;
+	bus->freq = frq;
 	
 	if(frq) {
 		unsigned char pres = BermudaTwiCalcPres(frq);
 		unsigned char twbr = BermudaTwiCalcTWBR(frq, pres);
-		BermudaTwIoctl(twi, TW_SET_RATE, &twbr);
-		BermudaTwIoctl(twi, TW_SET_PRES, &pres);
+		BermudaTwIoctl(bus, TW_SET_RATE, &twbr);
+		BermudaTwIoctl(bus, TW_SET_PRES, &pres);
 	}
 }
 

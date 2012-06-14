@@ -98,7 +98,7 @@
  * \typedef mutex_t
  * \brief Mutual exclusion type.
  */
-typedef unsigned char mutex_t;
+typedef volatile unsigned char mutex_t;
 
 typedef volatile unsigned char*   reg8_t;
 typedef unsigned short*  reg16_t;

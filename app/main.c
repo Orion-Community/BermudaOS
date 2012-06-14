@@ -23,21 +23,28 @@
 #include <sys/events/event.h>
 
 #include <lib/24c02.h>
+#include <lib/spiram.h>
 
 #include <dev/dev.h>
 #include <dev/twif.h>
+#include <dev/spibus.h>
 
 #include <arch/io.h>
 #include <arch/twi.h>
+#include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
 
 THREAD(SramThread, arg)
 {
-	unsigned char read_back = 0;
+	unsigned char read_back_eeprom = 0;
+	unsigned char read_back_sram = 0;
 	while(1) {
-		read_back = Bermuda24c02ReadByte(100);
-		printf("Read back value: %X\n", read_back);
+		read_back_sram = BermudaSpiRamReadByte(0x50);
+		read_back_eeprom = Bermuda24c02ReadByte(100);
+
+		printf("Read back value's: %X::%X\n", read_back_eeprom,
+			read_back_sram);
 		BermudaThreadSleep(1000);
 	}
 }
@@ -65,10 +72,11 @@ void setup()
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
-	//BermudaSpiRamInit(SPI0, 10);
-	//BermudaSpiRamWriteByte(0x50, 0x99);
+
 	Bermuda24c02Init(TWI0);
-	Bermuda24c02WriteByte(100, 0x99);
+	BermudaSpiRamInit(SPI0, 10);
+	BermudaSpiRamWriteByte(0x50, 0x99);
+	Bermuda24c02WriteByte(100, 0xAB);
 }
 
 void loop()
@@ -80,7 +88,7 @@ void loop()
 	tmp = adc->read(A0);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
-	//printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+	printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
 
 	BermudaThreadSleep(5000);
 	return;

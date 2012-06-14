@@ -126,7 +126,7 @@
 #define TW_RELEASE (TW_ACK & (~BIT(0)))
 
 /**
- * \def TW_ENABLE_NACK
+ * \def TW_NACK
  * \brief Enable the interface, but disable ACKing.
  * 
  * The following bits will be enabled: \n
@@ -134,7 +134,7 @@
  * * TWIE \n
  * * TWINT \n
  */
-#define TW_ENABLE_NACK (TW_ACK & (~BIT(6)))
+#define TW_NACK (TW_ACK & (~BIT(6)))
 
 /**
  * \def TWI_FRQ

@@ -99,7 +99,7 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 
 		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
 			if(bus->index + 1 < bus->rxlen) {
-				bus->twif->io(bus, TW_REPLY_ACK, NULL);
+				bus->twif->io(bus, TW_REPLY_ACK, NULL); // Only ack the last byte
 			}
 			else {
 				bus->twif->io(bus, TW_REPLY_NACK, NULL);

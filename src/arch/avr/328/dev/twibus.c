@@ -159,7 +159,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			*(hw->twcr) = TW_ACK;
 			break;
 		case TW_REPLY_NACK:
-			*(hw->twcr) = TW_ENABLE_NACK;
+			*(hw->twcr) = TW_NACK;
 			break;
 			
 		default:

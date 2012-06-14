@@ -45,6 +45,15 @@ PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 	int rc =  eeprom_bus->twif->transfer(eeprom_bus, tx, 2, NULL, 0, 
 		                               BASE_SLA_24C02, SCL_FRQ_24C02, 500);
 
-	printf("TWI error code: %x\n", eeprom_bus->error);
 	return rc;
+}
+
+PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
+{
+	unsigned char tx = addr;
+	unsigned char rx = 0;
+	eeprom_bus->twif->transfer(eeprom_bus, &tx, 1, &rx, 1, BASE_SLA_24C02,
+		                                SCL_FRQ_24C02, 500);
+	printf("TWI error code: %X\n", eeprom_bus->error);
+	return rx;
 }

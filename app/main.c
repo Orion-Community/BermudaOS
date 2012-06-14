@@ -34,8 +34,10 @@ static VTIMER *timer;
 
 THREAD(SramThread, arg)
 {
+	unsigned char read_back = 0;
 	while(1) {
-		Bermuda24c02WriteByte(100, 0x99);
+		read_back = Bermuda24c02ReadByte(100);
+		printf("Read back value: %X\n", read_back);
 		BermudaThreadSleep(1000);
 	}
 }
@@ -66,6 +68,7 @@ void setup()
 	//BermudaSpiRamInit(SPI0, 10);
 	//BermudaSpiRamWriteByte(0x50, 0x99);
 	Bermuda24c02Init(TWI0);
+	Bermuda24c02WriteByte(100, 0x99);
 }
 
 void loop()

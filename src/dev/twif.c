@@ -29,7 +29,7 @@
  * \brief Generic TWI interrupt handler.
  * \param bus TWI bus which raised the interrupt.
  * \warning Should only be called by hardware!
- * \todo Master receiver, slave transmitter and slave receiver.
+ * \todo Slave transmitter and slave receiver.
  * 
  * Generic handling of the TWI logic. It will first sent all data in the transmit
  * buffer, if present. Then it will receive data in the receive buffer, if a
@@ -40,7 +40,6 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 	unsigned char sla = bus->sla & (~BIT(0));
 	TW_IOCTL_MODE mode;
 	bus->twif->io(bus, TW_GET_STATUS, (void*)&(bus->status));
-	bus->error = bus->status;
 	
 	switch(bus->status) {
 		/* master start */

@@ -32,9 +32,9 @@
 #include <dev/spibus.h>
 
 #include <arch/avr/io.h>
+#include <arch/avr/interrupts.h>
 #include <arch/avr/328/dev/spireg.h>
 #include <arch/avr/328/dev/spibus.h>
-#include <avr/interrupt.h>
 
 #ifdef __EVENTS__
 THREAD *BermudaSPI0TransferQueue = SIGNALED;

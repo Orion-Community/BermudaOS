@@ -19,7 +19,7 @@
 /** \file src/arch/avr/328/timer.c */
 #include <lib/binary.h>
 
-#include <avr/interrupt.h>
+#include <arch/avr/interrupts.h>
 
 #include <sys/sched.h>
 #include <sys/thread.h>

@@ -18,8 +18,6 @@
 
 #include <bermuda.h>
 
-#include <avr/interrupt.h>
-
 #include <lib/spiram.h>
 #include <lib/binary.h>
 #include <dev/dev.h>
@@ -28,6 +26,7 @@
 #include <sys/sched.h>
 #include <sys/virt_timer.h>
 
+#include <arch/avr/interrupts.h>
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
 #include <arch/avr/328/dev/spibus.h>

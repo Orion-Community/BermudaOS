@@ -33,7 +33,7 @@
 #include <arch/avr/io.h>
 #include <arch/avr/328/dev/twibus.h>
 
-#include <avr/interrupt.h>
+#include <arch/avr/interrupts.h>
 
 #ifdef __EVENTS__
 /**
@@ -359,7 +359,7 @@ uint32_t      frq;
 	}
 }
 
-SIGNAL(TWI_vect)
+SIGNAL(TWI_STC_vect)
 {
 	twibus0->twif->isr(twibus0);
 }

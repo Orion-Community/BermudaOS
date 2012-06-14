@@ -24,7 +24,7 @@
 #include <sys/thread.h>
 #include <sys/sched.h>
 #include <lib/binary.h>
-#include <avr/interrupt.h>
+#include <arch/avr/interrupts.h>
 #include <arch/avr/io.h>
 
 /**

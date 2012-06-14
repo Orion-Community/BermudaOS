@@ -19,8 +19,6 @@
 #ifndef __ARCH_IO_H
 #define __ARCH_IO_H
 
-#include <avr/interrupt.h>
-
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/io.h>
         #include <arch/avr/timer.h>

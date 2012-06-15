@@ -130,9 +130,6 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			else {
 				mode = TW_REPLY_NACK;
 				bus->error = bus->status;
-#ifdef __EVENTS__
-				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
-#endif
 			}
 			bus->twif->io(bus, mode, NULL);
 			break;
@@ -142,7 +139,7 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			if(bus->index < bus->rxlen) {
 				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
 				if(bus->index + 1 < bus->rxlen) {
-					// if there is space for atleast one more byte
+					// if there is space for at least one more byte
 					bus->twif->io(bus, TW_REPLY_ACK, NULL);
 				}
 				else {

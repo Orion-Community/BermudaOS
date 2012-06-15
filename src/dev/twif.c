@@ -36,7 +36,7 @@
  * buffer, if present. Then it will receive data in the receive buffer, if a
  * Rx buffer address is configured.
  */
-PUBLIC void BermudaTwISR(TWIBUS *bus)
+PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 {
 	unsigned char sla = bus->sla & (~BIT(0));
 	TW_IOCTL_MODE mode;

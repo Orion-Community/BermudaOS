@@ -106,6 +106,9 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 	TWIHW *hw = bus->hwio;
 	unsigned char sla;
 	int rc = 0;
+	BermudaEnterCritical();
+	register unsigned char twcr = *(hw->twcr);
+	BermudaExitCritical();
 	
 	switch(mode) {
 		/* config cases */
@@ -134,6 +137,10 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 
 		case TW_ENABLE_INTERFACE:
 			*(hw->twcr) = TW_ENABLE;
+			break;
+
+		case TW_DISABLE_INTERFACE:
+			*(hw->twcr) = twcr & TW_DISABLE_INTERFACE;
 			break;
 			
 		/* I/O cases */

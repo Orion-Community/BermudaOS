@@ -75,7 +75,25 @@
 
 // TWI IO defines
 
+/**
+ * \def TW_ENABLE
+ * \brief Enables the TWI interface.
+ * 
+ * The following bits will be set: \n
+ * * TWEN \n
+ * * TWIE \n
+ * * TWEA \n
+ */
 #define TW_ENABLE (BIT(0) | BIT(2) | BIT(6))
+
+/**
+ * \def TW_DISABLE
+ * \brief Bit mask to disable the TWI interface.
+ * \warning Not a set value like TW_ENABLE! It is a mask.
+ * 
+ * Results in 00000101B.
+ */
+#define TW_DISABLE (~((~BIT(0)) ^ (~BIT(2))))
 
 /**
  * \def TW_ACK

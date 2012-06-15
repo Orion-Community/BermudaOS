@@ -137,6 +137,35 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, mode, NULL);
 			break;
 
+		case TWI_SR_SLAW_ACK:
+		case TWI_SR_GC_DATA_ACK:
+			if(bus->index < bus->rxlen) {
+				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
+				if(bus->index + 1 < bus->rxlen) {
+					// if there is space for atleast one more byte
+					bus->twif->io(bus, TW_REPLY_ACK, NULL);
+				}
+				else {
+					// no more space in buffer, nack next incoming byte
+					bus->twif->io(bus, TW_REPLY_NACK, NULL);
+				}
+				bus->index++;
+				break;
+			}
+		
+		case TWI_SR_SLAW_DATA_NACK:
+		case TWI_SR_GC_DATA_NACK:
+			bus->twif->io(bus, TW_REPLY_NACK, NULL); // NACK and wait for stop
+			break;
+
+		case TWI_SR_STOP:
+			bus->error = TWI_SR_STOP;
+			bus->twif->io(bus, TW_DISABLE_INTERFACE, NULL);
+#ifdef __EVENTS__
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#endif
+			break;
+
 		default:
 			bus->error = E_GENERIC;
 			bus->index = 0;

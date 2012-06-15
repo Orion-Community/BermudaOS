@@ -60,6 +60,7 @@ typedef enum {
 	TW_RELEASE_BUS,//!< Release the bus.
 	TW_GET_STATUS, //!< Get the status from hardware.
 	TW_ENABLE_INTERFACE, //!< Enables the TWI interface.
+	TW_DISABLE_INTERFACE, //!< Disable the TWI interface.
 	
 	TW_SENT_START, //!< Sent the TWI start condition.
 	TW_SENT_SLA,   //!< Sent the slave address over the TWI bus.

@@ -91,7 +91,7 @@
  * \brief Bit mask to disable the TWI interface.
  * \warning Not a set value like TW_ENABLE! It is a mask.
  * 
- * Results in 00000101B.
+ * Results in 0xFA or (11111010B).
  */
 #define TW_DISABLE (~((~BIT(0)) ^ (~BIT(2))))
 

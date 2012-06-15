@@ -29,7 +29,8 @@
  * \brief Generic TWI interrupt handler.
  * \param bus TWI bus which raised the interrupt.
  * \warning Should only be called by hardware!
- * \todo Slave transmitter and slave receiver.
+ * \todo Implement slave transmitter.
+ * \todo Test slave receiver.
  * 
  * Generic handling of the TWI logic. It will first sent all data in the transmit
  * buffer, if present. Then it will receive data in the receive buffer, if a
@@ -134,7 +135,7 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, mode, NULL);
 			break;
 
-		case TWI_SR_SLAW_ACK:
+		case TWI_SR_SLAW_DATA_ACK:
 		case TWI_SR_GC_DATA_ACK:
 			if(bus->index < bus->rxlen) {
 				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));

@@ -316,6 +316,8 @@ unsigned int  tmo;
 	BermudaTwIoctl(bus, TW_SENT_START, NULL);
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext( (volatile THREAD**)bus->queue, tmo);
+#elif __THREADS__
+	BermudaMutexEnter(&(bus->queue));
 #endif
 
 	out:

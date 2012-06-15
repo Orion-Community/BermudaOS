@@ -72,6 +72,8 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 				bus->twif->io(bus, TW_SENT_STOP, NULL);
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#elif __THREADS__
+				BermudaMutexRelease(&(bus->queue));
 #endif
 			}
 			break;
@@ -90,6 +92,8 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, mode, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#elif __THREADS__
+			BermudaMutexRelease(&(bus->queue));
 #endif
 			break;
 		
@@ -116,6 +120,8 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, TW_SENT_STOP, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#elif __THREADS__
+			BermudaMutexRelease(&(bus->queue));
 #endif
 			break;
 
@@ -161,6 +167,8 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, TW_DISABLE_INTERFACE, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#elif __THREADS__
+			BermudaMutexRelease(&(bus->queue));
 #endif
 			break;
 
@@ -170,6 +178,8 @@ PUBLIC void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+#elif __THREADS__
+			BermudaMutexRelease(&(bus->queue));
 #endif
 			break;
 	}

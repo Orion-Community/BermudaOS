@@ -105,8 +105,23 @@ struct _twif {
 	int (*transfer)(TWIBUS *twi, const void *tx, unsigned int txlen,  
 							  void *rx, unsigned int rxlen, unsigned char sla,
 							  uint32_t frq, unsigned int tmo);
+	/**
+	 * \brief I/O control functions.
+	 * \param bus TWI bus structure.
+	 * \param mode I/O mode to set/get.
+	 * \param conf I/O configuration.
+	 * 
+	 * Controls the I/O logic. Implemented by the TWI driver.
+	 */
 	int (*io)(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
-	void (*isr)(TWIBUS* BUS);
+
+	/**
+	 * \brief ISR handler.
+	 * \param bus TWI bus.
+	 * 
+	 * The ISR handler which will handle the logic.
+	 */
+	void (*isr)(TWIBUS* bus);
 };
 
 /**
@@ -117,8 +132,13 @@ struct _twif {
  * Each different TWI bus has its own _twibus structure.
  */
 struct _twibus {
+#ifdef __EVENTS__
 	volatile void *mutex;    //!< TWI bus mutex.
 	volatile void *queue;    //!< TWI transfer waiting queue.
+#elif __THREADS__
+	mutex_t mutex;
+#endif
+
 	struct _twif *twif;      //!< TWI hardware communication interface.
 	void *hwio;              //!< TWI hardware I/O registers.
 	const unsigned char *tx; //!< TWI transmit buffer.

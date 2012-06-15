@@ -37,7 +37,7 @@ extern "C" {
  * 
  * This function releases the lock from <i>lock</i> mutually exclusive.
  */
-extern inline void BermudaMutexRelease(unsigned char *lock);
+extern inline void BermudaMutexRelease(volatile unsigned char *lock);
 
 /**
  * \fn BermudaMutexEnter(unsigned char *lock)
@@ -46,7 +46,7 @@ extern inline void BermudaMutexRelease(unsigned char *lock);
  * 
  * This function locks a variable mutually exclusive.
  */
-extern void BermudaMutexEnter(unsigned char *lock);
+extern void BermudaMutexEnter(volatile unsigned char *lock);
 
 /**
  * \def BermudaEnterCritical

@@ -17,9 +17,11 @@
  */
 
 #include <stdlib.h>
-#include <avr/interrupt.h>
+
+#include <arch/avr/interrupts.h>
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
+
 #include <lib/binary.h>
 #include <sys/sched.h>
 

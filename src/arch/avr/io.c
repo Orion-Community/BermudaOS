@@ -39,7 +39,7 @@ inline unsigned char BermudaReadPGMByte(unsigned short addr)
  * 
  * This function locks a variable mutually exclusive.
  */
-void BermudaMutexEnter(unsigned char *lock)
+void BermudaMutexEnter(volatile unsigned char *lock)
 {
         unsigned char test = 0x1;
         
@@ -58,7 +58,7 @@ void BermudaMutexEnter(unsigned char *lock)
  * 
  * This function releases the lock from <i>lock</i> mutually exclusive.
  */
-inline void BermudaMutexRelease(unsigned char *lock)
+inline void BermudaMutexRelease(volatile unsigned char *lock)
 {
         unsigned char atomic = 0;
         

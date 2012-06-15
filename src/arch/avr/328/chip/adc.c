@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <avr/io.h>
-#include <avr/interrupt.h>
+#include <arch/avr/interrupts.h>
 
 #include <lib/binary.h>
 #include <arch/avr/io.h>

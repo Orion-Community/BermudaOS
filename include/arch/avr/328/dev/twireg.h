@@ -19,6 +19,7 @@
 //! \file arch/avr/328/dev/devreg.h
 
 #ifndef __TWIREG_328_H
+#define __TWIREG_328_H
 
 #include <bermuda.h>
 #include <arch/avr/io.h>

@@ -95,6 +95,15 @@
 #define __sig   __attribute__((signal))
 
 /**
+ * \def __link
+ * \brief Always link function.
+ * 
+ * Functions marked with <b>__link</b> are always linked into the
+ * executable, even if they <b>might</b> appear as unused to the linker.
+ */
+#define __link __attribute__((used))
+
+/**
  * \typedef mutex_t
  * \brief Mutual exclusion type.
  */

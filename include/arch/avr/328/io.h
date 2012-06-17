@@ -21,10 +21,8 @@
 #ifndef __IO328_H
 #define __IO328_H
 
+#include <bermuda.h>
 #include <arch/avr/io.h>
-#include <avr/io.h>
-
-typedef unsigned long uint32_t;
 
 #ifdef __cplusplus
 extern "C" {

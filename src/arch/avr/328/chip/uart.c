@@ -16,10 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+#include <stdio.h>
+#include <bermuda.h>
+#include <lib/binary.h>
 #include <arch/avr/io.h>
-#include <util/setbaud.h>
-#include <avr/io.h>
 #include <sys/sched.h>
 
 /* PRIVATE functions */

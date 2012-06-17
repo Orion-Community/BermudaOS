@@ -16,10 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file io.c */
+/** \file arch/avr/io.c */
 
+#include <bermuda.h>
 #include <arch/avr/io.h>
-#include <avr/io.h>
 
 /**
  * \brief Read a byte from program memory.

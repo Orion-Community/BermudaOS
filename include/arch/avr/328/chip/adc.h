@@ -20,7 +20,6 @@
 #ifndef __ADC_H
 #define __ADC_H
 
-#include <stdlib.h>
 #include <arch/avr/io.h>
 #include <bermuda.h>
 
@@ -30,6 +29,10 @@
 #define BermudaGetADCH()    MEM_IO8(0x79)
 #define BermudaGetADCSRB()  MEM_IO8(0x7B)
 #define BermudaGetDIDR0()   MEM_IO8(0x7E)
+
+#define ADEN 7
+#define ADSC 6
+#define ADIE 3
 
 #define ADC_DEFAULT_LAZY_CLK         64
 #define ADC_DEFAULT_CLK              B110

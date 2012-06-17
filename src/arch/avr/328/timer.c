@@ -61,7 +61,7 @@ void BermudaInitTimer0()
         *(timer0->output_comp_a) = 250;
         
         /* Enable the overflow interrupt */
-        spb(*timer0->int_mask, TOIE0);
+        spb(*(timer0->int_mask), TOIE0);
 }
 
 #if (TIMERS & B100) == B100

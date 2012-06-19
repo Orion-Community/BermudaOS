@@ -19,13 +19,14 @@
 /** \file adc.c */
 #if defined(__ADC__) || defined(__DOXYGEN__)
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/interrupts.h>
 
-#include <sys/sched.h>
 #include <lib/binary.h>
+#include <sys/sched.h>
 
 struct adc BermADC;
 static unsigned char adc_ref = 1; /* default analog reference */
@@ -291,3 +292,4 @@ SIGNAL(ADC_vect)
 }
 #endif /* __THREADS__ */
 #endif /* __ADC__ */
+

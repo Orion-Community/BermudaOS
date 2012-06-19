@@ -23,8 +23,6 @@
 #include <arch/avr/io.h>
 #include <arch/avr/timer.h>
 
-#define TOIE0 BIT(0)
-
 #define BermudaGetTCCR0A() SFR_IO8(0x24)
 #define BermudaGetTCCR0B() SFR_IO8(0x25)
 
@@ -50,6 +48,8 @@
 
 #define TIMER2_ASYC_SR MEM_IO8(0xB6)
 #define TIMER2_GEN_TCCR SFR_IO8(0x23)
+
+#define TOIE0 0
 
 // general defs
 /**

@@ -18,8 +18,9 @@
 
 #include <stdio.h>
 #include <bermuda.h>
-#include <lib/binary.h>
 #include <arch/avr/io.h>
+
+#include <lib/binary.h>
 #include <sys/sched.h>
 
 /* PRIVATE functions */

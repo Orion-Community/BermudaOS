@@ -21,7 +21,6 @@
 #ifndef __PORT_IO_H
 #define __PORT_IO_H
 
-#include <bermuda.h>
 #include <arch/avr/pgm.h>
 
 extern unsigned long BermudaTimerGetSysTick();
@@ -121,22 +120,22 @@ extern const unsigned char ROM  BermudaPinToPort[];
 extern const unsigned char ROM BermudaPinToMask[];
 
 extern inline unsigned char BermudaReadPGMByte(unsigned short);
-extern inline unsigned short BermudaReadPGMWord(unsigned short addr);
+extern inline unsigned short BermudaReadPGMWord(unsigned short);
 
 extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
 extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);
 extern unsigned char BermudaDigitalPinRead(unsigned char pin);
 
-#define BermudaGetIOPort(pin) pgm_read_byte((unsigned short) \
+#define BermudaGetIOPort(pin) BermudaReadPGMByte((unsigned short) \
                                 BermudaPinToPort+(pin))
-#define BermudaGetIOMask(pin) pgm_read_byte((unsigned short) \
+#define BermudaGetIOMask(pin) BermudaReadPGMByte((unsigned short) \
                                 BermudaPinToMask+(pin))
 #define BermudaGetIOMode(port)  ((volatile unsigned char*)pgm_read_word( \
-                                (unsigned short)BermudaPortToMode+(port)))
+                                BermudaPortToMode+(port)))
 #define BermudaGetOuputReg(port) ((volatile unsigned char*)pgm_read_word( \
-                                (unsigned short)BermudaPortToOutput+(port)))
+                                BermudaPortToOutput+(port)))
 #define BermudaGetInputReg(port) ((volatile unsigned char*)pgm_read_word( \
-                                (unsigned short)BermudaPortToInput+(port)))
+                                BermudaPortToInput+(port)))
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>
@@ -152,3 +151,4 @@ extern unsigned char BermudaDigitalPinRead(unsigned char pin);
 }
 #endif /* __cplusplus */
 #endif /* __PORT_IO_H */
+

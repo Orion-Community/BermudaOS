@@ -104,7 +104,10 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 
 		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
 			if(bus->index + 1 < bus->rxlen) {
-				bus->twif->io(bus, TW_REPLY_ACK, NULL); // Only ack the last byte
+				/*
+				 * Only enable ACKing if we are not receiving the last data byte.
+				 */
+				bus->twif->io(bus, TW_REPLY_ACK, NULL);
 			}
 			else {
 				bus->twif->io(bus, TW_REPLY_NACK, NULL);

@@ -116,6 +116,16 @@
 #define TWI_SR_GC_DATA_NACK 0x98 //!< General call received, NACK returned.
 #define TWI_SR_STOP 0xA0 //!< Stop or repeated start condition received.
 
+//  ********************************
+//  * Slave Transmitter            *
+//  ********************************
+
+#define TWI_SR_SLAR_ACK 0xA8 //!< Own SLA+R received, ack returned.
+#define TWI_SR_ARB_LOST 0xB0 //!< Arbitration lost as master, own SLA+R received.
+#define TWI_SR_DATA_ACK 0xB8 //!< Data sent successfuly, ACK received.
+#define TWI_SR_DATA_NACK 0xC0 //!< Data has been sent, NACK received.
+#define TWI_LAST_DATA_ACK 0xC8 //!< The last data byte is transmitted, ACK received.
+
 #ifdef TWCR
 #undef TWCR
 #undef TWBR

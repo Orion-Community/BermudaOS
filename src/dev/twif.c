@@ -29,7 +29,7 @@
  * \brief Generic TWI interrupt handler.
  * \param bus TWI bus which raised the interrupt.
  * \warning Should only be called by hardware!
- * \todo Implement slave transmitter.
+ * \todo Test slave transmitter.
  * \todo Test slave receiver.
  * 
  * Generic handling of the TWI logic. It will first sent all data in the transmit
@@ -40,6 +40,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 {
 	unsigned char sla = bus->sla & (~BIT(0));
 	TW_IOCTL_MODE mode;
+	unsigned char dummy = 0;
 	bus->twif->io(bus, TW_GET_STATUS, (void*)&(bus->status));
 	
 	switch(bus->status) {
@@ -101,7 +102,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		case TWI_MR_DATA_ACK:
 			bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
 			bus->index++;
-
+			// fall through to sent data
 		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
 			if(bus->index + 1 < bus->rxlen) {
 				/*
@@ -174,7 +175,52 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			BermudaMutexRelease(&(bus->queue));
 #endif
 			break;
-
+			
+		/*
+		 * TWI entered slave transmitter mode.
+		 */
+		case TWI_ST_ARB_LOST:
+		case TWI_ST_SLAR_ACK:
+			bus->index = 0;
+			// roll over to data sending
+		
+		/*
+		 * Data is sent and ACKed.
+		 */
+		case TWI_ST_DATA_ACK:
+			if(bus->index < bus->txlen) {
+				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->tx[bus->index]));
+				if(bus->index+1 < bus->txlen) {
+					mode = TW_REPLY_ACK;
+				}
+				else {
+					mode = TW_REPLY_NACK;
+				}
+				bus->index++;
+				bus->twif->io(bus, mode, NULL);
+				break;
+			}
+			else {
+				bus->twif->io(bus, TW_SENT_DATA, &dummy);
+				bus->twif->io(bus, TW_REPLY_NACK, NULL);
+				break;
+			}
+			
+		/*
+		 * Last data byte has been received and (N)ACKed.
+		 */
+		case TWI_ST_DATA_NACK:
+		case TWI_ST_LAST_DATA_ACK:
+			bus->twif->io(bus, TW_DISABLE_INTERFACE, NULL);
+			bus->error = bus->status;
+#ifdef __EVENTS__
+			BermudaEventSignalFromISR( (THREAD void**)bus->queue);
+#elif __THREADS__
+			BermudaMutexRelease(&(bus->queue));
+#endif
+			break;
+			
+		case TWI_BUS_ERROR:
 		default:
 			bus->error = E_GENERIC;
 			bus->index = 0;

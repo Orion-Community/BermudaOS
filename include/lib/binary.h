@@ -23,6 +23,7 @@
 #include <bermuda.h>
 
 #define BIT(x) (1<<x)
+#define _BV(x) BIT(x)
 
 __DECL
 /**

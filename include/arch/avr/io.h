@@ -21,8 +21,7 @@
 #ifndef __PORT_IO_H
 #define __PORT_IO_H
 
-#include <avr/io.h>
-#include <avr/pgmspace.h>
+#include <arch/avr/pgm.h>
 
 extern unsigned long BermudaTimerGetSysTick();
 

@@ -21,11 +21,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <avr/io.h>
+
+#include <arch/avr/io.h>
 #include <arch/avr/interrupts.h>
 
 #include <lib/binary.h>
-#include <arch/avr/io.h>
 #include <lib/binary.h>
 #include <sys/sched.h>
 

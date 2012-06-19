@@ -18,8 +18,7 @@
 
 #include <stdlib.h>
 #include <arch/avr/io.h>
-#include <util/setbaud.h>
-#include <avr/io.h>
+#include <lib/binary.h>
 #include <sys/sched.h>
 
 /* PRIVATE functions */

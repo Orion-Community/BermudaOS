@@ -19,7 +19,6 @@
 /** \file io.c */
 
 #include <arch/avr/io.h>
-#include <avr/io.h>
 
 inline unsigned char BermudaReadPGMByte(unsigned short addr)
 {

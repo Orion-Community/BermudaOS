@@ -49,6 +49,8 @@
 #define TIMER2_ASYC_SR MEM_IO8(0xB6)
 #define TIMER2_GEN_TCCR SFR_IO8(0x23)
 
+#define TOIE0 0
+
 // general defs
 /**
  * \def BermudaTimerGetTickFreq

@@ -126,9 +126,9 @@ extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
 extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);
 extern unsigned char BermudaDigitalPinRead(unsigned char pin);
 
-#define BermudaGetIOPort(pin) BermudaReadPGMByte((unsigned short) \
+#define BermudaGetIOPort(pin) pgm_read_byte((unsigned short) \
                                 BermudaPinToPort+(pin))
-#define BermudaGetIOMask(pin) BermudaReadPGMByte((unsigned short) \
+#define BermudaGetIOMask(pin) pgm_read_byte((unsigned short) \
                                 BermudaPinToMask+(pin))
 #define BermudaGetIOMode(port)  ((volatile unsigned char*)pgm_read_word( \
                                 BermudaPortToMode+(port)))

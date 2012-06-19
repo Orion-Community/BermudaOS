@@ -22,38 +22,6 @@
 #include <arch/avr/io.h>
 
 /**
- * \brief Read a byte from program memory.
- * \param addr Addess to read from.
- * \return Data read from PGM.
- * 
- * Read data stored at <b>addr</b> in program memory.
- */
-inline unsigned char BermudaReadPGMByte(unsigned short addr)
-{
-        unsigned char result;
-        __asm__ __volatile__("\n\t"
-                             "lpm %0, z\n\t"
-                             : "=r" (result)
-                             : "z"  (addr)
-                     );
-        return result;
-}
-
-/**
- * \brief Read a word from program memory.
- * \param addr Addess to read from.
- * \return Data read from PGM.
- * 
- * Read data stored at <b>addr</b> and <b>addr+1</b> in program memory.
- */
-inline unsigned short BermudaReadPGMWord(unsigned short addr)
-{
-	unsigned short ret = BermudaReadPGMByte(addr);
-	ret |= (BermudaReadPGMByte(addr+1) << 8);
-	return ret;
-}
-
-/**
  * \fn BermudaMutexEnter(unsigned char *lock)
  * \brief Enter locking state.
  * \param lock Lock pointer.

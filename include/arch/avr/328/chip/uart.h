@@ -19,7 +19,6 @@
 #ifndef __UART_H
 #define __UART_H
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <lib/binary.h>
 #include <arch/avr/io.h>

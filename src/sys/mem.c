@@ -43,12 +43,10 @@ static inline volatile HEAPNODE *BermudaHeapInitHeader(volatile HEAPNODE *node,
  */
 PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size) 
 {
-        BermudaMutexEnter(&mem_lock);
         if(size > MEM)
-        {
-                BermudaMutexRelease(&mem_lock);
                 return NULL;
-        }
+
+        BermudaMutexEnter(&mem_lock);
         void *ret = NULL;
         volatile HEAPNODE *c = BermudaHeapHead, *prev = NULL;
         while(c)
@@ -72,7 +70,10 @@ PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
         }
         
         if(c == NULL)
+	{
+		BermudaMutexRelease(&mem_lock);
                 return NULL;
+	}
         
         BermudaHeapUseBlock(c, prev);
         ret = ((void*)c)+sizeof(*c);

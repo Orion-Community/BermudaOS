@@ -49,7 +49,8 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		case TWI_MASTER_START:
 			// TWI start signal has been sent. The interface is ready to sent
 			// the slave address we want to address.
-			bus->index = 0;
+			bus->master_index = 0;
+			bus->busy = true;
 			if(bus->mode == TWI_MASTER_RECEIVER) {
 				sla |= 1;
 			}
@@ -60,11 +61,11 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		/* master transmitter */
 		case TWI_MT_SLA_ACK: // slave ACKed SLA+W
 		case TWI_MT_DATA_ACK: // slave ACKed data
-			if(bus->index < bus->txlen) {
-				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->tx[bus->index]));
-				bus->index++;
+			if(bus->master_index < bus->master_tx_len) {
+				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->master_tx[bus->master_index]));
+				bus->master_index++;
 			}
-			else if(bus->rxlen) {
+			else if(bus->master_rx_len) {
 				bus->mode = TWI_MASTER_RECEIVER;
 				bus->twif->io(bus, TW_SENT_START, NULL); // sent repeated start
 			}
@@ -76,6 +77,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 #elif __THREADS__
 				BermudaMutexRelease(&(bus->queue));
 #endif
+				bus->busy = false;
 			}
 			break;
 			
@@ -91,6 +93,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			}
 			bus->error = bus->status;
 			bus->twif->io(bus, mode, NULL);
+			bus->busy = false;
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 #elif __THREADS__
@@ -102,11 +105,11 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		 * Received data as a master and returned an ACK to the sending slave.
 		 */
 		case TWI_MR_DATA_ACK:
-			bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
-			bus->index++;
+			bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->master_rx[bus->master_index]));
+			bus->master_index++;
 			// fall through to sent data
 		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
-			if(bus->index + 1 < bus->rxlen) {
+			if(bus->master_index + 1 < bus->master_rx_len) {
 				/*
 				 * Only enable ACKing if we are not receiving the last data byte.
 				 */
@@ -118,12 +121,13 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			break;
 			
 		case TWI_MR_DATA_NACK:
-			if(bus->index < bus->rxlen) {
-				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
+			if(bus->master_index < bus->master_rx_len) {
+				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->master_rx[bus->master_index]));
 			}
 			
 			bus->error = bus->status;
 			bus->twif->io(bus, TW_SENT_STOP, NULL);
+			bus->busy = false;
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 #elif __THREADS__
@@ -136,9 +140,10 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		case TWI_SR_GC_ACK:
 		case TWI_SR_GC_ARB_LOST:
 		case TWI_SR_SLAW_ARB_LOST:
-			if(bus->rxlen) {
+			if(bus->slave_rx_len) {
 				mode = TW_REPLY_ACK;
-				bus->index = 0; // reset receive buffer.
+				bus->slave_index = 0; // reset receive buffer.
+				bus->busy = true;
 			}
 			else {
 				mode = TW_REPLY_NACK;
@@ -153,9 +158,9 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		 */
 		case TWI_SR_SLAW_DATA_ACK:
 		case TWI_SR_GC_DATA_ACK:
-			if(bus->index < bus->rxlen) {
-				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
-				if(bus->index + 1 < bus->rxlen) {
+			if(bus->slave_index < bus->slave_rx_len) {
+				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->slave_rx[bus->slave_index]));
+				if(bus->slave_index + 1 < bus->slave_rx_len) {
 					// if there is space for at least one more byte
 					bus->twif->io(bus, TW_REPLY_ACK, NULL);
 				}
@@ -163,7 +168,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 					// no more space in buffer, nack next incoming byte
 					bus->twif->io(bus, TW_REPLY_NACK, NULL);
 				}
-				bus->index++;
+				bus->slave_index++;
 				break;
 			}
 		
@@ -178,6 +183,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 
 		case TWI_SR_STOP:
 			bus->error = TWI_SR_STOP;
+			bus->busy = false;
 			bus->twif->io(bus, TW_DISABLE_INTERFACE, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
@@ -191,22 +197,22 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		 */
 		case TWI_ST_ARB_LOST:
 		case TWI_ST_SLAR_ACK:
-			bus->index = 0;
+			bus->slave_index = 0;
 			// roll over to data sending
 		
 		/*
 		 * Data is sent and ACKed.
 		 */
 		case TWI_ST_DATA_ACK:
-			if(bus->index < bus->txlen) {
-				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->tx[bus->index]));
-				if(bus->index+1 < bus->txlen) {
+			if(bus->slave_index < bus->slave_tx_len) {
+				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->slave_tx[bus->slave_index]));
+				if(bus->slave_index+1 < bus->slave_tx_len) {
 					mode = TW_REPLY_ACK;
 				}
 				else {
 					mode = TW_REPLY_NACK;
 				}
-				bus->index++;
+				bus->slave_index++;
 				bus->twif->io(bus, mode, NULL);
 				break;
 			}
@@ -223,6 +229,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		case TWI_ST_LAST_DATA_ACK:
 			bus->twif->io(bus, TW_DISABLE_INTERFACE, NULL);
 			bus->error = bus->status;
+			bus->busy = false;
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 #elif __THREADS__
@@ -233,8 +240,10 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		case TWI_BUS_ERROR:
 		default:
 			bus->error = E_GENERIC;
-			bus->index = 0;
+			bus->slave_index = 0;
+			bus->master_index = 0;
 			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
+			bus->busy = false;
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 #elif __THREADS__
@@ -244,5 +253,40 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 	}
 	
 	return;
+}
+
+/**
+ * \brief Listen for requests.
+ * \param bus TWI bus.
+ * \param rx Rx buffer.
+ * \param rxlen Rx buffer length.
+ * \param tmo Listen time-out.
+ * \return Error code. 0 for success.
+ * \warning If this function responds without error, the application should
+ *          respond IMMEDIATLY with BermudaTwiSlaveRespond.
+ * \todo Implement BermudaTwiSlaveRespond.
+ * \todo Finish this function.
+ * 
+ * Listens for requests by a master to this TWI bus interface.
+ */
+PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, void *rx, uptr rxlen, 
+	unsigned int tmo)
+{
+	int rc = -1;
+	
+	BermudaEnterCritical();
+	
+	if(bus->busy == false) {
+		bus->slave_rx = rx;
+		bus->slave_rx_len = rxlen;
+		bus->twif->io(bus, TW_REPLY_ACK, NULL);
+	}
+	BermudaExitCritical();
+	
+	if((rc = BermudaEventWait( (volatile THREAD**)bus->queue, tmo))) {
+		// time out
+	}
+	
+	return rc;
 }
 #endif /* __TWI__ */

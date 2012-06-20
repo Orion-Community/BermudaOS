@@ -44,6 +44,12 @@
 #define E_SUCCESS 0
 #define E_GENERIC 1
 
+#define FALSE 0
+#define TRUE !FALSE
+
+#define false FALSE
+#define true TRUE
+
 /**
  * \def __PACK__
  * \brief Packed attribute.
@@ -110,9 +116,9 @@
 typedef volatile unsigned char mutex_t;
 
 typedef volatile unsigned char*   reg8_t;
-typedef unsigned short*  reg16_t;
-typedef uint32_t*        reg32_t;
-// typedef unsigned long    size_t;
+typedef volatile unsigned short*  reg16_t;
+typedef volatile uint32_t*        reg32_t;
+typedef char                      bool;
 
 #ifdef __cplusplus
 extern "C" {

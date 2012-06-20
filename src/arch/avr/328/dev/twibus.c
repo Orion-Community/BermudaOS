@@ -358,10 +358,10 @@ unsigned int  rxlen;
 unsigned char sla;
 uint32_t      frq;
 {
-	bus->tx = tx;
-	bus->txlen = txlen;
-	bus->rx = rx;
-	bus->rxlen = rxlen;
+	bus->master_tx = tx;
+	bus->master_tx_len = txlen;
+	bus->master_rx = rx;
+	bus->master_rx_len = rxlen;
 	bus->sla = sla;
 	bus->freq = frq;
 	

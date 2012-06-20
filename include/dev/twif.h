@@ -142,11 +142,18 @@ struct _twibus {
 
 	struct _twif *twif;      //!< TWI hardware communication interface.
 	void *hwio;              //!< TWI hardware I/O registers.
-	const unsigned char *tx; //!< TWI transmit buffer.
-	uptr txlen;              //!< Length of the tx buffer.
-	unsigned char *rx;       //!< TWI receive buffer.
-	uptr rxlen;              //!< Length of the rx buffer.
-	uptr index;              //!< Data buffer index.
+	
+	const unsigned char *master_tx; //!< TWI transmit buffer.
+	uptr master_tx_len;              //!< Length of the tx buffer.
+	unsigned char *master_rx;       //!< TWI receive buffer.
+	uptr master_rx_len;              //!< Length of the rx buffer.
+	uptr master_index;              //!< Data buffer index.
+	
+	const unsigned char *slave_tx; //!< TWI transmit buffer.
+	uptr slave_tx_len;              //!< Length of the tx buffer.
+	unsigned char *slave_rx;       //!< TWI receive buffer.
+	uptr slave_rx_len;              //!< Length of the rx buffer.
+	uptr slave_index;              //!< Data buffer index.
 	
 	TWIMODE mode;            //!< TWI communication mode.
 	uint8_t sla;             //!< Configured slave address + R/W bit.
@@ -154,6 +161,7 @@ struct _twibus {
 	
 	unsigned char error;     //!< TWI error member.
 	unsigned char status;    //!< TWI status
+	bool busy;               //!< When set to !0 the interface is busy.
 };
 
 #ifdef __cplusplus

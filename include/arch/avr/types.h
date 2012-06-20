@@ -25,5 +25,6 @@ typedef unsigned long int uint32_t;
 typedef unsigned int uint16_t;
 typedef unsigned char uint8_t;
 typedef unsigned int uptr;
+typedef unsigned int size_t;
 
 #endif /* __AVR_TYPES_H */

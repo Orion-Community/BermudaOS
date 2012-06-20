@@ -18,7 +18,6 @@
 
 /** \file mem.c */
 
-#include <stddef.h>
 #include <bermuda.h>
 #include <lib/binary.h>
 

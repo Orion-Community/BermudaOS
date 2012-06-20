@@ -21,7 +21,6 @@
 #ifndef __MEM_H__
 #define __MEM_H__
 
-#include <stddef.h>
 #include <bermuda.h>
 
 #include <lib/binary.h>

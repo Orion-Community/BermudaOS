@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file arch/avr/328/dev/devreg.h
+//! \file arch/avr/328/dev/twireg.h
 
 #ifndef __TWIREG_328_H
 #define __TWIREG_328_H
@@ -110,10 +110,38 @@
  * been received; ACK has been returned.
  */
 #define TWI_SR_GC_ARB_LOST 0x78
-#define TWI_SR_SLAW_DATA_ACK 0x80 //!< Own SLA+W received, ACK returned.
-#define TWI_SR_SLAW_DATA_NACK 0x88 //!< Own SLA+W received, NACK returned.
-#define TWI_SR_GC_DATA_ACK 0x90 //!< General call received, ACK returned.
-#define TWI_SR_GC_DATA_NACK 0x98 //!< General call received, NACK returned.
+
+/**
+ * \brief Data received ACK returned.
+ * 
+ * Previously addressed with own SLA+W; data has been received and an ACK is
+ * returned.
+ */
+#define TWI_SR_SLAW_DATA_ACK 0x80
+
+/**
+ * \brief Data received ACK returned.
+ * 
+ * Previously addressed with own SLA+W; data has been received and a NACK is
+ * returned.
+ */
+#define TWI_SR_SLAW_DATA_NACK 0x88
+
+/**
+ * \brief Data received ACK returned.
+ * 
+ * Previously addressed with a GC; data has been received and an ACK is
+ * returned.
+ */
+#define TWI_SR_GC_DATA_ACK 0x90
+
+/**
+ * \brief Data received ACK returned.
+ * 
+ * Previously addressed with a GC; data has been received and a NACK is
+ * returned.
+ */
+#define TWI_SR_GC_DATA_NACK 0x98
 #define TWI_SR_STOP 0xA0 //!< Stop or repeated start condition received.
 
 //  ********************************

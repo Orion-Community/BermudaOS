@@ -98,7 +98,9 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 #endif
 			break;
 		
-		/* master receiver */
+		/*
+		 * Received data as a master and returned an ACK to the sending slave.
+		 */
 		case TWI_MR_DATA_ACK:
 			bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->rx[bus->index]));
 			bus->index++;
@@ -145,6 +147,10 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, mode, NULL);
 			break;
 
+		/*
+		 * Previously addressed with own SLA+W or GC; data has been received and
+		 * ACKed.
+		 */
 		case TWI_SR_SLAW_DATA_ACK:
 		case TWI_SR_GC_DATA_ACK:
 			if(bus->index < bus->rxlen) {
@@ -161,6 +167,10 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 				break;
 			}
 		
+		/*
+		 * Previously addressed with own SLA+W or GC; data has been received and
+		 * NACKed.
+		 */
 		case TWI_SR_SLAW_DATA_NACK:
 		case TWI_SR_GC_DATA_NACK:
 			bus->twif->io(bus, TW_REPLY_NACK, NULL); // NACK and wait for stop

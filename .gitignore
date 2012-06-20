@@ -26,4 +26,5 @@ small.ico
 make/.goutputstream-13D5EW
 make/.goutputstream-YDO9EW
 tags
-lib/
+lib/*
+doc/

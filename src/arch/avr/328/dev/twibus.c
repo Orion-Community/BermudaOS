@@ -20,7 +20,6 @@
 
 /**
  * \file arch/avr/328/dev/twibus.c Hardware TWI bus controller.
- * \todo Implement TWI.
  */
 
 #include <bermuda.h>
@@ -267,10 +266,15 @@ unsigned char BermudaTwiCalcPres(uint32_t frq)
  * \brief Transfer data using the twi bus.
  * \param twi Used TWI bus.
  * \param tx Transmit buffer.
+ * \param txlen Transmit buffer length.
  * \param rx Receive buffer.
+ * \param rxlen Receive buffer length.
+ * \param sla Slave address to sent to.
+ * \param frq Frequency to use when sending data.
  * \param tmo Transfer waiting time-out.
  * \warning A TWI init routine should be called before using this function.
  * \see BermudaTwi0Init
+ * \todo Should be moved to src/dev/twif.c
  * 
  * Data is transfered or received using the TWI bus. The mode this function
  * uses depends of the TWIMODE setting in the TWIBUS structure.
@@ -341,6 +345,7 @@ unsigned int  tmo;
  * \param rxlen Length of the received buffer.
  * \param sla Slave address used in the coming transmission.
  * \param frq Frequency to use in the coming transmission.
+ * \todo Should be moved to src/dev/twif.c
  * 
  * Used to initialize the TWI bus before starting a transfer.
  */

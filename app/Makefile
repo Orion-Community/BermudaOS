@@ -27,4 +27,4 @@ upload: $(TARGET)
 clean:
 	-rm -fv $(OBJS)
 	-rm -fv $(TARGET)
-
+	-rm -fv temp.elf

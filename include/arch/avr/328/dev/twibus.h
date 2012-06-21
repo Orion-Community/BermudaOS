@@ -105,7 +105,7 @@
  * * TWEA \n
  * * TWINT \n
  */
-#define TW_ACK BIT(TWIE) | BIT(TWEN) | BIT(TWEA) | BIT(TWINT))
+#define TW_ACK (BIT(TWIE) | BIT(TWEN) | BIT(TWEA) | BIT(TWINT))
 
 /**
  * \def TW_STOP

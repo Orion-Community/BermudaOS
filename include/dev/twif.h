@@ -174,7 +174,11 @@ extern "C"
 {
 #endif
 
-	extern void BermudaTwISR(TWIBUS *bus);
+extern void BermudaTwISR(TWIBUS *bus);
+extern int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
+	unsigned int tmo);
+extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
+	unsigned int tmo);
 
 #ifdef __cplusplus
 }

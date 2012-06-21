@@ -288,8 +288,47 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 		bus->error = E_TIMEOUT;
 	}
 	
-	if(bus->error = TWI_SR_STOP) {
+	if(bus->error == TWI_SR_STOP) {
 		*num = bus->slave_index;
+	}
+
+	return rc;
+}
+
+/**
+ * \brief Respond to a TWI slave request.
+ * \param bus TWI bus.
+ * \param tx Transmit buffer.
+ * \param txlen Transmit buffer length.
+ * \param tmo Time-out.
+ * \note tmo Should not be set to BERMUDA_EVENT_WAIT_INFINITE.
+ * \see BERMUDA_EVENT_WAIT_INFINITE
+ * 
+ * If tx and txlen are set to 0, no data will be transmitted and the bus
+ * will be released.
+ */
+PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
+	unsigned int tmo)
+{
+	int rc = -1;
+
+	if(tx && txlen) { // if there is something to transmit
+		BermudaEnterCritical();
+
+		bus->slave_index = 0;
+		bus->slave_tx = tx;
+		bus->slave_tx_len = txlen;
+
+		bus->twif->io(bus, TW_LISTEN, NULL); // release the bus
+		BermudaExitCritical();
+
+		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->queue, tmo))) {
+			bus->error = E_TIMEOUT;
+		}
+	}
+	else {
+		bus->busy = false;
+		bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 	}
 
 	return rc;

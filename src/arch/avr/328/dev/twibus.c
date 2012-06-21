@@ -328,7 +328,9 @@ unsigned int  tmo;
 	BermudaMutexEnter(&(bus->queue));
 #endif
 
-	out:
+out:
+	bus->master_tx_len = 0;
+	bus->master_rx_len = 0;
 #ifdef __EVENTS__
 	if(rc != -1) {
 		BermudaEventSignal((volatile THREAD**)bus->mutex);

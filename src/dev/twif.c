@@ -226,7 +226,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		 */
 		case TWI_ST_DATA_NACK:
 		case TWI_ST_LAST_DATA_ACK:
-			bus->twif->io(bus, TW_DISABLE_INTERFACE, NULL);
+			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
 			bus->error = bus->status;
 			bus->busy = false;
 #ifdef __EVENTS__
@@ -284,7 +284,7 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 	}
 	BermudaExitCritical();
 	
-	if((rc = BermudaEventWait( (volatile THREAD**)bus->queue, tmo))) {
+	if((rc = BermudaEventWaitNext( (volatile THREAD**)bus->queue, tmo))) {
 		bus->error = E_TIMEOUT;
 	}
 	
@@ -325,6 +325,9 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->queue, tmo))) {
 			bus->error = E_TIMEOUT;
 		}
+	}
+	else if(bus->master_tx_len || bus->master_rx_len) {
+		bus->twif->io(bus, TW_SENT_START, NULL);
 	}
 	else {
 		bus->busy = false;

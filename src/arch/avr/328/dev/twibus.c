@@ -132,6 +132,10 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			*((unsigned char*)conf) = bus->status;
 			break;
 			
+		case TW_BLOCK_INTERFACE:
+			*(hw->twcr) = twcr & TW_BLOCK_MASK;
+			break;
+			
 		case TW_RELEASE_BUS:
 			*(hw->twcr) = TW_RELEASE;
 			break;
@@ -141,7 +145,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 
 		case TW_DISABLE_INTERFACE:
-			*(hw->twcr) = twcr & TW_DISABLE_INTERFACE;
+			*(hw->twcr) = twcr & TW_DISABLE_MASK;
 			break;
 			
 		/* I/O cases */

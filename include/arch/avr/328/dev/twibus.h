@@ -84,7 +84,7 @@
  * * TWIE \n
  * * TWEA \n
  */
-#define TW_ENABLE (BIT(0) | BIT(2) | BIT(6))
+#define TW_ENABLE (BIT(TWIE) | BIT(TWEN) | BIT(TWEA))
 
 /**
  * \def TW_DISABLE
@@ -93,7 +93,7 @@
  * 
  * Results in 0xFA or (11111010B).
  */
-#define TW_DISABLE (~((~BIT(0)) ^ (~BIT(2))))
+#define TW_DISABLE_MASK (~((~BIT(TWIE)) ^ (~BIT(TWEN))))
 
 /**
  * \def TW_ACK
@@ -105,7 +105,7 @@
  * * TWEA \n
  * * TWINT \n
  */
-#define TW_ACK (BIT(0) | BIT(2) | BIT(6) | BIT(7))
+#define TW_ACK BIT(TWIE) | BIT(TWEN) | BIT(TWEA) | BIT(TWINT))
 
 /**
  * \def TW_STOP
@@ -117,7 +117,7 @@
  * * TWSTO \n
  * * TWEA \n
  */
-#define TW_STOP (TW_ACK | BIT(4))
+#define TW_STOP (TW_ACK | BIT(TWSTO))
 
 /**
  * \def TW_START
@@ -129,7 +129,7 @@
  * * TWSTA \n
  * * TWEA \n
  */
-#define TW_START (TW_ACK | BIT(5))
+#define TW_START (TW_ACK | BIT(TWSTA))
 
 /**
  * \def TW_RELEASE
@@ -141,7 +141,11 @@
  * * TWEA \n
  * * TWINT \n
  */
-#define TW_RELEASE (TW_ACK & (~BIT(0)))
+#define TW_RELEASE (TW_ACK & (~BIT(TWIE)))
+
+#define TW_LISTEN TW_ACK //!< Listen on the interface as a slave.
+
+#define TW_BLOCK_MASK ~(BIT(TWINT) | BIT(TWIE)) //!< Blocks the interface.
 
 /**
  * \def TW_NACK
@@ -152,7 +156,7 @@
  * * TWIE \n
  * * TWINT \n
  */
-#define TW_NACK (TW_ACK & (~BIT(6)))
+#define TW_NACK (TW_ACK & (~BIT(TWEA)))
 
 /**
  * \def TWI_FRQ

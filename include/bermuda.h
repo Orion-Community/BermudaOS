@@ -43,6 +43,7 @@
 
 #define E_SUCCESS 0
 #define E_GENERIC 1
+#define E_TIMEOUT 2
 
 #define FALSE 0
 #define TRUE !FALSE

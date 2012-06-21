@@ -40,11 +40,12 @@
  * \brief Type definition of the TWI mode.
  * \see TWIBUS
  */
-typedef enum {
+typedef enum
+{
 	TWI_MASTER_TRANSMITTER, //!< Master transmit mode.
-	TWI_MASTER_RECEIVER,    //!< Master receive mode.
-	TWI_SLAVE_TRANSMITTER,  //!< Slave transmit mode.
-	TWI_SLAVE_RECEIVER,     //!< Slave receive mode.
+	TWI_MASTER_RECEIVER, //!< Master receive mode.
+	TWI_SLAVE_TRANSMITTER, //!< Slave transmit mode.
+	TWI_SLAVE_RECEIVER, //!< Slave receive mode.
 } TWIMODE;
 
 /**
@@ -52,23 +53,25 @@ typedef enum {
  * \brief Type definition of I/O control modes for TWI.
  * \see BermudaTwIoctl
  */
-typedef enum {
-	TW_SET_RATE,   //!< Set the TWBR register.
-	TW_SET_PRES,   //!< Set the SCL prescaler.
-	TW_SET_SLA,    //!< Set new slave address.
-	
-	TW_RELEASE_BUS,//!< Release the bus.
+typedef enum
+{
+	TW_SET_RATE, //!< Set the TWBR register.
+	TW_SET_PRES, //!< Set the SCL prescaler.
+	TW_SET_SLA, //!< Set new slave address.
+
+	TW_RELEASE_BUS, //!< Release the bus.
 	TW_GET_STATUS, //!< Get the status from hardware.
 	TW_ENABLE_INTERFACE, //!< Enables the TWI interface.
 	TW_DISABLE_INTERFACE, //!< Disable the TWI interface.
-	
-	TW_SENT_START, //!< Sent the TWI start condition.
-	TW_SENT_SLA,   //!< Sent the slave address over the TWI bus.
-	TW_SENT_DATA,  //!< Sent a data byte over the TWI bus.
-	TW_SENT_STOP,  //!< Sent a stop condition.
-	TW_READ_DATA,  //!< Read data from the bus.
+	TW_BLOCK_INTERFACE, //!< Blocks the TWI interface.
 
-	TW_REPLY_ACK,  //!< Used by slave to ACK to the calling master.
+	TW_SENT_START, //!< Sent the TWI start condition.
+	TW_SENT_SLA, //!< Sent the slave address over the TWI bus.
+	TW_SENT_DATA, //!< Sent a data byte over the TWI bus.
+	TW_SENT_STOP, //!< Sent a stop condition.
+	TW_READ_DATA, //!< Read data from the bus.
+
+	TW_REPLY_ACK, //!< Used by slave to ACK to the calling master.
 	TW_REPLY_NACK, //!< Used by slave to disable ACKing.
 
 } TW_IOCTL_MODE;
@@ -92,7 +95,8 @@ typedef struct _twif TWIF;
  * 
  * Structure defining the communication function for a TWIBUS.
  */
-struct _twif {
+struct _twif
+{
 	/**
 	 * \brief Function pointer to the transfer function.
 	 * \param bus Bus interface to use with the transfer.
@@ -102,9 +106,9 @@ struct _twif {
 	 * 
 	 * Transfer data, depending on the set TWIMODE, over the TWI interface.
 	 */
-	int (*transfer)(TWIBUS *twi, const void *tx, unsigned int txlen,  
-							  void *rx, unsigned int rxlen, unsigned char sla,
-							  uint32_t frq, unsigned int tmo);
+	int (*transfer)(TWIBUS *twi, const void *tx, unsigned int txlen,
+		void *rx, unsigned int rxlen, unsigned char sla,
+		uint32_t frq, unsigned int tmo);
 	/**
 	 * \brief I/O control functions.
 	 * \param bus TWI bus structure.
@@ -121,7 +125,7 @@ struct _twif {
 	 * 
 	 * The ISR handler which will handle the logic.
 	 */
-	void (*isr)(TWIBUS* bus);
+	void (*isr)(TWIBUS * bus);
 };
 
 /**
@@ -131,44 +135,46 @@ struct _twif {
  *
  * Each different TWI bus has its own _twibus structure.
  */
-struct _twibus {
+struct _twibus
+{
 #ifdef __EVENTS__
-	volatile void *mutex;    //!< TWI bus mutex.
-	volatile void *queue;    //!< TWI transfer waiting queue.
+	volatile void *mutex; //!< TWI bus mutex.
+	volatile void *queue; //!< TWI transfer waiting queue.
 #elif __THREADS__
 	mutex_t mutex;
 	mutex_t queue;
 #endif
 
-	struct _twif *twif;      //!< TWI hardware communication interface.
-	void *hwio;              //!< TWI hardware I/O registers.
-	
+	struct _twif *twif; //!< TWI hardware communication interface.
+	void *hwio; //!< TWI hardware I/O registers.
+
 	const unsigned char *master_tx; //!< TWI transmit buffer.
-	uptr master_tx_len;              //!< Length of the tx buffer.
-	unsigned char *master_rx;       //!< TWI receive buffer.
-	uptr master_rx_len;              //!< Length of the rx buffer.
-	uptr master_index;              //!< Data buffer index.
-	
+	uptr master_tx_len; //!< Length of the tx buffer.
+	unsigned char *master_rx; //!< TWI receive buffer.
+	uptr master_rx_len; //!< Length of the rx buffer.
+	uptr master_index; //!< Data buffer index.
+
 	const unsigned char *slave_tx; //!< TWI transmit buffer.
-	uptr slave_tx_len;              //!< Length of the tx buffer.
-	unsigned char *slave_rx;       //!< TWI receive buffer.
-	uptr slave_rx_len;              //!< Length of the rx buffer.
-	uptr slave_index;              //!< Data buffer index.
-	
-	TWIMODE mode;            //!< TWI communication mode.
-	uint8_t sla;             //!< Configured slave address + R/W bit.
-	uint32_t freq;           //!< TWI transfer frequency in Hertz.
-	
-	unsigned char error;     //!< TWI error member.
-	unsigned char status;    //!< TWI status
-	bool busy;               //!< When set to !0 the interface is busy.
+	uptr slave_tx_len; //!< Length of the tx buffer.
+	unsigned char *slave_rx; //!< TWI receive buffer.
+	uptr slave_rx_len; //!< Length of the rx buffer.
+	uptr slave_index; //!< Data buffer index.
+
+	TWIMODE mode; //!< TWI communication mode.
+	uint8_t sla; //!< Configured slave address + R/W bit.
+	uint32_t freq; //!< TWI transfer frequency in Hertz.
+
+	unsigned char error; //!< TWI error member.
+	unsigned char status; //!< TWI status
+	bool busy; //!< When set to !0 the interface is busy.
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-extern void BermudaTwISR(TWIBUS *bus);
+	extern void BermudaTwISR(TWIBUS *bus);
 
 #ifdef __cplusplus
 }

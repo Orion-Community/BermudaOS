@@ -163,7 +163,23 @@
 #undef TWDR
 #undef TWAR
 #undef TWAMR
+
+#undef TWIE
+#undef TWEN
+#undef TWWC
+#undef TWSTO
+#undef TWSTA
+#undef TWEA
+#undef TWINT
 #endif
+
+#define TWIE 0
+#define TWEN 2
+#define TWWC 3
+#define TWSTO 4
+#define TWSTA 5
+#define TWEA 6
+#define TWINT 7
 
 /**
  * \def TWBR

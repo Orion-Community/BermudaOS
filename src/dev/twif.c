@@ -183,8 +183,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 
 		case TWI_SR_STOP:
 			bus->error = TWI_SR_STOP;
-			bus->busy = false;
-			bus->twif->io(bus, TW_DISABLE_INTERFACE, NULL);
+			bus->twif->io(bus, TW_BLOCK_INTERFACE, NULL);
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
 #elif __THREADS__
@@ -258,10 +257,12 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 /**
  * \brief Listen for requests.
  * \param bus TWI bus.
+ * \param num Will be set to the amount of received bytes.
  * \param rx Rx buffer.
  * \param rxlen Rx buffer length.
  * \param tmo Listen time-out.
  * \return Error code. 0 for success.
+ * \warning When this function returns without error, the bus is blocked!
  * \warning If this function responds without error, the application should
  *          respond IMMEDIATLY with BermudaTwiSlaveRespond.
  * \todo Implement BermudaTwiSlaveRespond.
@@ -269,7 +270,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
  * 
  * Listens for requests by a master to this TWI bus interface.
  */
-PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, void *rx, uptr rxlen, 
+PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
 	unsigned int tmo)
 {
 	int rc = -1;
@@ -279,14 +280,18 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, void *rx, uptr rxlen,
 	if(bus->busy == false) {
 		bus->slave_rx = rx;
 		bus->slave_rx_len = rxlen;
-		bus->twif->io(bus, TW_REPLY_ACK, NULL);
+		bus->twif->io(bus, TW_LISTEN, NULL);
 	}
 	BermudaExitCritical();
 	
 	if((rc = BermudaEventWait( (volatile THREAD**)bus->queue, tmo))) {
-		// time out
+		bus->error = E_TIMEOUT;
 	}
 	
+	if(bus->error = TWI_SR_STOP) {
+		*num = bus->slave_index;
+	}
+
 	return rc;
 }
 #endif /* __TWI__ */

@@ -81,6 +81,8 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	}
 	bus = BermudaHeapAlloc(sizeof(*bus));
 	TWI0 = bus;
+	bus->busy = false;
+
 	bus->twif = BermudaHeapAlloc(sizeof( *(bus->twif) ));
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
 	bus->twif->io = &BermudaTwIoctl;
@@ -141,6 +143,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 
 		case TW_ENABLE_INTERFACE:
+			*(hw->twcr) = BIT(TWINT);
 			*(hw->twcr) = TW_ENABLE;
 			break;
 

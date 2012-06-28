@@ -39,12 +39,21 @@ THREAD(SramThread, arg)
 {
 	unsigned char read_back_eeprom = 0;
 	unsigned char read_back_sram = 0;
+/*	unsigned char rx = 0, num;*/
 	while(1) {
 		read_back_sram = BermudaSpiRamReadByte(0x50);
 		read_back_eeprom = Bermuda24c02ReadByte(100);
 
 		printf("Read back value's: %X::%X\n", read_back_eeprom,
 			read_back_sram);
+// 		int rc = BermudaTwiSlaveListen(TWI0, &num, &rx, 1, 1000);
+// 		if(rc == 0) {
+// 			BermudaTwiSlaveRespond(TWI0, NULL, 0, 500);
+// 		}
+// 
+// 		printf("rx::rc: %X::%i\n", rx, rc);
+		printf("DDR::PORT::PIN: %X::%X::%X\n", *(AvrIO->ddrc), 
+			*(AvrIO->portc), *(AvrIO->pinc));
 		BermudaThreadSleep(1000);
 	}
 }

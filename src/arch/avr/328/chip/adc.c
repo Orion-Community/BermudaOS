@@ -98,9 +98,7 @@ unsigned char pin;
                 return 0;
         
         struct adc *adc = &BermADC;
-#ifdef __THREADS__
-        BermudaThreadEnterIO(BermudaCurrentThread);
-#endif
+
         while((*adc->adcsra & BIT(ADSC)) != 0);
         
         /* select input channel */
@@ -115,9 +113,7 @@ unsigned char pin;
         /* finished, get results and return them */
         unsigned char low = *adc->adcl;
         unsigned char high = *adc->adch;
-#ifdef __THREADS__
-        BermudaThreadExitIO(BermudaCurrentThread);
-#endif
+
         return low | (high << 8);
 }
 

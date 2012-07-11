@@ -143,7 +143,7 @@
  */
 #define TW_RELEASE (TW_ACK & (~BIT(TWIE)))
 
-#define TW_LISTEN TW_ACK //!< Listen on the interface as a slave.
+#define TW_LISTEN TW_ACK //!< Listen on the interface for incoming slave requests.
 
 #define TW_BLOCK_MASK ~(BIT(TWINT) | BIT(TWIE)) //!< Blocks the interface.
 

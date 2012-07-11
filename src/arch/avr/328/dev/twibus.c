@@ -44,13 +44,22 @@
 static volatile void *twi0_mutex = SIGNALED;
 
 /**
- * \var twi0_queue
- * \brief Transfer queue.
+ * \var twi0_master_queue
+ * \brief Master transfer queue.
  * 
- * Threads are placed in this queue when they are waiting for a TW transfer to
+ * Threads are placed in this queue when they are waiting for a TW master transfer to
  * complete.
  */
-static volatile void *twi0_queue;
+static volatile void *twi0_master_queue = SIGNALED;
+
+/**
+ * \var twi0_slave_queue
+ * \brief Slave transfer queue.
+ * 
+ * Threads are placed in this queue when they are waiting for a TW slave transfer to
+ * complete.
+ */
+static volatile void *twi0_slave_queue = SIGNALED;
 #endif
 
 /**
@@ -90,7 +99,8 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	bus->hwio = (void*)&twi0hw;
 #ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
-	bus->queue = &twi0_queue;
+	bus->master_queue = &twi0_master_queue;
+	bus->slave_queue = &twi0_slave_queue;
 #endif
 	bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 	bus->twif->io(bus, TW_SET_SLA, &sla);
@@ -176,6 +186,9 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 		case TW_REPLY_NACK:
 			*(hw->twcr) = TW_NACK;
 			break;
+			
+		case TW_SLAVE_LISTEN:
+			*(hw->twcr) = TW_LISTEN;
 			
 		default:
 			rc = -1;
@@ -326,22 +339,21 @@ unsigned int  tmo;
 	
 	BermudaTwIoctl(bus, TW_SENT_START, NULL);
 #ifdef __EVENTS__
-	rc = BermudaEventWaitNext( (volatile THREAD**)bus->queue, tmo);
+	rc = BermudaEventWaitNext( (volatile THREAD**)bus->master_queue, tmo);
 #elif __THREADS__
-	BermudaMutexEnter(&(bus->queue));
+	BermudaMutexEnter(&(bus->master_queue));
 #endif
+
 
 out:
 	bus->master_tx_len = 0;
 	bus->master_rx_len = 0;
 #ifdef __EVENTS__
-	if(rc != -1) {
-		BermudaEventSignal((volatile THREAD**)bus->mutex);
-	}
+	BermudaEventSignal((volatile THREAD**)bus->mutex);
 #elif __THREADS__
 	BermudaMutexRelease(&(bus->mutex));
 #endif
-	
+
 	return rc;
 }
 

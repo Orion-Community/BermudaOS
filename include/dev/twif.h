@@ -64,6 +64,7 @@ typedef enum
 	TW_ENABLE_INTERFACE, //!< Enables the TWI interface.
 	TW_DISABLE_INTERFACE, //!< Disable the TWI interface.
 	TW_BLOCK_INTERFACE, //!< Blocks the TWI interface.
+	TW_SLAVE_LISTEN, //!< Listen for incoming slave requests.
 
 	TW_SENT_START, //!< Sent the TWI start condition.
 	TW_SENT_SLA, //!< Sent the slave address over the TWI bus.
@@ -139,7 +140,9 @@ struct _twibus
 {
 #ifdef __EVENTS__
 	volatile void *mutex; //!< TWI bus mutex.
-	volatile void *queue; //!< TWI transfer waiting queue.
+	
+	volatile void *master_queue; //!< TWI master waiting queue.
+	volatile void *slave_queue;  //!< TWI slave waiting queue.
 #elif __THREADS__
 	mutex_t mutex;
 	mutex_t queue;

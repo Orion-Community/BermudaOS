@@ -73,9 +73,9 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 				bus->error = E_SUCCESS;
 				bus->twif->io(bus, TW_SENT_STOP, NULL);
 #ifdef __EVENTS__
-				BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+				BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
 #elif __THREADS__
-				BermudaMutexRelease(&(bus->queue));
+				BermudaMutexRelease(&(bus->master_queue));
 #endif
 				bus->busy = false;
 			}
@@ -94,10 +94,12 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->error = bus->status;
 			bus->twif->io(bus, mode, NULL);
 			bus->busy = false;
+			bus->master_rx_len = 0;
+			bus->master_tx_len = 0;
 #ifdef __EVENTS__
-			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
 #elif __THREADS__
-			BermudaMutexRelease(&(bus->queue));
+			BermudaMutexRelease(&(bus->master_queue));
 #endif
 			break;
 		
@@ -128,10 +130,11 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->error = bus->status;
 			bus->twif->io(bus, TW_SENT_STOP, NULL);
 			bus->busy = false;
+			bus->master_rx_len = 0;
 #ifdef __EVENTS__
-			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
 #elif __THREADS__
-			BermudaMutexRelease(&(bus->queue));
+			BermudaMutexRelease(&(bus->master_queue));
 #endif
 			break;
 
@@ -183,11 +186,13 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 
 		case TWI_SR_STOP:
 			bus->error = TWI_SR_STOP;
+			bus->busy = false;
 			bus->twif->io(bus, TW_BLOCK_INTERFACE, NULL);
+			bus->slave_rx_len = 0;
 #ifdef __EVENTS__
-			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->slave_queue);
 #elif __THREADS__
-			BermudaMutexRelease(&(bus->queue));
+			BermudaMutexRelease(&(bus->slave_queue));
 #endif
 			break;
 			
@@ -197,7 +202,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		case TWI_ST_ARB_LOST:
 		case TWI_ST_SLAR_ACK:
 			bus->slave_index = 0;
-			// roll over to data sending
+			bus->busy = true;
 		
 		/*
 		 * Data is sent and ACKed.
@@ -229,10 +234,11 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
 			bus->error = bus->status;
 			bus->busy = false;
+			bus->slave_tx_len = 0;
 #ifdef __EVENTS__
-			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->slave_queue);
 #elif __THREADS__
-			BermudaMutexRelease(&(bus->queue));
+			BermudaMutexRelease(&(bus->slave_queue));
 #endif
 			break;
 			
@@ -241,12 +247,20 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->error = E_GENERIC;
 			bus->slave_index = 0;
 			bus->master_index = 0;
+			
+			bus->master_rx_len = 0;
+			bus->master_tx_len = 0;
+			bus->slave_rx_len = 0;
+			bus->slave_tx_len = 0;
+			
 			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
 			bus->busy = false;
 #ifdef __EVENTS__
-			BermudaEventSignalFromISR( (volatile THREAD**)bus->queue);
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
+			BermudaEventSignalFromISR( (volatile THREAD**)bus->slave_queue);
 #elif __THREADS__
-			BermudaMutexRelease(&(bus->queue));
+			BermudaMutexRelease(&(bus->master_queue));
+			BermudaMutexRelease(&(bus->slave_queue));
 #endif
 			break;
 	}
@@ -277,14 +291,21 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 	
 	BermudaEnterCritical();
 	
-	if(bus->busy == false) {
+
 		bus->slave_rx = rx;
 		bus->slave_rx_len = rxlen;
-		bus->twif->io(bus, TW_LISTEN, NULL);
+	
+	if(bus->busy == false) {
+		if(bus->master_rx_len || bus->master_tx_len) {
+			bus->twif->io(bus, TW_SENT_START, NULL);
+		}
+		else {
+			bus->twif->io(bus, TW_SLAVE_LISTEN, NULL);
+		}
 	}
 	BermudaExitCritical();
 	
-	if((rc = BermudaEventWaitNext( (volatile THREAD**)bus->queue, tmo))) {
+	if((rc = BermudaEventWaitNext( (volatile THREAD**)bus->slave_queue, tmo))) {
 		bus->error = E_TIMEOUT;
 	}
 	
@@ -319,10 +340,10 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 		bus->slave_tx = tx;
 		bus->slave_tx_len = txlen;
 
-		bus->twif->io(bus, TW_LISTEN, NULL); // release the bus
+		bus->twif->io(bus, TW_SLAVE_LISTEN, NULL); // release the bus
 		BermudaExitCritical();
 
-		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->queue, tmo))) {
+		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->slave_queue, tmo))) {
 			bus->error = E_TIMEOUT;
 		}
 	}

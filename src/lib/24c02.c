@@ -52,6 +52,5 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 	unsigned char rx = 0;
 	eeprom_bus->twif->transfer(eeprom_bus, &tx, 1, &rx, 1, BASE_SLA_24C02,
 		                       SCL_FRQ_24C02, 500);
-	//printf("TWI error code: %X\n", eeprom_bus->error);
 	return rx;
 }

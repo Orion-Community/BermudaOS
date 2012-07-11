@@ -76,6 +76,8 @@ static TWIHW twi0hw = {
 	&TWDR,
 	&TWAR,
 	&TWAMR,
+	.scl = 5,
+	.sda = 4,
 };
 
 /**
@@ -97,6 +99,8 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	bus->twif->io = &BermudaTwIoctl;
 	bus->twif->isr = &BermudaTwISR;
 	bus->io.hwio = (void*)&twi0hw;
+	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
+	((TWIHW*)bus->io.hwio)->io_out = AvrIO->portc;
 #ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
 	bus->master_queue = &twi0_master_queue;
@@ -130,7 +134,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 			
 		case TW_SET_PRES:
-			*(hw->twsr) = (*(hw->twsr) &(~B11)) | *((unsigned char*)conf);
+			*(hw->twsr) = (*(hw->twsr) & (~B11)) | *((unsigned char*)conf);
 			break;
 			
 		case TW_SET_SLA:
@@ -153,8 +157,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 
 		case TW_ENABLE_INTERFACE:
-			*(hw->twcr) = BIT(TWINT);
-			*(hw->twcr) = TW_ENABLE;
+			*(hw->twcr) = BIT(TWINT) | TW_ENABLE;
 			break;
 
 		case TW_DISABLE_INTERFACE:
@@ -280,118 +283,6 @@ unsigned char BermudaTwiCalcPres(uint32_t frq)
 	}
 	
 	return ret;
-}
-
-/**
- * \brief Transfer data using the twi bus.
- * \param twi Used TWI bus.
- * \param tx Transmit buffer.
- * \param txlen Transmit buffer length.
- * \param rx Receive buffer.
- * \param rxlen Receive buffer length.
- * \param sla Slave address to sent to.
- * \param frq Frequency to use when sending data.
- * \param tmo Transfer waiting time-out.
- * \warning A TWI init routine should be called before using this function.
- * \see BermudaTwi0Init
- * \todo Should be moved to src/dev/twif.c
- * 
- * Data is transfered or received using the TWI bus. The mode this function
- * uses depends of the TWIMODE setting in the TWIBUS structure.
- */
-PUBLIC int BermudaTwiMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
-TWIBUS        *bus;
-const void*   tx;
-unsigned int  txlen;
-void*         rx;
-unsigned int  rxlen;
-unsigned char sla;
-uint32_t      frq;
-unsigned int  tmo;
-{
-	int rc = -1;
-#ifdef __EVENTS__
-	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
-		goto out;
-	}
-	else if(tx == NULL && rx == NULL) {
-		goto out;
-	}
-#else
-#ifdef __THREADS__
-	BermudaMutexEnter(&(bus->mutex));
-#endif
-	if(tx == NULL && rx == NULL) {
-		goto out;
-	}
-#endif
-	else {
-		rc = 0;
-	}
-	
-	BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq);
-	if(tx) {
-		bus->mode = TWI_MASTER_TRANSMITTER;
-	}
-	else {
-		bus->mode = TWI_MASTER_RECEIVER;
-	}
-	
-	BermudaTwIoctl(bus, TW_SENT_START, NULL);
-#ifdef __EVENTS__
-	rc = BermudaEventWaitNext( (volatile THREAD**)bus->master_queue, tmo);
-#elif __THREADS__
-	BermudaMutexEnter(&(bus->master_queue));
-#endif
-
-
-out:
-	bus->master_tx_len = 0;
-	bus->master_rx_len = 0;
-#ifdef __EVENTS__
-	BermudaEventSignal((volatile THREAD**)bus->mutex);
-#elif __THREADS__
-	BermudaMutexRelease(&(bus->mutex));
-#endif
-
-	return rc;
-}
-
-/**
- * \brief Initialize the TWI bus.
- * \param twi Bus to initialize.
- * \param tx  Transmit buffer.
- * \param txlen Length of the transmit buffer.
- * \param rx Receive buffer.
- * \param rxlen Length of the received buffer.
- * \param sla Slave address used in the coming transmission.
- * \param frq Frequency to use in the coming transmission.
- * \todo Should be moved to src/dev/twif.c
- * 
- * Used to initialize the TWI bus before starting a transfer.
- */
-PRIVATE WEAK void BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq)
-TWIBUS*       bus;
-const void*   tx;
-unsigned int  txlen;
-void*         rx;
-unsigned int  rxlen;
-unsigned char sla;
-uint32_t      frq;
-{
-	bus->master_tx = tx;
-	bus->master_tx_len = txlen;
-	bus->master_rx = rx;
-	bus->master_rx_len = rxlen;
-	bus->sla = sla;
-	bus->freq = frq;
-	
-	if(frq) {
-		unsigned char pres = BermudaTwiCalcPres(frq);
-		unsigned char twbr = BermudaTwiCalcTWBR(frq, pres);
-		BermudaTwIoctl(bus, TW_SET_RATE, &twbr);
-		BermudaTwIoctl(bus, TW_SET_PRES, &pres);
-	}
 }
 
 SIGNAL(TWI_STC_vect)

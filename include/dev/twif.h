@@ -196,6 +196,9 @@ extern int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 	unsigned int tmo);
 extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 	unsigned int tmo);
+extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, unsigned int txlen,  
+	void *rx, unsigned int rxlen, unsigned char sla,
+	uint32_t frq, unsigned int tmo);
 
 #ifdef __cplusplus
 }

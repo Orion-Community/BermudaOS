@@ -21,9 +21,17 @@
 #if defined(__TWI__) || defined(__DOXYGEN__)
 
 #include <bermuda.h>
-#include <sys/events/event.h>
+
+#include <lib/binary.h>
 #include <dev/twif.h>
 #include <arch/twi.h>
+
+#include <sys/events/event.h>
+
+// private function declarations
+PRIVATE WEAK int BermudaTwiHwIfacBusy(TWIBUS *bus);
+PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen, 
+	void *rx, unsigned int rxlen, unsigned char sla, uint32_t frq);
 
 /**
  * \brief Generic TWI interrupt handler.
@@ -184,6 +192,10 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, TW_REPLY_NACK, NULL); // NACK and wait for stop
 			break;
 
+		/*
+		 * The current bus master did sent a stop condition to terminate the
+		 * transfer.
+		 */
 		case TWI_SR_STOP:
 			bus->error = TWI_SR_STOP;
 			bus->busy = false;
@@ -266,6 +278,120 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 	}
 	
 	return;
+}
+
+/**
+ * \brief Transfer data using the twi bus.
+ * \param twi Used TWI bus.
+ * \param tx Transmit buffer.
+ * \param txlen Transmit buffer length.
+ * \param rx Receive buffer.
+ * \param rxlen Receive buffer length.
+ * \param sla Slave address to sent to.
+ * \param frq Frequency to use when sending data.
+ * \param tmo Transfer waiting time-out.
+ * \warning A TWI init routine should be called before using this function.
+ * \see BermudaTwi0Init
+ * \todo Should be moved to src/dev/twif.c
+ * 
+ * Data is transfered or received using the TWI bus. The mode this function
+ * uses depends of the TWIMODE setting in the TWIBUS structure.
+ */
+PUBLIC int BermudaTwiMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
+TWIBUS        *bus;
+const void*   tx;
+unsigned int  txlen;
+void*         rx;
+unsigned int  rxlen;
+unsigned char sla;
+uint32_t      frq;
+unsigned int  tmo;
+{
+	int rc = -1;
+#ifdef __EVENTS__
+	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
+		goto out;
+	}
+	else if(tx == NULL && rx == NULL) {
+		goto out;
+	}
+#else
+#ifdef __THREADS__
+	BermudaMutexEnter(&(bus->mutex));
+#endif
+	if(tx == NULL && rx == NULL) {
+		goto out;
+	}
+#endif
+	else {
+		rc = 0;
+	}
+	
+	BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq);
+	if(tx) {
+		bus->mode = TWI_MASTER_TRANSMITTER;
+	}
+	else {
+		bus->mode = TWI_MASTER_RECEIVER;
+	}
+	
+	if(bus->busy == false && BermudaTwiHwIfacBusy(bus)) {
+		bus->twif->io(bus, TW_SENT_START, NULL);
+	}
+#ifdef __EVENTS__
+	rc = BermudaEventWaitNext( (volatile THREAD**)bus->master_queue, tmo);
+#elif __THREADS__
+	BermudaMutexEnter(&(bus->master_queue));
+#endif
+
+
+out:
+	bus->master_tx_len = 0;
+	bus->master_rx_len = 0;
+#ifdef __EVENTS__
+	BermudaEventSignal((volatile THREAD**)bus->mutex);
+#elif __THREADS__
+	BermudaMutexRelease(&(bus->mutex));
+#endif
+
+	return rc;
+}
+
+/**
+ * \brief Initialize the TWI bus.
+ * \param twi Bus to initialize.
+ * \param tx  Transmit buffer.
+ * \param txlen Length of the transmit buffer.
+ * \param rx Receive buffer.
+ * \param rxlen Length of the received buffer.
+ * \param sla Slave address used in the coming transmission.
+ * \param frq Frequency to use in the coming transmission.
+ * \todo Should be moved to src/dev/twif.c
+ * 
+ * Used to initialize the TWI bus before starting a transfer.
+ */
+PRIVATE WEAK void BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq)
+TWIBUS*       bus;
+const void*   tx;
+unsigned int  txlen;
+void*         rx;
+unsigned int  rxlen;
+unsigned char sla;
+uint32_t      frq;
+{
+	bus->master_tx = tx;
+	bus->master_tx_len = txlen;
+	bus->master_rx = rx;
+	bus->master_rx_len = rxlen;
+	bus->sla = sla;
+	bus->freq = frq;
+	
+	if(frq) {
+		unsigned char pres = BermudaTwiCalcPres(frq);
+		unsigned char twbr = BermudaTwiCalcTWBR(frq, pres);
+		bus->twif->io(bus, TW_SET_RATE, &twbr);
+		bus->twif->io(bus, TW_SET_PRES, &pres);
+	}
 }
 
 /**
@@ -355,6 +481,43 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 		bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 	}
 
+	return rc;
+}
+
+/**
+ * \brief Checks the status of SCL and SDA.
+ * \param bus Bus interface to check.
+ * \return -1 if the given interface is in idle; \n
+ *         0 if SDA is low and SCL is HIGH; \n
+ *         1 if SCL is low and SDA is high; \n
+ *         2 if SCL and SDA are both low.
+ * \return The default return value is 2.
+ * 
+ * It is safe to use the interface if this function returns -1 (both lines are
+ * HIGH).
+ */
+PRIVATE WEAK int BermudaTwiHwIfacBusy(TWIBUS *bus)
+{
+	TWIHW *hw = BermudaTwiIoData(bus);
+	unsigned char scl = (*(hw->io_in)) & BIT(hw->scl);
+	unsigned char sda = (*(hw->io_in)) & BIT(hw->sda);
+	int rc = 2;
+	
+	switch(scl | sda) {
+		case TW_IF_IDLE:
+			rc = -1;
+			break;
+		case TW_IF_BUSY1:
+			rc = 0;
+			break;
+		case TW_IF_BUSY2:
+			rc = 1;
+			break;
+		case TW_IF_BUSY3:
+			rc = 2;
+			break;
+	}
+	
 	return rc;
 }
 #endif /* __TWI__ */

@@ -179,6 +179,14 @@ struct _twi_hw {
 	volatile reg8_t twdr;  //!< TWI data register.
 	volatile reg8_t twar;  //!< TWI (slave) address register
 	volatile reg8_t twamr; //!< TWI (slave) address mask register.
+	
+	// generic io registers used in twi
+	reg8_t io_in; //!< SCL/SDA input register.
+	reg8_t io_out; //!< SLA/SDA output register.
+	
+	// pins
+	unsigned char scl; //!< SCL pin.
+	unsigned char sda; //!< SDA pin.
 };
 
 /**

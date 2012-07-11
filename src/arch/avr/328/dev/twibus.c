@@ -96,7 +96,7 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
 	bus->twif->io = &BermudaTwIoctl;
 	bus->twif->isr = &BermudaTwISR;
-	bus->hwio = (void*)&twi0hw;
+	bus->io.hwio = (void*)&twi0hw;
 #ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
 	bus->master_queue = &twi0_master_queue;
@@ -116,7 +116,7 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
  */
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 {
-	TWIHW *hw = bus->hwio;
+	TWIHW *hw = bus->io.hwio;
 	unsigned char sla;
 	int rc = 0;
 	BermudaEnterCritical();

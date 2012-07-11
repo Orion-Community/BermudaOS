@@ -89,6 +89,17 @@ typedef struct _twibus TWIBUS;
  */
 typedef struct _twif TWIF;
 
+struct softio
+{
+	// generic io registers used in twi
+	reg8_t io_in; //!< SCL/SDA input register.
+	reg8_t io_out; //!< SLA/SDA output register.
+	
+	// pins
+	unsigned char scl; //!< SCL pin.
+	unsigned char sda; //!< SDA pin.
+} __attribute__((packed));
+
 /**
  * \struct _twif
  * \brief TWI communication interface.
@@ -127,7 +138,7 @@ struct _twif
 	 * The ISR handler which will handle the logic.
 	 */
 	void (*isr)(TWIBUS * bus);
-};
+} __attribute__((packed));
 
 /**
  * \struct _twibus
@@ -149,7 +160,10 @@ struct _twibus
 #endif
 
 	struct _twif *twif; //!< TWI hardware communication interface.
-	void *hwio; //!< TWI hardware I/O registers.
+	union {
+		void *hwio; //!< TWI hardware I/O registers.
+		struct softio *softio; //!< Software TWI registers;
+	} io;
 
 	const unsigned char *master_tx; //!< TWI transmit buffer.
 	uptr master_tx_len; //!< Length of the tx buffer.
@@ -170,7 +184,7 @@ struct _twibus
 	unsigned char error; //!< TWI error member.
 	unsigned char status; //!< TWI status
 	bool busy; //!< When set to !0 the interface is busy.
-};
+} __attribute__((packed));
 
 #ifdef __cplusplus
 extern "C"

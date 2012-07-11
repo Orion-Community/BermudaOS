@@ -79,6 +79,8 @@ void setup()
 	BermudaSpiRamInit(SPI0, 10);
 	BermudaSpiRamWriteByte(0x50, 0x99);
 	Bermuda24c02WriteByte(100, 0xAB);
+	
+	printf("HWIO: %p\n", TWI0->io.hwio);
 }
 
 void loop()
@@ -97,6 +99,9 @@ void loop()
 
 	printf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
+	unsigned char scl = (*(AvrIO->pinc)) & BIT(5);
+	unsigned char sda = (*(AvrIO->pinc)) & BIT(4);
+	printf("SCL: %X :: SDA: %X\n", scl, sda);
 
 	BermudaThreadSleep(5000);
 	return;

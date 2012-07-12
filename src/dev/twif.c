@@ -335,7 +335,7 @@ unsigned int  tmo;
 		bus->mode = TWI_MASTER_RECEIVER;
 	}
 	
-	if(bus->busy == false && BermudaTwiHwIfacBusy(bus)) {
+	if(bus->busy == false && bus->twif->ifbusy(bus) == -1) {
 		bus->twif->io(bus, TW_SENT_START, NULL);
 	}
 #ifdef __EVENTS__
@@ -422,7 +422,8 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 		bus->slave_rx_len = rxlen;
 	
 	if(bus->busy == false) {
-		if(bus->master_rx_len || bus->master_tx_len) {
+		if((bus->master_rx_len || bus->master_tx_len)  && 
+			bus->twif->ifbusy(bus) == -1) {
 			bus->twif->io(bus, TW_SENT_START, NULL);
 		}
 		else {
@@ -481,43 +482,6 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 		bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 	}
 
-	return rc;
-}
-
-/**
- * \brief Checks the status of SCL and SDA.
- * \param bus Bus interface to check.
- * \return -1 if the given interface is in idle; \n
- *         0 if SDA is low and SCL is HIGH; \n
- *         1 if SCL is low and SDA is high; \n
- *         2 if SCL and SDA are both low.
- * \return The default return value is 2.
- * 
- * It is safe to use the interface if this function returns -1 (both lines are
- * HIGH).
- */
-PRIVATE WEAK int BermudaTwiHwIfacBusy(TWIBUS *bus)
-{
-	TWIHW *hw = BermudaTwiIoData(bus);
-	unsigned char scl = (*(hw->io_in)) & BIT(hw->scl);
-	unsigned char sda = (*(hw->io_in)) & BIT(hw->sda);
-	int rc = 2;
-	
-	switch(scl | sda) {
-		case TW_IF_IDLE:
-			rc = -1;
-			break;
-		case TW_IF_BUSY1:
-			rc = 0;
-			break;
-		case TW_IF_BUSY2:
-			rc = 1;
-			break;
-		case TW_IF_BUSY3:
-			rc = 2;
-			break;
-	}
-	
 	return rc;
 }
 #endif /* __TWI__ */

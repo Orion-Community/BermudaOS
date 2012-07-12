@@ -130,6 +130,20 @@ struct _twif
 	 * Controls the I/O logic. Implemented by the TWI driver.
 	 */
 	int (*io)(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
+	
+	/**
+	 * \brief Checks the status of SCL and SDA.
+	 * \param bus Bus interface to check.
+	 * \return -1 if the given interface is in idle; \n
+	 *         0 if SDA is low and SCL is HIGH; \n
+	 *         1 if SCL is low and SDA is high; \n
+	 *         2 if SCL and SDA are both low.
+	 * \return The default return value is 2.
+	 * 
+	 * It is safe to use the interface if this function returns -1 (both lines are
+	 * HIGH).
+	 */
+	int (*ifbusy)(TWIBUS *bus);
 
 	/**
 	 * \brief ISR handler.

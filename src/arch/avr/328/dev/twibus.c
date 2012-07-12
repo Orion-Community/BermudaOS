@@ -34,6 +34,9 @@
 
 #include <arch/avr/interrupts.h>
 
+// private functions
+PRIVATE WEAK int BermudaTwHwIfacBusy(TWIBUS *bus);
+
 #ifdef __EVENTS__
 /**
  * \var twi0_mutex
@@ -97,6 +100,7 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	bus->twif = BermudaHeapAlloc(sizeof( *(bus->twif) ));
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
 	bus->twif->io = &BermudaTwIoctl;
+	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
 	bus->twif->isr = &BermudaTwISR;
 	bus->io.hwio = (void*)&twi0hw;
 	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
@@ -283,6 +287,43 @@ unsigned char BermudaTwiCalcPres(uint32_t frq)
 	}
 	
 	return ret;
+}
+
+/**
+ * \brief Checks the status of SCL and SDA.
+ * \param bus Bus interface to check.
+ * \return -1 if the given interface is in idle; \n
+ *         0 if SDA is low and SCL is HIGH; \n
+ *         1 if SCL is low and SDA is high; \n
+ *         2 if SCL and SDA are both low.
+ * \return The default return value is 2.
+ * 
+ * It is safe to use the interface if this function returns -1 (both lines are
+ * HIGH).
+ */
+PRIVATE WEAK int BermudaTwHwIfacBusy(TWIBUS *bus)
+{
+	TWIHW *hw = BermudaTwiIoData(bus);
+	unsigned char scl = (*(hw->io_in)) & BIT(hw->scl);
+	unsigned char sda = (*(hw->io_in)) & BIT(hw->sda);
+	int rc = 2;
+	
+	switch(scl | sda) {
+		case TW_IF_IDLE:
+			rc = -1;
+			break;
+		case TW_IF_BUSY1:
+			rc = 0;
+			break;
+		case TW_IF_BUSY2:
+			rc = 1;
+			break;
+		case TW_IF_BUSY3:
+			rc = 2;
+			break;
+	}
+	
+	return rc;
 }
 
 SIGNAL(TWI_STC_vect)

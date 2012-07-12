@@ -171,6 +171,9 @@
 #undef TWSTA
 #undef TWEA
 #undef TWINT
+
+#undef SCL
+#undef SDA
 #endif
 
 #define TWIE 0
@@ -180,6 +183,9 @@
 #define TWSTA 5
 #define TWEA 6
 #define TWINT 7
+
+#define SCL 5
+#define SDA 4
 
 /**
  * \def TWBR
@@ -235,5 +241,14 @@
  * Masks bits in the TWAR.
  */
 #define TWAMR MEM_IO8(0xBD)
+
+/**
+ * \brief The interface is free.
+ */
+#define TW_IF_IDLE (BIT(SCL) | BIT(SDA))
+
+#define TW_IF_BUSY1 BIT(SCL)
+#define TW_IF_BUSY2 BIT(SDA)
+#define TW_IF_BUSY3 0
 
 #endif /* __TWIREG_328_H */

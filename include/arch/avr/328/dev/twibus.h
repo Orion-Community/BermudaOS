@@ -39,6 +39,12 @@
 #define TWI0_INIT BermudaTwi0Init
 
 /**
+ * \def BermudaTwiIoData
+ * \brief Get I/O data address.
+ */
+#define BermudaTwiIoData(bus) bus->io.hwio
+
+/**
  * \def TW_TMO
  * \brief Default TWI timeout.
  * 
@@ -197,15 +203,8 @@ typedef struct _twi_hw TWIHW;
 
 __DECL
 extern void BermudaTwi0Init(unsigned char sla);
-extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, unsigned int txlen,  
-							  void *rx, unsigned int rxlen, unsigned char sla,
-							  uint32_t frq, unsigned int tmo);
 extern unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres);
 extern unsigned char BermudaTwiCalcPres(uint32_t pres);
-
-PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen, 
-								void *rx, unsigned int rxlen, unsigned char sla, 
-								uint32_t frq);
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 __DECL_END
 

@@ -52,17 +52,17 @@ typedef struct xornode
 } NODE;
 
 /**
- * \fn xorll_get_next(NODE *prev, NODE *this)
+ * \fn BermudaXorllGetNext(NODE *prev, NODE *this)
  * \return The next node
  * \brief Calculates the next node.
  *
  * Uses the XOR functionality to calculate the next node from the previous and
  * the next pointer.
  */
-NODE *xorll_get_next(NODE *prev, NODE *this);
+NODE *BermudaXorllGetNext(NODE *prev, NODE *this);
 
 /**
- * \fn xorll_list_insert(NODE *prev, NODE *this, NODE *new)
+ * \fn BermudaXorllInsert(NODE *prev, NODE *this, NODE *new)
  * 
  * \param prev Previous pointer of <i>this</i>.
  * \param this The node will be after <i>this</i>
@@ -74,20 +74,20 @@ NODE *xorll_get_next(NODE *prev, NODE *this);
  *
  * This function will insert the xornode node after the <i>this</i> node.
  */
-int xorll_list_insert(NODE *prev, NODE *this, NODE *new);
+int BermudaXorllInsert(NODE *prev, NODE *this, NODE *new);
 
 /**
- * \fn xorll_remove_node(NODE *prev, NODE *this)
+ * \fn BermudaXorllRemoveNode(NODE *prev, NODE *this)
  * \param prev Previous node of <i>this</i>
  * \param this Node which has to be removed.
  * \brief Remove node <i>this</i> from the list.
  * 
- * xorll_remove_node removes node <i>this</i> from the linked list.
+ * BermudaXorllRemoveNode removes node <i>this</i> from the linked list.
  */
-int xorll_remove_node(NODE *prev, NODE *this);
+int BermudaXorllRemoveNode(NODE *prev, NODE *this);
 
 /**
- * \fn xorll_list_add(NODE *list, NODE *node, NODE *new)
+ * \fn BermudaXorllAddNode(NODE *list, NODE *node, NODE *new)
  * \brief Add the node <i>new</i> to <i>list</i>.
  * \param list The list head.
  * \param node The node to add the new node after.
@@ -97,10 +97,10 @@ int xorll_remove_node(NODE *prev, NODE *this);
  * The xornode <i>new</i> will be added after <i>node</i> in the list
  * <i>list</i>.
  */
-int xorll_list_add(NODE *listHead, NODE *node, NODE *new);
+int BermudaXorllAddNode(NODE *listHead, NODE *node, NODE *new);
 
 /**
- * \fn iterate_xor_list(NODE *prev, NODE *head, xor_list_iterator_t hook)
+ * \fn BermudaXorllIterateList(NODE *prev, NODE *head, xor_list_iterator_t hook)
  * \param prev Previous node of the starting point <i>head</i>
  * \param head Iterate starting point.
  * \param hook Will be called every iteration.
@@ -110,10 +110,10 @@ int xorll_list_add(NODE *listHead, NODE *node, NODE *new);
  * This function returns trough a XOR-linkedlist and it will call hook on every
  * iteration.
  */
-int iterate_xor_list(NODE *prev, NODE *head, xor_list_iterator_t hook);
+int BermudaXorllIterateList(NODE *prev, NODE *head, xor_list_iterator_t hook);
 
 /**
- * \fn get_prev_node(NODE *this, NODE *next)
+ * \fn BermudaXorllGetPrev(NODE *this, NODE *next)
  * \param this 'Current' node.
  * \param next Consecutive node of <i>this</i>.
  * \brief This function returns the previous node of <i>this</i>
@@ -122,8 +122,7 @@ int iterate_xor_list(NODE *prev, NODE *head, xor_list_iterator_t hook);
  * This function calculates the previous node of <i>this</i> using the <i>next</i>
  * node.
  */
-static inline NODE*
-get_prev_node(NODE *this, NODE *next)
+static inline NODE *BermudaXorllGetPrev(NODE *this, NODE *next)
 {
         return (NODE*)((this) ? (ulong)this->pointer ^ (ulong)next : 0);
 }

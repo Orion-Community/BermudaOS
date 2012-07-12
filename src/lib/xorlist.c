@@ -28,14 +28,14 @@
 #include <lib/list/xorlist_error.h>
 
 /**
- * \fn xorll_get_next(NODE *prev, NODE *this)
+ * \fn BermudaXorllGetNext(NODE *prev, NODE *this)
  * \return The next node
  * \brief Calculates the next node.
  *
  * Uses the XOR functionality to calculate the next node from the previous and
  * the next pointer.
  */
-NODE *xorll_get_next(NODE *prev, NODE *this)
+NODE *BermudaXorllGetNext(NODE *prev, NODE *this)
 {
         if(this == NULL)
                 return this;
@@ -48,7 +48,7 @@ NODE *xorll_get_next(NODE *prev, NODE *this)
 }
 
 /**
- * \fn xorll_list_insert(NODE *prev, NODE *this, NODE *new)
+ * \fn BermudaXorllInsert(NODE *prev, NODE *this, NODE *new)
  * \brief Adds <b>node</b> to <b>list</b>.
  * \param prev The previous node
  * \param this The node will be after this node.
@@ -57,12 +57,12 @@ NODE *xorll_get_next(NODE *prev, NODE *this)
  *
  * This function will insert the xornode node between alpha and beta.
  */
-int xorll_list_insert(NODE *prev, NODE *this, NODE *new)
+int BermudaXorllInsert(NODE *prev, NODE *this, NODE *new)
 {
         ulong uprev = (ulong)prev;
         ulong uthis = (ulong)this;
         ulong unew  = (ulong)new;
-        NODE *next  = xorll_get_next(prev, this);
+        NODE *next  = BermudaXorllGetNext(prev, this);
         ulong unext = (ulong)next;
 
         ulong pNext_next = (next) ? (ulong)next->pointer ^ uthis : 0 ^ uthis;
@@ -82,21 +82,20 @@ int xorll_list_insert(NODE *prev, NODE *this, NODE *new)
 }
 
 /**
- * \fn xorll_remove_node(NODE *prev, NODE *this)
+ * \fn BermudaXorllRemoveNode(NODE *prev, NODE *this)
  * \param prev Previous node of <i>this</i>
  * \param this Node which has to be removed.
  * \brief Remove node <i>this</i> from the list.
  * 
- * xorll_remove_node removes node <i>this</i> from the linked list.
+ * BermudaXorllRemoveNode removes node <i>this</i> from the linked list.
  */
-int
-xorll_remove_node(NODE *prev, NODE *this)
+int BermudaXorllRemoveNode(NODE *prev, NODE *this)
 {
         if(NULL == this)
                 return NULL_PTR;
         
-        NODE *next = xorll_get_next(prev, this);
-        ulong uprev_prev = (ulong) ((prev) ? get_prev_node(prev, this) : NULL);
+        NODE *next = BermudaXorllGetNext(prev, this);
+        ulong uprev_prev = (ulong) ((prev) ? BermudaXorllGetPrev(prev, this) : NULL);
         
         ulong unext = (ulong)next;
         ulong uprev = (ulong)prev;
@@ -114,7 +113,7 @@ xorll_remove_node(NODE *prev, NODE *this)
 }
 
 /**
- * \fn xorll_list_add(NODE *list, NODE *node, NODE *new)
+ * \fn BermudaXorllAddNode(NODE *list, NODE *node, NODE *new)
  * \brief Add the node <i>new</i> to <i>list</i>.
  * \param list The list head.
  * \param node The node to add the new node after.
@@ -124,8 +123,7 @@ xorll_remove_node(NODE *prev, NODE *this)
  * The xornode <i>new</i> will be added after <i>node</i> in the list
  * <i>list</i>.
  */
-int
-xorll_list_add(NODE *listHead, NODE *node, NODE *new)
+int BermudaXorllAddNode(NODE *listHead, NODE *node, NODE *new)
 {
         NODE *prev = NULL,*carriage = listHead, *tmp;
 
@@ -135,18 +133,18 @@ xorll_list_add(NODE *listHead, NODE *node, NODE *new)
         {
                 if(carriage == node)
                 {
-                        xorll_list_insert(prev, carriage, new);
+                        BermudaXorllInsert(prev, carriage, new);
                         break;
                 }
                 tmp = carriage;
-                carriage = xorll_get_next(prev, tmp);                
+                carriage = BermudaXorllGetNext(prev, tmp);                
                 prev = tmp;
                 
                 if(!carriage && !node && new)
                 {
                         carriage = tmp;
-                        prev = get_prev_node(carriage, NULL);
-                        xorll_list_insert(prev, carriage, new);
+                        prev = BermudaXorllGetPrev(carriage, NULL);
+                        BermudaXorllInsert(prev, carriage, new);
                         break;
                 }
         }
@@ -155,7 +153,7 @@ xorll_list_add(NODE *listHead, NODE *node, NODE *new)
 }
 
 /**
- * \fn iterate_xor_list(NODE *prev, NODE *head, xor_list_iterator_t hook)
+ * \fn BermudaXorllIterateList(NODE *prev, NODE *head, xor_list_iterator_t hook)
  * \param prev Previous node of the starting point <i>head</i>
  * \param head Iterate starting point.
  * \param hook Will be called every iteration.
@@ -166,7 +164,7 @@ xorll_list_add(NODE *listHead, NODE *node, NODE *new)
  * iteration.
  */
 int
-iterate_xor_list(NODE *prev, NODE *head, xor_list_iterator_t hook)
+BermudaXorllIterateList(NODE *prev, NODE *head, xor_list_iterator_t hook)
 {
         NODE *carriage = head, *tmp;
         int result = -1;
@@ -176,7 +174,7 @@ iterate_xor_list(NODE *prev, NODE *head, xor_list_iterator_t hook)
         while(carriage)
         {
                 tmp = carriage; // save to set prev later
-                carriage = xorll_get_next(prev, tmp); // get next one..
+                carriage = BermudaXorllGetNext(prev, tmp); // get next one..
                 if(prev)
                         if(HOOK_DONE == (result = hook(prev)))
                                 break;

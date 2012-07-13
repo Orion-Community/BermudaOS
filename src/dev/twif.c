@@ -37,8 +37,8 @@ PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen,
  * \brief Generic TWI interrupt handler.
  * \param bus TWI bus which raised the interrupt.
  * \warning Should only be called by hardware!
- * \todo Test slave transmitter.
- * \todo Test slave receiver.
+ * \note When addressed as a slave receiver, the bus is blocked after the STOP
+ *       bit. The user should always respond with BermudaTwiSlaveRespond.
  * 
  * Generic handling of the TWI logic. It will first sent all data in the transmit
  * buffer, if present. Then it will receive data in the receive buffer, if a
@@ -60,22 +60,26 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->master_index = 0;
 			bus->busy = true;
 			if(bus->mode == TWI_MASTER_RECEIVER) {
-				sla |= 1;
+				sla |= 1; // SLA+R
 			}
 
 			bus->twif->io(bus, TW_SENT_SLA, &sla);
 			break;
 		
-		/* master transmitter */
+		/*
+		 * Transmit data as a master transmitter to the the addressed slave
+		 * device.
+		 */
 		case TWI_MT_SLA_ACK: // slave ACKed SLA+W
 		case TWI_MT_DATA_ACK: // slave ACKed data
 			if(bus->master_index < bus->master_tx_len) {
 				bus->twif->io(bus, TW_SENT_DATA, (void*)&(bus->master_tx[bus->master_index]));
-				bus->master_index++;
+				bus->master_index++; // late increment for AVRICC
 			}
 			else if(bus->master_rx_len) {
 				bus->mode = TWI_MASTER_RECEIVER;
 				bus->twif->io(bus, TW_SENT_START, NULL); // sent repeated start
+				bus->master_tx_len = 0;
 			}
 			else { // end of transfer
 				bus->error = E_SUCCESS;
@@ -86,9 +90,14 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 				BermudaMutexRelease(&(bus->master_queue));
 #endif
 				bus->busy = false;
+				bus->master_tx_len = 0;
 			}
 			break;
-			
+		
+		/*
+		 * Data is transmitted as a master transmitter and a NACK is returned.
+		 * If there is no arbitration a STOP bit will be generated on the bus.
+		 */
 		case TWI_MT_SLA_NACK: // slave NACKed SLA+W
 		case TWI_MT_DATA_NACK: // slave NACKed data byte
 		case TWI_MR_SLA_NACK: // SLA+R sent but NACKed
@@ -103,7 +112,6 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, mode, NULL);
 			bus->busy = false;
 			bus->master_rx_len = 0;
-			bus->master_tx_len = 0;
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
 #elif __THREADS__
@@ -130,6 +138,11 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			}
 			break;
 			
+		/*
+		 * Received data as a master receiver and returned a NACK. The received
+		 * byte will be stored and a STOP bit will be generated. The user application
+		 * will also be waken up if threading/events are enabled.
+		 */
 		case TWI_MR_DATA_NACK:
 			if(bus->master_index < bus->master_rx_len) {
 				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->master_rx[bus->master_index]));
@@ -194,7 +207,8 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 
 		/*
 		 * The current bus master did sent a stop condition to terminate the
-		 * transfer.
+		 * transfer. The bus will be blocked blocked by holding SCL low. Bus
+		 * operation can be continued by calling BermudaTwiSlaveRespond.
 		 */
 		case TWI_SR_STOP:
 			bus->error = TWI_SR_STOP;

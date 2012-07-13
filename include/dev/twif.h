@@ -57,7 +57,14 @@ typedef enum
 {
 	TW_SET_RATE, //!< Set the TWBR register.
 	TW_SET_PRES, //!< Set the SCL prescaler.
-	TW_SET_SLA, //!< Set new slave address.
+	
+	/**
+	 * \brief Set the slave address.
+	 * \note GCR will be disabled by default.
+	 * \see TW_SET_GCR
+	 */
+	TW_SET_SLA,
+	TW_SET_GCR, //!< Enable GCR.
 
 	TW_RELEASE_BUS, //!< Release the bus.
 	TW_GET_STATUS, //!< Get the status from hardware.

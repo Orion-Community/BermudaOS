@@ -112,6 +112,7 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 #endif
 	bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 	bus->twif->io(bus, TW_SET_SLA, &sla);
+	bus->twif->io(bus, TW_SET_GCR, NULL);
 }
 
 /**
@@ -145,7 +146,12 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			sla = (*((unsigned char*)conf)) & ~(BIT(0)); // mask out the GCRE bit
 			*(hw->twar) = sla;
 			break;
-		
+
+		case TW_SET_GCR:
+			sla = (*(hw->twar)) | BIT(0);
+			*(hw->twar) = sla;
+			break;
+
 		/* bus control */
 		case TW_GET_STATUS:
 			bus->status = (*hw->twsr) & (~B111);

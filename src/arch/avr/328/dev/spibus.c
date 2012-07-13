@@ -173,11 +173,14 @@ PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint
 	uptr idx = 0;
 	HWSPI *io = bus->io;
 	int rc = 0;
-	
+#ifdef __EVENTS__
 	if(BermudaEventWait((volatile THREAD**)bus->mutex, tmo) == -1) {
 		rc = -1;
 		goto out;
 	}
+#elif __THREADS__
+	BermudaMutexEnter(&(bus->mutex));
+#endif
 	
 	for(; idx < len; idx++) {
 		*(io->spdr) = tx[idx];
@@ -197,7 +200,11 @@ PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint
 #endif
 	}
 
+#ifdef __EVENTS__
 	BermudaEventSignal((volatile THREAD**)bus->mutex);
+#elif __THREADS__
+	BermudaMutexRelease(&(bus->mutex));
+#endif
 	out:
 	return rc;
 }

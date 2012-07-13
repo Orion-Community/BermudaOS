@@ -142,13 +142,18 @@ typedef struct _spictrl SPICTRL;
  */
 struct _spibus
 {
-		void *mutex; //!< SPI bus mutex.
-		void *queue; //!< Transfer waiting queue.
-		SPICTRL *ctrl; //!< SPI bus controller \see _spictrl
-		void *io; //!< SPI interface control */
-		uint16_t mode; //!< SPI mode select.
-		uint32_t rate; //!< SPI rate select.
-		unsigned char cs; //!< Chip select pin.
+#ifdef __EVENTS__
+	void *mutex; //!< SPI bus mutex.
+	void *queue; //!< Transfer waiting queue.
+#elif __THREADS__
+	mutex_t mutex;
+	mutex_t queue;
+#endif
+	SPICTRL *ctrl; //!< SPI bus controller \see _spictrl
+	void *io; //!< SPI interface control */
+	uint16_t mode; //!< SPI mode select.
+	uint32_t rate; //!< SPI rate select.
+	unsigned char cs; //!< Chip select pin.
 };
 
 /**

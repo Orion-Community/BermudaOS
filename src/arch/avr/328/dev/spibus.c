@@ -74,7 +74,7 @@ static SPICTRL BermudaSpiHardwareCtrl = {
  * 
  * Definition of the SPI hardware bus 0.
  */
-static SPIBUS BermudaSpi0HardwareBus = {
+SPIBUS BermudaSpi0HardwareBus = {
 #ifdef __EVENTS__
         .queue = (void*)&BermudaSPI0TransferQueue,
 #else
@@ -97,28 +97,11 @@ static SPIBUS BermudaSpi0HardwareBus = {
  * 
  * When this function returns 0, the device is ready to use.
  */
-PUBLIC int BermudaSPI0HardwareInit(DEVICE *dev)
+PUBLIC int BermudaSPI0HardwareInit()
 {
-	int rc = -1;
+	int rc = 0;
 	HWSPI *hwio = &BermudaSPI0HardwareIO;
-        
-	if((dev->io = BermudaHeapAlloc(sizeof(*dev->io))) == NULL)
-			return rc;
-	rc = 0;
-        
-	// initialize the file
-	dev->io->write = &BermudaSPIWrite;
-	dev->io->read = NULL;
-	dev->io->flush = NULL;
-	dev->io->close = NULL;
-	dev->io->mode = 0;
-	dev->io->data = (void*)dev;
-        
-	dev->data = &BermudaSpi0HardwareBus;
 
-#ifdef __EVENTS__
-	dev->mutex = &BermudaSPI0Mutex;
-#endif
 	// enable the spi interface
 	SPI_DDR |= (SPI_SCK | SPI_MOSI | SPI_SS);
 	SPI_PORT &= ~(SPI_SCK | SPI_MOSI);

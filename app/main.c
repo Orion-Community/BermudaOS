@@ -93,6 +93,7 @@ void loop()
 	temperature /= 10;
 	printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
 	
+	
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
 	printf("Read back value's: %X::%X\n", read_back_eeprom,

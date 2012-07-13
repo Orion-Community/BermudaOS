@@ -19,7 +19,7 @@
 #ifndef __ARCH_SPI_H
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-        #include <arch/avr/328/chip/spi.h>
+        #include <arch/avr/328/dev/spibus.h>
 #endif
 
 #endif /* __ARCH_SPI_H */

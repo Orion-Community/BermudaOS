@@ -46,7 +46,7 @@ typedef struct _spictrl SPICTRL;
  */
 #define BermudaSpiSetSelectPin(dev, pin) \
 { \
-        ((SPIBUS*)dev->data)->cs = pin; \
+        dev->cs = pin; \
 }
 
 /**
@@ -55,7 +55,7 @@ typedef struct _spictrl SPICTRL;
  */
 #define BermudaSpiDevDeselect(dev) \
 { \
-	(((SPIBUS*)dev->data)->ctrl)->deselect((SPIBUS*)dev->data); \
+	dev->ctrl->deselect(dev); \
 }
 
 /**
@@ -65,7 +65,7 @@ typedef struct _spictrl SPICTRL;
  */
 #define BermudaSpiDevSetMode(dev, mode) \
 { \
-	((SPICTRL*)((SPIBUS*)(dev->data))->ctrl)->set_mode((SPIBUS*)dev->data, mode); \
+	dev->ctrl->set_mode(dev, mode); \
 }
 
 /**
@@ -75,7 +75,7 @@ typedef struct _spictrl SPICTRL;
  */
 #define BermudaSpiDevSetRate(dev, rate) \
 { \
-	((SPICTRL*)((SPIBUS*)(dev->data))->ctrl)->set_rate((SPIBUS*)dev->data, rate); \
+	dev->ctrl->set_rate(dev, rate); \
 }
 
 #ifndef BERMUDA_SPI_TMO
@@ -212,7 +212,7 @@ struct _spictrl
 extern "C" {
 #endif
 
-extern int BermudaSPIWrite(VFILE *file, const void *tx, size_t len);
+extern int BermudaSPIWrite(SPIBUS *bus, const void *tx, size_t len);
 extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigned int max);
 
 // inline funcs
@@ -226,11 +226,8 @@ extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigne
  * 
  * Safely try to set the chip select pin in the SPIBUS structure.
  */
-static inline int BermudaSpiSetSelectPinSafe(DEVICE *spidev, uint8_t cs)
+static inline int BermudaSpiSetSelectPinSafe(SPIBUS *spidev, uint8_t cs)
 {
-	if(BermudaDeviceIsLocked(spidev)) {
-		return -1;
-	}
 	BermudaSpiSetSelectPin(spidev, cs);
 	return 0;
 }
@@ -244,11 +241,8 @@ static inline int BermudaSpiSetSelectPinSafe(DEVICE *spidev, uint8_t cs)
  * 
  * Sets the given SPI mode, but only if the device is not locked.
  */
-static inline int BermudaSpiSetModeSafe(DEVICE *dev, uint16_t mode)
+static inline int BermudaSpiSetModeSafe(SPIBUS *dev, uint16_t mode)
 {
-	if(BermudaDeviceIsLocked(dev)) {
-		return -1;
-	}
 	BermudaSpiDevSetRate(dev, mode);
 	return 0;
 }
@@ -262,11 +256,8 @@ static inline int BermudaSpiSetModeSafe(DEVICE *dev, uint16_t mode)
  * Sets the given SPI rate, but only if the device is not locked. If the device
  * is locked, this function will return immediatly.
  */
-static inline int BermudaSpiSetRateSafe(DEVICE *dev, uint32_t rate)
+static inline int BermudaSpiSetRateSafe(SPIBUS *dev, uint32_t rate)
 {
-	if(BermudaDeviceIsLocked(dev)) {
-		return -1;
-	}
 	BermudaSpiDevSetRate(dev, rate);
 	return 0;
 }

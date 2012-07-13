@@ -65,10 +65,7 @@ PUBLIC int BermudaInit(void)
 	BermudaInitBaseADC();
 #endif
 #ifdef __SPI__
-	DEVICE *spi = BermudaHeapAlloc(sizeof(*spi));
-	spi->init = &BermudaSPI0HardwareInit;
-	spi->name = "SPI0";
-	BermudaDeviceRegister(spi, NULL);
+	BermudaSPI0HardwareInit();
 #endif
 
 	BermudaTwi0Init(0x56);

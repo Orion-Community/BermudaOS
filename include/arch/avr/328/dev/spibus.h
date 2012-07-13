@@ -29,7 +29,7 @@
  * \def SPI0
  * \brief Device name of hardware spi bus 0.
  */
-#define SPI0 "SPI0"
+#define SPI0 (&BermudaSpi0HardwareBus)
 
 /**
  * \struct _hwspi
@@ -50,7 +50,8 @@ typedef struct _hwspi HWSPI;
 extern "C" {
 #endif
 
-extern int BermudaSPI0HardwareInit(DEVICE *dev);
+extern SPIBUS BermudaSpi0HardwareBus;
+extern int BermudaSPI0HardwareInit();
 
 // internal functions
 PRIVATE WEAK void BermudaSpiSetRate(SPIBUS *bus, uint32_t rate);

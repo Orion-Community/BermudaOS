@@ -38,25 +38,13 @@
  * \note This function writes to the back ground buffers, not to the actual
  *       interface.
  */
-PUBLIC int BermudaSPIWrite(VFILE *file, const void *tx, size_t len)
+PUBLIC int BermudaSPIWrite(SPIBUS *bus, const void *tx, size_t len)
 {
 	int rc = -1;
-	DEVICE *dev = file->data;
-	SPIBUS *bus = dev->data;
-
-#ifdef __EVENTS__
-	if(dev->alloc(dev, BERMUDA_SPI_TMO) == -1) {
-		return rc;
-	}
-#endif
 
 	bus->ctrl->select(bus);
 	rc = bus->ctrl->transfer(bus, tx, (uint8_t*)tx, (uptr)len, BERMUDA_SPI_TMO);
 	bus->ctrl->deselect(bus);
-
-#ifdef __EVENTS__
-	dev->release(dev);
-#endif
 
 	return rc;
 }

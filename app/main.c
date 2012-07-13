@@ -34,20 +34,18 @@
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
-static unsigned char read_back_sram = 0;
 
 THREAD(SramThread, arg)
 {
-	unsigned char rx = 0, tx = 0xAA;
+	unsigned char rx = 0, tx = 0xDB;
 	unsigned int num = 0;
 	
 	while(1) {
-		read_back_sram = BermudaSpiRamReadByte(0x50);
 		int rc = BermudaTwiSlaveListen(TWI0, &num, &rx, 1, 1000);
 		if(rc == 0) {
 			BermudaTwiSlaveRespond(TWI0, &tx, 1, 500);
 		}
-		printf("NUM: %x :: RX: %x :: rc: %i\n", num, rx, rc);
+		printf("NUM: 0x%X :: RX: 0x%X :: rc: %i\n", num, rx, rc);
 	}
 }
 
@@ -77,8 +75,8 @@ void setup()
 
 	Bermuda24c02Init(TWI0);
 	BermudaSpiRamInit(SPI0, 10);
-	BermudaSpiRamWriteByte(0x50, 0x99);
-	Bermuda24c02WriteByte(100, 0xAB);
+	BermudaSpiRamWriteByte(0x50, 0xF8);
+	Bermuda24c02WriteByte(100, 0xAC);
 }
 
 void loop()
@@ -86,14 +84,14 @@ void loop()
 	struct adc *adc = BermudaGetADC();
 	float tmp = 0;
 	int temperature = 0;
-	unsigned char read_back_eeprom = 0;
+	unsigned char read_back_eeprom = 0, read_back_sram = 0;
 
 	tmp = adc->read(A0);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
 	printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
 	
-	
+	read_back_sram = BermudaSpiRamReadByte(0x50);
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
 	printf("Read back value's: %X::%X\n", read_back_eeprom,

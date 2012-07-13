@@ -349,7 +349,9 @@ out:
 	bus->master_tx_len = 0;
 	bus->master_rx_len = 0;
 #ifdef __EVENTS__
-	BermudaEventSignal((volatile THREAD**)bus->mutex);
+	if(rc != -1) {
+		BermudaEventSignal((volatile THREAD**)bus->mutex);
+	}
 #elif __THREADS__
 	BermudaMutexRelease(&(bus->mutex));
 #endif

@@ -48,9 +48,9 @@ THREAD *BermudaSPI0Mutex = SIGNALED;
  * Hardware I/O registers for the SPI 0 bus.
  */
 static HWSPI BermudaSPI0HardwareIO = {
-        .spcr = &SPI_CTRL,
-        .spsr = &SPI_STATUS,
-        .spdr = &SPI_DATA,
+		.spcr = &SPI_CTRL,
+		.spsr = &SPI_STATUS,
+		.spdr = &SPI_DATA,
 };
 
 /**
@@ -60,11 +60,11 @@ static HWSPI BermudaSPI0HardwareIO = {
  * Interface for hardware SPI on the avr ATmega328.
  */
 static SPICTRL BermudaSpiHardwareCtrl = {
-        .transfer = &BermudaHardwareSpiTransfer,
-        .set_mode = &BermudaSpiSetMode,
-        .set_rate = &BermudaSpiSetRate,
-        .select   = &BermudaHardwareSpiSelect,
-        .deselect = &BermudaHardwareSpiDeselect,
+		.transfer = &BermudaHardwareSpiTransfer,
+		.set_mode = &BermudaSpiSetMode,
+		.set_rate = &BermudaSpiSetRate,
+		.select   = &BermudaHardwareSpiSelect,
+		.deselect = &BermudaHardwareSpiDeselect,
 };
 
 /**
@@ -76,15 +76,17 @@ static SPICTRL BermudaSpiHardwareCtrl = {
  */
 SPIBUS BermudaSpi0HardwareBus = {
 #ifdef __EVENTS__
-        .queue = (void*)&BermudaSPI0TransferQueue,
+		.mutex = (void*)&BermudaSPI0Mutex,
+		.queue = (void*)&BermudaSPI0TransferQueue,
 #else
-        .queue = NULL,
+		.mutex = NULL,
+		.queue = NULL,
 #endif
-        .ctrl  = &BermudaSpiHardwareCtrl,
-        .io    = &BermudaSPI0HardwareIO,
-        .mode  = (BERMUDA_SPI_MODE0 | BERMUDA_SPI_MODE_UPDATE | BERMUDA_SPI_RATE_UPDATE),
-        .rate  = F_CPU/128,
-        .cs    = 0,
+		.ctrl  = &BermudaSpiHardwareCtrl,
+		.io    = &BermudaSPI0HardwareIO,
+		.mode  = (BERMUDA_SPI_MODE0 | BERMUDA_SPI_MODE_UPDATE | BERMUDA_SPI_RATE_UPDATE),
+		.rate  = F_CPU/128,
+		.cs    = 0,
 };
 
 /**
@@ -172,10 +174,15 @@ PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint
 	HWSPI *io = bus->io;
 	int rc = 0;
 	
+	if(BermudaEventWait((volatile THREAD**)bus->mutex, tmo) == -1) {
+		rc = -1;
+		goto out;
+	}
+	
 	for(; idx < len; idx++) {
 		*(io->spdr) = tx[idx];
 #ifdef __EVENTS__
-		if(BermudaEventWait((volatile THREAD**)bus->queue, tmo) == -1) {
+		if(BermudaEventWaitNext((volatile THREAD**)bus->queue, tmo) == -1) {
 			rc -= 1;
 			rx[idx] = 0xFF;
 		}
@@ -190,6 +197,8 @@ PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint
 #endif
 	}
 
+	BermudaEventSignal((volatile THREAD**)bus->mutex);
+	out:
 	return rc;
 }
 

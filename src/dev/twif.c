@@ -434,8 +434,8 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 	BermudaEnterCritical();
 	
 
-		bus->slave_rx = rx;
-		bus->slave_rx_len = rxlen;
+	bus->slave_rx = rx;
+	bus->slave_rx_len = rxlen;
 	
 	if(bus->busy == false) {
 		if((bus->master_rx_len || bus->master_tx_len)  && 

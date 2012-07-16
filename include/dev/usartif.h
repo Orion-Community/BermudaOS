@@ -39,6 +39,10 @@ typedef struct _usartbus USARTBUS;
  */
 typedef struct _usartif  USARTIF;
 
+typedef enum
+{
+} USART_IOCTL_MODE;
+
 /**
  * \brief The _usartif structure defines the USART interface.
  *
@@ -47,8 +51,11 @@ typedef struct _usartif  USARTIF;
  */
 struct _usartif
 {
-	int transfer(USARTBUS *bus, const void *tx, uprt tx_len, void *rx, uptr rx_len,
-				 unsigned int baud, int tmo);
+	int (*transfer)(USARTBUS *bus, const void *tx, uprt tx_len, void *rx, uptr rx_len,
+					unsigned int baud, int tmo);
+	void (*io)(USARTBUS *bus, USART_IOCTL_MODE mode, void *data);
+	void (*isr)(USARTBUS *bus);
+	int (*ifbusy)(USARTBUS *bus);
 } __attribute__((packed));
 
 /**

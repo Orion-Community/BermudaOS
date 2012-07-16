@@ -177,7 +177,7 @@ struct _twibus
 	volatile void *slave_queue;  //!< TWI slave waiting queue.
 #elif __THREADS__
 	mutex_t mutex;
-	mutex_t queue;
+	mutex_t maser_queue;
 #endif
 
 	struct _twif *twif; //!< TWI hardware communication interface.

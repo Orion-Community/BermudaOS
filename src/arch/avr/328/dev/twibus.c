@@ -115,6 +115,10 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	bus->twif->io(bus, TW_SET_GCR, NULL);
 }
 
+PUBLIC TWIBUS *BermudaTwiBusFactory(unsigned char sla)
+{
+}
+
 /**
  * \brief Do TWI I/O control.
  * \param bus The TWI bus.

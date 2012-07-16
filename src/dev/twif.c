@@ -432,7 +432,6 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 	int rc = -1;
 	
 	BermudaEnterCritical();
-	
 
 	bus->slave_rx = rx;
 	bus->slave_rx_len = rxlen;

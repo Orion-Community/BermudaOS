@@ -104,6 +104,14 @@ PUBLIC void BermudaTwi0InitCreate(unsigned char sla)
 	bus->twif->io(bus, TW_SET_GCR, NULL);
 }
 
+/**
+ * \brief Initializes the TWI structes.
+ * \param sla Slave address to set.
+ * \note The TWIBUS, TWIF and TWIHW will be initialized by this function.
+ *
+ * All data structures needed to use the hardware TW interface will be initialized
+ * by this function.
+ */
 PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 {
 	TWIBUS *bus;
@@ -139,6 +147,16 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
 	((TWIHW*)bus->io.hwio)->io_out = AvrIO->portc;
 	return bus;
+}
+
+/**
+ * \brief Destroys the TW bus structures.
+ * \param bus Bus to destroy.
+ */
+PUBLIC void BermudaTwiBusFactoryDestroy(TWIBUS *bus)
+{
+	BermudaHeapFree(bus->twif);
+	BermudaHeapFree(bus);
 }
 
 /**

@@ -205,7 +205,7 @@ __DECL
 extern void BermudaTwi0Init(unsigned char sla);
 extern unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres);
 extern unsigned char BermudaTwiCalcPres(uint32_t pres);
-extern TWIBUS *BermudaTwiBusFactory(unsigned char sla);
+extern TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla);
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 __DECL_END
 

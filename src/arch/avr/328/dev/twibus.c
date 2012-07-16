@@ -87,36 +87,58 @@ static TWIHW twi0hw = {
  * \brief Initialize TWI bus 0.
  * \param sla Own slave address.
  */
-PUBLIC void BermudaTwi0Init(unsigned char sla)
+PUBLIC void BermudaTwi0InitCreate(unsigned char sla)
 {
 	TWIBUS *bus;
 	if(TWI0 != NULL) { // already initialized
 		return;
 	}
-	bus = BermudaHeapAlloc(sizeof(*bus));
-	TWI0 = bus;
-	bus->busy = false;
+	if((bus = BermudaTwiBusFactoryCreate(sla)) == NULL) {
+		return;
+	}
 
-	bus->twif = BermudaHeapAlloc(sizeof( *(bus->twif) ));
-	bus->twif->transfer = &BermudaTwiMasterTransfer;
-	bus->twif->io = &BermudaTwIoctl;
-	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
-	bus->twif->isr = &BermudaTwISR;
-	bus->io.hwio = (void*)&twi0hw;
-	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
-	((TWIHW*)bus->io.hwio)->io_out = AvrIO->portc;
-#ifdef __EVENTS__
-	bus->mutex = &twi0_mutex;
-	bus->master_queue = &twi0_master_queue;
-	bus->slave_queue = &twi0_slave_queue;
-#endif
+	TWI0 = bus;
+
 	bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 	bus->twif->io(bus, TW_SET_SLA, &sla);
 	bus->twif->io(bus, TW_SET_GCR, NULL);
 }
 
-PUBLIC TWIBUS *BermudaTwiBusFactory(unsigned char sla)
+PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 {
+	TWIBUS *bus;
+	TWIF   *twif;
+	
+	bus = BermudaHeapAlloc(sizeof(*bus));
+	twif = BermudaHeapAlloc(sizeof(*twif));
+
+	if(!bus && !twif) {
+		return NULL;
+	}
+
+	// Initialize the TW interface.
+	bus->twif = twif;
+	bus->twif->transfer = &BermudaTwiMasterTransfer;
+	bus->twif->io = &BermudaTwIoctl;
+	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
+	bus->twif->isr = &BermudaTwISR;
+
+	// Initialize other parts the bus
+	bus->busy = false;
+#ifdef __EVENTS__
+	bus->mutex = &twi0_mutex;
+	bus->master_queue = &twi0_master_queue;
+	bus->slave_queue = &twi0_slave_queue;
+#elif __THREADS__
+	bus->mutex = &tw_mutex;
+	bus->master_queue = &tw_master_queue;
+#endif
+
+	// Initialize the hardware interface.
+	bus->io.hwio = (void*)&twi0hw;
+	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
+	((TWIHW*)bus->io.hwio)->io_out = AvrIO->portc;
+	return bus;
 }
 
 /**

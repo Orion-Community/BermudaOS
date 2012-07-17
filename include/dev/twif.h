@@ -48,6 +48,12 @@ typedef enum
 	TWI_SLAVE_RECEIVER, //!< Slave receive mode.
 } TWIMODE;
 
+typedef enum
+{
+	TWI_SOFTWARE_CONTROLLER, //!< Type definition of software based TWI buses.
+	TWI_HARDWARE_CONTROLLER, //!< Type definition of hardware based TWI buses.
+} TWI_BUS_TYPE;
+
 /**
  * \typedef TW_IOCTL_MODE
  * \brief Type definition of I/O control modes for TWI.

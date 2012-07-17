@@ -86,6 +86,7 @@ static TWIHW twi0hw = {
 /**
  * \brief Initialize TWI bus 0.
  * \param sla Own slave address.
+ * \todo Generalize and move to dev/twif.c
  */
 PUBLIC void BermudaTwi0InitCreate(unsigned char sla)
 {
@@ -152,10 +153,14 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 /**
  * \brief Destroys the TW bus structures.
  * \param bus Bus to destroy.
+ * \param type Defines the type of the bus (hardware/software).
  */
-PUBLIC void BermudaTwiBusFactoryDestroy(TWIBUS *bus)
+PUBLIC void BermudaTwiBusFactoryDestroy(TWIBUS *bus, TWI_BUS_TYPE type)
 {
 	BermudaHeapFree(bus->twif);
+	if(type == TWI_SOFTWARE_CONTROLLER) {
+		BermudaHeapFree(bus->io.softio);
+	}
 	BermudaHeapFree(bus);
 }
 

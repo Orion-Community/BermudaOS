@@ -31,21 +31,21 @@ int BermudaInitUART()
 {
         unsigned char ints = 0;
         BermudaSafeCli(&ints);
-        
+
         UBRR0H = UBRRH_VALUE;
         UBRR0L = UBRRL_VALUE;
-        
+
 #ifdef UART2X
         UCSR0A |= _BV(U2X0);
 #else
         UCSR0A &= ~(_BV(U2X0));
 #endif
-        
+
         UCSR0C = _BV(UCSZ01) | _BV(UCSZ00); /* sent data in packets of 8 bits */
         UCSR0B = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
-        
+
         BermudaRedirUARTIO();
-        
+
         BermudaIntsRestore(ints);
         return 0;
 }
@@ -57,7 +57,7 @@ int BermudaUARTPutChar(char c, FILE *stream)
 #endif
         if(c == '\n')
                 BermudaUARTPutChar('\r', stream);
-        
+
         while((UCSR0A & _BV(UDRE0)) == 0);
         UDR0 = c;
 #ifdef __THREADS__

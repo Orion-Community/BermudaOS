@@ -16,4 +16,40 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bermuda.h>
 
+#include <arch/usart.h>
+#include <dev/usartif.h>
+
+#ifdef ___EVENTS__
+/**
+ * \var usart_mutex
+ * \brief Mutex to make transfers mutually exclusive.
+ */
+static volatile void *usart_mutex;
+
+/**
+ * \var usart_queue
+ * \brief Transfer waiting queue.
+ *
+ * Threads waiting for a transfer are put in this queue.
+ */
+static volatile void *usart_queue = SIGNALED;
+#endif
+
+PUBLIC void BermudaUsart0Init()
+{
+	UBBR0H = UBRR0H_VALUE;
+	UBRR0L = UBRR0L_VALUE;
+
+#ifdef UART2X
+	UCSR0A |= _BV(U2X0);
+	#else
+	UCSR0A &= ~(_BV(U2X0));
+#endif
+
+	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00); /* sent data in packets of 8 bits */
+	UCSR0B = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
+
+	// enable completion interrupts
+}

@@ -499,4 +499,18 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 
 	return rc;
 }
+
+/**
+ * \brief Destroys the TW bus structures.
+ * \param bus Bus to destroy.
+ * \param type Defines the type of the bus (hardware/software).
+ */
+PUBLIC void BermudaTwiBusFactoryDestroy(TWIBUS *bus, TWI_BUS_TYPE type)
+{
+	BermudaHeapFree(bus->twif);
+	if(type == TWI_SOFTWARE_CONTROLLER) {
+		BermudaHeapFree(bus->io.softio);
+	}
+		BermudaHeapFree(bus);
+}
 #endif /* __TWI__ */

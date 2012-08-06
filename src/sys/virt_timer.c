@@ -69,7 +69,7 @@ PUBLIC void BermudaTimerInit()
         unsigned long count = BermudaTimerGetSysTick();
         while(count == BermudaTimerGetSysTick())
                 delay_loop_count++;
-        
+
         /*
          * The loop above takes more cycles due to the function call in the
          * while loop. So a correction has to be applied.

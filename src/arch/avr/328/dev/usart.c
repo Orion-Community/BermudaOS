@@ -18,8 +18,10 @@
 
 #include <bermuda.h>
 
-#include <arch/usart.h>
 #include <dev/usartif.h>
+
+#include <arch/avr/io.h>
+#include <arch/avr/328/dev/uart.h>
 
 #ifdef ___EVENTS__
 /**
@@ -44,7 +46,7 @@ PUBLIC void BermudaUsart0Init()
 
 #ifdef UART2X
 	UCSR0A |= _BV(U2X0);
-	#else
+#else
 	UCSR0A &= ~(_BV(U2X0));
 #endif
 

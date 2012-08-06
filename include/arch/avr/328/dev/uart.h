@@ -22,7 +22,7 @@
 #include <bermuda.h>
 
 #include <arch/io.h>
-#include <arch/avr/328/chip/uart.h>
+#include <dev/usartif.h>
 
 #define USART0 (&BermudaUART0)
 
@@ -38,7 +38,7 @@ struct hw_uart
 
 typedef struct hw_uart USART;
 
-extern UARTBUS BermudaUART0;
+extern USARTBUS BermudaUART0;
 extern void BermudaUART0Init(USARTBUS *bus);
 
 #endif /* __ARCH_GENERIC_UART_H */

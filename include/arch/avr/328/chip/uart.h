@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __UART_H
-#define __UART_H
+#ifndef __CHIP_UART_H
+#define __CHIP_UART_H
 
 #include <stdio.h>
 #include <lib/binary.h>
@@ -108,5 +108,5 @@ extern inline FILE *BermudaGetUARTInput();
 #ifdef __cplusplus
 }
 #endif
-#endif /* __UART_H */
+#endif /* __CHIP_UART_H */
 

@@ -21,7 +21,7 @@
 
 #include <bermuda.h>
 
-#include <arch/usart.h>
+#include <arch/types.h>
 
 /**
  * \typedef USARTBUS
@@ -41,6 +41,7 @@ typedef struct _usartif  USARTIF;
 
 typedef enum
 {
+	USART_SET_BAUD,
 } USART_IOCTL_MODE;
 
 /**
@@ -51,7 +52,7 @@ typedef enum
  */
 struct _usartif
 {
-	int (*transfer)(USARTBUS *bus, const void *tx, uprt tx_len, void *rx, uptr rx_len,
+	int (*transfer)(USARTBUS *bus, const void *tx, uptr tx_len, void *rx, uptr rx_len,
 					unsigned int baud, int tmo);
 	void (*io)(USARTBUS *bus, USART_IOCTL_MODE mode, void *data);
 	void (*isr)(USARTBUS *bus);

@@ -19,10 +19,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <bermuda.h>
-#include <arch/avr/io.h>
 
 #include <lib/binary.h>
 #include <sys/sched.h>
+
+#include <arch/avr/io.h>
+#include <arch/avr/328/dev/uart.h>
+#include <arch/avr/328/dev/usartreg.h>
 
 /* PRIVATE functions */
 static void BermudaRedirUARTIO();
@@ -32,8 +35,8 @@ int BermudaInitUART()
         unsigned char ints = 0;
         BermudaSafeCli(&ints);
 
-        UBRR0H = UBRRH_VALUE;
-        UBRR0L = UBRRL_VALUE;
+        UBRR0H = UBRR0H_VALUE;
+        UBRR0L = UBRR0L_VALUE;
 
 #ifdef UART2X
         UCSR0A |= _BV(U2X0);

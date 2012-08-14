@@ -19,91 +19,13 @@
 #ifndef __CHIP_UART_H
 #define __CHIP_UART_H
 
-#include <stdio.h>
-#include <lib/binary.h>
-#include <arch/avr/io.h>
+#include <arch/avr/328/dev/uart.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef BAUD
-#define BAUD 9600
-#warning "Serial baudrate has not been defined, defaulting to 9600."
-#endif
 
-	/* baud calculations */
-#undef USE_2X
-
-	/* Baud rate tolerance is 2 % unless previously defined */
-#ifndef BAUD_TOL
-#  define BAUD_TOL 2
-#endif
-
-#ifdef __ASSEMBLER__
-#define UBRR_VALUE (((F_CPU) + 8 * (BAUD)) / (16 * (BAUD)) -1)
-#else
-#define UBRR_VALUE (((F_CPU) + 8UL * (BAUD)) / (16UL * (BAUD)) -1UL)
-#endif
-
-#if 100 * (F_CPU) > \
-	(16 * ((UBRR_VALUE) + 1)) * (100 * (BAUD) + (BAUD) * (BAUD_TOL))
-#  define USE_2X 1
-#elif 100 * (F_CPU) < \
-	(16 * ((UBRR_VALUE) + 1)) * (100 * (BAUD) - (BAUD) * (BAUD_TOL))
-#  define USE_2X 1
-#else
-#  define USE_2X 0
-#endif
-
-#if USE_2X
-	/* U2X required, recalculate */
-#undef UBRR_VALUE
-
-#ifdef __ASSEMBLER__
-#define UBRR_VALUE (((F_CPU) + 4 * (BAUD)) / (8 * (BAUD)) -1)
-#else
-#define UBRR_VALUE (((F_CPU) + 4UL * (BAUD)) / (8UL * (BAUD)) -1UL)
-#endif
-
-#if 100 * (F_CPU) > \
-	(8 * ((UBRR_VALUE) + 1)) * (100 * (BAUD) + (BAUD) * (BAUD_TOL))
-#  warning "Baud rate achieved is higher than allowed"
-#endif
-
-#if 100 * (F_CPU) < \
-	(8 * ((UBRR_VALUE) + 1)) * (100 * (BAUD) - (BAUD) * (BAUD_TOL))
-#  warning "Baud rate achieved is lower than allowed"
-#endif
-
-#endif /* USE_U2X */
-
-#ifdef UBRR_VALUE
-#  define UBRRL_VALUE (UBRR_VALUE & 0xff)
-#  define UBRRH_VALUE (UBRR_VALUE >> 8)
-#endif
-
-#define UBRR0L MEM_IO8(0xC4)
-#define UBRR0H MEM_IO8(0xC5)
-#define UDR0 MEM_IO8(0xC6)
-
-#define UCSR0A MEM_IO8(0xC0)
-#define UCSR0B MEM_IO8(0xC1)
-#define UCSR0C MEM_IO8(0xC2)
-
-#define U2X0 1
-#define UCSZ00 1
-#define UCSZ01 2
-#define TXEN0 3
-#define RXEN0 4
-#define UDRE0 5
-#define RXC0 7
-
-extern int BermudaInitUART();
-extern int BermudaUARTPutChar(char, FILE *);
-extern int BermudaUARTGettChar(FILE *);
-extern inline FILE *BermudaGetUARTOutput();
-extern inline FILE *BermudaGetUARTInput();
 
 #ifdef __cplusplus
 }

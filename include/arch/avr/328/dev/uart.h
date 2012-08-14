@@ -19,12 +19,18 @@
 #ifndef __ARCH_GENERIC_UART_H
 #define __ARCH_GENERIC_UART_H
 
+#include <stdio.h>
 #include <bermuda.h>
 
-#include <arch/io.h>
 #include <dev/usartif.h>
 
 #define USART0 (&BermudaUART0)
+
+extern int BermudaInitUART();
+extern int BermudaUARTPutChar(char, FILE *);
+extern int BermudaUARTGettChar(FILE *);
+extern inline FILE *BermudaGetUARTOutput();
+extern inline FILE *BermudaGetUARTInput();
 
 struct hw_uart
 {
@@ -38,7 +44,6 @@ struct hw_uart
 
 typedef struct hw_uart USART;
 
-extern USARTBUS BermudaUART0;
 extern void BermudaUART0Init(USARTBUS *bus);
 
 #endif /* __ARCH_GENERIC_UART_H */

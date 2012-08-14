@@ -16,12 +16,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <bermuda.h>
 
+#include <lib/binary.h>
 #include <dev/usartif.h>
 
 #include <arch/avr/io.h>
 #include <arch/avr/328/dev/uart.h>
+#include <arch/avr/328/dev/usartreg.h>
 
 #ifdef ___EVENTS__
 /**
@@ -41,7 +45,7 @@ static volatile void *usart_queue = SIGNALED;
 
 PUBLIC void BermudaUsart0Init()
 {
-	UBBR0H = UBRR0H_VALUE;
+	UBRR0H = UBRR0H_VALUE;
 	UBRR0L = UBRR0L_VALUE;
 
 #ifdef UART2X

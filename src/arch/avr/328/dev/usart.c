@@ -16,18 +16,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <bermuda.h>
 
 #include <lib/binary.h>
 #include <dev/usartif.h>
 
+#include <sys/events/event.h>
+
 #include <arch/avr/io.h>
 #include <arch/avr/328/dev/uart.h>
 #include <arch/avr/328/dev/usartreg.h>
 
-#ifdef ___EVENTS__
+
+//<< Private function declarations >>//
+PRIVATE WEAK void BermudaUsartBusInit(USARTBUS *bus);
+
+#ifdef __EVENTS__
 /**
  * \var usart_mutex
  * \brief Mutex to make transfers mutually exclusive.
@@ -43,8 +47,30 @@ static volatile void *usart_mutex;
 static volatile void *usart_queue = SIGNALED;
 #endif
 
+/**
+ * \var BermudaUART0
+ * \brief Global USART 0 variable.
+ *
+ * Global definition of the first hardware USART.
+ */
+USARTBUS BermudaUART0;
+
+static HW_USART hw_usart0 = {
+	.ucsra = &UCSR0A,
+	.ucsrb = &UCSR0B,
+	.ucsrc = &UCSR0C,
+	.ubrrl = &UBRR0L,
+	.ubrrh = &UBRR0H,
+	.udr   = &UDR0,
+};
+
 PUBLIC void BermudaUsart0Init()
 {
+	USARTBUS *bus = USART0;
+	bus->mutex = (void*)usart_mutex;
+	bus->queue = (void*)usart_queue;
+	bus->io.hwio = &hw_usart0;
+	
 	UBRR0H = UBRR0H_VALUE;
 	UBRR0L = UBRR0L_VALUE;
 

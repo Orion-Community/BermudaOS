@@ -34,15 +34,15 @@ extern inline FILE *BermudaGetUARTInput();
 
 struct hw_uart
 {
-	reg8_t ucsr0a; //!< UART control & status register 0-a.
-	reg8_t ucsr0b; //!< UART control & status register 0-b.
-	reg8_t ucsr0c; //!< UART control & status register 0-c.
-	reg8_t ubrr0l; //!< UART bit rate register 0 LSB.
-	reg8_t ubrr0h; //!< UART bit reate register 0 MSB.
-	reg8_t udr0;   //!< UART data register 0.
+	reg8_t ucsra; //!< UART control & status register 0-a.
+	reg8_t ucsrb; //!< UART control & status register 0-b.
+	reg8_t ucsrc; //!< UART control & status register 0-c.
+	reg8_t ubrrl; //!< UART bit rate register 0 LSB.
+	reg8_t ubrrh; //!< UART bit reate register 0 MSB.
+	reg8_t udr;   //!< UART data register 0.
 } __attribute__((packed));
 
-typedef struct hw_uart USART;
+typedef struct hw_uart HW_USART;
 
 extern void BermudaUART0Init(USARTBUS *bus);
 

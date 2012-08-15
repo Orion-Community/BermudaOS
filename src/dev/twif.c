@@ -159,7 +159,14 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 #endif
 			break;
 
-		/* slave receiver cases */
+		/*
+		 * TWI_SR_SLAW_ACK: Own slave address received, ack returned.
+		 * TWI_SR_GC_ACK: General call received, ACK returned.
+		 * TWI_SR_GC_ARB_LOST: Lost arbitration as master in SLA+R/W,
+		 *                     received generall call.
+		 * TWI_SR_SLAW_ARB_LOST: Lost arbitration as master in SLA+R/W,
+		 *                       received own slave address.
+		 */
 		case TWI_SR_SLAW_ACK:
 		case TWI_SR_GC_ACK:
 		case TWI_SR_GC_ARB_LOST:
@@ -306,7 +313,6 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
  * \param tmo Transfer waiting time-out.
  * \warning A TWI init routine should be called before using this function.
  * \see BermudaTwi0Init
- * \todo Should be moved to src/dev/twif.c
  * 
  * Data is transfered or received using the TWI bus. The mode this function
  * uses depends of the TWIMODE setting in the TWIBUS structure.
@@ -382,7 +388,6 @@ out:
  * \param rxlen Length of the received buffer.
  * \param sla Slave address used in the coming transmission.
  * \param frq Frequency to use in the coming transmission.
- * \todo Should be moved to src/dev/twif.c
  * 
  * Used to initialize the TWI bus before starting a transfer.
  */
@@ -421,8 +426,6 @@ uint32_t      frq;
  * \warning When this function returns without error, the bus is blocked!
  * \warning If this function responds without error, the application should
  *          respond IMMEDIATLY with BermudaTwiSlaveRespond.
- * \todo Implement BermudaTwiSlaveRespond.
- * \todo Finish this function.
  * 
  * Listens for requests by a master to this TWI bus interface.
  */

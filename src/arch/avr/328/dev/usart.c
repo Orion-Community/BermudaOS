@@ -64,24 +64,56 @@ static HW_USART hw_usart0 = {
 	.udr   = &UDR0,
 };
 
+static USARTIF hw_usartif = {
+        
+};
+
 PUBLIC void BermudaUsart0Init()
 {
 	USARTBUS *bus = USART0;
+#ifdef __EVENTS__
 	bus->mutex = (void*)usart_mutex;
 	bus->queue = (void*)usart_queue;
+#endif
+        bus->usartif = &hw_usartif;
 	bus->io.hwio = &hw_usart0;
-	
-	UBRR0H = UBRR0H_VALUE;
-	UBRR0L = UBRR0L_VALUE;
+	HW_USART *hw = &hw_usart0;
+        
+	*(hw->ubrrh) = UBRR0H_VALUE;
+	*(hw->ubrrl) = UBRR0L_VALUE;
 
 #ifdef UART2X
-	UCSR0A |= _BV(U2X0);
+	*(hw->ucsra) |= _BV(U2X0);
 #else
-	UCSR0A &= ~(_BV(U2X0));
+	*(hw->ucsra) &= ~(_BV(U2X0));
 #endif
 
-	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00); /* sent data in packets of 8 bits */
-	UCSR0B = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
+	*(hw->ucsrc) = _BV(UCSZ01) | _BV(UCSZ00); /* sent data in packets of 8 bits */
+	*(hw->ucsrb) = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
 
 	// enable completion interrupts
+	BermudaEnterCritical();
+	*(hw->ucsrc) |= BIT(RXCIE0) | BIT(TXCIE0);
+	BermudaExitCritical();
+}
+
+/**
+ * \brief I/O control function for the USART of the ATmega328.
+ * \param bus The bus to control.
+ * \param mode The I/O mode to set.
+ * \param arg Argument which might be needed. May be NULL.
+ * \warning The argument <i>arg</i> won't be checked for errors.
+ */
+PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, 
+				    void *arg)
+{
+	unsigned char raw_baud;
+	switch(mode)
+	{
+		case USART_SET_BAUD:
+			raw_baud = *((unsigned char*)arg);
+			break;
+		default:
+			break;
+	}
 }

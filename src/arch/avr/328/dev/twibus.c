@@ -108,6 +108,8 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
  * \brief Initializes the TWI structes.
  * \param sla Slave address to set.
  * \note The TWIBUS, TWIF and TWIHW will be initialized by this function.
+ * \todo Split the function up in a generic part, hardware part and a bus specific
+ *       part.
  *
  * All data structures needed to use the hardware TW interface will be initialized
  * by this function.

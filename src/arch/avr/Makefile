@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../../include
 TARGET			= avr.o
 ARDUINO_LIBS		=
 
-CSRCS			= io.c stack.c
+CSRCS			= io.c stack.c twif.c
 CPPSRCS			=
 ASMSRCS			= task_switch.S
 

@@ -127,5 +127,16 @@ PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode,
  */
 PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 {
+	unsigned short ubrr = (F_CPU + 8 * baud) / (16 * baud) - 1;
+	HW_USART *hw = (HW_USART*)(bus->io.hwio);
 	
+	if((100 * F_CPU) < (16 * (baud + 1)) * (100 * baud) - baud * BAUD_TOL)
+	{
+		ubrr = (F_CPU + 4 * baud) / (8 * baud) - 1;
+		(*(hw->ucsra)) |= BIT(1);
+	}
+	
+	// program the new rate
+	(*(hw->ubrrl)) = baud & 0xFF;
+	(*(hw->ubrrh)) = (baud >> 8) & 0xF;
 }

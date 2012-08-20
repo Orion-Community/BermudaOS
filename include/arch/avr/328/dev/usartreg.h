@@ -28,11 +28,6 @@
 #warning "Serial baudrate has not been defined, defaulting to 9600."
 #endif
 
-#ifndef BAUD
-#define BAUD 9600
-#warning "Serial baudrate has not been defined, defaulting to 9600."
-#endif
-
 	/* baud calculations */
 #undef USE_2X
 

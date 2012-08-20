@@ -24,7 +24,7 @@
 #include <sys/sched.h>
 
 #include <arch/avr/io.h>
-#include <arch/avr/328/dev/uart.h>
+#include <arch/avr/328/dev/usart.h>
 #include <arch/avr/328/dev/usartreg.h>
 
 /* PRIVATE functions */

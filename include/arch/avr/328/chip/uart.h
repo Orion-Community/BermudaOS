@@ -19,7 +19,7 @@
 #ifndef __CHIP_UART_H
 #define __CHIP_UART_H
 
-#include <arch/avr/328/dev/uart.h>
+#include <arch/avr/328/dev/usart.h>
 
 #ifdef __cplusplus
 extern "C" {

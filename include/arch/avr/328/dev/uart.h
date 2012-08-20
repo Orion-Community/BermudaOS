@@ -16,34 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ARCH_GENERIC_UART_H
-#define __ARCH_GENERIC_UART_H
+#ifndef __DEPRICATED_UART_HEADER__
+#define __DEPRICATED_UART_HEADER__
 
-#include <stdio.h>
-#include <bermuda.h>
+#include <arch/avr/328/dev/usart.h>
 
-#include <dev/usartif.h>
+#warning "Including this file is depricated. Use 'arch/avr/328/dev/usart.h' \
+instead."
 
-#define USART0 (&BermudaUART0)
-
-extern int BermudaInitUART();
-extern int BermudaUARTPutChar(char, FILE *);
-extern int BermudaUARTGettChar(FILE *);
-extern inline FILE *BermudaGetUARTOutput();
-extern inline FILE *BermudaGetUARTInput();
-
-struct hw_uart
-{
-	reg8_t ucsra; //!< UART control & status register 0-a.
-	reg8_t ucsrb; //!< UART control & status register 0-b.
-	reg8_t ucsrc; //!< UART control & status register 0-c.
-	reg8_t ubrrl; //!< UART bit rate register 0 LSB.
-	reg8_t ubrrh; //!< UART bit reate register 0 MSB.
-	reg8_t udr;   //!< UART data register 0.
-} __attribute__((packed));
-
-typedef struct hw_uart HW_USART;
-
-extern void BermudaUART0Init(USARTBUS *bus);
-
-#endif /* __ARCH_GENERIC_UART_H */
+#endif /* __DEPRICATED_UART_HEADER__ */

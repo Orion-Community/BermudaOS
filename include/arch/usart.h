@@ -20,7 +20,7 @@
 #define __ARCH_TWI_H
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-        #include <arch/avr/328/dev/uart.h>
-        #endif
-        
-        #endif /* __ARCH_TWI_H */
+        #include <arch/avr/328/dev/usart.h>
+#endif
+
+#endif /* __ARCH_TWI_H */

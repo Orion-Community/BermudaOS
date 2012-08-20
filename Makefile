@@ -27,6 +27,7 @@ all:
 
 clean:
 	$(MAKE) -C src/ clean
+	-rm -Rfv lib/*
 
 rebuild:
 	$(MAKE) -C src/ clean all

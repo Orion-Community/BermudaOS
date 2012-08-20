@@ -33,6 +33,8 @@
 /* vectors */
 #define TIMER0_OVF_vect signal_vect(16)
 #define SPI_STC_vect signal_vect(17)
+#define USART_RX_STC_vect signal_vect(19)
+#define USART_TX_STC_vect signal_vect(21)
 #define TWI_STC_vect signal_vect(24)
 
 #define sei() __asm__ __volatile__ ("sei" ::: "memory")

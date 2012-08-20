@@ -24,6 +24,7 @@
 #include <sys/events/event.h>
 
 #include <arch/avr/io.h>
+#include <arch/avr/interrupts.h>
 #include <arch/avr/328/dev/uart.h>
 #include <arch/avr/328/dev/usartreg.h>
 
@@ -139,4 +140,14 @@ PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 	// program the new rate
 	(*(hw->ubrrl)) = baud & 0xFF;
 	(*(hw->ubrrh)) = (baud >> 8) & 0xF;
+}
+
+SIGNAL(USART_TX_STC_vect)
+{
+	
+}
+
+SIGNAL(USART_RX_STC_vect)
+{
+	
 }

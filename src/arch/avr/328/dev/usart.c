@@ -30,6 +30,7 @@
 
 //<< Private function declarations >>//
 PRIVATE WEAK void BermudaUsartBusInit(USARTBUS *bus);
+PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
 
 #ifdef __EVENTS__
 /**
@@ -107,13 +108,24 @@ PUBLIC void BermudaUsart0Init()
 PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, 
 				    void *arg)
 {
-	unsigned char raw_baud;
 	switch(mode)
 	{
 		case USART_SET_BAUD:
-			raw_baud = *((unsigned char*)arg);
+			BermudaUsartConfigBaud(bus, *((unsigned short*)arg));
 			break;
 		default:
 			break;
 	}
+}
+
+/**
+ * \brief Configures the baudrate for the given USART bus.
+ * \param bus Bus to configure.
+ * \param baud Desired baudrate.
+ * 
+ * The function will determine if the bus should operate in USART 2x mode.
+ */
+PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
+{
+	
 }

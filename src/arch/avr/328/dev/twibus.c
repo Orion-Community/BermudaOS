@@ -98,18 +98,26 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	}
 
 	TWI0 = bus;
+	
+	#ifdef __EVENTS__
+	bus->mutex = &twi0_mutex;
+	bus->master_queue = &twi0_master_queue;
+	bus->slave_queue = &twi0_slave_queue;
+#elif __THREADS__
+	bus->mutex = &tw_mutex;
+	bus->master_queue = &tw_master_queue;
+#endif
 
-	bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
-	bus->twif->io(bus, TW_SET_SLA, &sla);
-	bus->twif->io(bus, TW_SET_GCR, NULL);
+	// Initialize the hardware interface.
+	bus->io.hwio = (void*)&twi0hw;
+	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
+	((TWIHW*)bus->io.hwio)->io_out = AvrIO->portc;
 }
 
 /**
  * \brief Initializes the TWI structes.
  * \param sla Slave address to set.
  * \note The TWIBUS, TWIF and TWIHW will be initialized by this function.
- * \todo Split the function up in a generic part, hardware part and a bus specific
- *       part.
  *
  * All data structures needed to use the hardware TW interface will be initialized
  * by this function.
@@ -133,21 +141,12 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
 	bus->twif->isr = &BermudaTwISR;
 
-	// Initialize other parts the bus
+	// Initialize other parts of the bus
 	bus->busy = false;
-#ifdef __EVENTS__
-	bus->mutex = &twi0_mutex;
-	bus->master_queue = &twi0_master_queue;
-	bus->slave_queue = &twi0_slave_queue;
-#elif __THREADS__
-	bus->mutex = &tw_mutex;
-	bus->master_queue = &tw_master_queue;
-#endif
+	bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
+	bus->twif->io(bus, TW_SET_SLA, &sla);
+	bus->twif->io(bus, TW_SET_GCR, NULL);
 
-	// Initialize the hardware interface.
-	bus->io.hwio = (void*)&twi0hw;
-	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
-	((TWIHW*)bus->io.hwio)->io_out = AvrIO->portc;
 	return bus;
 }
 
@@ -260,7 +259,6 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
  * \see TW_PRES_4 
  * \see TW_PRES_16 
  * \see TW_PRES_64
- * \todo Implement the actual calculation.
  * 
  * The needed value of the TWBR register will be calculated using the given
  * (and used) prescaler value.

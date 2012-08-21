@@ -18,6 +18,8 @@
 
 //! \file src/arch/avr/328/dev/usart.c HW specific USART controller.
 
+#if defined(__USART__) || defined(__DOXYGEN__)
+
 #include <bermuda.h>
 
 #include <lib/binary.h>
@@ -169,3 +171,4 @@ SIGNAL(USART_RX_STC_vect)
 {
 	USART0->usartif->isr(USART0, USART_RX);
 }
+#endif

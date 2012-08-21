@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file src/arch/avr/usartif.c ATmega specific USART.
+
 #include <bermuda.h>
 
 #include <arch/io.h>

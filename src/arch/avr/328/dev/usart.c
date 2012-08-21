@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file src/arch/avr/328/dev/usart.c HW specific USART controller.
+
 #include <bermuda.h>
 
 #include <lib/binary.h>

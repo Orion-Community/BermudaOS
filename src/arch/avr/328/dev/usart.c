@@ -32,7 +32,6 @@
 
 
 //<< Private function declarations >>//
-PRIVATE WEAK void BermudaUsartBusInit(USARTBUS *bus);
 PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
 PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg);
 
@@ -82,6 +81,11 @@ static USARTIF hw_usartif = {
 	.isr = BermudaUsartISR,
 };
 
+/**
+ * \brief Initialise USART0.
+ * 
+ * USART bus 0 will be initialised by this function.
+ */
 PUBLIC void BermudaUsart0Init()
 {
 	USARTBUS *bus = USART0;

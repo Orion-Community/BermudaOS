@@ -69,3 +69,73 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, char transtype)
 			break;
 	}
 }
+
+/**
+ * \brief Initiate a USART transfer.
+ * \param bus Bus to use for the transfer.
+ * \param tx Transmit buffer.
+ * \param txlen Transmit buffer length.
+ * \param rx Receive buffer.
+ * \param rxlen Receive buffer length.
+ * \param baud Desired baudrate.
+ * \param tmo Time-out. Maximum time to wait for the transfer to complete.
+ * \return An error code will be return. 0 for success -1 on failure (eg wrong
+ *         parameters or transmission timed out.
+ * The transfer will be started. Based on the parameters it will start a transmit
+ * or receive operation. If both should be done it will do a transmit first.
+ */
+PUBLIC int BermudaUsartTransfer(bus, tx, txlen, rx, rxlen, baud, tmo)
+USARTBUS *bus;
+const void *tx;
+unsigned int txlen;
+void *rx;
+unsigned int rxlen;
+unsigned int baud;
+unsigned int tmo;
+{
+	int rc = -1;
+	USART_IOCTL_MODE mode;
+	void *buffer = NULL;
+	
+	if(txlen == 0 && rxlen == 0) {
+		return rc;
+	}
+#ifdef __EVENTS__
+	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
+		return -1;
+	}
+#endif
+
+	if(txlen) {
+		bus->tx = tx;
+		bus->tx_len = txlen;
+		bus->tx_index = 0;
+		mode = USART_TX_DATA;
+		buffer = (void*)&(bus->tx[0]);
+	}
+	
+	if(rxlen) {
+		bus->rx = rx;
+		bus->rx_len = rxlen;
+		bus->rx_index = 0;
+		if(txlen) {
+			mode = USART_TX_DATA;
+			buffer = (void*)&(bus->tx[0]);
+		} else {
+			mode = USART_RX_DATA;
+			buffer = &(bus->rx[0]);
+		}
+	}
+	
+	bus->usartif->io(bus, mode, buffer);
+#ifdef __EVENTS__
+	BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
+#endif
+	
+#ifdef __EVENTS__
+	if(rc != -1) {
+		BermudaEventSignal((volatile THREAD**)bus->mutex);
+	}
+#endif
+	return rc;
+}

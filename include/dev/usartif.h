@@ -105,11 +105,11 @@ struct _usartbus
 
 	USARTIF *usartif;
 
-	volatile unsigned char *tx; //!< Transmit buffer.
+	const unsigned char *tx; //!< Transmit buffer.
 	uptr tx_len;                //!< Transmit buffer length.
 	uptr tx_index;              //!< Transmit buffer index.
 	
-	volatile unsigned char *rx; //!< Receive buffer.
+	unsigned char *rx; //!< Receive buffer.
 	uptr rx_len;                //!< Receive buffer length.
 	uptr rx_index;              //!< Receive buffer index.
 } __attribute__((packed));

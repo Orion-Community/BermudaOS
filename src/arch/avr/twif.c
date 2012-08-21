@@ -29,7 +29,6 @@
 #include <sys/events/event.h>
 
 // private function declarations
-PRIVATE WEAK int BermudaTwiHwIfacBusy(TWIBUS *bus);
 PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen, 
 	void *rx, unsigned int rxlen, unsigned char sla, uint32_t frq);
 
@@ -504,6 +503,43 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 }
 
 /**
+ * \brief Checks the status of SCL and SDA.
+ * \param bus Bus interface to check.
+ * \return -1 if the given interface is in idle; \n
+ *         0 if SDA is low and SCL is HIGH; \n
+ *         1 if SCL is low and SDA is high; \n
+ *         2 if SCL and SDA are both low.
+ * \return The default return value is 2.
+ * 
+ * It is safe to use the interface if this function returns -1 (both lines are
+ * HIGH).
+ */
+PUBLIC int BermudaTwHwIfacBusy(TWIBUS *bus)
+{
+	TWIHW *hw = BermudaTwiIoData(bus);
+	unsigned char scl = (*(hw->io_in)) & BIT(hw->scl);
+	unsigned char sda = (*(hw->io_in)) & BIT(hw->sda);
+	int rc = 2;
+	
+	switch(scl | sda) {
+		case TW_IF_IDLE:
+			rc = -1;
+			break;
+		case TW_IF_BUSY1:
+			rc = 0;
+			break;
+		case TW_IF_BUSY2:
+			rc = 1;
+			break;
+		case TW_IF_BUSY3:
+			rc = 2;
+			break;
+	}
+	
+	return rc;
+}
+
+/**
  * \brief Destroys the TW bus structures.
  * \param bus Bus to destroy.
  * \param type Defines the type of the bus (hardware/software).
@@ -514,6 +550,6 @@ PUBLIC void BermudaTwiBusFactoryDestroy(TWIBUS *bus, TWI_BUS_TYPE type)
 	if(type == TWI_SOFTWARE_CONTROLLER) {
 		BermudaHeapFree(bus->io.softio);
 	}
-		BermudaHeapFree(bus);
+	BermudaHeapFree(bus);
 }
 #endif /* __TWI__ */

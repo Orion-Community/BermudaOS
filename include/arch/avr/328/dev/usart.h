@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//!< \file include/arch/avr/328/dev/usart.h
+
 #ifndef __ARCH_GENERIC_UART_H
 #define __ARCH_GENERIC_UART_H
 

@@ -32,6 +32,7 @@
 //<< Private function declarations >>//
 PRIVATE WEAK void BermudaUsartBusInit(USARTBUS *bus);
 PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
+PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg);
 
 #ifdef __EVENTS__
 /**
@@ -41,12 +42,20 @@ PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
 static volatile void *usart_mutex;
 
 /**
- * \var usart_queue
- * \brief Transfer waiting queue.
+ * \var usart_tx_queue
+ * \brief Transmit waiting queue.
  *
  * Threads waiting for a transfer are put in this queue.
  */
-static volatile void *usart_queue = SIGNALED;
+static volatile void *usart_tx_queue = SIGNALED;
+
+/**
+ * \var usart_rx_queue
+ * \brief Transmit waiting queue.
+ *
+ * Threads waiting for a transfer are put in this queue.
+ */
+static volatile void *usart_rx_queue = SIGNALED;
 #endif
 
 /**
@@ -67,7 +76,8 @@ static HW_USART hw_usart0 = {
 };
 
 static USARTIF hw_usartif = {
-        
+	.io = BermudaUsartIoCtl,
+	.isr = BermudaUsartISR,
 };
 
 PUBLIC void BermudaUsart0Init()
@@ -75,9 +85,10 @@ PUBLIC void BermudaUsart0Init()
 	USARTBUS *bus = USART0;
 #ifdef __EVENTS__
 	bus->mutex = (void*)usart_mutex;
-	bus->queue = (void*)usart_queue;
+	bus->tx_queue = (void*)usart_tx_queue;
+	bus->rx_queue = (void*)usart_rx_queue;
 #endif
-        bus->usartif = &hw_usartif;
+	bus->usartif = &hw_usartif;
 	bus->io.hwio = &hw_usart0;
 	HW_USART *hw = &hw_usart0;
         
@@ -105,6 +116,7 @@ PUBLIC void BermudaUsart0Init()
  * \param mode The I/O mode to set.
  * \param arg Argument which might be needed. May be NULL.
  * \warning The argument <i>arg</i> won't be checked for errors.
+ * \todo Implement Rx and Tx data.
  */
 PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, 
 				    void *arg)
@@ -144,10 +156,10 @@ PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 
 SIGNAL(USART_TX_STC_vect)
 {
-	
+	USART0->usartif->isr(USART0, USART_TX);
 }
 
 SIGNAL(USART_RX_STC_vect)
 {
-	
+	USART0->usartif->isr(USART0, USART_RX);
 }

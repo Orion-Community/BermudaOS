@@ -115,5 +115,8 @@ struct _usartbus
 } __attribute__((packed));
 
 extern void BermudaUsartISR(USARTBUS *bus, char transtype);
+extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, 
+								void *rx, unsigned int rxlen, unsigned int baud, 
+								unsigned int tmo);
 
 #endif /* __USART_INTERFACE_H_ */

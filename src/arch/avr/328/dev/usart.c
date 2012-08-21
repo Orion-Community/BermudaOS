@@ -20,6 +20,7 @@
 
 #if defined(__USART__) || defined(__DOXYGEN__)
 
+#include <stdio.h>
 #include <bermuda.h>
 
 #include <lib/binary.h>
@@ -36,6 +37,8 @@
 //<< Private function declarations >>//
 PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
 PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg);
+PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream);
+PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
 
 #ifdef __EVENTS__
 /**
@@ -60,6 +63,9 @@ static volatile void *usart_tx_queue = SIGNALED;
  */
 static volatile void *usart_rx_queue = SIGNALED;
 #endif
+
+static FILE usart_in = { 0 };
+static FILE usart_out = { 0 };
 
 /**
  * \var BermudaUART0
@@ -160,6 +166,39 @@ PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 	// program the new rate
 	(*(hw->ubrrl)) = baud & 0xFF;
 	(*(hw->ubrrh)) = (baud >> 8) & 0xF;
+}
+
+/**
+ * \brief Setup the USART file streams used by functions such as printf.
+ * \todo Put this function in serialio.c
+ */
+PUBLIC void BermudaUsartSetupStreams()
+{
+		fdev_setup_stream(&usart_out, &BermudaUsartWriteByte, NULL, _FDEV_SETUP_WRITE);
+		fdev_setup_stream(&usart_in, NULL, &BermudaUsartReadByte, _FDEV_SETUP_READ);
+		stdout = &usart_out;
+		stdin  = &usart_in;
+}
+
+/**
+ * \brief Writes a byte the serial bus.
+ * \todo Put this function in serialio.c
+ */
+PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
+{
+	BermudaUsartTransfer(USART0, (const void*)&c, 1, NULL, 0, 9600, 500);
+	return 0;
+}
+
+/**
+ * \brief Tries to read a byte from the serial bus.
+ * \todo Put this function in serialio.c
+ */
+PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
+{
+	unsigned char c = 0;
+	BermudaUsartTransfer(USART0, NULL, 0, &c, 1, 9600, 500);
+	return c;
 }
 
 SIGNAL(USART_TX_STC_vect)

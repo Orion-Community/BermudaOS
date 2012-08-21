@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file src/dev/twif.c Generic Two Wire Interface.
+//! \file src/arch/avr/twif.c Generic Two Wire Interface.
 
 #if defined(__TWI__) || defined(__DOXYGEN__)
 

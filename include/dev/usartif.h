@@ -24,6 +24,20 @@
 #include <arch/types.h>
 
 /**
+ * \def USART_RX
+ * \brief Definition of the USART receive transfer type.
+ * \see BermudaUsartISR
+ */
+#define USART_RX 0
+
+/**
+ * \def USART_TX
+ * \brief Definition of the USART transmit transfer type.
+ * \see BermudaUsartISR
+ */
+#define USART_TX 1
+
+/**
  * \typedef USARTBUS
  * \brief Type definition of USARTBUS.
  *
@@ -42,6 +56,9 @@ typedef struct _usartif  USARTIF;
 typedef enum
 {
 	USART_SET_BAUD,
+	
+	USART_TX_DATA,
+	USART_RX_DATA,
 } USART_IOCTL_MODE;
 
 /**
@@ -55,7 +72,7 @@ struct _usartif
 	int (*transfer)(USARTBUS *bus, const void *tx, uptr tx_len, void *rx, uptr rx_len,
 					unsigned int baud, int tmo);
 	void (*io)(USARTBUS *bus, USART_IOCTL_MODE mode, void *data);
-	void (*isr)(USARTBUS *bus);
+	void (*isr)(USARTBUS *bus, char transtype);
 	int (*ifbusy)(USARTBUS *bus);
 } __attribute__((packed));
 
@@ -69,7 +86,8 @@ struct _usartbus
 {
 #ifdef __EVENTS__
 	void *mutex; //!< Bus mutex.
-	void *queue; //!< Transfer waiting queue.
+	void *tx_queue; //!< Transmit waiting queue.
+	void *rx_queue; //!< Receive waiting queue.
 #elif __THREADS__
 	mutex_t mutex;  //!< Bus mutex.
 	mutext_t queue; //!< Transfer mutex.
@@ -95,5 +113,7 @@ struct _usartbus
 	uptr rx_len;                //!< Receive buffer length.
 	uptr rx_index;              //!< Receive buffer index.
 } __attribute__((packed));
+
+extern void BermudaUsartISR(USARTBUS *bus, char transtype);
 
 #endif /* __USART_INTERFACE_H_ */

@@ -96,7 +96,7 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 
 	TWI0 = bus;
 	
-	#ifdef __EVENTS__
+#ifdef __EVENTS__
 	bus->mutex = &twi0_mutex;
 	bus->master_queue = &twi0_master_queue;
 	bus->slave_queue = &twi0_slave_queue;

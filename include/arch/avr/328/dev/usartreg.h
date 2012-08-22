@@ -98,5 +98,6 @@
 // interrupts
 #define RXCIE0 7
 #define TXCIE0 6
+#define UDRIE0 5
 
 #endif   /* __UART_REGISTER_HEADER_ */

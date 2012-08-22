@@ -36,7 +36,7 @@
  * 
  * This interrupt handler is called by hardware when there is a transfer done.
  */
-PUBLIC __link void BermudaUsartISR(USARTBUS *bus, char transtype)
+PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 {
 	switch(transtype) {
 		case USART_TX:
@@ -45,8 +45,8 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, char transtype)
 				bus->tx_index++;
 			}
 			else {
+				bus->usartif->io(bus, USART_STOP, NULL);
 				bus->tx_len = 0;
-				bus->tx_index = 0;
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
 #endif
@@ -59,7 +59,6 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, char transtype)
 				bus->rx_index++;
 			}
 			else {
-				bus->rx_index = 0;
 				bus->rx_len = 0;
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
@@ -98,7 +97,7 @@ unsigned int tmo;
 	int rc = -1;
 	USART_IOCTL_MODE mode;
 	void *buffer = NULL;
-	
+
 	if(txlen == 0 && rxlen == 0) {
 		return rc;
 	}
@@ -108,36 +107,31 @@ unsigned int tmo;
 	}
 #endif
 
-	if(txlen) {
-		bus->tx = tx;
-		bus->tx_len = txlen;
-		bus->tx_index = 0;
-		mode = USART_TX_DATA;
-		buffer = (void*)&(bus->tx[0]);
-	}
-	
 	if(rxlen) {
 		bus->rx = rx;
 		bus->rx_len = rxlen;
 		bus->rx_index = 0;
-		if(txlen) {
-			mode = USART_TX_DATA;
-			buffer = (void*)&(bus->tx[0]);
-		} else {
-			mode = USART_RX_DATA;
-			buffer = &(bus->rx[0]);
-		}
+		mode = USART_RX_DATA;
+		buffer = (void*)rx;
 	}
 	
+	if(txlen) {
+		bus->tx = tx;
+		bus->tx_len = txlen;
+		bus->tx_index = 1;
+		mode = USART_TX_DATA;
+		buffer = (void*)tx;
+	}
+	
+	bus->usartif->io(bus, USART_START, NULL);
 	bus->usartif->io(bus, mode, buffer);
 #ifdef __EVENTS__
-	BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
+	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
 #endif
 	
 #ifdef __EVENTS__
-	if(rc != -1) {
-		BermudaEventSignal((volatile THREAD**)bus->mutex);
-	}
+	BermudaEventSignal((volatile THREAD**)bus->mutex);
+
 #endif
 	return rc;
 }

@@ -45,7 +45,7 @@ PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
  * \var usart_mutex
  * \brief Mutex to make transfers mutually exclusive.
  */
-static volatile void *usart_mutex;
+static volatile void *usart_mutex = SIGNALED;
 
 /**
  * \var usart_tx_queue
@@ -97,14 +97,20 @@ static USARTIF hw_usartif = {
 PUBLIC void BermudaUsart0Init()
 {
 	USARTBUS *bus = USART0;
+	bus->tx = NULL; 
+	bus->rx = NULL;
+	bus->tx_len = 0;
+	bus->rx_len = 0;
+	bus->tx_index = 0;
+	bus->rx_index = 0;
 #ifdef __EVENTS__
-	bus->mutex = (void*)usart_mutex;
-	bus->tx_queue = (void*)usart_tx_queue;
-	bus->rx_queue = (void*)usart_rx_queue;
+	bus->mutex = (void*)&usart_mutex;
+	bus->tx_queue = (void*)&usart_tx_queue;
+	bus->rx_queue = (void*)&usart_rx_queue;
 #endif
 	bus->usartif = &hw_usartif;
 	bus->io.hwio = &hw_usart0;
-	HW_USART *hw = &hw_usart0;
+	HW_USART *hw = BermudaUsartGetIO(bus);
         
 	*(hw->ubrrh) = UBRR0H_VALUE;
 	*(hw->ubrrl) = UBRR0L_VALUE;
@@ -119,9 +125,9 @@ PUBLIC void BermudaUsart0Init()
 	*(hw->ucsrb) = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
 
 	// enable completion interrupts
-// 	BermudaEnterCritical();
-// 	*(hw->ucsrc) |= BIT(RXCIE0) | BIT(TXCIE0);
-// 	BermudaExitCritical();
+	BermudaEnterCritical();
+	*(hw->ucsrb) |= BIT(RXCIE0);
+	BermudaExitCritical();
 }
 
 /**
@@ -140,6 +146,14 @@ PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *
 	{
 		case USART_SET_BAUD:
 			BermudaUsartConfigBaud(bus, *((unsigned short*)arg));
+			break;
+			
+		case USART_START:
+			(*(hw->ucsrb)) |= BIT(TXCIE0);
+			break;
+			
+		case USART_STOP:
+			(*(hw->ucsrb)) &= ~BIT(TXCIE0);
 			break;
 			
 		case USART_TX_DATA:
@@ -196,14 +210,24 @@ PUBLIC void BermudaUsartSetupStreams()
  */
 PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 {
-	HW_USART *hw = BermudaUsartGetIO(USART0);
+
+// 	HW_USART *hw = BermudaUsartGetIO(USART0);
+// 	
+// 	(*(hw->ucsrc)) |= BIT(UDRIE0);
+// 	
+// 	if(c == '\n') {
+// 		BermudaUsartWriteByte('\r', stream);
+// 	}
+// 
+// 
+// 	while((UCSR0A & _BV(UDRE0)) == 0);
+// 	(*(hw->udr)) = c;
 	
 	if(c == '\n') {
 		BermudaUsartWriteByte('\r', stream);
 	}
-
-	while((UCSR0A & _BV(UDRE0)) == 0);
-	(*(hw->udr)) = c;
+	
+	BermudaUsartTransfer(USART0, &c, 1, NULL, 0, 9600, 500);
 
 	return 0;
 }
@@ -222,10 +246,11 @@ PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
 SIGNAL(USART_TX_STC_vect)
 {
 	USART0->usartif->isr(USART0, USART_TX);
+	return;
 }
 
 SIGNAL(USART_RX_STC_vect)
 {
-	USART0->usartif->isr(USART0, USART_RX);
+// 	USART0->usartif->isr(USART0, USART_RX);
 }
 #endif

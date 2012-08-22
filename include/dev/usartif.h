@@ -57,6 +57,9 @@ typedef enum
 {
 	USART_SET_BAUD,
 	
+	USART_START,
+	USART_STOP,
+	
 	USART_TX_DATA,
 	USART_RX_DATA,
 } USART_IOCTL_MODE;
@@ -72,7 +75,7 @@ struct _usartif
 	int (*transfer)(USARTBUS *bus, const void *tx, uptr tx_len, void *rx, uptr rx_len,
 					unsigned int baud, int tmo);
 	void (*io)(USARTBUS *bus, USART_IOCTL_MODE mode, void *data);
-	void (*isr)(USARTBUS *bus, char transtype);
+	void (*isr)(USARTBUS *bus, unsigned char transtype);
 	int (*ifbusy)(USARTBUS *bus);
 } __attribute__((packed));
 
@@ -114,7 +117,7 @@ struct _usartbus
 	uptr rx_index;              //!< Receive buffer index.
 } __attribute__((packed));
 
-extern void BermudaUsartISR(USARTBUS *bus, char transtype);
+extern void BermudaUsartISR(USARTBUS *bus, unsigned char transtype);
 extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, 
 								void *rx, unsigned int rxlen, unsigned int baud, 
 								unsigned int tmo);

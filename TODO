@@ -13,3 +13,7 @@ TODO for version 0.0.4
 
 * Hardware TWI.
 * LOADS of docs..
+
+TODO for version 0.0.5
+
+* Fix the missing first character in BermudaUsartTransfer Tx's.

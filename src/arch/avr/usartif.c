@@ -82,7 +82,6 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
  * \param tmo Time-out. Maximum time to wait for the transfer to complete.
  * \return An error code will be return. 0 for success -1 on failure (eg wrong
  *         parameters or transmission timed out.
- * \todo The first character is not being transmitted using this function.
  * 
  * The transfer will be started. Based on the parameters it will start a transmit
  * or receive operation. If both should be done it will do a transmit first.
@@ -120,12 +119,16 @@ unsigned int tmo;
 	if(txlen) {
 		bus->tx = tx;
 		bus->tx_len = txlen;
-		bus->tx_index = 1;
+		bus->tx_index = 0;
 		mode = USART_TX_DATA;
 		buffer = (void*)tx;
 	}
 	
 	bus->usartif->io(bus, USART_START, NULL);
+	/*
+	 * The sent below does trigger the transfer complete interrupt, but no data
+	 * appears on the bus.
+	 */
 	bus->usartif->io(bus, mode, buffer);
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);

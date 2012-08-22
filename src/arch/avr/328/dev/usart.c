@@ -210,25 +210,19 @@ PUBLIC void BermudaUsartSetupStreams()
  */
 PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 {
-
-// 	HW_USART *hw = BermudaUsartGetIO(USART0);
-// 	
-// 	(*(hw->ucsrc)) |= BIT(UDRIE0);
-// 	
-// 	if(c == '\n') {
-// 		BermudaUsartWriteByte('\r', stream);
-// 	}
-// 
-// 
-// 	while((UCSR0A & _BV(UDRE0)) == 0);
-// 	(*(hw->udr)) = c;
+	USART0->usartif->io(USART0, USART_STOP, NULL);
+	HW_USART *hw = BermudaUsartGetIO(USART0);
+	
+	(*(hw->ucsrc)) |= BIT(UDRIE0);
 	
 	if(c == '\n') {
 		BermudaUsartWriteByte('\r', stream);
 	}
-	
-	BermudaUsartTransfer(USART0, &c, 1, NULL, 0, 9600, 500);
 
+	while((UCSR0A & _BV(UDRE0)) == 0);
+	(*(hw->udr)) = c;
+
+	USART0->usartif->io(USART0, USART_START, NULL);
 	return 0;
 }
 

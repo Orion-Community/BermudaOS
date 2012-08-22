@@ -27,6 +27,7 @@
 #define __BERMUDA_H
 
 #include <arch/types.h>
+#include <sys/out.h>
 
 #ifdef __cplusplus
 #include <cplusplus.h>

@@ -28,9 +28,11 @@
 #include <dev/dev.h>
 #include <dev/twif.h>
 #include <dev/spibus.h>
+#include <dev/usartif.h>
 
 #include <arch/io.h>
 #include <arch/twi.h>
+#include <arch/usart.h>
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
@@ -45,7 +47,7 @@ THREAD(SramThread, arg)
 		if(rc == 0) {
 			BermudaTwiSlaveRespond(TWI0, &tx, 1, 500);
 		}
-		printf("NUM: 0x%X :: RX: 0x%X :: rc: %i\n", num, rx, rc);
+		BermudaPrintf("NUM: 0x%X :: RX: 0x%X :: rc: %i\n", num, rx, rc);
 	}
 }
 
@@ -89,13 +91,14 @@ void loop()
 	tmp = adc->read(A0);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
-	printf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-	
+	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+
 	read_back_sram = BermudaSpiRamReadByte(0x50);
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
-	printf("Read back value's: %X::%X\n", read_back_eeprom,
+	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
+	BermudaUsartTransfer(USART0, "USART output\r\n", 14, NULL, 0, 9600, 500);
 
 	BermudaThreadSleep(5000);
 	return;

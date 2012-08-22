@@ -33,6 +33,7 @@
 #include <arch/avr/timer.h>
 #include <arch/avr/stack.h>
 #include <arch/avr/328/dev/twibus.h>
+#include <arch/avr/328/dev/usart.h>
 
 #define LED_DDR  BermudaGetDDRB()
 #define LED_PORT BermudaGetPORTB()
@@ -58,7 +59,8 @@ THREAD(MainThread, data)
 PUBLIC int BermudaInit(void)
 {       
 	BermudaHeapInitBlock((volatile void*)&__heap_start, MEM-128);
-	BermudaInitUART();
+	BermudaUsart0Init(USART0);
+	BermudaUsartSetupStreams();
 	BermudaInitTimer0();
 
 #ifdef __ADC__

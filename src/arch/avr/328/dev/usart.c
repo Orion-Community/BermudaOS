@@ -119,9 +119,9 @@ PUBLIC void BermudaUsart0Init()
 	*(hw->ucsrb) = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
 
 	// enable completion interrupts
-	BermudaEnterCritical();
-	*(hw->ucsrc) |= BIT(RXCIE0) | BIT(TXCIE0);
-	BermudaExitCritical();
+// 	BermudaEnterCritical();
+// 	*(hw->ucsrc) |= BIT(RXCIE0) | BIT(TXCIE0);
+// 	BermudaExitCritical();
 }
 
 /**
@@ -132,14 +132,24 @@ PUBLIC void BermudaUsart0Init()
  * \warning The argument <i>arg</i> won't be checked for errors.
  * \todo Implement Rx and Tx data.
  */
-PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, 
-				    void *arg)
+PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg)
 {
+	HW_USART *hw = BermudaUsartGetIO(bus);
+	
 	switch(mode)
 	{
 		case USART_SET_BAUD:
 			BermudaUsartConfigBaud(bus, *((unsigned short*)arg));
 			break;
+			
+		case USART_TX_DATA:
+			(*(hw->udr)) = *((volatile unsigned char*)arg);
+			break;
+			
+		case USART_RX_DATA:
+			*((volatile unsigned char*)arg) = (*(hw->udr));
+			break;
+		
 		default:
 			break;
 	}
@@ -186,7 +196,15 @@ PUBLIC void BermudaUsartSetupStreams()
  */
 PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 {
-	BermudaUsartTransfer(USART0, (const void*)&c, 1, NULL, 0, 9600, 500);
+	HW_USART *hw = BermudaUsartGetIO(USART0);
+	
+	if(c == '\n') {
+		BermudaUsartWriteByte('\r', stream);
+	}
+
+	while((UCSR0A & _BV(UDRE0)) == 0);
+	(*(hw->udr)) = c;
+
 	return 0;
 }
 

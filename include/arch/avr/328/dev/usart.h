@@ -28,6 +28,8 @@
 
 #define USART0 (&BermudaUART0)
 
+#define BermudaUsartGetIO(bus) ((void*)((bus)->io.hwio))
+
 extern int BermudaInitUART();
 extern int BermudaUARTPutChar(char, FILE *);
 extern int BermudaUARTGettChar(FILE *);
@@ -46,6 +48,8 @@ struct hw_uart
 
 typedef struct hw_uart HW_USART;
 
-extern void BermudaUART0Init(USARTBUS *bus);
+extern USARTBUS BermudaUART0;
+extern void BermudaUsart0Init();
+extern void BermudaUsartSetupStreams();
 
 #endif /* __ARCH_GENERIC_UART_H */

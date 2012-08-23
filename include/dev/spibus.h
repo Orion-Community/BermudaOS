@@ -136,6 +136,16 @@ typedef struct _spictrl SPICTRL;
 // priv defs
 #define BERMUDA_SPI_X2_SHIFT 11
 
+typedef enum
+{
+	SPI_START,
+	SPI_STOP,
+	SPI_IDLE,
+	
+	SPI_READ_DATA,
+	SPI_WRITE_DATA,
+} SPI_IOCTL_MODE;
+
 /**
  * \struct _spibus
  * \brief SPI bus structure.
@@ -144,7 +154,7 @@ struct _spibus
 {
 #ifdef __EVENTS__
 	void *mutex; //!< SPI bus mutex.
-	void *queue; //!< Transfer waiting queue.
+	void *master_queue; //!< Transfer waiting queue.
 #elif __THREADS__
 	mutex_t mutex;
 	mutex_t queue;
@@ -154,6 +164,11 @@ struct _spibus
 	uint16_t mode; //!< SPI mode select.
 	uint32_t rate; //!< SPI rate select.
 	unsigned char cs; //!< Chip select pin.
+	
+	const unsigned char *master_tx;
+	const unsigned char *master_rx;
+	uptr master_len;
+	uptr master_index;
 };
 
 /**
@@ -164,54 +179,62 @@ struct _spibus
  */
 struct _spictrl
 {        
-        /**
-         * \brief Transfer data.
-         * \param bus SPI bus.
-         * \param tx Transmit buffer.
-         * \param rx Receive buffer.
-         * \param len Data length.
-         * \param tmo Bus timeout.
-         * 
-         * Transfer data over the SPI bus from the transmit buffer, while receiving
-         * data in the receive buffer.
-         */
-        int  (*transfer)(SPIBUS* bus, const const uint8_t *tx, uint8_t *rx, uptr len, 
-			             unsigned int tmo);
-              
-        /**
-         * \brief Set data mode.
-         * \param bus SPI bus.
-         * \param mode Mode to set.
-         * 
-         * Set the given mode to this bus.
-         */
-        void (*set_mode)   (SPIBUS* bus, unsigned char mode);
-        
-        /**
-         * \brief Set the clock rate.
-         * \param bus SPI bus.
-         * \param rate Rate in Hertz.
-         * 
-         * Set the given clock rate in the spi bus.
-         */
-        void (*set_rate)   (SPIBUS* bus, uint32_t rate);
+	/**
+	* \brief Transfer data.
+	* \param bus SPI bus.
+	* \param tx Transmit buffer.
+	* \param rx Receive buffer.
+	* \param len Data length.
+	* \param tmo Bus timeout.
+	* 
+	* Transfer data over the SPI bus from the transmit buffer, while receiving
+	* data in the receive buffer.
+	*/
+	int  (*transfer)(SPIBUS* bus, const const uint8_t *tx, uint8_t *rx, uptr len, 
+						unsigned int tmo);
+			
+	/**
+	* \brief Set data mode.
+	* \param bus SPI bus.
+	* \param mode Mode to set.
+	* 
+	* Set the given mode to this bus.
+	*/
+	void (*set_mode)   (SPIBUS* bus, unsigned char mode);
+	
+	/**
+	* \brief Set the clock rate.
+	* \param bus SPI bus.
+	* \param rate Rate in Hertz.
+	* 
+	* Set the given clock rate in the spi bus.
+	*/
+	void (*set_rate)   (SPIBUS* bus, uint32_t rate);
 
-        /**
-         * \brief Change the chip select before transfer.
-         * \param bus SPI bus to change chip select for.
-         * \warning The bus has to be allocated before selecting it.
-         */
-        void (*select)(SPIBUS *bus);
-        
-        /**
-         * \brief Deselct a chip.
-         * \param bus SPI bus to deselect.
-         * \warning The bus has to be allocated.
-         * \note When the deselect signal is given, it is save to remove the bus
-         *       mutex.
-         * \see _device::alloc
-         */
-        void (*deselect)(SPIBUS *bus);
+	/**
+	* \brief Change the chip select before transfer.
+	* \param bus SPI bus to change chip select for.
+	* \warning The bus has to be allocated before selecting it.
+	*/
+	void (*select)(SPIBUS *bus);
+	
+	/**
+	* \brief Deselct a chip.
+	* \param bus SPI bus to deselect.
+	* \warning The bus has to be allocated.
+	* \note When the deselect signal is given, it is save to remove the bus
+	*       mutex.
+	* \see _device::alloc
+	*/
+	void (*deselect)(SPIBUS *bus);
+	
+	/**
+	 * \brief SPI interrupt service handler.
+	 * \param bus SPI bus to service.
+	 */
+	void (*isr)(SPIBUS *bus);
+	
+	void (*io)(SPIBUS *bus, SPI_IOCTL_MODE mode, void *data);
 };
 
 #ifdef __cplusplus
@@ -220,6 +243,7 @@ extern "C" {
 
 extern int BermudaSPIWrite(SPIBUS *bus, const void *tx, size_t len);
 extern uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigned int max);
+extern void BermudaSpiISR(SPIBUS *bus);
 
 // inline funcs
  

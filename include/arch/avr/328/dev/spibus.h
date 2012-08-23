@@ -31,6 +31,8 @@
  */
 #define SPI0 (&BermudaSpi0HardwareBus)
 
+#define BermduaSpiGetIO(bus) ((HWSPI*)(bus)->io)
+
 /**
  * \struct _hwspi
  * \brief Hardware control structure.

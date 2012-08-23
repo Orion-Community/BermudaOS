@@ -69,7 +69,7 @@ static volatile void *twi0_slave_queue = SIGNALED;
  */
 TWIBUS *twibus0 = NULL;
 
-static TWIHW twi0hw = {
+static HWTWI twi0hw = {
 	&TWBR,
 	&TWCR,
 	&TWSR,
@@ -107,14 +107,14 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 
 	// Initialize the hardware interface.
 	bus->io.hwio = (void*)&twi0hw;
-	((TWIHW*)bus->io.hwio)->io_in = AvrIO->pinc;
-	((TWIHW*)bus->io.hwio)->io_out = AvrIO->portc;
+	BermudaTwiIoData(bus)->io_in = AvrIO->pinc;
+	BermudaTwiIoData(bus)->io_out = AvrIO->portc;
 }
 
 /**
  * \brief Initializes the TWI structes.
  * \param sla Slave address to set.
- * \note The TWIBUS, TWIF and TWIHW will be initialized by this function.
+ * \note The TWIBUS, TWIF and HWTWI will be initialized by this function.
  *
  * All data structures needed to use the hardware TW interface will be initialized
  * by this function.
@@ -136,7 +136,7 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
 	bus->twif->io = &BermudaTwIoctl;
 	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
-	bus->twif->isr = &BermudaTwISR;
+	bus->twif->isr = &BermudaTwiISR;
 
 	// Initialize other parts of the bus
 	bus->busy = false;
@@ -157,7 +157,7 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
  */
 PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 {
-	TWIHW *hw = bus->io.hwio;
+	HWTWI *hw = BermudaTwiIoData(bus);
 	unsigned char sla;
 	int rc = 0;
 	BermudaEnterCritical();

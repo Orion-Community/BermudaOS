@@ -43,7 +43,7 @@ PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen,
  * buffer, if present. Then it will receive data in the receive buffer, if a
  * Rx buffer address is configured.
  */
-PUBLIC __link void BermudaTwISR(TWIBUS *bus)
+PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 {
 	unsigned char sla = bus->sla & (~BIT(0));
 	TW_IOCTL_MODE mode;
@@ -533,7 +533,7 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
  */
 PUBLIC int BermudaTwHwIfacBusy(TWIBUS *bus)
 {
-	TWIHW *hw = BermudaTwiIoData(bus);
+	HWTWI *hw = BermudaTwiIoData(bus);
 	unsigned char scl = (*(hw->io_in)) & BIT(hw->scl);
 	unsigned char sda = (*(hw->io_in)) & BIT(hw->sda);
 	int rc = 2;

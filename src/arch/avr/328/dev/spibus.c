@@ -32,6 +32,7 @@
 #include <dev/spibus.h>
 
 #include <arch/avr/io.h>
+#include <arch/avr/spif.h>
 #include <arch/avr/interrupts.h>
 #include <arch/avr/328/dev/spireg.h>
 #include <arch/avr/328/dev/spibus.h>
@@ -40,6 +41,9 @@
 THREAD *BermudaSPI0TransferQueue = SIGNALED;
 THREAD *BermudaSPI0Mutex = SIGNALED;
 #endif
+
+// private functions
+PRIVATE WEAK void BermudaSpiIoCtl(SPIBUS *bus, SPI_IOCTL_MODE mode, void *data);
 
 /**
  * \var BermudaSPI0HardwareIO
@@ -65,6 +69,8 @@ static SPICTRL BermudaSpiHardwareCtrl = {
 		.set_rate = &BermudaSpiSetRate,
 		.select   = &BermudaHardwareSpiSelect,
 		.deselect = &BermudaHardwareSpiDeselect,
+		.io		  = &BermudaSpiIoCtl,
+		.isr	  = &BermudaSpiISR,
 };
 
 /**
@@ -77,10 +83,10 @@ static SPICTRL BermudaSpiHardwareCtrl = {
 SPIBUS BermudaSpi0HardwareBus = {
 #ifdef __EVENTS__
 		.mutex = (void*)&BermudaSPI0Mutex,
-		.queue = (void*)&BermudaSPI0TransferQueue,
-#else
-		.mutex = NULL,
-		.queue = NULL,
+		.master_queue = (void*)&BermudaSPI0TransferQueue,
+#elif __THREADS__
+		.mutex = 0,
+		.queue = 0,
 #endif
 		.ctrl  = &BermudaSpiHardwareCtrl,
 		.io    = &BermudaSPI0HardwareIO,
@@ -170,7 +176,10 @@ PRIVATE WEAK void BermudaHardwareSpiDeselect(SPIBUS *bus)
 PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint8_t *rx,
 	uptr len, unsigned int tmo)
 {
+#ifndef __EVENTS__
 	uptr idx = 0;
+#endif
+	
 	HWSPI *io = bus->io;
 	int rc = 0;
 #ifdef __EVENTS__
@@ -182,25 +191,28 @@ PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint
 	BermudaMutexEnter(&(bus->mutex));
 #endif
 	
+	
+#ifdef __EVENTS__
+	bus->master_tx = tx;
+	bus->master_rx = rx;
+	bus->master_len = len;
+	bus->master_index = 1; // first byte is sent below
+	
+	*(io->spdr) = tx[0];
+	if((rc = BermudaEventWaitNext((volatile THREAD**)bus->master_queue, tmo)) == -1) {
+		goto free;
+	}
+#else
 	for(; idx < len; idx++) {
 		*(io->spdr) = tx[idx];
-#ifdef __EVENTS__
-		if(BermudaEventWaitNext((volatile THREAD**)bus->queue, tmo) == -1) {
-			rc -= 1;
-			rx[idx] = 0xFF;
-		}
-		else {
-			rx[idx] = *(io->spdr);
-			rc += 1;
-		}
-#else
 		while(!(*(io->spsr) & BIT(SPIF)));
 		rx[idx] = *(io->spdr);
 		rc += 1;
-#endif
 	}
+#endif
 
 #ifdef __EVENTS__
+free:
 	BermudaEventSignal((volatile THREAD**)bus->mutex);
 #elif __THREADS__
 	BermudaMutexRelease(&(bus->mutex));
@@ -251,6 +263,23 @@ PRIVATE WEAK void BermudaSpiRateToHwBits(unsigned long *rate_select, unsigned ch
 	*rate_select = hw;
 }
 
+PRIVATE WEAK void BermudaSpiIoCtl(SPIBUS *bus, SPI_IOCTL_MODE mode, void *data)
+{
+	HWSPI *hw = BermduaSpiGetIO(bus);
+	
+	switch(mode)
+	{
+		case SPI_WRITE_DATA:
+			(*(hw->spdr)) = *((unsigned char*)data);
+		case SPI_READ_DATA:
+			*((unsigned char*)data) = (*(hw->spdr));
+			break;
+		
+		default:
+			break;
+	}
+}
+
 /**
  * \brief Update the SPI rate.
  * \param bus SPI bus to update.
@@ -281,7 +310,8 @@ PRIVATE WEAK void BermudaSpiSetMode( SPIBUS *bus, unsigned char mode )
 #ifdef __EVENTS__
 SIGNAL(SPI_STC_vect)
 {
-	BermudaEventSignalFromISR((volatile THREAD**)(&BermudaSpi0HardwareBus)->queue);
+// 	BermudaEventSignalFromISR((volatile THREAD**)(&BermudaSpi0HardwareBus)->master_queue);
+	SPI0->ctrl->isr(SPI0);
 }
 #endif /* __EVENTS__ */
 #endif /* __SPI__ */

@@ -74,7 +74,7 @@ typedef enum
 
 	TW_RELEASE_BUS, //!< Release the bus.
 	TW_GET_STATUS, //!< Get the status from hardware.
-	TW_ENABLE_INTERFACE, //!< Enables the TWI interface.
+	TW_ENABLE_INTERFACE, //!< Enables the TWI interface, entering idle state.
 	TW_DISABLE_INTERFACE, //!< Disable the TWI interface.
 	TW_BLOCK_INTERFACE, //!< Blocks the TWI interface.
 	TW_SLAVE_LISTEN, //!< Listen for incoming slave requests.
@@ -218,7 +218,7 @@ extern "C"
 {
 #endif
 
-extern void BermudaTwISR(TWIBUS *bus);
+extern void BermudaTwiISR(TWIBUS *bus);
 extern int BermudaTwHwIfacBusy(TWIBUS *bus);
 extern int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
 	unsigned int tmo);

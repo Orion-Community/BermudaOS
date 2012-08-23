@@ -42,7 +42,7 @@
  * \def BermudaTwiIoData
  * \brief Get I/O data address.
  */
-#define BermudaTwiIoData(bus) bus->io.hwio
+#define BermudaTwiIoData(bus) ((HWTWI*)bus->io.hwio)
 
 /**
  * \def TW_TMO
@@ -85,7 +85,7 @@
  * \def TW_ENABLE
  * \brief Enables the TWI interface.
  * 
- * The following bits will be set: \n
+ * The bus is enabled and in idle state. The following bits will be set: \n
  * * TWEN \n
  * * TWIE \n
  * * TWEA \n
@@ -147,7 +147,7 @@
  * * TWEA \n
  * * TWINT \n
  */
-#define TW_RELEASE (TW_ACK & (~BIT(TWIE)))
+#define TW_RELEASE (TW_ENABLE & (~BIT(TWIE)))
 
 #define TW_LISTEN TW_ACK //!< Listen on the interface for incoming slave requests.
 
@@ -178,7 +178,7 @@
  * 
  * Structure containing all hardware I/O registers.
  */
-struct _twi_hw {
+struct _hw_twi {
 	volatile reg8_t twbr;  //!< TWI bit rate control register.
 	volatile reg8_t twcr;  //!< TWI control register.
 	volatile reg8_t twsr;  //!< TWI status register.
@@ -196,10 +196,10 @@ struct _twi_hw {
 };
 
 /**
- * \typedef TWIHW
+ * \typedef HWTWI
  * \brief Type definition of the HW I/O structure.
  */
-typedef struct _twi_hw TWIHW;
+typedef struct _hw_twi HWTWI;
 
 __DECL
 extern void BermudaTwi0Init(unsigned char sla);

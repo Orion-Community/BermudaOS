@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - TWI interface
+ *  BermudaOS - Serial Peripheral Interface
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * \file include/arch/twi.h
- * 
- * Use this header to include the correct architecture dependent TWI header.
- */
+#if defined(__SPI__) || defined(__DOXYGEN__)
 
-#ifndef __ARCH_TWI_H
-#define __ARCH_TWI_H
+#include <bermuda.h>
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-        #include <arch/avr/328/dev/twibus.h>
+#include <arch/spi.h>
+#include <arch/avr/spif.h>
+
+#include <sys/events/event.h>
+
+PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
+{
+	if(bus->master_rx) {
+		bus->ctrl->io(bus, SPI_READ_DATA, (void*)&(bus->master_rx[bus->master_index-1]));
+	}
+	if(bus->master_index < bus->master_len) {
+		bus->ctrl->io(bus, SPI_WRITE_DATA, (void*)&(bus->master_tx[bus->master_index]));
+		bus->master_index++;
+	}
+#ifdef __EVENTS__
+	else {
+		BermudaEventSignalFromISR((volatile THREAD**)bus->master_queue);
+	}
 #endif
-
-#endif /* __ARCH_TWI_H */
+}
+#endif

@@ -93,6 +93,7 @@
 #define TXEN0 3
 #define RXEN0 4
 #define UDRE0 5
+#define TXCn 6
 #define RXC0 7
 
 // interrupts

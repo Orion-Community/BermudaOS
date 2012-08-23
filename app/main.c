@@ -99,7 +99,6 @@ void loop()
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
 	BermudaUsartTransfer(USART0, "USART output\r\n", 14, NULL, 0, 9600, 500);
-
 	BermudaThreadSleep(5000);
 	return;
 }

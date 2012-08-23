@@ -119,7 +119,7 @@ unsigned int tmo;
 	if(txlen) {
 		bus->tx = tx;
 		bus->tx_len = txlen;
-		bus->tx_index = 0;
+		bus->tx_index = 1;
 		mode = USART_TX_DATA;
 		buffer = (void*)tx;
 	}
@@ -129,6 +129,7 @@ unsigned int tmo;
 	 * The sent below does trigger the transfer complete interrupt, but no data
 	 * appears on the bus.
 	 */
+	
 	bus->usartif->io(bus, mode, buffer);
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);

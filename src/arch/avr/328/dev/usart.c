@@ -149,6 +149,7 @@ PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *
 			break;
 			
 		case USART_START:
+			(*(hw->ucsra)) |= BIT(TXCn);
 			(*(hw->ucsrb)) |= BIT(TXCIE0);
 			break;
 			
@@ -157,6 +158,7 @@ PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *
 			break;
 			
 		case USART_TX_DATA:
+			while(( (*(hw->ucsra)) & BIT(UDRE0) ) == 0);
 			(*(hw->udr)) = *((volatile unsigned char*)arg);
 			break;
 			
@@ -210,11 +212,9 @@ PUBLIC void BermudaUsartSetupStreams()
  */
 PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 {
-	USART0->usartif->io(USART0, USART_STOP, NULL);
 	HW_USART *hw = BermudaUsartGetIO(USART0);
 	
-	(*(hw->ucsrc)) |= BIT(UDRIE0);
-	
+	USART0->usartif->io(USART0, USART_STOP, NULL);
 	if(c == '\n') {
 		BermudaUsartWriteByte('\r', stream);
 	}
@@ -222,7 +222,6 @@ PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 	while((UCSR0A & _BV(UDRE0)) == 0);
 	(*(hw->udr)) = c;
 
-	USART0->usartif->io(USART0, USART_START, NULL);
 	return 0;
 }
 

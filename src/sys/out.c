@@ -30,7 +30,7 @@ PUBLIC int BermudaPrintf(const char *fmt, ...)
 		return -1;
 	}
 #endif
-	
+
 	va_list va;
 	int i;
 	
@@ -40,5 +40,6 @@ PUBLIC int BermudaPrintf(const char *fmt, ...)
 #ifdef __EVENTS__
 	BermudaEventSignal((volatile THREAD**)USART0->mutex);
 #endif
+
 	return i;
 }

@@ -37,8 +37,6 @@
 //<< Private function declarations >>//
 PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
 PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg);
-PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream);
-PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
 
 #ifdef __EVENTS__
 /**
@@ -63,9 +61,6 @@ static volatile void *usart_tx_queue = SIGNALED;
  */
 static volatile void *usart_rx_queue = SIGNALED;
 #endif
-
-static FILE usart_in = { 0 };
-static FILE usart_out = { 0 };
 
 /**
  * \var BermudaUART0

@@ -50,6 +50,5 @@ typedef struct hw_uart HW_USART;
 
 extern USARTBUS BermudaUART0;
 extern void BermudaUsart0Init();
-extern void BermudaUsartSetupStreams();
 
 #endif /* __ARCH_GENERIC_UART_H */

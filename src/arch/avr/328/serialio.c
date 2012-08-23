@@ -21,6 +21,9 @@
 PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
 PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream);
 
+static FILE usart_in = { 0 };
+static FILE usart_out = { 0 };
+
 #include <bermuda.h>
 #include <stdio.h>
 
@@ -29,7 +32,6 @@ PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream);
 
 /**
  * \brief Setup the USART file streams used by functions such as printf.
- * \todo Put this function in serialio.c
  */
 PUBLIC void BermudaUsartSetupStreams()
 {
@@ -41,7 +43,6 @@ PUBLIC void BermudaUsartSetupStreams()
 
 /**
  * \brief Writes a byte the serial bus.
- * \todo Put this function in serialio.c
  */
 PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 {
@@ -60,7 +61,6 @@ PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 
 /**
  * \brief Tries to read a byte from the serial bus.
- * \todo Put this function in serialio.c
  */
 PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
 {

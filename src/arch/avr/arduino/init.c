@@ -32,6 +32,7 @@
 #include <arch/avr/328/dev/spibus.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/stack.h>
+#include <arch/avr/serialio.h>
 #include <arch/avr/328/dev/twibus.h>
 #include <arch/avr/328/dev/usart.h>
 

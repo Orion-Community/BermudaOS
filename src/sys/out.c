@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file src/sys/out.c Text output module.
+
 #include <stdio.h>
 #include <bermuda.h>
 
@@ -23,6 +25,11 @@
 
 #include <sys/events/event.h>
 
+/**
+ * \brief Bermudas implementation of printf.
+ * \param fmt Format of the string to print.
+ * \param ... Variable argument list.
+ */
 PUBLIC int BermudaPrintf(const char *fmt, ...)
 {
 #ifdef __EVENTS__

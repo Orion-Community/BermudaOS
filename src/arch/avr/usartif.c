@@ -82,6 +82,7 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
  * \param tmo Time-out. Maximum time to wait for the transfer to complete.
  * \return An error code will be return. 0 for success -1 on failure (eg wrong
  *         parameters or transmission timed out.
+ * \todo Implement the receive interface.
  * 
  * The transfer will be started. Based on the parameters it will start a transmit
  * or receive operation. If both should be done it will do a transmit first.

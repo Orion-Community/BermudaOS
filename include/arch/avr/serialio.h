@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/arch/avr/serialio.h Stdio backend.
+
 #ifndef __SERIALIO_H_
 #define __SERIALIO_H_
 

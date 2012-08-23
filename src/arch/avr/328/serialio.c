@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file src/arch/avr/328/serialio.c Stdio backend functions.
+
 #include <bermuda.h>
 #include <stdio.h>
 
@@ -32,6 +34,11 @@ static FILE usart_out = { 0 };
 
 /**
  * \brief Setup the USART file streams used by functions such as printf.
+ * \see BermudaUsartWriteByte
+ * \see BermudaUsartReadByte
+ * 
+ * Stdout will be redirected to BermudaUsartWriteByte. Stdin is redirected to
+ * the function BermudaUsartReadByte.
  */
 PUBLIC void BermudaUsartSetupStreams()
 {
@@ -43,6 +50,9 @@ PUBLIC void BermudaUsartSetupStreams()
 
 /**
  * \brief Writes a byte the serial bus.
+ * \note This function is used by <b>stdout</b>
+ * 
+ * Writes a single character (<i>c</i>) to the USART0 (hardware usart).
  */
 PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 {
@@ -61,6 +71,9 @@ PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 
 /**
  * \brief Tries to read a byte from the serial bus.
+ * \note This function is used by stdin.
+ * 
+ * Waits for one character on USART0 (hardware usart) for 500 miliseconds.
  */
 PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
 {

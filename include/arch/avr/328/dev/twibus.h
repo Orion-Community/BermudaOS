@@ -85,10 +85,13 @@
  * \def TW_ENABLE
  * \brief Enables the TWI interface.
  * 
- * The bus is enabled and in idle state. The following bits will be set: \n
+ * Enables the bus by entering idle state. The following bits will be set: \n
  * * TWEN \n
  * * TWIE \n
  * * TWEA \n
+ * 
+ * When this mode is enabled, it will trigger an interrupt if bit 8 in the SREG
+ * register is set, but it won't ACK data.
  */
 #define TW_ENABLE (BIT(TWIE) | BIT(TWEN) | BIT(TWINT))
 

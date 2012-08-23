@@ -55,13 +55,13 @@ typedef struct _usartif  USARTIF;
 
 typedef enum
 {
-	USART_SET_BAUD,
+	USART_SET_BAUD, //! Set the baud rate.
 	
-	USART_START,
-	USART_STOP,
+	USART_START, //!< Start the USART controller.
+	USART_STOP, //!< Stops the USART controller.
 	
-	USART_TX_DATA,
-	USART_RX_DATA,
+	USART_TX_DATA, //!< Transmit data. 
+	USART_RX_DATA, //!< Read data from the backend buffer.
 } USART_IOCTL_MODE;
 
 /**

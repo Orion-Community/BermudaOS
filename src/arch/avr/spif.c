@@ -25,6 +25,11 @@
 
 #include <sys/events/event.h>
 
+/**
+ * \brief ISR of the Atmel ATmega SPI.
+ * \param bus Bus to service.
+ * \warning Should only be called by hardware.
+ */
 PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
 {
 	if(bus->master_rx) {

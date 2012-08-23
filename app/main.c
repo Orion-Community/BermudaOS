@@ -91,7 +91,6 @@ void loop()
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
-	char *buff[10];
 
 	tmp = adc->read(A0);
 	temperature = tmp / 1024 * 5000;

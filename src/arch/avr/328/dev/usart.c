@@ -189,48 +189,6 @@ PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 	(*(hw->ubrrh)) = (baud >> 8) & 0xF;
 }
 
-/**
- * \brief Setup the USART file streams used by functions such as printf.
- * \todo Put this function in serialio.c
- */
-PUBLIC void BermudaUsartSetupStreams()
-{
-		fdev_setup_stream(&usart_out, &BermudaUsartWriteByte, NULL, _FDEV_SETUP_WRITE);
-		fdev_setup_stream(&usart_in, NULL, &BermudaUsartReadByte, _FDEV_SETUP_READ);
-		stdout = &usart_out;
-		stdin  = &usart_in;
-}
-
-/**
- * \brief Writes a byte the serial bus.
- * \todo Put this function in serialio.c
- */
-PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
-{
-	HW_USART *hw = BermudaUsartGetIO(USART0);
-	
-	USART0->usartif->io(USART0, USART_STOP, NULL);
-	if(c == '\n') {
-		BermudaUsartWriteByte('\r', stream);
-	}
-
-	while((UCSR0A & _BV(UDRE0)) == 0);
-	(*(hw->udr)) = c;
-
-	return 0;
-}
-
-/**
- * \brief Tries to read a byte from the serial bus.
- * \todo Put this function in serialio.c
- */
-PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
-{
-	unsigned char c = 0;
-	BermudaUsartListen(USART0, &c, 1, 9600, 500);
-	return c;
-}
-
 SIGNAL(USART_TX_STC_vect)
 {
 	USART0->usartif->isr(USART0, USART_TX);

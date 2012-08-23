@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../../../include
 TARGET			= 328.o
 ARDUINO_LIBS		=
 
-CSRCS			= io.c timer.c
+CSRCS			= io.c timer.c serialio.c
 CPPSRCS			=
 ASMSRC			=
 

@@ -16,19 +16,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// private functions
-
-PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
-PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream);
-
-static FILE usart_in = { 0 };
-static FILE usart_out = { 0 };
-
 #include <bermuda.h>
 #include <stdio.h>
 
 #include <arch/usart.h>
 #include <arch/avr/serialio.h>
+#include <arch/avr/328/dev/usartreg.h>
+
+// private functions
+PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
+PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream);
+
+static FILE usart_in = { 0 };
+static FILE usart_out = { 0 };
 
 /**
  * \brief Setup the USART file streams used by functions such as printf.
@@ -65,6 +65,6 @@ PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
 {
 	unsigned char c = 0;
-	BermudaUsartTransfer(USART0, NULL, 0, &c, 1, 9600, 500);
+	BermudaUsartListen(USART0, &c, 1, 9600, 500);
 	return c;
 }

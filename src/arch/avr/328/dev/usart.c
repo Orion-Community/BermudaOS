@@ -244,6 +244,6 @@ SIGNAL(USART_TX_STC_vect)
 
 SIGNAL(USART_RX_STC_vect)
 {
-// 	USART0->usartif->isr(USART0, USART_RX);
+	USART0->usartif->isr(USART0, USART_RX);
 }
 #endif

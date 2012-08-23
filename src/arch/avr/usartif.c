@@ -97,8 +97,6 @@ unsigned int baud;
 unsigned int tmo;
 {
 	int rc = -1;
-	USART_IOCTL_MODE mode;
-	void *buffer = NULL;
 
 	if(txlen == 0 && rxlen == 0) {
 		return rc;
@@ -109,29 +107,20 @@ unsigned int tmo;
 	}
 #endif
 
+	bus->usartif->io(bus, USART_START, NULL);
 	if(rxlen) {
 		bus->rx = rx;
 		bus->rx_len = rxlen;
 		bus->rx_index = 0;
-		mode = USART_RX_DATA;
-		buffer = (void*)rx;
 	}
 	
 	if(txlen) {
 		bus->tx = tx;
 		bus->tx_len = txlen;
 		bus->tx_index = 1;
-		mode = USART_TX_DATA;
-		buffer = (void*)tx;
+		bus->usartif->io(bus, USART_TX_DATA, (void*)bus->tx);
 	}
 	
-	bus->usartif->io(bus, USART_START, NULL);
-	/*
-	 * The sent below does trigger the transfer complete interrupt, but no data
-	 * appears on the bus.
-	 */
-	
-	bus->usartif->io(bus, mode, buffer);
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
 #endif

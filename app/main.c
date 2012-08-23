@@ -41,6 +41,7 @@ THREAD(SramThread, arg)
 {
 	unsigned char rx = 0, tx = 0xDB;
 	unsigned int num = 0;
+	char *buff[4];
 	
 	while(1) {
 		int rc = BermudaTwiSlaveListen(TWI0, &num, &rx, 1, 1000);
@@ -48,6 +49,9 @@ THREAD(SramThread, arg)
 			BermudaTwiSlaveRespond(TWI0, &tx, 1, 500);
 		}
 		BermudaPrintf("NUM: 0x%X :: RX: 0x%X :: rc: %i\n", num, rx, rc);
+		BermudaUsartListen(USART0, buff, 3, 9600, 500);
+		buff[3] = '\0';
+		BermudaPrintf("%s\n", buff);
 	}
 }
 
@@ -87,6 +91,7 @@ void loop()
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
+	char *buff[10];
 
 	tmp = adc->read(A0);
 	temperature = tmp / 1024 * 5000;
@@ -98,7 +103,7 @@ void loop()
 
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
-	BermudaUsartTransfer(USART0, "USART output\r\n", 14, NULL, 0, 9600, 500);
+	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
 	BermudaThreadSleep(5000);
 	return;
 }

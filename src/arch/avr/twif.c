@@ -111,6 +111,16 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, mode, NULL);
 			bus->busy = false;
 			bus->master_rx_len = 0;
+			
+			/*
+			 * Start wait for slave requests if possible
+			 */
+			if(bus->slave_rx_len) {
+				bus->twif->io(bus, TW_SLAVE_LISTEN, NULL);
+			}
+			else {
+				bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
+			}
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
 #elif __THREADS__
@@ -151,6 +161,13 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 			bus->twif->io(bus, TW_SENT_STOP, NULL);
 			bus->busy = false;
 			bus->master_rx_len = 0;
+			
+			if(bus->slave_rx_len) {
+				bus->twif->io(bus, TW_SLAVE_LISTEN, NULL);
+			}
+			else {
+				bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
+			}
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
 #elif __THREADS__
@@ -263,7 +280,7 @@ PUBLIC __link void BermudaTwISR(TWIBUS *bus)
 		 */
 		case TWI_ST_DATA_NACK:
 		case TWI_ST_LAST_DATA_ACK:
-			bus->twif->io(bus, TW_RELEASE_BUS, NULL);
+			bus->twif->io(bus, TW_ENABLE_INTERFACE, NULL);
 			bus->error = bus->status;
 			bus->busy = false;
 			bus->slave_tx_len = 0;
@@ -456,7 +473,7 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
 	if(bus->error == TWI_SR_STOP) {
 		*num = bus->slave_index;
 	}
-
+	bus->slave_rx_len = 0;
 	return rc;
 }
 

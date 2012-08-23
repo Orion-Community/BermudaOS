@@ -233,7 +233,7 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 			
 		case TW_SLAVE_LISTEN:
-			*(hw->twcr) = TW_LISTEN;
+			*(hw->twcr) |= TW_LISTEN;
 			
 		default:
 			rc = -1;

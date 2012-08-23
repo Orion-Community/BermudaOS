@@ -90,7 +90,7 @@
  * * TWIE \n
  * * TWEA \n
  */
-#define TW_ENABLE (BIT(TWIE) | BIT(TWEN) | BIT(TWEA))
+#define TW_ENABLE (BIT(TWIE) | BIT(TWEN) | BIT(TWINT))
 
 /**
  * \def TW_DISABLE
@@ -99,7 +99,7 @@
  * 
  * Results in 0xFA or (11111010B).
  */
-#define TW_DISABLE_MASK (~((~BIT(TWIE)) ^ (~BIT(TWEN))))
+#define TW_DISABLE_MASK ((~BIT(TWIE)) ^ (~BIT(TWEN)) ^ (~BIT(TWEA)))
 
 /**
  * \def TW_ACK
@@ -123,7 +123,7 @@
  * * TWSTO \n
  * * TWEA \n
  */
-#define TW_STOP (TW_ACK | BIT(TWSTO))
+#define TW_STOP (TW_ENABLE | BIT(TWSTO))
 
 /**
  * \def TW_START

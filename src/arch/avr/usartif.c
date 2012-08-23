@@ -61,7 +61,7 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 			else {
 				bus->rx_len = 0;
 #ifdef __EVENTS__
-				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
+				BermudaEventSignalFromISR((volatile THREAD**)bus->rx_queue);
 #endif
 			}
 			break;
@@ -82,25 +82,22 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
  * \param tmo Time-out. Maximum time to wait for the transfer to complete.
  * \return An error code will be return. 0 for success -1 on failure (eg wrong
  *         parameters or transmission timed out.
+ * \todo Implement the receive interface.
  * 
  * The transfer will be started. Based on the parameters it will start a transmit
  * or receive operation. If both should be done it will do a transmit first.
  */
-PUBLIC int BermudaUsartTransfer(bus, tx, txlen, rx, rxlen, baud, tmo)
+PUBLIC int BermudaUsartTransfer(bus, tx, txlen, baud, tmo)
 USARTBUS *bus;
 const void *tx;
 unsigned int txlen;
-void *rx;
-unsigned int rxlen;
 unsigned int baud;
 unsigned int tmo;
 {
 	int rc = -1;
-	USART_IOCTL_MODE mode;
-	void *buffer = NULL;
 
-	if(txlen == 0 && rxlen == 0) {
-		return rc;
+	if(txlen == 0) {
+		return -1;
 	}
 #ifdef __EVENTS__
 	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
@@ -108,29 +105,12 @@ unsigned int tmo;
 	}
 #endif
 
-	if(rxlen) {
-		bus->rx = rx;
-		bus->rx_len = rxlen;
-		bus->rx_index = 0;
-		mode = USART_RX_DATA;
-		buffer = (void*)rx;
-	}
-	
-	if(txlen) {
-		bus->tx = tx;
-		bus->tx_len = txlen;
-		bus->tx_index = 1;
-		mode = USART_TX_DATA;
-		buffer = (void*)tx;
-	}
-	
 	bus->usartif->io(bus, USART_START, NULL);
-	/*
-	 * The sent below does trigger the transfer complete interrupt, but no data
-	 * appears on the bus.
-	 */
+	bus->tx = tx;
+	bus->tx_len = txlen;
+	bus->tx_index = 1;
+	bus->usartif->io(bus, USART_TX_DATA, (void*)bus->tx);
 	
-	bus->usartif->io(bus, mode, buffer);
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
 #endif
@@ -138,6 +118,30 @@ unsigned int tmo;
 #ifdef __EVENTS__
 	BermudaEventSignal((volatile THREAD**)bus->mutex);
 
+#endif
+	return rc;
+}
+
+PUBLIC int BermudaUsartListen(bus, rx, rxlen, baud, tmo)
+USARTBUS *bus;
+void *rx;
+unsigned int rxlen;
+unsigned int baud;
+unsigned int tmo;
+{
+	int rc = -1;
+	
+	if(!rxlen) {
+		return rc;
+	}
+	
+	bus->rx = rx;
+	bus->rx_len = rxlen;
+	bus->rx_index = 0;
+	bus->usartif->io(bus, USART_START, NULL);
+	
+#ifdef __EVENTS__
+	rc = BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, tmo);
 #endif
 	return rc;
 }

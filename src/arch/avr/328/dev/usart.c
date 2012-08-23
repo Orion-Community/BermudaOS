@@ -227,7 +227,7 @@ PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
 {
 	unsigned char c = 0;
-	BermudaUsartTransfer(USART0, NULL, 0, &c, 1, 9600, 500);
+	BermudaUsartListen(USART0, &c, 1, 9600, 500);
 	return c;
 }
 
@@ -239,6 +239,6 @@ SIGNAL(USART_TX_STC_vect)
 
 SIGNAL(USART_RX_STC_vect)
 {
-// 	USART0->usartif->isr(USART0, USART_RX);
+	USART0->usartif->isr(USART0, USART_RX);
 }
 #endif

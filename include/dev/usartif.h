@@ -119,7 +119,9 @@ struct _usartbus
 
 extern void BermudaUsartISR(USARTBUS *bus, unsigned char transtype);
 extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, 
-								void *rx, unsigned int rxlen, unsigned int baud, 
-								unsigned int tmo);
+								unsigned int baud, unsigned int tmo);
+extern int BermudaUsartListen(USARTBUS *bus, void *rx, unsigned int rxlen,
+							  unsigned int baud, unsigned int tmo);
+
 
 #endif /* __USART_INTERFACE_H_ */

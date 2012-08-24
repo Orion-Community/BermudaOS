@@ -90,6 +90,14 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 #endif
 				bus->busy = false;
 				bus->master_tx_len = 0;
+				
+				/*
+				 * Enable listening for slave requests if there is a slave
+				 * operation waiting.
+				 */
+				if(bus->slave_rx_len) {
+					bus->twif->io(bus, TW_SLAVE_LISTEN, NULL);
+				}
 			}
 			break;
 		
@@ -99,6 +107,8 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 		 */
 		case TWI_MT_SLA_NACK: // slave NACKed SLA+W
 		case TWI_MT_DATA_NACK: // slave NACKed data byte
+			bus->master_tx_len = 0;
+			/* roll through */
 		case TWI_MR_SLA_NACK: // SLA+R sent but NACKed
 		case TWI_MASTER_ARB_LOST: // lost bus control
 			if(bus->status == TWI_MASTER_ARB_LOST) {
@@ -132,8 +142,10 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 		 * Received data as a master and returned an ACK to the sending slave.
 		 */
 		case TWI_MR_DATA_ACK:
-			bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->master_rx[bus->master_index]));
-			bus->master_index++;
+			if(bus->master_index < bus->master_rx_len) {
+				bus->twif->io(bus, TW_READ_DATA, (void*)&(bus->master_rx[bus->master_index]));
+				bus->master_index++;
+			}
 			// fall through to sent data
 		case TWI_MR_SLA_ACK: // slave ACKed SLA+R
 			if(bus->master_index + 1 < bus->master_rx_len) {
@@ -225,7 +237,19 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 		 */
 		case TWI_SR_SLAW_DATA_NACK:
 		case TWI_SR_GC_DATA_NACK:
-			bus->twif->io(bus, TW_REPLY_NACK, NULL); // NACK and wait for stop
+			if(bus->master_index) {
+				/*
+				 * If there is a master operation waiting, start it as soon as
+				 * the bus becomes available.
+				 */
+				bus->twif->io(bus, TW_SENT_START, NULL);
+			}
+			else {
+				/* 
+				 * Continue to deny data from the master.
+				 */
+				bus->twif->io(bus, TW_REPLY_NACK, NULL); // NACK and wait for stop
+			}
 			break;
 
 		/*
@@ -276,7 +300,11 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 			}
 			
 		/*
-		 * Last data byte has been received and (N)ACKed.
+		 * TWI_ST_DATA_NACK: Transmitted a data byte to the master and received a
+		 *                   NACK back from the master.
+		 * TWI_ST_LAST_DATA_ACK: The last data byte has been received.
+		 * 
+		 * Seize the transmission.
 		 */
 		case TWI_ST_DATA_NACK:
 		case TWI_ST_LAST_DATA_ACK:
@@ -289,6 +317,9 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 #elif __THREADS__
 			BermudaMutexRelease(&(bus->slave_queue));
 #endif
+			if(bus->master_tx_len || bus->master_rx_len) {
+				bus->twif->io(bus, TW_SENT_START, NULL);
+			}
 			break;
 			
 		case TWI_BUS_ERROR:

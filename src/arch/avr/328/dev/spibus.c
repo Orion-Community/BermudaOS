@@ -269,8 +269,19 @@ PRIVATE WEAK void BermudaSpiIoCtl(SPIBUS *bus, SPI_IOCTL_MODE mode, void *data)
 	
 	switch(mode)
 	{
+		case SPI_ENABLE_MASTER:
+			(*(hw->spcr)) |= SPI_MASTER_ENABLE;
+			bus->bus_type = BERMUDA_SPI_MASTER;
+			break;
+			
+		case SPI_ENABLE_SLAVE:
+			(*(hw->spcr)) &= ~SPI_MASTER_ENABLE;
+			bus->bus_type = BERMUDA_SPI_SLAVE;
+			break;
+			
 		case SPI_WRITE_DATA:
 			(*(hw->spdr)) = *((unsigned char*)data);
+			break;
 		case SPI_READ_DATA:
 			*((unsigned char*)data) = (*(hw->spdr));
 			break;
@@ -310,7 +321,6 @@ PRIVATE WEAK void BermudaSpiSetMode( SPIBUS *bus, unsigned char mode )
 #ifdef __EVENTS__
 SIGNAL(SPI_STC_vect)
 {
-// 	BermudaEventSignalFromISR((volatile THREAD**)(&BermudaSpi0HardwareBus)->master_queue);
 	SPI0->ctrl->isr(SPI0);
 }
 #endif /* __EVENTS__ */

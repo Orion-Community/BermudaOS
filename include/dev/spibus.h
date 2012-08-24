@@ -133,6 +133,18 @@ typedef struct _spictrl SPICTRL;
  */
 #define BERMUDA_SPI_RATE2X BIT(13)
 
+/**
+ * \def BERMUDA_SPI_MASTER
+ * \brief Definition of the SPI master type.
+ */
+#define BERMUDA_SPI_MASTER 0xF
+
+/**
+ * \def BERMUDA_SPI_SLAVE
+ * \brief Definition of the SPI slave type.
+ */
+#define BERMUDA_SPI_SLAVE  0xF0
+
 // priv defs
 #define BERMUDA_SPI_X2_SHIFT 11
 
@@ -141,6 +153,9 @@ typedef enum
 	SPI_START,
 	SPI_STOP,
 	SPI_IDLE,
+	
+	SPI_ENABLE_MASTER,
+	SPI_ENABLE_SLAVE,
 	
 	SPI_READ_DATA,
 	SPI_WRITE_DATA,
@@ -164,6 +179,7 @@ struct _spibus
 	uint16_t mode; //!< SPI mode select.
 	uint32_t rate; //!< SPI rate select.
 	unsigned char cs; //!< Chip select pin.
+	unsigned char bus_type; //!< Master/slave selector.
 	
 	const unsigned char *master_tx;
 	const unsigned char *master_rx;
@@ -259,36 +275,6 @@ extern void BermudaSpiISR(SPIBUS *bus);
 static inline int BermudaSpiSetSelectPinSafe(SPIBUS *spidev, uint8_t cs)
 {
 	BermudaSpiSetSelectPin(spidev, cs);
-	return 0;
-}
-
-
-/**
- * \brief Set a SPI mode.
- * \param dev Device to set the mode for.
- * \param mode Mode to set.
- * \return -1 if the device is locked 0 otherwise.
- * 
- * Sets the given SPI mode, but only if the device is not locked.
- */
-static inline int BermudaSpiSetModeSafe(SPIBUS *dev, uint16_t mode)
-{
-	BermudaSpiDevSetRate(dev, mode);
-	return 0;
-}
-
-/**
- * \brief Set a SPI rate.
- * \param dev Device to set the rate for.
- * \param rate Rate to set.
- * \return -1 if the device is locked.
- * 
- * Sets the given SPI rate, but only if the device is not locked. If the device
- * is locked, this function will return immediatly.
- */
-static inline int BermudaSpiSetRateSafe(SPIBUS *dev, uint32_t rate)
-{
-	BermudaSpiDevSetRate(dev, rate);
 	return 0;
 }
 

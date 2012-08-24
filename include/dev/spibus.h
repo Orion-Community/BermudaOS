@@ -170,6 +170,7 @@ struct _spibus
 #ifdef __EVENTS__
 	void *mutex; //!< SPI bus mutex.
 	void *master_queue; //!< Transfer waiting queue.
+	void *slave_queue; //!< Slave transfer waiting queue.
 #elif __THREADS__
 	mutex_t mutex;
 	mutex_t queue;
@@ -185,6 +186,11 @@ struct _spibus
 	const unsigned char *master_rx;
 	uptr master_len;
 	uptr master_index;
+	
+	const unsigned char *slave_tx;
+	const unsigned char *slave_rx;
+	uptr slave_len;
+	uptr slave_index;
 };
 
 /**

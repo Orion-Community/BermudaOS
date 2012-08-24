@@ -38,8 +38,9 @@
 #include <arch/avr/328/dev/spibus.h>
 
 #ifdef __EVENTS__
-THREAD *BermudaSPI0TransferQueue = SIGNALED;
-THREAD *BermudaSPI0Mutex = SIGNALED;
+static THREAD *BermudaSPI0TransferQueue = SIGNALED;
+static THREAD *BermudaSPI0SlaveTransferQueue = SIGNALED;
+static THREAD *BermudaSPI0Mutex = SIGNALED;
 #endif
 
 // private functions
@@ -84,6 +85,7 @@ SPIBUS BermudaSpi0HardwareBus = {
 #ifdef __EVENTS__
 		.mutex = (void*)&BermudaSPI0Mutex,
 		.master_queue = (void*)&BermudaSPI0TransferQueue,
+		.slave_queue = (void*)&BermudaSPI0SlaveTransferQueue,
 #elif __THREADS__
 		.mutex = 0,
 		.queue = 0,
@@ -151,6 +153,7 @@ PRIVATE WEAK void BermudaHardwareSpiSelect(SPIBUS *bus)
 		*(hw->spcr) = (*(hw->spcr) & (~B1100)) | ((bus->mode & B11) << SPI_MODE_SHIFT);
 	}
 
+	bus->ctrl->io(bus, SPI_ENABLE_MASTER, NULL);
 	BermudaSetPinMode(bus->cs, OUTPUT);
 	BermudaDigitalPinWrite(bus->cs, LOW);
 }
@@ -271,11 +274,17 @@ PRIVATE WEAK void BermudaSpiIoCtl(SPIBUS *bus, SPI_IOCTL_MODE mode, void *data)
 	{
 		case SPI_ENABLE_MASTER:
 			(*(hw->spcr)) |= SPI_MASTER_ENABLE;
+			SPI_DDR |= (SPI_SCK | SPI_MOSI | SPI_SS);
+			SPI_PORT &= ~(SPI_SCK | SPI_MOSI);
+			SPI_PORT |= SPI_SS;
 			bus->bus_type = BERMUDA_SPI_MASTER;
 			break;
 			
 		case SPI_ENABLE_SLAVE:
 			(*(hw->spcr)) &= ~SPI_MASTER_ENABLE;
+			SPI_DDR &= ~(SPI_SCK | SPI_MOSI | SPI_SS);
+			SPI_DDR |= SPI_MISO;
+			SPI_PORT &= ~SPI_MISO;
 			bus->bus_type = BERMUDA_SPI_SLAVE;
 			break;
 			

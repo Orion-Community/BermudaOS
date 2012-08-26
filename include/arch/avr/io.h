@@ -136,6 +136,26 @@ extern unsigned char BermudaDigitalPinRead(unsigned char pin);
                                 BermudaPortToOutput+(port)))
 #define BermudaGetInputReg(port) ((volatile unsigned char*)pgm_read_word( \
                                 BermudaPortToInput+(port)))
+                
+/**
+ * \brief Outputs given data to the given I/O register.
+ * \param io I/O register to write data to.
+ * \param data Data to write.
+ */                
+static inline void outb(volatile unsigned char *io, unsigned char data)
+{
+	*io = data;
+}
+
+/**
+ * \brief Read 8 bits of data from the given I/O register.
+ * \param io I/O register to read data from.
+ * \param data Pointer to a location to store the read data in.
+ */
+static inline void inb(volatile unsigned char *io, unsigned char *data)
+{
+	*data = *io;
+}
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>

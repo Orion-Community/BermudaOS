@@ -113,6 +113,22 @@ struct softio
 	unsigned char sda; //!< SDA pin.
 } __attribute__((packed));
 
+typedef struct twimsg
+{
+	/**
+	 * \brief Bus to sent the message to (the 'mail address').
+	 */
+	TWIBUS *address;
+	
+	const void *tx_buff;
+	uptr tx_length;
+	uptr tx_index;
+	
+	void *rx_buff;
+	uptr rx_length;
+	uptr rx_index;
+} TWIMSG;
+
 /**
  * \struct _twif
  * \brief TWI communication interface.

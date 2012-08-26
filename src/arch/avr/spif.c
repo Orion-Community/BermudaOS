@@ -71,13 +71,28 @@ PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
 		
 }
 
-PUBLIC void BermudaSpiSlaveListen(bus, tx, rx, len, tmo)
+PUBLIC int BermudaSpiSlaveListen(bus, tx, rx, len, tmo)
 SPIBUS *bus;
 const void *tx;
 void *rx;
 uptr len;
 unsigned int tmo;
 {
+	int rc = -1;
+	
+	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo) == -1) {
+		return rc;
+	}
+	
+	bus->ctrl->io(bus, SPI_ENABLE_SLAVE, NULL);
+	bus->slave_rx = rx;
+	bus->slave_tx = tx;
+	bus->slave_len = len;
+	
+	rc = BermudaEventWaitNext((volatile THREAD **)bus->mutex, tmo);
+	
+	BermudaEventSignal((volatile THREAD**) bus->mutex, tmo);
+	return rc;
 	
 }
 #endif

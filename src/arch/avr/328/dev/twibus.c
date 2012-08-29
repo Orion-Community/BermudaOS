@@ -194,31 +194,32 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			*(hw->twcr) = twcr & TW_BLOCK_MASK;
 			break;
 			
-		case TW_RELEASE_BUS:
-			*(hw->twcr) = TW_RELEASE;
-			break;
-
 		case TW_ENABLE_INTERFACE:
-			*(hw->twcr) = BIT(TWINT) | TW_ENABLE;
+		case TW_RELEASE_BUS:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE));
 			break;
 
 		case TW_DISABLE_INTERFACE:
-			*(hw->twcr) = twcr & TW_DISABLE_MASK;
+			*(hw->twcr) = twcr & (~BIT(TWINT) & ~BIT(TWEN) & ~BIT(TWEA) & 
+						~BIT(TWIE) & ~BIT(TWSTA));
 			break;
 			
 		/* I/O cases */
 		case TW_SENT_DATA:
 		case TW_SENT_SLA:
 			*(hw->twdr) = *( (unsigned char*)conf );
-			*(hw->twcr) = TW_ACK;
+			*(hw->twcr) = (twcr & ~BIT(TWSTA)) | (BIT(TWEN) | BIT(TWINT) | 
+							BIT(TWIE) | BIT(TWEA));
 			break;
 			
 		case TW_SENT_START:
-			*(hw->twcr) = TW_START; // sent the given start
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | 
+							BIT(TWEA) | BIT(TWSTA)); // sent the given start
 			break;
 
 		case TW_SENT_STOP:
-			*(hw->twcr) = TW_STOP; // enable the TWSTO bit
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) |
+							BIT(TWSTO)); // enable the TWSTO bit
 			break;
 			
 		case TW_READ_DATA:
@@ -226,14 +227,15 @@ PRIVATE WEAK int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			break;
 
 		case TW_REPLY_ACK:
-			*(hw->twcr) = TW_ACK;
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
 			break;
+			
 		case TW_REPLY_NACK:
-			*(hw->twcr) = TW_NACK;
+			*(hw->twcr) = BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
 			break;
 			
 		case TW_SLAVE_LISTEN:
-			*(hw->twcr) |= TW_LISTEN;
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
 			
 		default:
 			rc = -1;

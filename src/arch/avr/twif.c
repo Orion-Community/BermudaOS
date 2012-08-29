@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - TWI interface
+ *  BermudaOS - AVR ATmega TWI module
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file src/arch/avr/twif.c Generic Two Wire Interface.
+/**
+ * \file src/arch/avr/twif.c ATmega Two Wire Interface.
+ * \brief Implementation of the TWI/I2C for the AVR ATmega processor family.
+ */
 
 #if defined(__TWI__) || defined(__DOXYGEN__)
 

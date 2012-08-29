@@ -80,7 +80,7 @@ unsigned int tmo;
 {
 	int rc = -1;
 	
-	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo) == -1) {
+	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
 		return rc;
 	}
 	
@@ -91,7 +91,7 @@ unsigned int tmo;
 	
 	rc = BermudaEventWaitNext((volatile THREAD **)bus->mutex, tmo);
 	
-	BermudaEventSignal((volatile THREAD**) bus->mutex, tmo);
+	BermudaEventSignal((volatile THREAD**) bus->mutex);
 	return rc;
 	
 }

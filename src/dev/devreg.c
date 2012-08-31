@@ -50,7 +50,6 @@ PUBLIC int BermudaDeviceRegister(DEVICE *dev, void *ioctl)
 		dev->next = BermudaDeviceRoot;
 		BermudaDeviceRoot = dev;
 		dev->ioctl = ioctl;
-		dev->init(dev);
 		dev->alloc = &BermudaDeviceAlloc;
 		dev->release = &BermudaDeviceRelease;
 		rc = 0;

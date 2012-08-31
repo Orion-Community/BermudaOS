@@ -81,6 +81,12 @@
 #define dev_close(dev)          dev->io->close(dev->io)
 
 /**
+ * \typedef DEVICE
+ * \brief Device type.
+ */
+typedef struct _device DEVICE;
+
+/**
  * \struct _device
  * \brief Device information structure.
  */
@@ -95,18 +101,10 @@ struct _device
 	char *name;
 	VFILE *io; //!< Virtual file I/O member.
 	void *data; //!< Device specific data.
+	
+	void (*ctrl)(DEVICE *dev, int reg, void *data);
 	void *ioctl; //!< Device I/O control block.
 	void *mutex; //!< Device mutex.
-        
-	/**
-	 * \brief Init this device.
-	 * \param dev 'This' device. A pointer to itself.
-	 *  \note Called by BermudaDeviceRegister
-	 * \see BermudaDeviceRegister
-	 * 
-	 * Initialise the device driver and device structure.
-	 */
-	int (*init)(struct _device *dev);
 
 	/**
 	 * \brief Allocate the device.
@@ -123,12 +121,6 @@ struct _device
 	 */
 	int (*release)(struct _device *dev);
 };
-
-/**
- * \typedef DEVICE
- * \brief Device type.
- */
-typedef struct _device DEVICE;
 
 #ifdef __cplusplus
 extern "C" {

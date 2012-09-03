@@ -123,7 +123,13 @@ typedef struct twimsg
 	unsigned char *rx_buff;
 	uptr rx_length;
 	uptr rx_index;
+	
+	uint32_t scl_freq;
+	unsigned int tmo;
+	unsigned char sla;
 } TWIMSG;
+
+typedef void (*twi_call_back)(TWIMSG *msg);
 
 /**
  * \struct _twif
@@ -230,8 +236,10 @@ extern "C"
 {
 #endif
 
-extern void BermudaTwiISR(TWIBUS *bus);
 extern int BermudaTwHwIfacBusy(TWIBUS *bus);
+extern int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
+
+extern void BermudaTwiISR(TWIBUS *bus);
 extern int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
 	unsigned int tmo);
 extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,

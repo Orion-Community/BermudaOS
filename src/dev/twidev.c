@@ -33,8 +33,10 @@ PUBLIC DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name)
 	DEVICE *dev = BermudaHeapAlloc(sizeof(DEVICE));
 	VFILE *file = BermudaHeapAlloc(sizeof(VFILE));
 	dev->name = name;
-	BermudaDeviceRegister(dev, bus);
+	BermudaDeviceRegister(dev, bus->io.hwio);
+	
 	dev->io = file;
+	dev->data = bus;
 	
 	file->write = &BermudaTwiDevWrite;
 	file->read = &BermudaTwiDevRead;
@@ -45,11 +47,28 @@ PUBLIC DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name)
 	return dev;
 }
 
+/**
+ * \brief Do a master transaction which writes (<b>or reads!</b>) to/from
+ *        a given TWI device.
+ * \param file I/O file.
+ * \param tx Pointer to a TWIMSG.
+ * \param size Size of tx. Should always equal <i>sizeof(TWIMSG)</i>.
+ */
 PUBLIC int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size)
 {
-	return -1;
+	TWIMSG *msg = (TWIMSG*)tx;
+	TWIBUS *bus = ((DEVICE*)(file->data))->data;
+	return bus->twif->transfer(bus, msg->tx_buff, msg->tx_length, msg->rx_buff, msg->rx_length,
+							msg->sla, msg->scl_freq, msg->tmo);
 }
 
+/**
+ * \brief Listen as a slave and respond if there is a slave request for our
+ *        device.
+ * \param file I/O file.
+ * \param rx Pointer to a TWIMSG.
+ * \param seze Size of rx Should always equal <i>sizeof(TWIMSG)</i>.
+ */
 PUBLIC int BermudaTwiDevRead(VFILE *file, void *rx, size_t size)
 {
 	return -1;

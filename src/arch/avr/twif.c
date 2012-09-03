@@ -591,6 +591,104 @@ PUBLIC int BermudaTwHwIfacBusy(TWIBUS *bus)
 }
 
 /**
+ * \brief Do TWI I/O control.
+ * \param bus The TWI bus.
+ * \param mode I/O control mode.
+ * \param conf I/O configuration.
+ * \return 0 on success, -1 when an invalid value in <b>mode</b> is given.
+ * \see TW_IOCTL_MODE
+ */
+PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
+{
+	HWTWI *hw = BermudaTwiIoData(bus);
+	unsigned char sla;
+	int rc = 0;
+	BermudaEnterCritical();
+	register unsigned char twcr = *(hw->twcr);
+	BermudaExitCritical();
+	
+	switch(mode) {
+		/* config cases */
+		case TW_SET_RATE:
+			*(hw->twbr) = *((unsigned char*)conf);
+			break;
+			
+		case TW_SET_PRES:
+			*(hw->twsr) = (*(hw->twsr) & (~B11)) | *((unsigned char*)conf);
+			break;
+			
+		case TW_SET_SLA:
+			sla = (*((unsigned char*)conf)) & ~(BIT(0)); // mask out the GCRE bit
+			*(hw->twar) = sla;
+			break;
+
+		case TW_SET_GCR:
+			sla = (*(hw->twar)) | BIT(0);
+			*(hw->twar) = sla;
+			break;
+
+		/* bus control */
+		case TW_GET_STATUS:
+			bus->status = (*hw->twsr) & (~B111);
+			*((unsigned char*)conf) = bus->status;
+			break;
+			
+		case TW_BLOCK_INTERFACE:
+			*(hw->twcr) = twcr & (~BIT(TWINT) | BIT(TWIE));
+			break;
+			
+		case TW_ENABLE_INTERFACE:
+		case TW_RELEASE_BUS:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE));
+			break;
+
+		case TW_DISABLE_INTERFACE:
+			*(hw->twcr) = twcr & (~BIT(TWINT) & ~BIT(TWEN) & ~BIT(TWEA) & 
+						~BIT(TWIE) & ~BIT(TWSTA));
+			break;
+			
+		/* I/O cases */
+		case TW_SENT_DATA:
+		case TW_SENT_SLA:
+			*(hw->twdr) = *( (unsigned char*)conf );
+			*(hw->twcr) = (twcr & ~BIT(TWSTA)) | (BIT(TWEN) | BIT(TWINT) | 
+							BIT(TWIE) | BIT(TWEA));
+			break;
+			
+		case TW_SENT_START:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | 
+							BIT(TWEA) | BIT(TWSTA)); // sent the given start
+			break;
+
+		case TW_SENT_STOP:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) |
+							BIT(TWSTO)); // enable the TWSTO bit
+			break;
+			
+		case TW_READ_DATA:
+			*((unsigned char*)conf) = *(hw->twdr);
+			break;
+
+		case TW_REPLY_ACK:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
+			break;
+			
+		case TW_REPLY_NACK:
+			*(hw->twcr) = BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
+			break;
+			
+		case TW_SLAVE_LISTEN:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
+			
+		default:
+			rc = -1;
+			break;
+	}
+
+	return rc;
+}
+
+/**
  * \brief Destroys the TW bus structures.
  * \param bus Bus to destroy.
  * \param type Defines the type of the bus (hardware/software).

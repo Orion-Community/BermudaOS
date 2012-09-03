@@ -129,7 +129,7 @@ typedef struct twimsg
 	unsigned char sla;
 } TWIMSG;
 
-typedef void (*twi_call_back)(TWIMSG *msg);
+typedef void (*twi_call_back_t)(TWIMSG *msg);
 
 /**
  * \struct _twif

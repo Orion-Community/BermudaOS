@@ -28,6 +28,12 @@
 int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size);
 int BermudaTwiDevRead(VFILE *file, void *rx, size_t size);
 
+/**
+ * \brief Initialize the TWI device.
+ * \param bus Backend TWI structure.
+ * \param name Name of the device.
+ * \note The name of the device should be unique.
+ */
 PUBLIC DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name)
 {
 	DEVICE *dev = BermudaHeapAlloc(sizeof(DEVICE));
@@ -45,6 +51,48 @@ PUBLIC DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name)
 	file->data = dev;
 	
 	return dev;
+}
+
+/**
+ * \brief Compose a TWI message based on the given parameters.
+ * \param tx Transmit buffer.
+ * \param txlen Transmit buffer length.
+ * \param rx Receive buffer.
+ * \param rxlen Receive buffer length.
+ * \param sla Slave address to address.
+ * \param scl SCL frequency.
+ * \param tmo Maximum waiting time-out.
+ * \param call_back Used in slave transmissions. This function will be called when
+ *                  a slave receive is done.
+ */
+PUBLIC TWIMSG *BermudaTwiMsgCompose(tx, txlen, rx, rxlen, sla, scl, tmo, call_back)
+const void *tx;
+uptr txlen;
+void *rx;
+uptr rxlen;
+unsigned char sla;
+uint32_t scl;
+unsigned int tmo;
+twi_call_back_t call_back;
+{
+	TWIMSG *msg = BermudaHeapAlloc(sizeof(*msg));
+	msg->tx_buff = tx;
+	msg->tx_length = txlen;
+	msg->rx_buff = rx;
+	msg->rx_length = rxlen;
+	msg->sla = sla;
+	msg->scl_freq = scl;
+	msg->tmo = tmo;
+	msg->call_back = call_back;
+	
+	return msg;
+}
+
+PUBLIC void BermudaTwiMsgDestroy(TWIMSG *msg)
+{
+	if(msg) {
+		BermudaHeapFree(msg);
+	}
 }
 
 /**

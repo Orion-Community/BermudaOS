@@ -289,12 +289,9 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
 		return 0xFF;
 	}
 	
-	twbr = F_CPU / freq;
-	twbr /= prescaler;
-	twbr -= 16;
-	twbr /= 2;
+	twbr = (F_CPU - (16*freq)) / (2*prescaler*freq);
 	
-	return twbr;
+	return twbr & 0xFF;
 }
 
 /**
@@ -308,23 +305,23 @@ PUBLIC unsigned char BermudaTwiCalcTWBR(uint32_t freq, unsigned char pres)
  *
  * Calculates the prescaler value based on the given frequency.
  */
-unsigned char BermudaTwiCalcPres(uint32_t frq)
+PUBLIC unsigned char BermudaTwiCalcPres(uint32_t frq)
 {
 	unsigned char ret = 0;
 	
-	if(frq > TWI_FRQ(255,64) && frq < TWI_FRQ(255,16)) {
-		ret = B11;
-	}
-	else if(frq > TWI_FRQ(255,16) && frq < TWI_FRQ(255,4)) {
-		ret = B10;
-	}
-	else if(frq > TWI_FRQ(255,4) && frq < TWI_FRQ(255,1)) {
-		ret = B1;
-	}
-	else if(frq > TWI_FRQ(255,1)) {
+	if(frq > TWI_FRQ(255,1)) {
 		ret = B0;
 	}
-	
+	else if(frq > TWI_FRQ(255,4) && frq < TWI_FRQ(1,4)) {
+		ret = B11;
+	}
+	else if(frq > TWI_FRQ(255,16) && frq < TWI_FRQ(1,16)) {
+		ret = B10;
+	}
+	else if(frq > TWI_FRQ(255,64) && frq < TWI_FRQ(1,64)) {
+		ret = B1;
+	}
+
 	return ret;
 }
 

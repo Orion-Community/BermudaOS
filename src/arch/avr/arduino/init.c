@@ -21,6 +21,7 @@
 #include <lib/spiram.h>
 #include <lib/binary.h>
 #include <dev/dev.h>
+#include <dev/twidev.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
@@ -72,6 +73,7 @@ PUBLIC int BermudaInit(void)
 #endif
 
 	BermudaTwi0Init(0x56);
+	BermudaTwiDevInit(TWI0, "TWI0");
 
 	STACK_L = (MEM-128) & 0xFF;
 	STACK_H = ((MEM-128) >> 8) & 0xFF;

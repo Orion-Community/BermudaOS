@@ -20,7 +20,12 @@
 
 #include <bermuda.h>
 
+#include <fs/vfile.h>
+
+#include <dev/dev.h>
 #include <dev/twif.h>
+#include <dev/twidev.h>
+
 #include <lib/24c02.h>
 #include <arch/twi.h>
 
@@ -41,9 +46,18 @@ PUBLIC void Bermuda24c02Init(TWIBUS *bus)
 
 PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 {
+	int rc = -1;
 	unsigned char tx[] = { addr, data };
-	return eeprom_bus->twif->transfer(eeprom_bus, tx, 2, NULL, 0, 
-		                              BASE_SLA_24C02, SCL_FRQ_24C02, 500);
+	DEVICE *dev = dev_open("TWI0");
+	TWIMSG *msg;
+	
+	if(dev) {
+		msg = BermudaTwiMsgCompose((const void*)tx, 2, NULL, 0, BASE_SLA_24C02,
+									  SCL_FRQ_24C02, 500, NULL);
+		rc = dev->io->write(dev->io, msg, sizeof(*msg));
+		BermudaTwiMsgDestroy(msg);
+	}
+	return rc;
 }
 
 PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)

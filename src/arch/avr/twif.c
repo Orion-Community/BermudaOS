@@ -542,7 +542,7 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
 			bus->error = E_TIMEOUT;
 		}
 	}
-	else if(bus->master_tx_len || bus->master_rx_len) {
+	else if((bus->master_tx_len || bus->master_rx_len) && bus->busy == false) {
 		bus->twif->io(bus, TW_SENT_START, NULL);
 	}
 	else {

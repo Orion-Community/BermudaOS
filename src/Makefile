@@ -59,5 +59,3 @@ clean:
 	$(MAKE) -C sys/ clean BUILDSYS=$(BUILDSYS)
 	$(MAKE) -C dev/ clean BUILDSYS=$(BUILDSYS)
 
-doc:
-	-doxygen ../Doxyfile

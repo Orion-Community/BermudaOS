@@ -20,7 +20,7 @@ BUILDSYS = linux
 include make/Makefile.$(BUILDSYS)
 include make/Makefile.defs
 
-.PHONY: all clean rebuild
+.PHONY: all clean rebuild doc
 
 all:
 	$(MAKE) -C src/
@@ -31,3 +31,6 @@ clean:
 
 rebuild:
 	$(MAKE) -C src/ clean all
+
+doc:
+	$(DOXY) Doxyfile

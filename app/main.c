@@ -27,6 +27,7 @@
 
 #include <dev/dev.h>
 #include <dev/twif.h>
+#include <dev/twidev.h>
 #include <dev/spibus.h>
 #include <dev/usartif.h>
 
@@ -36,19 +37,31 @@
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
+static unsigned char twi_slave_tx = 0x0;
+
+TWI_HANDLE(SlaveResponder, msg)
+{
+
+	msg->tx_buff = (const void*)&twi_slave_tx;
+	msg->tx_length = 1;
+	msg->tmo = 500;
+	twi_slave_tx++;
+}
 
 THREAD(SramThread, arg)
 {
-	unsigned char rx = 0, tx = 0xDB;
+	unsigned char rx = 0;
 	unsigned int num = 0;
 	char *buff[4];
+	DEVICE *twi = dev_open("TWI0");
+	TWIMSG *msg;
 	
 	while(1) {
-		int rc = BermudaTwiSlaveListen(TWI0, &num, &rx, 1, 1000);
-		if(rc == 0) {
-			BermudaTwiSlaveRespond(TWI0, &tx, 1, 500);
-		}
-		BermudaPrintf("NUM: 0x%X :: RX: 0x%X :: rc: %i\n", num, rx, rc);
+		msg = BermudaTwiMsgCompose(NULL, 0, &rx, 1, 0, 0, 1000, &SlaveResponder);
+		num = (uptr)dev_read(twi, msg, sizeof(*msg));
+		BermudaTwiMsgDestroy(msg);
+		BermudaPrintf("NUM: 0x%X :: RX: 0x%X\n", num, rx);
+		
 		BermudaUsartListen(USART0, buff, 3, 9600, 500);
 		buff[3] = '\0';
 		BermudaPrintf("%s\n", buff);

@@ -125,10 +125,10 @@ PUBLIC int BermudaTwiDevRead(VFILE *file, void *rx, size_t size)
 	
 	if((rc = bus->twif->listen(bus, &num, msg->rx_buff, msg->rx_length, 
 							   msg->tmo)) == 0) {
-		if(bus->call_back) {
-			bus->call_back(msg);
+		if(msg->call_back) {
+			msg->call_back(msg);
 		}
 		bus->twif->respond(bus, msg->tx_buff, msg->tx_length, msg->tmo);
 	}
-	return num;
+	return (int)num;
 }

@@ -175,6 +175,11 @@ struct _twif
 	 * HIGH).
 	 */
 	int (*ifbusy)(TWIBUS *bus);
+	
+	int (*listen)(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
+				  unsigned int tmo);
+	int (*respond)(TWIBUS *bus, const void *tx, uptr txlen,
+				   unsigned int tmo);
 
 	/**
 	 * \brief ISR handler.

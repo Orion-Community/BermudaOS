@@ -45,7 +45,7 @@
  * 
  * This define will write to the I/O file associated with the given device.
  */
-#define dev_write(dev, tx, len) dev->io->write(dev->io, tx, len)
+#define dev_write(dev, tx, len) ((dev)->io->write(dev->io, tx, len))
 
 /**
  * \def dev_read
@@ -56,7 +56,7 @@
  * 
  * Writes to the I/O file associated with the given device.
  */
-#define dev_read (dev, rx, len) dev->io->read (dev->io, rx, len)
+#define dev_read (dev, rx, len) ((dev)->io->read (dev->io, rx, len))
 
 /**
  * \def dev_flush

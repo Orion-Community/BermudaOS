@@ -137,6 +137,8 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 	bus->twif->io = &BermudaTwIoctl;
 	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
 	bus->twif->isr = &BermudaTwiISR;
+	bus->twif->listen = &BermudaTwiSlaveListen;
+	bus->twif->respond = &BermudaTwiSlaveRespond;
 
 	// Initialize other parts of the bus
 	bus->busy = false;

@@ -28,4 +28,8 @@ extern TWIMSG *BermudaTwiMsgCompose(const void *tx, uptr txlen, void *rx, uptr r
 extern void BermudaTwiMsgDestroy(TWIMSG *msg);
 extern DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name);
 
+#define TWI_HANDLE(fn, arg) \
+static void fn(TWIMSG *arg); \
+static void fn(TWIMSG *arg)
+
 #endif

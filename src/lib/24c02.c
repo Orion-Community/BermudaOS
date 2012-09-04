@@ -64,7 +64,15 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 {
 	unsigned char tx = addr;
 	unsigned char rx = 0;
-	eeprom_bus->twif->transfer(eeprom_bus, &tx, 1, &rx, 1, BASE_SLA_24C02,
-		                       SCL_FRQ_24C02, 500);
+	DEVICE *dev = dev_open("TWI0");
+	TWIMSG *msg;
+	
+	if(dev) {
+		msg = BermudaTwiMsgCompose((const void*)&tx, 1, &rx, 1, BASE_SLA_24C02,
+									  SCL_FRQ_24C02, 500, NULL);
+		dev_write(dev, msg, sizeof(*msg));
+		BermudaTwiMsgDestroy(msg);
+	}
+
 	return rx;
 }

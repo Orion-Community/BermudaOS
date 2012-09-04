@@ -115,9 +115,20 @@ PUBLIC int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size)
  *        device.
  * \param file I/O file.
  * \param rx Pointer to a TWIMSG.
- * \param seze Size of rx Should always equal <i>sizeof(TWIMSG)</i>.
+ * \param size Size of rx. Should always equal <i>sizeof(TWIMSG)</i>.
  */
 PUBLIC int BermudaTwiDevRead(VFILE *file, void *rx, size_t size)
 {
-	return -1;
+	int rc = -1; uptr num = 0;
+	TWIMSG *msg = (TWIMSG*)rx;
+	TWIBUS *bus = ((DEVICE*)(file->data))->data;
+	
+	if((rc = bus->twif->listen(bus, &num, msg->rx_buff, msg->rx_length, 
+							   msg->tmo)) == 0) {
+		if(bus->call_back) {
+			bus->call_back(msg);
+		}
+		bus->twif->respond(bus, msg->tx_buff, msg->tx_length, msg->tmo);
+	}
+	return num;
 }

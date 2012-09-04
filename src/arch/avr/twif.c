@@ -378,24 +378,6 @@ uint32_t      frq;
 unsigned int  tmo;
 {
 	int rc = -1;
-#ifdef __EVENTS__
-	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
-		goto out;
-	}
-	else if(tx == NULL && rx == NULL) {
-		goto out;
-	}
-#else
-#ifdef __THREADS__
-	BermudaMutexEnter(&(bus->mutex));
-#endif
-	if(tx == NULL && rx == NULL) {
-		goto out;
-	}
-#endif
-	else {
-		rc = 0;
-	}
 	
 	BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq);
 	if(tx) {
@@ -412,18 +394,6 @@ unsigned int  tmo;
 	rc = BermudaEventWaitNext( (volatile THREAD**)bus->master_queue, tmo);
 #elif __THREADS__
 	BermudaMutexEnter(&(bus->master_queue));
-#endif
-
-
-out:
-	bus->master_tx_len = 0;
-	bus->master_rx_len = 0;
-#ifdef __EVENTS__
-	if(rc != -1) {
-		BermudaEventSignal((volatile THREAD**)bus->mutex);
-	}
-#elif __THREADS__
-	BermudaMutexRelease(&(bus->mutex));
 #endif
 
 	return rc;

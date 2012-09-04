@@ -67,9 +67,9 @@ PUBLIC DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name)
  */
 PUBLIC TWIMSG *BermudaTwiMsgCompose(tx, txlen, rx, rxlen, sla, scl, tmo, call_back)
 const void *tx;
-uptr txlen;
+size_t txlen;
 void *rx;
-uptr rxlen;
+size_t rxlen;
 unsigned char sla;
 uint32_t scl;
 unsigned int tmo;
@@ -119,7 +119,7 @@ PUBLIC int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size)
  */
 PUBLIC int BermudaTwiDevRead(VFILE *file, void *rx, size_t size)
 {
-	int rc = -1; uptr num = 0;
+	int rc = -1; size_t num = 0;
 	TWIMSG *msg = (TWIMSG*)rx;
 	TWIBUS *bus = ((DEVICE*)(file->data))->data;
 	

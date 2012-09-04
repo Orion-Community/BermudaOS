@@ -117,12 +117,10 @@ typedef struct twimsg
 {
 	void (*call_back)(struct twimsg *msg);
 	const unsigned char *tx_buff;
-	uptr tx_length;
-	uptr tx_index;
+	size_t tx_length;
 	
 	unsigned char *rx_buff;
-	uptr rx_length;
-	uptr rx_index;
+	size_t rx_length;
 	
 	uint32_t scl_freq;
 	unsigned int tmo;
@@ -176,9 +174,9 @@ struct _twif
 	 */
 	int (*ifbusy)(TWIBUS *bus);
 	
-	int (*listen)(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
+	int (*listen)(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 				  unsigned int tmo);
-	int (*respond)(TWIBUS *bus, const void *tx, uptr txlen,
+	int (*respond)(TWIBUS *bus, const void *tx, size_t txlen,
 				   unsigned int tmo);
 
 	/**
@@ -216,16 +214,16 @@ struct _twibus
 	} io;
 
 	const unsigned char *master_tx; //!< TWI transmit buffer.
-	uptr master_tx_len; //!< Length of the tx buffer.
+	size_t master_tx_len; //!< Length of the tx buffer.
 	unsigned char *master_rx; //!< TWI receive buffer.
-	uptr master_rx_len; //!< Length of the rx buffer.
-	uptr master_index; //!< Data buffer index.
+	size_t master_rx_len; //!< Length of the rx buffer.
+	size_t master_index; //!< Data buffer index.
 
 	const unsigned char *slave_tx; //!< TWI transmit buffer.
-	uptr slave_tx_len; //!< Length of the tx buffer.
+	size_t slave_tx_len; //!< Length of the tx buffer.
 	unsigned char *slave_rx; //!< TWI receive buffer.
-	uptr slave_rx_len; //!< Length of the rx buffer.
-	uptr slave_index; //!< Data buffer index.
+	size_t slave_rx_len; //!< Length of the rx buffer.
+	size_t slave_index; //!< Data buffer index.
 
 	TWIMODE mode; //!< TWI communication mode.
 	uint8_t sla; //!< Configured slave address + R/W bit.
@@ -245,12 +243,12 @@ extern int BermudaTwHwIfacBusy(TWIBUS *bus);
 extern int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 
 extern void BermudaTwiISR(TWIBUS *bus);
-extern int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
+extern int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 	unsigned int tmo);
-extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
+extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 	unsigned int tmo);
-extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, unsigned int txlen,  
-	void *rx, unsigned int rxlen, unsigned char sla,
+extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
+	void *rx, size_t rxlen, unsigned char sla,
 	uint32_t frq, unsigned int tmo);
 
 #ifdef __cplusplus

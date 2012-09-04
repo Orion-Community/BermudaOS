@@ -51,17 +51,17 @@ TWI_HANDLE(SlaveResponder, msg)
 THREAD(SramThread, arg)
 {
 	unsigned char rx = 0;
-	unsigned int num = 0;
+	size_t num = 0;
 	char *buff[4];
 	DEVICE *twi = dev_open("TWI0");
 	TWIMSG *msg;
 	
 	while(1) {
 		msg = BermudaTwiMsgCompose(NULL, 0, &rx, 1, 0, 0, 1000, &SlaveResponder);
-		num = (uptr)dev_read(twi, msg, sizeof(*msg));
+		num = (size_t)dev_read(twi, msg, sizeof(*msg));
 		BermudaTwiMsgDestroy(msg);
 		BermudaPrintf("NUM: 0x%X :: RX: 0x%X\n", num, rx);
-		
+
 		BermudaUsartListen(USART0, buff, 3, 9600, 500);
 		buff[3] = '\0';
 		BermudaPrintf("%s\n", buff);

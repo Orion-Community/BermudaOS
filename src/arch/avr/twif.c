@@ -444,9 +444,9 @@ out:
 PRIVATE WEAK void BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq)
 TWIBUS*       bus;
 const void*   tx;
-unsigned int  txlen;
+size_t        txlen;
 void*         rx;
-unsigned int  rxlen;
+size_t        rxlen;
 unsigned char sla;
 uint32_t      frq;
 {
@@ -479,7 +479,7 @@ uint32_t      frq;
  * 
  * Listens for requests by a master to this TWI bus interface.
  */
-PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen, 
+PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 	unsigned int tmo)
 {
 	int rc = -1;
@@ -523,7 +523,7 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, uptr *num, void *rx, uptr rxlen,
  * If tx and txlen are set to 0, no data will be transmitted and the bus
  * will be released.
  */
-PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, uptr txlen,
+PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 	unsigned int tmo)
 {
 	int rc = -1;

@@ -22,7 +22,7 @@
 #include <bermuda.h>
 #include <dev/twif.h>
 
-extern TWIMSG *BermudaTwiMsgCompose(const void *tx, uptr txlen, void *rx, uptr rxlen, 
+extern TWIMSG *BermudaTwiMsgCompose(const void *tx, size_t txlen, void *rx, size_t rxlen, 
 									unsigned char sla, uint32_t scl, unsigned int tmo, 
 									twi_call_back_t call_back);
 extern void BermudaTwiMsgDestroy(TWIMSG *msg);

@@ -152,7 +152,7 @@ void BermudaHeapPrint()
         unsigned short i = 0;
         while(c)
         {
-                printf("Node[%u]: %p with size %x\n", i, c, c->size);
+                BermudaPrintf("Node[%u]: %p with size %x\n", i, c, c->size);
                 i++;
                 c = c->next;
         }

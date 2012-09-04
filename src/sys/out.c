@@ -32,19 +32,22 @@
  */
 PUBLIC int BermudaPrintf(const char *fmt, ...)
 {
+	int i;
 #ifdef __EVENTS__
 	if(BermudaEventWait((volatile THREAD**)USART0->mutex, 500) == -1) {
-		return -1;
+		i = -1;
+		goto out;
 	}
 #endif
 
 	va_list va;
-	int i;
 	
 	va_start(va, fmt);
 	i = vfprintf(stdout, fmt, va);
 	va_end(va);
+
 #ifdef __EVENTS__
+out:
 	BermudaEventSignal((volatile THREAD**)USART0->mutex);
 #endif
 

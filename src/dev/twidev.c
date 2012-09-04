@@ -112,19 +112,18 @@ PUBLIC void BermudaTwiMsgDestroy(TWIMSG *msg)
  */
 PUBLIC int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size)
 {
-        int rc = -1;
+	int rc = -1;
 	TWIMSG *msg = (TWIMSG*)tx;
 	DEVICE *dev = (DEVICE*)(file->data);
 	TWIBUS *bus = (TWIBUS*)(dev->data);
 #ifdef __EVENTS__
 	if(dev->alloc(file->data, msg->tmo) == -1) {
-		goto out;
+		return rc;
 	}
 #endif
 	rc = bus->twif->transfer(bus, msg->tx_buff, msg->tx_length, msg->rx_buff, msg->rx_length,
 							msg->sla, msg->scl_freq, msg->tmo);
 #ifdef __EVENTS__
-out:
 	dev->release(file->data);
 #endif
 	return rc;

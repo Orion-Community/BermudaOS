@@ -88,8 +88,8 @@ void setup()
 {
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
-					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 150, 
+					BermudaHeapAlloc(150), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 
 	Bermuda24c02Init(TWI0);

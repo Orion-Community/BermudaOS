@@ -104,7 +104,7 @@ struct _device
 	
 	void (*ctrl)(DEVICE *dev, int reg, void *data);
 	void *ioctl; //!< Device I/O control block.
-	void *mutex; //!< Device mutex.
+	volatile void *mutex; //!< Device mutex.
 
 	/**
 	 * \brief Allocate the device.

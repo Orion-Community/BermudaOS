@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/dev/twidev.h TWI device header.
+
 #ifndef __TWI_DEV__
 #define __TWI_DEV__
 
@@ -27,7 +29,15 @@ extern TWIMSG *BermudaTwiMsgCompose(const void *tx, size_t txlen, void *rx, size
 									twi_call_back_t call_back);
 extern void BermudaTwiMsgDestroy(TWIMSG *msg);
 extern DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name);
+extern int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size);
+extern int BermudaTwiDevRead(VFILE *file, void *rx, size_t size);
 
+/**
+ * \brief Shortcut to define a correct TWI call back function.
+ * \param fn Function name.
+ * \param arg Function argument name (which is the used TWI message).
+ * \see TWIMSG
+ */
 #define TWI_HANDLE(fn, arg) \
 static void fn(TWIMSG *arg); \
 static void fn(TWIMSG *arg)

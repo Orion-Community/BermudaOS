@@ -16,17 +16,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file src/dev/twidev.c TWI front-end API.
+
 #include <bermuda.h>
 
 #include <arch/types.h>
 
 #include <dev/twif.h>
 #include <dev/dev.h>
+#include <dev/twidev.h>
 
 #include <fs/vfile.h>
-
-int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size);
-int BermudaTwiDevRead(VFILE *file, void *rx, size_t size);
 
 /**
  * \brief Initialize the TWI device.
@@ -64,6 +64,7 @@ PUBLIC DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name)
  * \param tmo Maximum waiting time-out.
  * \param call_back Used in slave transmissions. This function will be called when
  *                  a slave receive is done.
+ * \return The created TWIMSG structure.
  */
 PUBLIC TWIMSG *BermudaTwiMsgCompose(tx, txlen, rx, rxlen, sla, scl, tmo, call_back)
 const void *tx;
@@ -88,6 +89,12 @@ twi_call_back_t call_back;
 	return msg;
 }
 
+/**
+ * \brief Destroy the TWI message.
+ * \param msg Message to destroy.
+ * 
+ * The given message will be free'd but not the buffers in the message.
+ */
 PUBLIC void BermudaTwiMsgDestroy(TWIMSG *msg)
 {
 	if(msg) {

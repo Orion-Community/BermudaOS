@@ -113,20 +113,36 @@ struct softio
 	unsigned char sda; //!< SDA pin.
 } __attribute__((packed));
 
+/**
+ * \brief TWI message structure.
+ * 
+ * Used to pass data to the TWI front-end.
+ */
 typedef struct twimsg
 {
+	/**
+	 * \brief Call back used in slave operation.
+	 * \param msg Message used in the operation.
+	 * 
+	 * This function pointer will be called when a slave receive is done. The
+	 * application can then check the received values and apply the correct
+	 * transmission values.
+	 */
 	void (*call_back)(struct twimsg *msg);
-	const unsigned char *tx_buff;
-	size_t tx_length;
+	const unsigned char *tx_buff; //!< Transmit buffer.
+	size_t tx_length; //!< Transmit buffer length.
 	
-	unsigned char *rx_buff;
-	size_t rx_length;
+	unsigned char *rx_buff; //!< Receive buffer.
+	size_t rx_length; //!< Receive buffer length.
 	
-	uint32_t scl_freq;
-	unsigned int tmo;
-	unsigned char sla;
+	uint32_t scl_freq; //!< TWI operation frequency in master mode.
+	unsigned int tmo; //!< Maximum transfer waiting time-out. Used in master and slave.
+	unsigned char sla; //!< Slave address to address in master mode.
 } TWIMSG;
 
+/**
+ * \brief Type definition of TWI call back functions.
+ */
 typedef void (*twi_call_back_t)(TWIMSG *msg);
 
 /**

@@ -7,7 +7,7 @@ CPPSRCS			=
 LIBDIR			= ../lib
 LIBS			= -lBermuda -ltwidev -ldevreg -lspibus -lEvents -l24c02 \
 			  -lspiram
-BUILDSYS		= windows
+BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs

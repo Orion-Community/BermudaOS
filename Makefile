@@ -23,10 +23,10 @@ include make/Makefile.defs
 .PHONY: all clean rebuild doc
 
 all:
-	$(MAKE) -C src/
+	$(MAKE) -C src/ BUILDSYS=$(BUILDSYS)
 
 clean:
-	$(MAKE) -C src/ clean
+	$(MAKE) -C src/ clean BUILDSYS=$(BUILDSYS)
 	-rm -Rfv lib/*
 
 rebuild:

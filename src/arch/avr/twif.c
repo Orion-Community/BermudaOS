@@ -62,7 +62,7 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 			bus->master_index = 0;
 			bus->busy = true;
 			if(bus->mode == TWI_MASTER_RECEIVER) {
-				sla |= 1; // SLA+R
+				sla |= TWI_READ; // SLA+R
 			}
 
 			bus->twif->io(bus, TW_SENT_SLA, &sla);
@@ -202,6 +202,7 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 		case TWI_SR_GC_ACK:
 		case TWI_SR_GC_ARB_LOST:
 		case TWI_SR_SLAW_ARB_LOST:
+			bus->mode = TWI_SLAVE_RECEIVER;
 			if(bus->slave_rx_len) {
 				mode = TW_REPLY_ACK;
 				bus->slave_index = 0; // reset receive buffer.
@@ -240,11 +241,16 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 		 */
 		case TWI_SR_SLAW_DATA_NACK:
 		case TWI_SR_GC_DATA_NACK:
-			if(bus->master_index) {
+			if(bus->master_tx_len) {
+				bus->mode = TWI_MASTER_TRANSMITTER;
 				/*
 				 * If there is a master operation waiting, start it as soon as
 				 * the bus becomes available.
 				 */
+				bus->twif->io(bus, TW_SENT_START, NULL);
+			}
+			else if(bus->master_rx_len) {
+				bus->mode = TWI_MASTER_RECEIVER;
 				bus->twif->io(bus, TW_SENT_START, NULL);
 			}
 			else {
@@ -278,6 +284,7 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 		case TWI_ST_ARB_LOST:
 		case TWI_ST_SLAR_ACK:
 			bus->slave_index = 0;
+			bus->mode = TWI_SLAVE_TRANSMITTER;
 			bus->busy = true;
 		
 		/*
@@ -320,7 +327,16 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 #elif __THREADS__
 			BermudaMutexRelease(&(bus->slave_queue));
 #endif
-			if(bus->master_tx_len || bus->master_rx_len) {
+			if(bus->master_tx_len) {
+				bus->mode = TWI_MASTER_TRANSMITTER;
+				/*
+				 * If there is a master operation waiting, start it as soon as
+				 * the bus becomes available.
+				 */
+				bus->twif->io(bus, TW_SENT_START, NULL);
+			}
+			else if(bus->master_rx_len) {
+				bus->mode = TWI_MASTER_RECEIVER;
 				bus->twif->io(bus, TW_SENT_START, NULL);
 			}
 			break;
@@ -513,6 +529,12 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 		}
 	}
 	else if((bus->master_tx_len || bus->master_rx_len) && bus->busy == false) {
+		if(bus->master_tx_len) {
+			bus->mode = TWI_MASTER_TRANSMITTER;
+		}
+		else if(bus->master_rx_len) {
+			bus->mode = TWI_MASTER_RECEIVER;
+		}
 		bus->twif->io(bus, TW_SENT_START, NULL);
 	}
 	else {

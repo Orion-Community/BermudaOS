@@ -26,7 +26,8 @@
 #define __ARCH_TWI_H
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-        #include <arch/avr/328/dev/twibus.h>
+	#include <arch/avr/twif.h>
+	#include <arch/avr/328/dev/twibus.h>
 #endif
 
 #endif /* __ARCH_TWI_H */

@@ -30,8 +30,8 @@
 #include <dev/twif.h>
 
 #include <arch/avr/io.h>
+#include <arch/avr/twif.h>
 #include <arch/avr/328/dev/twibus.h>
-
 #include <arch/avr/interrupts.h>
 
 #ifdef __EVENTS__
@@ -136,9 +136,9 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 	bus->twif->transfer = &BermudaTwiMasterTransfer;
 	bus->twif->io = &BermudaTwIoctl;
 	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
-	bus->twif->isr = &BermudaTwiISR;
 	bus->twif->listen = &BermudaTwiSlaveListen;
 	bus->twif->respond = &BermudaTwiSlaveRespond;
+	BermudaAvrTwiIrqAttatch(bus, &BermudaTwiISR);
 
 	// Initialize other parts of the bus
 	bus->busy = false;

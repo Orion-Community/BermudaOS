@@ -250,24 +250,4 @@ struct _twibus
 	bool busy; //!< When set to !0 the interface is busy.
 } __attribute__((packed));
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-extern int BermudaTwHwIfacBusy(TWIBUS *bus);
-extern int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
-
-extern void BermudaTwiISR(TWIBUS *bus);
-extern int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
-	unsigned int tmo);
-extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
-	unsigned int tmo);
-extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
-	void *rx, size_t rxlen, unsigned char sla,
-	uint32_t frq, unsigned int tmo);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

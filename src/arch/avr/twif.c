@@ -99,6 +99,7 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 				 * operation waiting.
 				 */
 				if(bus->slave_rx_len) {
+					bus->mode = TWI_SLAVE_RECEIVER;
 					bus->twif->io(bus, TW_SLAVE_LISTEN, NULL);
 				}
 			}
@@ -129,6 +130,7 @@ PUBLIC __link void BermudaTwiISR(TWIBUS *bus)
 			 * Start wait for slave requests if possible
 			 */
 			if(bus->slave_rx_len) {
+				bus->mode = TWI_SLAVE_RECEIVER;
 				bus->twif->io(bus, TW_SLAVE_LISTEN, NULL);
 			}
 			else {
@@ -639,6 +641,17 @@ PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 						~BIT(TWIE) & ~BIT(TWSTA));
 			break;
 			
+		case TW_REPLY_ACK:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
+			break;
+			
+		case TW_REPLY_NACK:
+			*(hw->twcr) = BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
+			break;
+			
+		case TW_SLAVE_LISTEN:
+			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
+			
 		/* I/O cases */
 		case TW_SENT_DATA:
 		case TW_SENT_SLA:
@@ -660,17 +673,6 @@ PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 		case TW_READ_DATA:
 			*((unsigned char*)conf) = *(hw->twdr);
 			break;
-
-		case TW_REPLY_ACK:
-			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
-			break;
-			
-		case TW_REPLY_NACK:
-			*(hw->twcr) = BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
-			break;
-			
-		case TW_SLAVE_LISTEN:
-			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
 			
 		default:
 			rc = -1;
@@ -678,6 +680,32 @@ PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 	}
 
 	return rc;
+}
+
+/**
+ * \brief Attatch an ISR to the given TWI bus.
+ * \param bus Bus to attatch the ISR to.
+ * \param handle The actual ISR.
+ */
+PUBLIC void BermudaAvrTwiIrqAttatch(TWIBUS *bus, void (*handle)(TWIBUS*))
+{
+	HWTWI *hw = BermudaTwiIoData(bus);
+	
+	bus->twif->isr = handle;
+	*(hw->twcr) |= BIT(TWIE);
+}
+
+/**
+ * \brief Deactivate the interrupt service routine for the given TWIBUS.
+ * \param bus TWI bus ones IRQ will be disabled.
+ * \note Also the hardware interrupt will be disabled.
+ */
+PUBLIC void BermudaAvrTwiIrqDetatch(TWIBUS *bus)
+{
+	HWTWI *hw = BermudaTwiIoData(bus);
+	
+	*(hw->twcr) &= ~BIT(TWIE);
+	bus->twif->isr = NULL;
 }
 
 /**

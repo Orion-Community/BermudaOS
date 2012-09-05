@@ -68,18 +68,20 @@ THREAD(SramThread, arg)
 	}
 }
 
-#define SCL_100K 100000UL
 THREAD(TwiTest, arg)
 {
-	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,  0xAA, 0xAB, 0xAC,  0xAA, 0xAB, 0xAC,
-						 0xAD };
+	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
+			     0xDC, 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
+			     0x0 };
+	DEVICE *twi;
 	TWIMSG *msg;
-	DEVICE *twi = dev_open("TWI0");
 	
 	while(1) {
-		msg = BermudaTwiMsgCompose(tx, 10, NULL, 0, 0x54, SCL_100K, 500, NULL);
+		twi = dev_open("TWI0");
+		msg = BermudaTwiMsgCompose(tx, 20, NULL, 0, 0x54, 100000, 500, NULL);
 		dev_write(twi, msg, sizeof(*msg));
 		BermudaTwiMsgDestroy(msg);
+		tx[19]++;
 		
 		BermudaThreadSleep(1000);
 	}
@@ -108,7 +110,7 @@ void setup()
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 150, 
 					BermudaHeapAlloc(150), BERMUDA_DEFAULT_PRIO);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
-						BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 
 	Bermuda24c02Init(TWI0);
@@ -128,7 +130,7 @@ void loop()
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
 	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
-
+	
 	read_back_sram = BermudaSpiRamReadByte(0x50);
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 

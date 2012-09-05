@@ -68,6 +68,23 @@ THREAD(SramThread, arg)
 	}
 }
 
+#define SCL_100K 100000UL
+THREAD(TwiTest, arg)
+{
+	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,  0xAA, 0xAB, 0xAC,  0xAA, 0xAB, 0xAC,
+						 0xAD };
+	TWIMSG *msg;
+	DEVICE *twi = dev_open("TWI0");
+	
+	while(1) {
+		msg = BermudaTwiMsgCompose(tx, 10, NULL, 0, 0x54, SCL_100K, 500, NULL);
+		dev_write(twi, msg, sizeof(*msg));
+		BermudaTwiMsgDestroy(msg);
+		
+		BermudaThreadSleep(1000);
+	}
+}
+
 static unsigned char led = 1;
 
 PUBLIC void TestTimer(VTIMER *timer, void *arg)
@@ -90,6 +107,8 @@ void setup()
 	BermudaSetPinMode(5, OUTPUT);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 150, 
 					BermudaHeapAlloc(150), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
+						BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 
 	Bermuda24c02Init(TWI0);

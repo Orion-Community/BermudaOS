@@ -29,7 +29,7 @@
 #include <lib/24c02.h>
 #include <arch/twi.h>
 
-static TWIBUS *eeprom_bus = NULL;
+static char *eeprom_dev = NULL;
 
 /**
  * \brief Initialize the 24C02 driver.
@@ -39,16 +39,16 @@ static TWIBUS *eeprom_bus = NULL;
  * 
  * When this routine is called, the driver is functional and ready to use.
  */
-PUBLIC void Bermuda24c02Init(TWIBUS *bus)
+PUBLIC void Bermuda24c02Init(char *devname)
 {
-	eeprom_bus = bus;
+	eeprom_dev = devname;
 }
 
 PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 {
 	int rc = -1;
 	unsigned char tx[] = { addr, data };
-	DEVICE *dev = dev_open("TWI0");
+	DEVICE *dev = dev_open(eeprom_dev);
 	TWIMSG *msg;
 	
 	if(dev) {
@@ -64,7 +64,7 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 {
 	unsigned char tx = addr;
 	unsigned char rx = 0;
-	DEVICE *dev = dev_open("TWI0");
+	DEVICE *dev = dev_open(eeprom_dev);
 	TWIMSG *msg;
 	
 	if(dev) {

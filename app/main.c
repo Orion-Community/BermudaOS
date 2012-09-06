@@ -113,7 +113,7 @@ void setup()
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 
-	Bermuda24c02Init(TWI0);
+	Bermuda24c02Init("TWI0");
 	BermudaSpiRamInit(SPI0, 10);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
 	Bermuda24c02WriteByte(100, 0xAC);

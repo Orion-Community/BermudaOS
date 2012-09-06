@@ -35,7 +35,7 @@
 
 #define SCL_FRQ_24C02 100000UL //! SCL frequency of 100.0KHz
 
-extern void Bermuda24c02Init(TWIBUS *bus);
+extern void Bermuda24c02Init(char *devname);
 extern int Bermuda24c02WriteByte(unsigned char addr, unsigned char data);
 extern unsigned char Bermuda24c02ReadByte(unsigned char addr);
 

@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../include
 TARGET			= sys.o
 ARDUINO_LIBS		=
 
-CSRCS			= thread.c sched.c mem.c virt_timer.c out.c
+CSRCS			= thread.c sched.c mem.c virt_timer.c
 CPPSRCS			=
 ASMSRCS			=
 LIBDIR			= ../../lib

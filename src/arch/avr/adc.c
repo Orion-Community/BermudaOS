@@ -111,8 +111,6 @@ PUBLIC unsigned short BermudaADCConvert(ADC *adc, unsigned char pin)
 #endif
 	if(((*(adc->adcsra)) & BIT(ADEN)) == 0)
 		return 0;
-
-	while((*adc->adcsra & BIT(ADSC)) != 0);
 	
 	/* select input channel */
 	*adc->admux = ((pin & 0x7) | (adc->aref << 6));

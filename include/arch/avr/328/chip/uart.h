@@ -21,14 +21,6 @@
 
 #include <arch/avr/328/dev/usart.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-
-#ifdef __cplusplus
-}
 #endif
 #endif /* __CHIP_UART_H */
 

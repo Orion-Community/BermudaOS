@@ -37,23 +37,28 @@
 #define ADC_DEFAULT_LAZY_CLK         64
 #define ADC_DEFAULT_CLK              B110
 
+#define ADC0 (&adc0)
+
 struct adc;
 
 typedef unsigned short (*adc_read_t)(unsigned char);
-typedef void (*adc_write_t)(struct adc*, unsigned short);
 
-
+/**
+ * \brief ADC interface.
+ */
 struct adc
 {
-        adc_read_t read;
-        adc_write_t write;
+        adc_read_t read; //!< Function pointer which reads the ADC.
 
-        unsigned char prescaler, aref;
+        unsigned char prescaler; //!< ADC internal clock prescaler.
+        unsigned char aref; //!< Analog reference settings.
         
         volatile uint8_t *adcl, *adch,
                 *admux, *adcsra, *adcsrb,
                 *didr0;
 } __attribute__((packed));
+
+typedef struct adc ADC;
 
 extern struct adc BermADC;
 

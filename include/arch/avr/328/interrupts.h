@@ -36,6 +36,7 @@
 #define USART_RX_STC_vect signal_vect(18)
 #define USART_DRE_vect signal_vect(19)
 #define USART_TX_STC_vect signal_vect(20)
+#define ADC_CC_vect signal_vect(21)
 #define TWI_STC_vect signal_vect(24)
 
 #define sei() __asm__ __volatile__ ("sei" ::: "memory")

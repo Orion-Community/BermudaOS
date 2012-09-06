@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/dev/adc.h Analog Digital Converter.
+
 #ifndef __DEV_ADC_H
 #define __DEV_ADC_H
 
@@ -24,9 +26,20 @@
 struct adc;
 
 #ifdef __EVENTS__
-typedef unsigned short (*adc_read_t)(struct adc *,unsigned char, unsigned int);
+/**
+ * \brief Type definintion of the adc read function.
+ * \param adc ADC structure.
+ * \param pin Pin to read from.
+ * \param tmo Maximum time-out.
+ */
+typedef unsigned short (*adc_read_t)(struct adc *adc, unsigned char pin, unsigned int tmo);
 #else
-typedef unsigned short (*adc_read_t)(struct adc *,unsigned char);
+/**
+ * \brief Type definintion of the adc read function.
+ * \param adc ADC structure.
+ * \param pin Pin to read from.
+ */
+typedef unsigned short (*adc_read_t)(struct adc *adc,unsigned char pin);
 #endif
 
 /**
@@ -35,8 +48,8 @@ typedef unsigned short (*adc_read_t)(struct adc *,unsigned char);
 struct adc
 {
 #ifdef __EVENTS__
-	volatile void *mutex;
-	volatile void *queue;
+	volatile void *mutex; //!< Queue to wait in.
+	volatile void *queue; //!< Transfer waiting queue.
 #endif
 	adc_read_t read; //!< Function pointer which reads the ADC.
 
@@ -48,8 +61,9 @@ struct adc
 			*didr0;
 } __attribute__((packed));
 
+/**
+ * \brief Type definition of the ADC structure.
+ */
 typedef struct adc ADC;
-
-extern struct adc BermADC;
 
 #endif

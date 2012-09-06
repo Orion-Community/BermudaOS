@@ -22,11 +22,13 @@
 #include <lib/binary.h>
 #include <dev/dev.h>
 #include <dev/twidev.h>
+#include <dev/adc.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
 #include <sys/virt_timer.h>
 
+#include <arch/adc.h>
 #include <arch/avr/interrupts.h>
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
@@ -67,7 +69,7 @@ PUBLIC int BermudaInit(void)
 	BermudaInitTimer0();
 
 #ifdef __ADC__
-	BermudaInitBaseADC();
+	BermudaAdc0Init();
 #endif
 #ifdef __SPI__
 	BermudaSPI0HardwareInit();

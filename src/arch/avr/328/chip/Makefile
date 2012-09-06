@@ -7,7 +7,7 @@ LOCAL_LIB		= ../../../../../include
 TARGET			= chip.o
 ARDUINO_LIBS		=
 
-CSRCS			= adc.c
+CSRCS			= 
 CPPSRCS			=
 
 include ../../../../../make/Makefile.$(BUILDSYS)

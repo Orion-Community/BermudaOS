@@ -30,10 +30,12 @@
 #include <dev/twidev.h>
 #include <dev/spibus.h>
 #include <dev/usartif.h>
+#include <dev/adc.h>
 
 #include <arch/io.h>
 #include <arch/twi.h>
 #include <arch/usart.h>
+#include <arch/adc.h>
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
@@ -41,7 +43,6 @@ static unsigned char twi_slave_tx = 0x0;
 
 TWI_HANDLE(SlaveResponder, msg)
 {
-
 	msg->tx_buff = (const void*)&twi_slave_tx;
 	msg->tx_length = 1;
 	msg->tmo = 500;
@@ -121,12 +122,11 @@ void setup()
 
 void loop()
 {
-	struct adc *adc = BermudaGetADC();
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
 
-	tmp = adc->read(A0);
+	tmp = ADC0->read(ADC0, A0);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
 	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());

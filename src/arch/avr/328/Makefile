@@ -14,7 +14,7 @@ ASMSRC			=
 include ../../../../make/Makefile.$(BUILDSYS)
 include ../../../../make/Makefile.defs
 
-OBJS                    += chip.o dev.o
+OBJS                    += dev.o
 
 .PHONY: all clean $(TARGET)
 all: $(TARGET)

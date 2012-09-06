@@ -110,3 +110,15 @@ unsigned char BermudaDigitalPinRead(unsigned char pin)
 #endif
         return ret;
 }
+
+/**
+ * \brief Adjust the pin number for generic CPU level use.
+ * \param pin Pin number to adjust.
+ * \note Only for analog pins.
+ * 
+ * Example usage is in de ADC.
+ */
+PUBLIC unsigned char BermudaBoardAnalogPinAdjust(unsigned char pin)
+{
+	return pin-14;
+}

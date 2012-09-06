@@ -23,9 +23,6 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
 
-chip.o:
-	$(MAKE) -C chip/ BUILDSYS=$(BUILDSYS)
-
 dev.o:
 	$(MAKE) -C dev/ BUILDSYS=$(BUILDSYS)
 
@@ -40,5 +37,4 @@ dev.o:
 
 clean:
 	-rm -vf $(OBJS) $(TARGET)
-	$(MAKE) -C chip/ clean
 	$(MAKE) -C dev/ clean

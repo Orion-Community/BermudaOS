@@ -18,6 +18,8 @@
 
 //! \file src/arch/avr/328/serialio.c Stdio backend functions.
 
+#if defined(__USART__) || defined(__DOXYGEN__)
+
 #include <bermuda.h>
 #include <stdio.h>
 
@@ -81,3 +83,5 @@ PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
 	BermudaUsartListen(USART0, &c, 1, 9600, 500);
 	return c;
 }
+
+#endif

@@ -61,9 +61,10 @@ THREAD(MainThread, data)
 PUBLIC int BermudaInit(void)
 {       
 	BermudaHeapInitBlock((volatile void*)&__heap_start, (MEM-128) - (size_t)&__heap_start);
-
+#ifdef __USART__
 	BermudaUsart0Init(USART0);
 	BermudaUsartSetupStreams();
+#endif
 	BermudaInitTimer0();
 
 #ifdef __ADC__
@@ -73,8 +74,10 @@ PUBLIC int BermudaInit(void)
 	BermudaSPI0HardwareInit();
 #endif
 
+#ifdef __TWI__
 	BermudaTwi0Init(0x56);
 	BermudaTwiDevInit(TWI0, "TWI0");
+#endif
 
 	STACK_L = (MEM-128) & 0xFF;
 	STACK_H = ((MEM-128) >> 8) & 0xFF;

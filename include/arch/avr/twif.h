@@ -30,7 +30,7 @@ extern "C"
 extern int BermudaTwHwIfacBusy(TWIBUS *bus);
 extern int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 
-extern void BermudaTwiISR(TWIBUS *bus);
+extern void BermudaAvrTwiISR(TWIBUS *bus);
 extern int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 	unsigned int tmo);
 extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,

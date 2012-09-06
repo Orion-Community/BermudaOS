@@ -125,6 +125,7 @@ extern inline unsigned short BermudaReadPGMWord(unsigned short);
 extern void BermudaSetPinMode(unsigned char pin, unsigned char mode);
 extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);
 extern unsigned char BermudaDigitalPinRead(unsigned char pin);
+extern unsigned char BermudaBoardAnalogPinAdjust(unsigned char pin);
 
 #define BermudaGetIOPort(pin) pgm_read_byte((unsigned short) \
                                 BermudaPinToPort+(pin))
@@ -159,8 +160,7 @@ static inline void inb(volatile unsigned char *io, unsigned char *data)
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>
-        #include <arch/avr/328/chip/adc.h>
-        #include <arch/avr/328/chip/uart.h>
+        #include <arch/avr/328/dev/usart.h>
 #endif
 
 #ifdef __ARDUINO__

@@ -21,7 +21,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(TARGET) $(OBJS)
-	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(TARGET:.o=.a) $(OBJS)
+#	$(AR) $(ARFLAGS) $(LIBDIR)/lib$(TARGET:.o=.a) $(OBJS)
 
 %o: %c
 	$(CC) $(CCFLAGS) -o $@ $<

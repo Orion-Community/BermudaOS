@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - AVR ATmega328(P) ISR definitions
+ *  BermudaOS - Analog Digital Converter
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ATmega328_ISR_H
-#define __ATmega328_ISR_H
+#ifdef __AVR__
 
-#define signal_vect(num) __vector_ ## num
+#include <arch/avr/adc.h>
 
-#ifdef _AVR_IOXXX_H_
-#undef TIMER0_OVF_vect
-#undef SPI_STC_vect
-#undef TWI_vect
-
-#undef sei
-#undef cli
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+	#include <arch/avr/328/dev/adc.h>
 #endif
 
-/* vectors */
-#define TIMER0_OVF_vect signal_vect(16)
-#define SPI_STC_vect signal_vect(17)
-#define USART_RX_STC_vect signal_vect(18)
-#define USART_DRE_vect signal_vect(19)
-#define USART_TX_STC_vect signal_vect(20)
-#define ADC_CC_vect signal_vect(21)
-#define TWI_STC_vect signal_vect(24)
-
-#define sei() __asm__ __volatile__ ("sei" ::: "memory")
-#define cli() __asm__ __volatile__ ("cli" ::: "memory")
-
-#endif /* __ATmega328_ISR_H */
+#endif

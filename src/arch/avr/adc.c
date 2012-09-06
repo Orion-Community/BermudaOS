@@ -39,8 +39,8 @@ PRIVATE WEAK int BermudaAdcSetPrescaler(ADC *adc, const unsigned char prescaler)
 struct adc adc0;
 
 #ifdef __EVENTS__
-volatile void *adc0_mutex = SIGNALED;
-volatile void *adc0_queue = SIGNALED;
+static void *adc0_mutex = SIGNALED;
+static void *adc0_queue = SIGNALED;
 #endif
 
 /**
@@ -79,6 +79,11 @@ PUBLIC void BermudaAdcFactoryCreate(ADC *adc)
 	adc->didr0 = &BermudaGetDIDR0();
 	adc->read = &BermudaADCConvert;
 	adc->aref = ADC_DEFAULT_AREF;
+	
+#ifdef __EVENTS__
+	adc->mutex = &adc0_mutex;
+	adc->queue = &adc0_queue;
+#endif
 	return;
 }
 
@@ -92,10 +97,17 @@ PUBLIC void BermudaAdcFactoryCreate(ADC *adc)
  * This function starts the analog to digital conversion and returns the
  * result.
  */
+#ifdef __EVENTS__
+PUBLIC unsigned short BermudaADCConvert(ADC *adc, unsigned char pin, unsigned int tmo)
+#else
 PUBLIC unsigned short BermudaADCConvert(ADC *adc, unsigned char pin)
+#endif
 {
 #ifdef __BOARD__
 	pin = BermudaBoardAnalogPinAdjust(pin);
+#endif
+#ifdef __EVENTS__
+	BermudaEventWait((volatile THREAD**)adc->mutex, tmo);
 #endif
 	if(((*(adc->adcsra)) & BIT(ADEN)) == 0)
 		return 0;
@@ -109,12 +121,19 @@ PUBLIC unsigned short BermudaADCConvert(ADC *adc, unsigned char pin)
 	spb(*adc->adcsra, ADSC);
 
 	/* wait for it to finish */
+#ifdef __EVENTS__
+	BermudaEventWaitNext( (volatile THREAD**)adc->queue, tmo);
+#else
 	while((*adc->adcsra & BIT(ADSC)) != 0);
+#endif
 
 	/* finished, get results and return them */
 	unsigned char low = *adc->adcl;
 	unsigned char high = *adc->adch;
 
+#ifdef __EVENTS__
+	BermudaEventSignal((volatile THREAD**)adc->mutex);
+#endif
 	return low | (high << 8);
 }
 
@@ -138,7 +157,7 @@ PRIVATE WEAK int BermudaAdcSetPrescaler(ADC *adc, const unsigned char prescaler)
 #ifdef __EVENTS__
 SIGNAL(ADC_CC_vect)
 {
-	BermudaEventSignalFromISR((volatile THREAD**)adc0_queue);
+	BermudaEventSignalFromISR((volatile THREAD**)ADC0->queue);
 }
 #endif
 

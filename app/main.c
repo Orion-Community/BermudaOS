@@ -126,7 +126,7 @@ void loop()
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
 
-	tmp = ADC0->read(ADC0, A0);
+	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
 	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());

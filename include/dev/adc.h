@@ -23,21 +23,29 @@
 
 struct adc;
 
+#ifdef __EVENTS__
+typedef unsigned short (*adc_read_t)(struct adc *,unsigned char, unsigned int);
+#else
 typedef unsigned short (*adc_read_t)(struct adc *,unsigned char);
+#endif
 
 /**
  * \brief ADC interface.
  */
 struct adc
 {
-        adc_read_t read; //!< Function pointer which reads the ADC.
+#ifdef __EVENTS__
+	volatile void *mutex;
+	volatile void *queue;
+#endif
+	adc_read_t read; //!< Function pointer which reads the ADC.
 
-        unsigned char prescaler; //!< ADC internal clock prescaler.
-        unsigned char aref; //!< Analog reference settings.
-        
-        volatile uint8_t *adcl, *adch,
-                *admux, *adcsra, *adcsrb,
-                *didr0;
+	unsigned char prescaler; //!< ADC internal clock prescaler.
+	unsigned char aref; //!< Analog reference settings.
+	
+	volatile uint8_t *adcl, *adch,
+			*admux, *adcsra, *adcsrb,
+			*didr0;
 } __attribute__((packed));
 
 typedef struct adc ADC;

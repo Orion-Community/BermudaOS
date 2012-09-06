@@ -83,7 +83,11 @@ static inline void BermudaAdcDisable(struct adc *adc)
 
 extern void BermudaAdc0Init();
 extern void BermudaAdcFactoryCreate(ADC *adc);
+#ifdef __EVENTS__
+extern unsigned short BermudaADCConvert(ADC *adc, unsigned char pin, unsigned int tmo);
+#else
 extern unsigned short BermudaADCConvert(ADC *adc, unsigned char pin);
+#endif
 __DECL_END
 
 #endif /* __AVR_ADC_h */

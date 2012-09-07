@@ -124,4 +124,6 @@
  */
 #define SPI_ENABLE BIT(6)
 
+#define SPIF 7
+
 #endif /* __328SPI_REG_H */

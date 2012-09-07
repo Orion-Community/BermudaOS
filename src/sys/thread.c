@@ -340,7 +340,7 @@ PUBLIC void BermudaIoWait(volatile void **tpp)
 
 PUBLIC void BermudaIoSignal(volatile void **tpp)
 {
-	THREAD *t;
+	volatile THREAD *t;
 	
 	BermudaEnterCritical();
 	t = *tpp;
@@ -351,7 +351,7 @@ PUBLIC void BermudaIoSignal(volatile void **tpp)
 			// not if the thread notifies itself or the thread the thread
 			// is already in the ready state.
 			t->state = THREAD_READY;
-			BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
+			BermudaThreadPrioQueueAdd(&BermudaRunQueue, (THREAD*)t);
 		}
 	}
 }

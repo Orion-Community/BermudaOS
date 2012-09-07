@@ -168,13 +168,18 @@ typedef enum
 struct _spibus
 {
 #ifdef __EVENTS__
-	void *mutex; //!< SPI bus mutex.
-	void *master_queue; //!< Transfer waiting queue.
-	void *slave_queue; //!< Slave transfer waiting queue.
-#elif __THREADS__
+	volatile void *mutex; //!< TWI bus mutex.
+#else
 	mutex_t mutex;
-	mutex_t queue;
 #endif
+#if defined(__EVENTS__) || defined(__THREADS__)
+	volatile void *master_queue; //!< TWI master waiting queue.
+	volatile void *slave_queue;  //!< TWI slave waiting queue.
+#else
+	mutex_t maser_queue;
+	mutex_t slave_queue;
+#endif
+
 	SPICTRL *ctrl; //!< SPI bus controller \see _spictrl
 	void *io; //!< SPI interface control */
 	uint16_t mode; //!< SPI mode select.

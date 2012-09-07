@@ -62,7 +62,7 @@ PUBLIC void BermudaAdc0Init()
 	BermudaAdcEnable(adc);
 
 	BermudaAdcSetPrescaler(adc, ADC_DEFAULT_CLK);
-#ifndef __EVENTS__
+#ifdef __EVENTS__
 	BermudaAdcIrqAttatch(adc);
 #endif
 	return;

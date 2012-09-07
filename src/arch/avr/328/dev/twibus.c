@@ -60,15 +60,6 @@ static volatile void *twi0_master_queue = SIGNALED;
  * complete.
  */
 static volatile void *twi0_slave_queue = SIGNALED;
-#else
-/**
- * \brief Master transmission queue when events are disabled.
- */
-static mutex_t tw_master_queue = 0;
-/**
- * \brief Slave transmission waiting queue when events are disabled.
- */
-static mutex_t tw_slave_queue = 0;
 #endif
 
 /**
@@ -112,8 +103,8 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 #else
 	bus->mutex = 0;
 #ifndef __THREADS__
-	bus->master_queue = &tw_master_queue;
-	bus->slave_queue = &tw_slave_queue;
+	bus->master_queue = 1;
+	bus->slave_queue = 1;
 #endif
 #endif
 

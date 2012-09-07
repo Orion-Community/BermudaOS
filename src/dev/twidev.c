@@ -127,7 +127,7 @@ PUBLIC int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size)
 							msg->sla, msg->scl_freq, msg->tmo);
 #ifdef __EVENTS__
 	dev->release(file->data);
-#elif
+#elif __THREADS__
 	BermudaMutexRelease(&(bus->mutex));
 #endif
 	return rc;

@@ -93,7 +93,7 @@ struct _usartbus
 	void *rx_queue; //!< Receive waiting queue.
 #elif __THREADS__
 	mutex_t mutex;  //!< Bus mutex.
-	mutext_t queue; //!< Transfer mutex.
+	mutex_t queue; //!< Transfer mutex.
 #endif
 	union {
 		void *hwio;   //!< Hardware I/O pointer.

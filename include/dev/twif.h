@@ -155,6 +155,7 @@ typedef void (*twi_call_back_t)(TWIMSG *msg);
  */
 struct _twif
 {
+#ifdef __EVENTS__
 	/**
 	 * \brief Function pointer to the transfer function.
 	 * \param bus Bus interface to use with the transfer.
@@ -167,6 +168,17 @@ struct _twif
 	int (*transfer)(TWIBUS *twi, const void *tx, unsigned int txlen,
 		void *rx, unsigned int rxlen, unsigned char sla,
 		uint32_t frq, unsigned int tmo);
+	int (*listen)(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
+				  unsigned int tmo);
+	int (*respond)(TWIBUS *bus, const void *tx, size_t txlen,
+				   unsigned int tmo);
+#else
+	int (*transfer)(TWIBUS *twi, const void *tx, unsigned int txlen,
+		void *rx, unsigned int rxlen, unsigned char sla,
+		uint32_t frq);
+	int (*listen)(TWIBUS *bus, size_t *num, void *rx, size_t rxlen);
+	int (*respond)(TWIBUS *bus, const void *tx, size_t txlen);
+#endif
 	/**
 	 * \brief I/O control functions.
 	 * \param bus TWI bus structure.
@@ -190,11 +202,6 @@ struct _twif
 	 * HIGH).
 	 */
 	int (*ifbusy)(TWIBUS *bus);
-	
-	int (*listen)(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
-				  unsigned int tmo);
-	int (*respond)(TWIBUS *bus, const void *tx, size_t txlen,
-				   unsigned int tmo);
 
 	/**
 	 * \brief ISR handler.

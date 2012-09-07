@@ -31,13 +31,22 @@ extern int BermudaTwHwIfacBusy(TWIBUS *bus);
 extern int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 
 extern void BermudaAvrTwiISR(TWIBUS *bus);
+
+#ifdef __EVENTS__
+extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
+	void *rx, size_t rxlen, unsigned char sla,
+	uint32_t frq, unsigned int tmo);
 extern int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 	unsigned int tmo);
 extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 	unsigned int tmo);
+#else
 extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
 	void *rx, size_t rxlen, unsigned char sla,
-	uint32_t frq, unsigned int tmo);
+	uint32_t frq);
+extern int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen);
+extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen);
+#endif
 
 extern void BermudaAvrTwiIrqAttatch(TWIBUS *bus, void (*handle)(TWIBUS*));
 extern void BermudaAvrTwiIrqDetatch(TWIBUS *bus);

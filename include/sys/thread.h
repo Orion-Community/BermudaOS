@@ -255,8 +255,8 @@ extern THREAD *BermudaThreadGetByName(char *name);
 extern void BermudaThreadFree();
 
 #if !defined(__EVENTS__) && defined(__THREADS__)
-extern void BermudaIoWait(void *volatile*tpp);
-extern void BermudaIoSignal(void *volatile*tpp);
+extern void BermudaIoWait(volatile void **tpp);
+extern void BermudaIoSignal(volatile void **tpp);
 #endif
 
 #ifndef __THREADS__

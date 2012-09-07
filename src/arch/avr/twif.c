@@ -535,8 +535,12 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxle
  * If tx and txlen are set to 0, no data will be transmitted and the bus
  * will be released.
  */
+#ifdef __EVENTS__
 PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 	unsigned int tmo)
+#else
+PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen)
+#endif
 {
 	int rc = -1;
 

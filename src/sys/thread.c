@@ -329,7 +329,7 @@ PUBLIC THREAD *BermudaThreadGetByName(char *name)
 }
 
 #if !defined(__EVENTS__) && defined(__THREADS__)
-PUBLIC void BermudaIoWait(void *volatile* tpp)
+PUBLIC void BermudaIoWait(volatile void **tpp)
 {
 	BermudaEnterCritical();
 	*tpp = BermudaCurrentThread;
@@ -338,7 +338,7 @@ PUBLIC void BermudaIoWait(void *volatile* tpp)
 	BermudaThreadWait();
 }
 
-PUBLIC void BermudaIoSignal(void *volatile* tpp)
+PUBLIC void BermudaIoSignal(volatile void **tpp)
 {
 	THREAD *t;
 	

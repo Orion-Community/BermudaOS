@@ -183,6 +183,7 @@
 #define TWSTA 5
 #define TWEA 6
 #define TWINT 7
+#define GCR 0
 
 #define SCL 5
 #define SDA 4

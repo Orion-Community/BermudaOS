@@ -71,6 +71,7 @@ typedef enum
 	 */
 	TW_SET_SLA,
 	TW_SET_GCR, //!< Enable GCR.
+	TW_CLEAR_GCR, //!< Disable the GCR bit.
 
 	TW_RELEASE_BUS, //!< Release the bus.
 	TW_GET_STATUS, //!< Get the status from hardware.

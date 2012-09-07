@@ -24,10 +24,11 @@
 #if defined(__TWI__) || defined(__DOXYGEN__)
 
 #include <bermuda.h>
-
 #include <lib/binary.h>
+
 #include <dev/twif.h>
 #include <arch/twi.h>
+#include <arch/io.h>
 
 #include <sys/events/event.h>
 
@@ -598,80 +599,90 @@ PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 	unsigned char sla;
 	int rc = 0;
 	BermudaEnterCritical();
-	register unsigned char twcr = *(hw->twcr);
+	register unsigned char twcr;
+	inb(hw->twcr, &sla); // use sla because we need an address of.
+	twcr = sla;
 	BermudaExitCritical();
 	
 	switch(mode) {
 		/* config cases */
 		case TW_SET_RATE:
-			*(hw->twbr) = *((unsigned char*)conf);
+			outb(hw->twbr, *((unsigned char*)conf));
 			break;
 			
 		case TW_SET_PRES:
+			outb(hw->twsr, (*(hw->twsr) & (~B11)) | *((unsigned char*)conf));
 			*(hw->twsr) = (*(hw->twsr) & (~B11)) | *((unsigned char*)conf);
 			break;
 			
 		case TW_SET_SLA:
-			sla = (*((unsigned char*)conf)) & ~(BIT(0)); // mask out the GCRE bit
-			*(hw->twar) = sla;
+			sla = (*((unsigned char*)conf)) & ~(BIT(GCR)); // mask out the GCRE bit
+			outb(hw->twar, sla);
 			break;
 
 		case TW_SET_GCR:
-			sla = (*(hw->twar)) | BIT(0);
-			*(hw->twar) = sla;
+			sla = (*(hw->twar)) | BIT(GCR);
+			outb(hw->twar, sla);
 			break;
+			
+		case TW_CLEAR_GCR:
+			inb(hw->twar, &sla);
+			sla &= ~BIT(GCR);
+			outb(hw->twar, sla);
 
 		/* bus control */
 		case TW_GET_STATUS:
-			bus->status = (*hw->twsr) & (~B111);
+			inb(hw->twsr, &(bus->status));
+			bus->status &= ~B111;
 			*((unsigned char*)conf) = bus->status;
 			break;
 			
 		case TW_BLOCK_INTERFACE:
-			*(hw->twcr) = twcr & ~(BIT(TWINT) | BIT(TWIE));
+			outb(hw->twcr, twcr & ~(BIT(TWINT) | BIT(TWIE)));
 			break;
 			
 		case TW_ENABLE_INTERFACE:
 		case TW_RELEASE_BUS:
-			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE));
+			outb(hw->twcr, twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE)));
 			break;
 
 		case TW_DISABLE_INTERFACE:
-			*(hw->twcr) = twcr & (~BIT(TWINT) & ~BIT(TWEN) & ~BIT(TWEA) & 
-						~BIT(TWIE) & ~BIT(TWSTA));
+			outb(hw->twcr, twcr & (~BIT(TWINT) & ~BIT(TWEN) & ~BIT(TWEA) & 
+						~BIT(TWIE) & ~BIT(TWSTA)));
 			break;
 			
 		case TW_REPLY_ACK:
-			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
+			outb(hw->twcr, twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA)));
 			break;
 			
 		case TW_REPLY_NACK:
-			*(hw->twcr) = BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
+			outb(hw->twcr, BIT(TWEN) | BIT(TWINT) | BIT(TWIE));
 			break;
 			
 		case TW_SLAVE_LISTEN:
-			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA));
+			outb(hw->twcr, twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | BIT(TWEA)));
+			break;
 			
 		/* I/O cases */
 		case TW_SENT_DATA:
 		case TW_SENT_SLA:
-			*(hw->twdr) = *( (unsigned char*)conf );
-			*(hw->twcr) = (twcr & ~BIT(TWSTA)) | (BIT(TWEN) | BIT(TWINT) | 
-							BIT(TWIE) | BIT(TWEA));
+			outb(hw->twdr, *( (unsigned char*)conf ));
+			outb(hw->twcr, (twcr & ~BIT(TWSTA)) | (BIT(TWEN) | BIT(TWINT) | 
+							BIT(TWIE) | BIT(TWEA)));
 			break;
 			
 		case TW_SENT_START:
-			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | 
-							BIT(TWEA) | BIT(TWSTA)); // sent the given start
+			outb(hw->twcr, twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) | 
+							BIT(TWEA) | BIT(TWSTA)));
 			break;
 
 		case TW_SENT_STOP:
-			*(hw->twcr) = twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) |
-							BIT(TWSTO)); // enable the TWSTO bit
+			outb(hw->twcr, twcr | (BIT(TWEN) | BIT(TWINT) | BIT(TWIE) |
+							BIT(TWSTO)));
 			break;
 			
 		case TW_READ_DATA:
-			*((unsigned char*)conf) = *(hw->twdr);
+			inb(hw->twdr, (unsigned char*)conf);
 			break;
 			
 		default:

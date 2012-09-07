@@ -215,12 +215,15 @@ struct _twibus
 {
 #ifdef __EVENTS__
 	volatile void *mutex; //!< TWI bus mutex.
-	
+#else
+	mutex_t mutex;
+#endif
+#if defined(__EVENTS__) || defined(__THREADS__)
 	volatile void *master_queue; //!< TWI master waiting queue.
 	volatile void *slave_queue;  //!< TWI slave waiting queue.
-#elif __THREADS__
-	mutex_t mutex;
+#else
 	mutex_t maser_queue;
+	mutex_t slave_queue;
 #endif
 
 	struct _twif *twif; //!< TWI hardware communication interface.

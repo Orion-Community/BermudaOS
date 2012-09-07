@@ -328,6 +328,35 @@ PUBLIC THREAD *BermudaThreadGetByName(char *name)
         return ret;
 }
 
+#if !defined(__EVENTS__) && defined(__THREADS__)
+PUBLIC void BermudaIoWait(void *volatile* tpp)
+{
+	BermudaEnterCritical();
+	*tpp = BermudaCurrentThread;
+	BermudaExitCritical();
+	
+	BermudaThreadWait();
+}
+
+PUBLIC void BermudaIoSignal(void *volatile* tpp)
+{
+	THREAD *t;
+	
+	BermudaEnterCritical();
+	t = *tpp;
+	BermudaExitCritical();
+	
+	if(t != NULL) {
+		if(t->state == THREAD_WAITING || t->state == THREAD_SLEEPING) { 	
+			// not if the thread notifies itself or the thread the thread
+			// is already in the ready state.
+			t->state = THREAD_READY;
+			BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
+		}
+	}
+}
+#endif
+
 /**
  * @}
  */

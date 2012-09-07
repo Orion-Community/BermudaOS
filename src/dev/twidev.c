@@ -120,11 +120,15 @@ PUBLIC int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size)
 	if(dev->alloc(file->data, msg->tmo) == -1) {
 		return rc;
 	}
+#elif __THREADS__
+	BermudaMutexEnter(&(bus->mutex));
 #endif
 	rc = bus->twif->transfer(bus, msg->tx_buff, msg->tx_length, msg->rx_buff, msg->rx_length,
 							msg->sla, msg->scl_freq, msg->tmo);
 #ifdef __EVENTS__
 	dev->release(file->data);
+#elif
+	BermudaMutexRelease(&(bus->mutex));
 #endif
 	return rc;
 }

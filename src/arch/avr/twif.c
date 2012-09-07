@@ -88,8 +88,8 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
 				bus->twif->io(bus, TW_SENT_STOP, NULL);
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
-#elif __THREADS__
-				BermudaMutexRelease(&(bus->master_queue));
+#else
+				BermudaIoSignal(&(bus->master_queue));
 #endif
 				bus->busy = false;
 				bus->master_tx_len = 0;
@@ -138,8 +138,8 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
 			}
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
-#elif __THREADS__
-			BermudaMutexRelease(&(bus->master_queue));
+#else
+			BermudaIoSignal(&(bus->master_queue));
 #endif
 			break;
 		
@@ -187,8 +187,8 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
 			}
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
-#elif __THREADS__
-			BermudaMutexRelease(&(bus->master_queue));
+#else
+			BermudaIoSignal(&(bus->master_queue));
 #endif
 			break;
 
@@ -275,8 +275,8 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
 			bus->slave_rx_len = 0;
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->slave_queue);
-#elif __THREADS__
-			BermudaMutexRelease(&(bus->slave_queue));
+#else
+			BermudaIoSignal(&(bus->slave_queue));
 #endif
 			break;
 			
@@ -326,8 +326,8 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
 			bus->slave_tx_len = 0;
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->slave_queue);
-#elif __THREADS__
-			BermudaMutexRelease(&(bus->slave_queue));
+#else
+			BermudaIoSignal(&(bus->slave_queue));
 #endif
 			if(bus->master_tx_len) {
 				bus->mode = TWI_MASTER_TRANSMITTER;
@@ -359,9 +359,9 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
 #ifdef __EVENTS__
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->master_queue);
 			BermudaEventSignalFromISR( (volatile THREAD**)bus->slave_queue);
-#elif __THREADS__
-			BermudaMutexRelease(&(bus->master_queue));
-			BermudaMutexRelease(&(bus->slave_queue));
+#else
+			BermudaIoSignal(&(bus->master_queue));
+			BermudaIoSignal(&(bus->slave_queue));
 #endif
 			break;
 	}
@@ -385,7 +385,11 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
  * Data is transfered or received using the TWI bus. The mode this function
  * uses depends of the TWIMODE setting in the TWIBUS structure.
  */
+#ifdef __EVENTS__
 PUBLIC int BermudaTwiMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
+#else
+PUBLIC int BermudaTwiMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq)
+#endif
 TWIBUS        *bus;
 const void*   tx;
 unsigned int  txlen;
@@ -393,7 +397,9 @@ void*         rx;
 unsigned int  rxlen;
 unsigned char sla;
 uint32_t      frq;
+#ifdef __EVENTS__
 unsigned int  tmo;
+#endif
 {
 	int rc = -1;
 	
@@ -407,12 +413,17 @@ unsigned int  tmo;
 	
 	if(bus->busy == false && bus->twif->ifbusy(bus) == -1) {
 		bus->twif->io(bus, TW_SENT_START, NULL);
-	}
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext( (volatile THREAD**)bus->master_queue, tmo);
-#elif __THREADS__
-	BermudaMutexEnter(&(bus->master_queue));
+#else
+#ifndef __THREADS__
+	bus->master_queue = 1; // always wait for a signal from the ISR
 #endif
+	BermudaIoWait(&(bus->master_queue));
+	rc = 0;
+#endif
+	}
+
 
 	return rc;
 }
@@ -467,8 +478,12 @@ uint32_t      frq;
  * 
  * Listens for requests by a master to this TWI bus interface.
  */
+#ifdef __EVENTS__
 PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 	unsigned int tmo)
+#else
+PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen)
+#endif
 {
 	int rc = -1;
 	
@@ -488,9 +503,17 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxle
 	}
 	BermudaExitCritical();
 	
+#ifdef __EVENTS__
 	if((rc = BermudaEventWaitNext( (volatile THREAD**)bus->slave_queue, tmo))) {
 		bus->error = E_TIMEOUT;
 	}
+#else
+#ifndef __THREADS__
+	bus->slave_queue = 1; // alwasys wait for signal
+#endif
+	BermudaIoWait(&(bus->slave_queue));
+	rc = 0;
+#endif
 	
 	if(bus->error == TWI_SR_STOP) {
 		*num = bus->slave_index;
@@ -526,9 +549,17 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 		bus->twif->io(bus, TW_SLAVE_LISTEN, NULL); // release the bus
 		BermudaExitCritical();
 
+#ifdef __EVENTS__
 		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->slave_queue, tmo))) {
 			bus->error = E_TIMEOUT;
 		}
+#else
+#ifndef __THREADS__
+		bus->slave_queue = 1;
+#endif
+		BermudaIoWait(&(bus->slave_queue));
+		rc = 0;
+#endif
 	}
 	else if((bus->master_tx_len || bus->master_rx_len) && bus->busy == false) {
 		if(bus->master_tx_len) {

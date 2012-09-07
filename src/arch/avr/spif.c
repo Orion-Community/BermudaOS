@@ -45,11 +45,14 @@ PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
 				bus->ctrl->io(bus, SPI_WRITE_DATA, (void*)&(bus->master_tx[bus->master_index]));
 				bus->master_index++;
 			}
-#ifdef __EVENTS__
+
 			else {
+#ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->master_queue);
-			}
+#else
+				BermudaIoSignal(&(bus->master_queue));
 #endif
+			}
 			break;
 			
 		case BERMUDA_SPI_SLAVE:
@@ -62,7 +65,9 @@ PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
 			else {
 				bus->ctrl->io(bus, SPI_WRITE_DATA, (void*)&dummy);
 #ifdef __EVENTS__
-				BermudaEventSignalFromISR((volatile THREAD**)bus->slave_queue);
+				BermudaEventSignalFromISR((volatile THREAD**)bus->master_queue);
+#else
+				BermudaIoSignal(&(bus->master_queue));
 #endif
 			}
 			bus->slave_index++;

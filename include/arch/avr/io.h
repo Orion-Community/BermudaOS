@@ -29,6 +29,9 @@ extern unsigned long BermudaTimerGetSysTick();
 extern "C" {
 #endif
 
+#define BermudaIoWait(x) BermudaMutexEnter(x)
+#define BermudaIoSignal(x) BermudaMutexRelease(x)
+
 /**
  * \fn BermudaMutexRelease(unsigned char *lock)
  * \brief Release the mutex lock from <i>lock</i>.

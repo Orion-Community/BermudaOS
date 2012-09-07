@@ -72,8 +72,13 @@ typedef enum
  */
 struct _usartif
 {
+#ifdef __EVENTS__
 	int (*transfer)(USARTBUS *bus, const void *tx, uptr tx_len, void *rx, uptr rx_len,
 					unsigned int baud, int tmo);
+#else
+	int (*transfer)(USARTBUS *bus, const void *tx, uptr tx_len, void *rx, uptr rx_len,
+				unsigned int baud);
+#endif
 	void (*io)(USARTBUS *bus, USART_IOCTL_MODE mode, void *data);
 	void (*isr)(USARTBUS *bus, unsigned char transtype);
 	int (*ifbusy)(USARTBUS *bus);
@@ -91,10 +96,12 @@ struct _usartbus
 	void *mutex; //!< Bus mutex.
 	void *tx_queue; //!< Transmit waiting queue.
 	void *rx_queue; //!< Receive waiting queue.
-#elif __THREADS__
+#else
 	mutex_t mutex;  //!< Bus mutex.
-	mutex_t queue; //!< Transfer mutex.
+	mutex_t tx_queue; //!< Transfer mutex.
+	mutex_t rx_queue;
 #endif
+
 	union {
 		void *hwio;   //!< Hardware I/O pointer.
 
@@ -118,10 +125,17 @@ struct _usartbus
 } __attribute__((packed));
 
 extern void BermudaUsartISR(USARTBUS *bus, unsigned char transtype);
+#ifdef __EVENTS__
 extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, 
 								unsigned int baud, unsigned int tmo);
 extern int BermudaUsartListen(USARTBUS *bus, void *rx, unsigned int rxlen,
 							  unsigned int baud, unsigned int tmo);
+#else
+extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, 
+								unsigned int baud);
+extern int BermudaUsartListen(USARTBUS *bus, void *rx, unsigned int rxlen,
+							  unsigned int baud);
+#endif
 
 
 #endif /* __USART_INTERFACE_H_ */

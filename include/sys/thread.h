@@ -259,11 +259,6 @@ extern void BermudaIoWait(volatile void **tpp);
 extern void BermudaIoSignal(volatile void **tpp);
 #endif
 
-#ifndef __THREADS__
-#define BermudaIoWait(x) BermudaMutexEnter(x)
-#define BermudaIoSignal(x) BermudaMutexRelease(x)
-#endif
-
 // internal functions
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
 __DECL_END

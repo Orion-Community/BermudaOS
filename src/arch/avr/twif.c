@@ -417,9 +417,7 @@ unsigned int  tmo;
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext( (volatile THREAD**)bus->master_queue, tmo);
 #else
-#ifndef __THREADS__
 	bus->master_queue = 1; // always wait for a signal from the ISR
-#endif
 	BermudaIoWait(&(bus->master_queue));
 	rc = 0;
 #endif
@@ -505,13 +503,11 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxle
 	BermudaExitCritical();
 	
 #ifdef __EVENTS__
-	if((rc = BermudaEventWaitNext( (volatile THREAD**)bus->slave_queue, tmo))) {
+	if((rc = BermudaEventWaitNext( (volatile THREAD**)bus->slave_queue, tmo)) == -1) {
 		bus->error = E_TIMEOUT;
 	}
 #else
-#ifndef __THREADS__
 	bus->slave_queue = 1; // alwasys wait for signal
-#endif
 	BermudaIoWait(&(bus->slave_queue));
 	rc = 0;
 #endif
@@ -555,13 +551,11 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen)
 		BermudaExitCritical();
 
 #ifdef __EVENTS__
-		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->slave_queue, tmo))) {
+		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->slave_queue, tmo)) == -1) {
 			bus->error = E_TIMEOUT;
 		}
 #else
-#ifndef __THREADS__
 		bus->slave_queue = 1;
-#endif
 		BermudaIoWait(&(bus->slave_queue));
 		rc = 0;
 #endif

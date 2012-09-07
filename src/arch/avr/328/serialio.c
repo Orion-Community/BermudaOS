@@ -80,7 +80,11 @@ PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
 PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
 {
 	unsigned char c = 0;
+#ifdef __THREADS__
 	BermudaUsartListen(USART0, &c, 1, 9600, 500);
+#else
+	BermudaUsartListen(USART0, &c, 1, 9600);
+#endif
 	return c;
 }
 

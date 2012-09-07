@@ -39,7 +39,6 @@
 
 #ifdef __EVENTS__
 static THREAD *BermudaSPI0TransferQueue = SIGNALED;
-static THREAD *BermudaSPI0SlaveTransferQueue = SIGNALED;
 static THREAD *BermudaSPI0Mutex = SIGNALED;
 #endif
 
@@ -96,13 +95,9 @@ SPIBUS BermudaSpi0HardwareBus = {
 #ifdef __EVENTS__
 		.mutex = (void*)&BermudaSPI0Mutex,
 		.master_queue = (void*)&BermudaSPI0TransferQueue,
-		.slave_queue = (void*)&BermudaSPI0SlaveTransferQueue,
 #else
 		.mutex = 0,
-#ifndef __THREADS__
-		.slave_queue  = 1,
 		.master_queue = 1,
-#endif
 #endif
 		.ctrl  = &BermudaSpiHardwareCtrl,
 		.io    = &BermudaSPI0HardwareIO,

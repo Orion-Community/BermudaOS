@@ -222,7 +222,7 @@ PUBLIC void BermudaSchedulerExec()
         THREAD *tqp, *volatile*qhp, *t;
         unsigned long tick_new;
         static unsigned long tick_resume = (unsigned long)0;
-        
+
         t = BermudaThreadHead;
         while(t)
         {

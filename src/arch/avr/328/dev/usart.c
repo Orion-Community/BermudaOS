@@ -102,6 +102,10 @@ PUBLIC void BermudaUsart0Init()
 	bus->mutex = (void*)&usart_mutex;
 	bus->tx_queue = (void*)&usart_tx_queue;
 	bus->rx_queue = (void*)&usart_rx_queue;
+#else
+	bus->mutex = 0;
+	bus->tx_queue = 1;
+	bus->rx_queue = 1;
 #endif
 	bus->usartif = &hw_usartif;
 	bus->io.hwio = &hw_usart0;

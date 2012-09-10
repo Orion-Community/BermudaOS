@@ -125,13 +125,17 @@ void setup()
 	Bermuda24c02WriteByte(100, 0xAC);
 }
 
+#ifdef __THREADS__
+void loop()
+#else
 unsigned long loop()
+#endif
 {
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
 
-	tmp = ADC0->read(ADC0, A0);
+	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
 	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
@@ -141,7 +145,7 @@ unsigned long loop()
 
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
-	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600);
+	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
 	return;

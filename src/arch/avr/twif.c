@@ -641,7 +641,6 @@ PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 			
 		case TW_SET_PRES:
 			outb(hw->twsr, (*(hw->twsr) & (~B11)) | *((unsigned char*)conf));
-			*(hw->twsr) = (*(hw->twsr) & (~B11)) | *((unsigned char*)conf);
 			break;
 			
 		case TW_SET_SLA:

@@ -50,7 +50,7 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
 #else
-				BermudaIoSignal(&(bus->tx_queue));
+				BermudaMutexRelease(&(bus->tx_queue));
 #endif
 			}
 			break;
@@ -65,7 +65,7 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->rx_queue);
 #else
-				BermudaIoSignal(&(bus->rx_queue));
+				BermudaMutexRelease(&(bus->rx_queue));
 #endif
 			}
 			break;
@@ -127,6 +127,7 @@ unsigned int tmo;
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
 	BermudaEventSignal((volatile THREAD**)bus->mutex);
 #else
+	bus->tx_queue = 1;
 	BermudaMutexEnter(&(bus->tx_queue));
 	BermudaMutexRelease(&(bus->mutex));
 #endif

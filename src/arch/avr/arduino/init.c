@@ -88,18 +88,10 @@ PUBLIC int BermudaInit(void)
 	BermudaSchedulerInit(&MainThread);
 	BermudaSchedulerStart();
 #else
-	static unsigned long tick_resume = 0;
+
 	setup();
 	while(1) {
 		loop();
-		tick_new = BermudaTimerGetSysTick();
-		if(tick_new != tick_resume) {
-			/*
-			 * Point 2 - process all timers
-			 */
-			BermudaTimerProcess();
-			tick_resume = tick_new;
-		}
 	}
 #endif
         return 0;

@@ -38,8 +38,10 @@
 #include <arch/adc.h>
 #include <arch/avr/328/dev/spibus.h>
 
+#ifdef __THREADS__
 static VTIMER *timer;
 static unsigned char twi_slave_tx = 0x0;
+
 
 TWI_HANDLE(SlaveResponder, msg)
 {
@@ -88,6 +90,7 @@ THREAD(TwiTest, arg)
 	}
 }
 
+
 static unsigned char led = 1;
 
 PUBLIC void TestTimer(VTIMER *timer, void *arg)
@@ -95,6 +98,7 @@ PUBLIC void TestTimer(VTIMER *timer, void *arg)
 	BermudaDigitalPinWrite(5, led);
 	led ^= 1;
 }
+#endif
 
 int main(void)
 {
@@ -108,11 +112,13 @@ void setup()
 {
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
+#ifdef __THREADS__
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 150, 
 					BermudaHeapAlloc(150), BERMUDA_DEFAULT_PRIO);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
+#endif
 
 	Bermuda24c02Init("TWI0");
 	BermudaSpiRamInit(SPI0, 10);
@@ -137,6 +143,10 @@ void loop()
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
 	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
+#ifdef __THREADS__
 	BermudaThreadSleep(5000);
+#else
+	BermudaDelay(500);
+#endif
 	return;
 }

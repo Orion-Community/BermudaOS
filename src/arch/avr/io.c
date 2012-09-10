@@ -19,6 +19,8 @@
 /** \file arch/avr/io.c */
 
 #include <bermuda.h>
+#include <lib/binary.h>
+
 #include <arch/avr/io.h>
 
 /**
@@ -30,14 +32,7 @@
  */
 void BermudaMutexEnter(volatile unsigned char *lock)
 {
-        unsigned char test = 0x1;
-        
-        while(test != 0x0)
-        {
-                test  ^= *lock;
-                *lock ^= test;
-                test  ^= *lock;
-        }
+	while((*lock & B1) == B1);    
 }
 
 /**
@@ -49,9 +44,7 @@ void BermudaMutexEnter(volatile unsigned char *lock)
  */
 inline void BermudaMutexRelease(volatile unsigned char *lock)
 {
-        unsigned char atomic = 0;
-        
-        atomic ^= *lock;
-        *lock  ^= atomic;
-        atomic ^= *lock;
+	BermudaEnterCritical();
+	*lock = 0;
+	BermudaExitCritical();
 }

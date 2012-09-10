@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define __THREADS__
+/* #define __THREADS__ */
 #ifdef __THREADS__
 .section .text
 .global BermudaSwitchTask

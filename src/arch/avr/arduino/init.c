@@ -45,7 +45,11 @@
 #define LED      PINB5
 
 extern unsigned int __heap_start;
+#ifdef __THREADS__
 extern void loop();
+#else
+extern unsigned long loop();
+#endif
 extern void setup();
 
 #ifdef __THREADS__
@@ -89,9 +93,22 @@ PUBLIC int BermudaInit(void)
 	BermudaSchedulerStart();
 #else
 
+	unsigned long current_ms, delay_ms = 0, prev_ms = 0, delay;
+	
 	setup();
+	delay = loop(); // first run to get delay
 	while(1) {
-		loop();
+		current_ms = BermudaTimerGetSysTick();
+		if(prev_ms != current_ms) {
+			BermudaTimerProcess();
+			prev_ms = current_ms;
+		}
+
+		if((current_ms - delay_ms) > delay) {
+			delay = loop();
+			delay_ms = current_ms;
+		}
+		
 	}
 #endif
         return 0;

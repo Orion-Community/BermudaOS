@@ -38,8 +38,8 @@
 #include <arch/adc.h>
 #include <arch/avr/328/dev/spibus.h>
 
-#ifdef __THREADS__
 static VTIMER *timer;
+#ifdef __THREADS__
 static unsigned char twi_slave_tx = 0x0;
 
 
@@ -89,7 +89,7 @@ THREAD(TwiTest, arg)
 		BermudaThreadSleep(1000);
 	}
 }
-
+#endif
 
 static unsigned char led = 1;
 
@@ -98,7 +98,6 @@ PUBLIC void TestTimer(VTIMER *timer, void *arg)
 	BermudaDigitalPinWrite(5, led);
 	led ^= 1;
 }
-#endif
 
 int main(void)
 {
@@ -117,8 +116,8 @@ void setup()
 					BermudaHeapAlloc(150), BERMUDA_DEFAULT_PRIO);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 #endif
+	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 
 	Bermuda24c02Init("TWI0");
 	BermudaSpiRamInit(SPI0, 10);
@@ -126,13 +125,13 @@ void setup()
 	Bermuda24c02WriteByte(100, 0xAC);
 }
 
-void loop()
+unsigned long loop()
 {
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
 
-	tmp = ADC0->read(ADC0, A0, 500);
+	tmp = ADC0->read(ADC0, A0);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
 	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
@@ -142,11 +141,11 @@ void loop()
 
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
-	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
+	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600);
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
-#else
-	BermudaDelay(500);
-#endif
 	return;
+#else
+	return 500;
+#endif
 }

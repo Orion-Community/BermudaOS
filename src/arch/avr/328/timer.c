@@ -161,7 +161,7 @@ PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
   * pres[1]: Represents CS01;
   * pres[2]: Represents CS02;
   */
-void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres)
+PUBLIC void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres)
 {
         *timer->controlB &= ~B111; // results in 11111000
         *timer->controlB |= pres & B111;

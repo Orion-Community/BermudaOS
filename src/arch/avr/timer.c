@@ -16,8 +16,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <arch/avr/io.h>
+#include <bermuda.h>
+
+#include <lib/bermuda.h>
+
+#include <arch/io.h>
+#include <arch/avr/timer.h>
+
+PUBLIC void BermudaAvrTimerSetISR(TIMER *timer, unsigned char isr)
+{
+	unsigned char i = 1;
+	unsigned char int_mask;
+	
+	for(; i <= TIMER_ISRS; i << 1) {
+		inb(timer->int_mask, &int_mask);
+		if((isr & i) != 0) {
+			outb(timer->int_mask, int_mask | i);
+		}
+	}
+}
 
 
 

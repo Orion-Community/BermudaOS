@@ -62,17 +62,13 @@ typedef struct pwm PWM;
  */
 typedef struct pwm_channel PWM_CHANNEL;
 
-/**
- * \brief Definition of the PWM structure.
- * \see PWM
- */
-struct pwm
+typedef enum
 {
-	TIMER *timer; //!< Timer backend of this PWM.
-	uint16_t duty; //!< Duty time in ms.
-	uint32_t freq; //!< PWM frequency in Hz.
-	PWM_CHANNEL channels[MAX_CHANNELS]; //! PWM channels
-} __attribute__((packed));
+	CHANNEL_ONE = 0,
+	CHANNEL_TWO,
+	CHANNEL_THREE,
+	CHANNEL_FOUR,
+} PWM_CHANNEL_NUM;
 
 struct pwm_channel
 {
@@ -89,6 +85,19 @@ struct pwm_channel
 	 * * BIT[0]: 1 = enabled, 0 = disabled.
 	 */
 	unsigned char flags : 1;
+	
+	uint16_t duty; //!< Duty time in ms.
+} __attribute__((packed));
+
+/**
+ * \brief Definition of the PWM structure.
+ * \see PWM
+ */
+struct pwm
+{
+	TIMER *timer; //!< Timer backend of this PWM.
+	uint32_t freq; //!< PWM frequency in Hz.
+	PWM_CHANNEL *channels[MAX_CHANNELS]; //! PWM channels
 } __attribute__((packed));
 
 #endif /* __PWMDEV_H */

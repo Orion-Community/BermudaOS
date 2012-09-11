@@ -21,6 +21,12 @@
 
 #include <bermuda.h>
 
+#define OVERFLOW_ISR B1
+#define OUTPUT_COMPAREA_ISR B10
+#define OUTPUT_COMPAREB_ISR B100
+
+#define TIMER_ISRS B100
+
 struct timer
 {
         unsigned short prescaler;
@@ -53,11 +59,8 @@ __DECL
 extern void BermudaSetupTimer(char *name, unsigned short top, unsigned char mode,
                                 unsigned char prescaler);
 
-#ifdef __LAZY__
-extern int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres);
-#else
+extern void BermudaAvrTimerSetISR(TIMER *timer, unsigned char isr);
 extern void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres);
-#endif
 
 extern inline unsigned long BermudaTimerGetSysTick();
 __DECL_END

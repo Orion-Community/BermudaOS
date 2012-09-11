@@ -68,14 +68,9 @@ BermudaTimerGetTickFreq()) / 1000)
 __DECL
 extern void BermudaInitTimer0();
 
-#ifdef __LAZY__
-PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode);
-PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm);
-#else
 PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode);
 PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer,
                                                         unsigned char ocm);
-#endif
 
 #if (TIMERS & B1) == B1
 PRIVATE WEAK void BermudaTimer0InitRegs(TIMER *timer);

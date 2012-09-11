@@ -150,80 +150,6 @@ PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
 }
 #endif
 
-#ifdef __LAZY__
-/**
-  * \fn BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
-  * \brief Set the timer prescaler.
-  * \param timer The prescaler will be set for this given timer.
-  * \param pres The prescaler to set.
-  * \return Error code.
-  *
-  * The prescaler must be a power of two, but there are a few exceptions. The
-  * followeing values have a different meaning:
-  *
-  * * [pres == 0] This will disable the counter.
-  * * [pres == 0xFF] This will set a prescaler of 1 (i.e. no prescaler)
-  * * [pres == 0xFE] This will set the prescaler to an external clock on the T0
-  *                  pin - falling edge.
-  * * [pres == 0xFD] Same as <i>pres == 0xFE</i>, but it will clock on the rising
-  *                  rising edge.
-  */
-int BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
-{
-        if(0xFF == pres || 0xFE == pres || 0xFD == pres)
-                goto SetPrescaler;
-        if(BermudaIsPowerOfTwo(pres))
-                return -1;
-
-        SetPrescaler:
-        
-        cpb(*timer->controlB, CS00);
-        cpb(*timer->controlB, CS01);
-        cpb(*timer->controlB, CS02);
-        
-        timer->prescaler = pres;
-        
-        switch(pres)
-        {
-                case 8:
-                        spb(*timer->controlB, CS01);
-                        break;
-                        
-                case 64:
-                        spb(*timer->controlB, CS00);
-                        spb(*timer->controlB, CS01);
-                        break;
-                        
-                case 256:
-                        spb(*timer->controlB, CS02);
-                        break;
-                        
-                case 1024:
-                        spb(*timer->controlB, CS00);
-                        spb(*timer->controlB, CS02);
-                        break;
-                
-                case 0xFD:
-                        spb(*timer->controlB, CS00);
-                        spb(*timer->controlB, CS01);
-                        spb(*timer->controlB, CS02);
-                        break;
-                        
-                case 0xFE:
-                        spb(*timer->controlB, CS01);
-                        spb(*timer->controlB, CS02);
-                        break;
-                        
-                case 0xFF: /* a pres of 255 means there will not be a prescaler */
-                        spb(*timer->controlB, CS00);
-                        
-                default:
-                        break;
-        }
-        
-        return 0;
-}
-#else
 /**
   * \fn BermudaTimerSetPrescaler(TIMER *timer, unsigned short pres)
   * \brief Set the timer prescaler.
@@ -241,62 +167,7 @@ void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres)
         *timer->controlB |= pres & B111;
         timer->prescaler = pres & B111;
 }
-#endif
 
-#ifdef __LAZY__
-/**
-  * \fn BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
-  * \brief Set the Output Compare Match for the given timer.
-  * \param timer The timer.
-  * \param ocm The output compare mode
-  *
-  * If bit 7 of <i>ocm</i> is set, the OCMB bits will be set instead of the
-  * OCMA bits.
-  */
-PRIVATE WEAK void BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
-{
-        unsigned char bit0, bit1;
-        
-        if(NULL == timer)
-                return;
-        
-        if((ocm & 0x80) != 0)
-        {
-                bit0 = COM0B0;
-                bit1 = COM0B1;
-                ocm &= ~0x80;
-        }
-        else
-        {
-                bit0 = COM0A0;
-                bit1 = COM0A1;
-        }
-        
-        cpb(*timer->controlA, bit0);
-        cpb(*timer->controlA, bit1);
-        
-        switch(ocm)
-        {
-                case 1:
-                        spb(*timer->controlA, bit0);
-                        break;
-
-                case 2:
-                        spb(*timer->controlA, bit1);
-                        break;
-
-                case 3:
-                        spb(*timer->controlA, bit0);
-                        spb(*timer->controlA, bit1);
-                        break;
-
-                default:
-                        break;
-        }
-        
-        return;
-}
-#else
 /**
   * \fn BermudaTimerSetOutputCompareMatch(TIMER *timer, ocm_t ocm)
   * \brief Set the Output Compare Match for the given timer.
@@ -315,63 +186,7 @@ unsigned char ocm;
         *timer->controlA &= B11110000;
         *timer->controlA |= (ocm & B1111) << 4;
 }
-#endif
 
-#ifdef __LAZY__
-/**
- * \fn BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
- * \brief Set the waveform generation mode
- * \param timer The timer.
- * \param mode The mode to set to <i>timer</i>.
- * \see enum wfm_t
- * 
- * This function will set the mode of the waveform generator of the given timer.
- * Valid modes are found in the enumeration wfm_t.
- */
-PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
-{
-        if(NULL == timer)
-                return;
-        BermudaTimerDisable(timer);
-        
-        /* reset the entire operation mode */
-        cpb(*timer->controlA, WGM00);
-        cpb(*timer->controlA, WGM01);
-        cpb(*timer->controlB, WGM02);
-        
-        switch(mode)
-        {
-                case WFM_PHASE_CORRECT:
-                        spb(*timer->controlA, WGM00);
-                        spb(*timer->controlB, WGM02);
-                        break;
-                
-                case WFM_PHASE_CORRECT_MAX:
-                        spb(*timer->controlA, WGM00);
-                        break;
-                
-                case WFM_CTC:
-                        spb(*timer->controlA, WGM01);
-                        break;
-                
-                case WFM_FAST_PWM:
-                        spb(*timer->controlA, WGM00);
-                        spb(*timer->controlA, WGM01);
-                        spb(*timer->controlB, WGM02);
-                        break;
-                
-                case WFM_FAST_PWM_MAX:
-                        spb(*timer->controlA, WGM00);
-                        spb(*timer->controlA, WGM01);
-                        break;
-                        
-                default: /* normal operation */
-                        break;
-        }
-        
-        BermudaTimerEnable(timer);
-}
-#else
 /**
  * \fn BermudaTimerSetWaveFormMode(TIMER *timer, wfm_t mode)
  * \brief Set the waveform generation mode
@@ -391,7 +206,6 @@ PRIVATE WEAK void BermudaTimerSetWaveFormMode(TIMER *timer, unsigned char mode)
         *timer->controlB |= (mode & B1) << 3;
         return;
 }
-#endif
 
 /**
  * \var BermudaSystemTick

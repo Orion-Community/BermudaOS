@@ -15,7 +15,7 @@ include ../make/Makefile.defs
 .PHONY: all clean upload $(TARGET)
 
 all: $(TARGET) $(OBJS)
-	$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o temp.elf $(OBJS) -L$(LIBDIR) $(LIBS)
+	$(CC) -mmcu=$(MCU) -mcall-prologues -lm -Wl,--gc-sections -Os -o temp.elf $(OBJS) -L$(LIBDIR) $(LIBS)
 	$(OBJCOPY) -R .eeprom -O ihex temp.elf $(TARGET)
 #	-rm -fv temp.elf
 

@@ -43,7 +43,9 @@ PUBLIC DEVICE *BermudaTwiDevInit(TWIBUS *bus, char *name)
 	
 	dev->io = file;
 	dev->data = bus;
-        dev->mutex = bus->mutex;
+#ifdef __EVENTS__
+	dev->mutex = bus->mutex;
+#endif
 	
 	file->write = &BermudaTwiDevWrite;
 	file->read = &BermudaTwiDevRead;
@@ -120,11 +122,18 @@ PUBLIC int BermudaTwiDevWrite(VFILE *file, const void *tx, size_t size)
 	if(dev->alloc(file->data, msg->tmo) == -1) {
 		return rc;
 	}
+#else
+	BermudaMutexEnter(&(bus->mutex));
 #endif
-	rc = bus->twif->transfer(bus, msg->tx_buff, msg->tx_length, msg->rx_buff, msg->rx_length,
-							msg->sla, msg->scl_freq, msg->tmo);
+
 #ifdef __EVENTS__
+	rc = bus->twif->transfer(bus, msg->tx_buff, msg->tx_length, msg->rx_buff, msg->rx_length,
+						msg->sla, msg->scl_freq, msg->tmo);
 	dev->release(file->data);
+#else
+	rc = bus->twif->transfer(bus, msg->tx_buff, msg->tx_length, msg->rx_buff, msg->rx_length,
+						msg->sla, msg->scl_freq);
+	BermudaMutexRelease(&(bus->mutex));
 #endif
 	return rc;
 }
@@ -141,13 +150,20 @@ PUBLIC int BermudaTwiDevRead(VFILE *file, void *rx, size_t size)
 	int rc = -1; size_t num = 0;
 	TWIMSG *msg = (TWIMSG*)rx;
 	TWIBUS *bus = ((DEVICE*)(file->data))->data;
-	
+#ifdef __EVENTS__
 	if((rc = bus->twif->listen(bus, &num, msg->rx_buff, msg->rx_length, 
 							   msg->tmo)) == 0) {
+#else
+	if((rc = bus->twif->listen(bus, &num, msg->rx_buff, msg->rx_length)) == 0) {
+#endif
 		if(msg->call_back) {
 			msg->call_back(msg);
 		}
+#ifdef __EVENTS__
 		bus->twif->respond(bus, msg->tx_buff, msg->tx_length, msg->tmo);
+#else
+		bus->twif->respond(bus, msg->tx_buff, msg->tx_length);
+#endif
 	}
 	return (int)num;
 }

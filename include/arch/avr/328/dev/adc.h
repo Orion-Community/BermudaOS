@@ -16,7 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __ADC__
+//! \file include/arch/avr/328/dev/adc.h Analog Digital Converter.
+
+#if defined(__ADC__) || defined(__DOXYGEN__)
 #ifndef __ATmega328_ADC_H
 #define __ATmega328_ADC_H
 
@@ -36,6 +38,10 @@
 
 #define ADC_DEFAULT_CLK              B110
 
+/**
+ * \def ADC0
+ * \brief Can be used to address the structure of ADC0.
+ */
 #define ADC0 (&adc0)
 
 #endif /* __ATmega328_ADC_H */

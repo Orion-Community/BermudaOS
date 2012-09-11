@@ -104,7 +104,7 @@ PUBLIC void BermudaDelay_us(unsigned long us)
  * 
  * The CPU will busy wait for the given amount of mili seconds.
  */
-PUBLIC void BermudaDelay(unsigned char ms)
+PUBLIC void BermudaDelay(unsigned short ms)
 {
         BermudaDelay_us((unsigned long)ms * 1000);
 }

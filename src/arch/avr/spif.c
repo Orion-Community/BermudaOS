@@ -45,11 +45,14 @@ PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
 				bus->ctrl->io(bus, SPI_WRITE_DATA, (void*)&(bus->master_tx[bus->master_index]));
 				bus->master_index++;
 			}
-#ifdef __EVENTS__
+
 			else {
+#ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->master_queue);
-			}
+#else
+				BermudaIoSignal(&(bus->master_queue));
 #endif
+			}
 			break;
 			
 		case BERMUDA_SPI_SLAVE:
@@ -62,37 +65,14 @@ PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
 			else {
 				bus->ctrl->io(bus, SPI_WRITE_DATA, (void*)&dummy);
 #ifdef __EVENTS__
-				BermudaEventSignalFromISR((volatile THREAD**)bus->slave_queue);
+				BermudaEventSignalFromISR((volatile THREAD**)bus->master_queue);
+#else
+				BermudaIoSignal(&(bus->master_queue));
 #endif
 			}
 			bus->slave_index++;
 			break;
 	}
 		
-}
-
-PUBLIC int BermudaSpiSlaveListen(bus, tx, rx, len, tmo)
-SPIBUS *bus;
-const void *tx;
-void *rx;
-uptr len;
-unsigned int tmo;
-{
-	int rc = -1;
-	
-	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
-		return rc;
-	}
-	
-	bus->ctrl->io(bus, SPI_ENABLE_SLAVE, NULL);
-	bus->slave_rx = rx;
-	bus->slave_tx = tx;
-	bus->slave_len = len;
-	
-	rc = BermudaEventWaitNext((volatile THREAD **)bus->mutex, tmo);
-	
-	BermudaEventSignal((volatile THREAD**) bus->mutex);
-	return rc;
-	
 }
 #endif

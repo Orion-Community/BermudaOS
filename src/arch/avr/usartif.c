@@ -49,6 +49,8 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 				bus->tx_len = 0;
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
+#else
+				BermudaMutexRelease(&(bus->tx_queue));
 #endif
 			}
 			break;
@@ -62,6 +64,8 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 				bus->rx_len = 0;
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->rx_queue);
+#else
+				BermudaMutexRelease(&(bus->rx_queue));
 #endif
 			}
 			break;
@@ -87,12 +91,18 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
  * The transfer will be started. Based on the parameters it will start a transmit
  * or receive operation. If both should be done it will do a transmit first.
  */
+#ifdef __EVENTS__
 PUBLIC int BermudaUsartTransfer(bus, tx, txlen, baud, tmo)
+#else
+PUBLIC int BermudaUsartTransfer(bus, tx, txlen, baud)
+#endif
 USARTBUS *bus;
 const void *tx;
 unsigned int txlen;
 unsigned int baud;
+#ifdef __EVENTS__
 unsigned int tmo;
+#endif
 {
 	int rc = -1;
 
@@ -103,6 +113,8 @@ unsigned int tmo;
 	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
 		return -1;
 	}
+#else
+	BermudaMutexEnter(&(bus->mutex));
 #endif
 
 	bus->usartif->io(bus, USART_START, NULL);
@@ -113,21 +125,27 @@ unsigned int tmo;
 	
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
-#endif
-	
-#ifdef __EVENTS__
 	BermudaEventSignal((volatile THREAD**)bus->mutex);
-
+#else
+	bus->tx_queue = 1;
+	BermudaMutexEnter(&(bus->tx_queue));
+	BermudaMutexRelease(&(bus->mutex));
 #endif
 	return rc;
 }
 
+#ifdef __EVENTS__
 PUBLIC int BermudaUsartListen(bus, rx, rxlen, baud, tmo)
+#else
+PUBLIC int BermudaUsartListen(bus, rx, rxlen, baud)
+#endif
 USARTBUS *bus;
 void *rx;
 unsigned int rxlen;
 unsigned int baud;
+#ifdef __EVENTS__
 unsigned int tmo;
+#endif
 {
 	int rc = -1;
 	
@@ -142,6 +160,9 @@ unsigned int tmo;
 	
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, tmo);
+#else
+	rc = 0;
+	BermudaMutexEnter(&(bus->rx_queue));
 #endif
 	return rc;
 }

@@ -29,4 +29,4 @@ $(TARGET): $(OBJS)
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 clean:
-	-rm -vf $(OBJS)
+	-rm -vf $(OBJS) $(TARGET)

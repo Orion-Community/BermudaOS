@@ -58,6 +58,7 @@ typedef void* EVENT;
 extern "C" {
 #endif
 
+#ifdef __EVENTS__
 extern int BermudaEventWait(volatile THREAD **queue, unsigned int tmo);
 extern int BermudaEventSignal(volatile THREAD **tqpp);
 extern int BermudaEventSignalRaw(THREAD *volatile*tqpp);
@@ -66,6 +67,7 @@ extern int BermudaEventWaitNext(volatile THREAD **tqpp, unsigned int tmo);
 
 // private functions
 PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg);
+#endif
 
 __DECL_END
 

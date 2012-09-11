@@ -39,7 +39,13 @@ PRIVATE WEAK int BermudaAdcSetPrescaler(ADC *adc, const unsigned char prescaler)
 struct adc adc0;
 
 #ifdef __EVENTS__
+/**
+ * \brief Mutex variable.
+ */
 static void *adc0_mutex = SIGNALED;
+/**
+ * \brief Transfer waiting queue.
+ */
 static void *adc0_queue = SIGNALED;
 #endif
 
@@ -56,7 +62,7 @@ PUBLIC void BermudaAdc0Init()
 	BermudaAdcEnable(adc);
 
 	BermudaAdcSetPrescaler(adc, ADC_DEFAULT_CLK);
-#ifndef __EVENTS__
+#ifdef __EVENTS__
 	BermudaAdcIrqAttatch(adc);
 #endif
 	return;

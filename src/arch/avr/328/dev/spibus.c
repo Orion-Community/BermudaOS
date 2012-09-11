@@ -39,8 +39,18 @@
 
 #ifdef __EVENTS__
 static THREAD *BermudaSPI0TransferQueue = SIGNALED;
-static THREAD *BermudaSPI0SlaveTransferQueue = SIGNALED;
 static THREAD *BermudaSPI0Mutex = SIGNALED;
+#endif
+
+#ifndef __THREADS__
+/**
+ * \brief Master transmission queue when events are disabled.
+ */
+static mutex_t spi_master_queue = 0;
+/**
+ * \brief Slave transmission waiting queue when events are disabled.
+ */
+static mutex_t spi_slave_queue = 0;
 #endif
 
 // private functions
@@ -85,10 +95,9 @@ SPIBUS BermudaSpi0HardwareBus = {
 #ifdef __EVENTS__
 		.mutex = (void*)&BermudaSPI0Mutex,
 		.master_queue = (void*)&BermudaSPI0TransferQueue,
-		.slave_queue = (void*)&BermudaSPI0SlaveTransferQueue,
-#elif __THREADS__
+#else
 		.mutex = 0,
-		.queue = 0,
+		.master_queue = 1,
 #endif
 		.ctrl  = &BermudaSpiHardwareCtrl,
 		.io    = &BermudaSPI0HardwareIO,
@@ -217,10 +226,11 @@ PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint
 #ifdef __EVENTS__
 free:
 	BermudaEventSignal((volatile THREAD**)bus->mutex);
+	out:
 #elif __THREADS__
 	BermudaMutexRelease(&(bus->mutex));
 #endif
-	out:
+
 	return rc;
 }
 

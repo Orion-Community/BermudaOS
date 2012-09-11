@@ -254,6 +254,11 @@ extern void BermudaThreadYield();
 extern THREAD *BermudaThreadGetByName(char *name);
 extern void BermudaThreadFree();
 
+#if !defined(__EVENTS__) && defined(__THREADS__)
+extern void BermudaIoWait(volatile void **tpp);
+extern void BermudaIoSignal(volatile void **tpp);
+#endif
+
 // internal functions
 PRIVATE WEAK void BermudaThreadTimeout(VTIMER *timer, void *arg);
 __DECL_END

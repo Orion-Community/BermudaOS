@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/arch/adc.h Analog Digital Converter.
+
 #ifdef __AVR__
 
 #include <arch/avr/adc.h>

@@ -124,7 +124,7 @@ extern VTIMER *BermudaTimerCreate(unsigned long ms, vtimer_callback fn, void *ar
                                      unsigned char flags);
 extern void BermudaTimerStop(VTIMER *timer);
 extern void BermudaTimerInit();
-extern void BermudaDelay(unsigned char ms);
+extern void BermudaDelay(unsigned short ms);
 extern void BermudaDelay_us(unsigned long us);
 
 // internal functions

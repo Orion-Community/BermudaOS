@@ -100,9 +100,10 @@ PUBLIC void BermudaTwi0Init(unsigned char sla)
 	bus->mutex = &twi0_mutex;
 	bus->master_queue = &twi0_master_queue;
 	bus->slave_queue = &twi0_slave_queue;
-#elif __THREADS__
-	bus->mutex = &tw_mutex;
-	bus->master_queue = &tw_master_queue;
+#else
+	bus->mutex = 0;
+	bus->master_queue = 1;
+	bus->slave_queue = 1;
 #endif
 
 	// Initialize the hardware interface.

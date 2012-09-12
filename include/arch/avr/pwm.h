@@ -20,8 +20,11 @@
 #ifndef __PWM_AVR_H
 #define __PWM_AVR_H
 
+#define AVR_PWM_BASE_FRQ 2000UL
+#define AVR_PWM_DEFAULT_PS 32UL
+
 __DECL
-extern void BermudaAvrPwmInit(PWM *pwm, TIMER *timer, uint32_t freq);
+extern void BermudaAvrPwmInit(PWM *pwm, TIMER *timer);
 extern void BermudaAvrPwmChannelInit(PWM *pwm, PWM_CHANNEL_NUM channel, reg8_t bank,
 									 unsigned char pin);
 extern void BermudaAvrPwmSetDuty(PWM *pwm, uint16_t duty, PWM_CHANNEL_NUM channel);

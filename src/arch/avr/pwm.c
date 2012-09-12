@@ -29,18 +29,27 @@
 #include <arch/avr/timer.h>
 #include <arch/avr/pwm.h>
 
+#if ((TIMERS & B100) != B100)
+#warning AVR hardware timer 2 should be enabled to use PWM functionality.
+#endif
+
 /**
  * \brief Initialize the given PWM structure.
  * \param timer Backend timer to support the PWM.
  * \param freq Frequency to run on the timer.
  * \todo Implement a frequency calculator.
  */
-PUBLIC void BermudaAvrPwmInit(PWM *pwm, TIMER *timer, uint32_t freq)
+PUBLIC void BermudaAvrPwmInit(PWM *pwm, TIMER *timer)
 {
-	pwm->timer = timer;
-	pwm->freq = freq;
+	if(timer == NULL) {
+		BermudaAvrTimer2Init();
+		timer = TIMER2;
+	}
 	
-	BermudaTimerSetPrescaler(timer, B001);
+	pwm->timer = timer;
+	pwm->freq = AVR_PWM_BASE_FRQ;
+	BermudaAvrTimerSetTop(timer, (F_CPU/AVR_PWM_DEFAULT_PS)/AVR_PWM_BASE_FRQ);
+	BermudaTimerSetPrescaler(timer, B11);
 	BermudaAvrTimerSetISR(timer, OVERFLOW_ISR | OUTPUT_COMPAREA_ISR);
 }
 

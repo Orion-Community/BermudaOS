@@ -52,6 +52,11 @@
 #define false FALSE
 #define true TRUE
 
+#define POINTER(T) (typeof(T*))
+#define ARRAY(T, N) (typeof(T[N]))
+
+#define NEXT(E) ((typeof(E))((E)->next))
+
 /**
  * \def __PACK__
  * \brief Packed attribute.

@@ -30,7 +30,15 @@
 #include <arch/avr/328/timer.h>
 
 PRIVATE WEAK TIMER *timer0 = NULL;
-PRIVATE WEAK TIMER *timer2 = NULL;
+
+/**
+ * \var timer2
+ * \brief Variable definition of hardware timer 2.
+ * \note The prescaler is always 32.
+ * 
+ * This timer is usually used for PWM generation.
+ */
+TIMER *timer2 = NULL;
 
 /**
  * \fn BermudaInitTimer0()
@@ -66,7 +74,7 @@ void BermudaInitTimer0()
 
 #if (TIMERS & B100) == B100
 /**
- * \fn BermudaInitTimer2()
+ * \fn BermudaAvrTimer2Init()
  * \brief Initialize timer 2.
  *
  * This function initializes timer 2 with the following properties:
@@ -79,7 +87,7 @@ void BermudaInitTimer0()
  * The main function of this timer is to provide sleep support and generate a
  * timer feed to the scheduler.
  */
-void BermudaInitTimer2()
+PUBLIC void BermudaAvrTimer2Init()
 {
         unsigned char ints = 0;
         BermudaSafeCli(&ints);
@@ -89,7 +97,6 @@ void BermudaInitTimer2()
         BermudaHardwareTimerInit(timer2, B111, B11, B0);
 
         *(timer2->output_comp_a) = 250;
-        spb(*timer2->int_mask, TOIE2);
         
         BermudaIntsRestore(ints);
 }
@@ -238,9 +245,3 @@ SIGNAL(TIMER0_OVF_vect)
 	BermudaSystemTick++;
 }
 
-#if (TIMERS & B100) == B100
-SIGNAL(TIMER2_OVF_vect)
-{
-
-}
-#endif

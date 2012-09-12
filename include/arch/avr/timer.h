@@ -27,6 +27,8 @@
 
 #define TIMER_ISRS B100
 
+#define TIMER2 (timer2)
+
 struct timer
 {
         unsigned short prescaler;
@@ -64,6 +66,8 @@ extern void BermudaTimerSetPrescaler(TIMER *timer, unsigned char pres);
 
 extern inline unsigned long BermudaTimerGetSysTick();
 __DECL_END
+
+extern TIMER *timer2;
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/timer.h>

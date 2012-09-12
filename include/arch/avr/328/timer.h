@@ -65,6 +65,11 @@
 #define BermudaTimerMillisToTicks(ms) (((unsigned long)ms * (unsigned long) \
 BermudaTimerGetTickFreq()) / 1000)
 
+#define BermudaAvrTimerSetTop(timer, top) 	\
+{											\
+	outb(timer->output_comp_a, top); 		\
+}
+
 __DECL
 extern void BermudaInitTimer0();
 
@@ -82,8 +87,8 @@ PRIVATE WEAK void BermudaTimer1InitRegs(TIMER *timer);
 #endif
 
 #if (TIMERS & B100) == B100
-// #error No support for timer 2 yet!
-extern void BermudaInitTimer2();
+
+extern void BermudaAvrTimer2Init();
 PRIVATE WEAK void BermudaTimer2InitRegs(TIMER *timer);
 PRIVATE WEAK void BermudaTimerSetAsychStatusRegister(TIMER *timer,
                                                      unsigned char sr);

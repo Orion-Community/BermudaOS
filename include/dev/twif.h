@@ -48,6 +48,11 @@ typedef enum
 	TWI_SLAVE_RECEIVER, //!< Slave receive mode.
 } TWIMODE;
 
+/**
+ * \brief Type of the bus.
+ * 
+ * A bus can either be controlled by internal hardware, or by a software driver.
+ */
 typedef enum
 {
 	TWI_SOFTWARE_CONTROLLER, //!< Type definition of software based TWI buses.

@@ -33,7 +33,7 @@
 #include <sys/events/event.h>
 
 // private function declarations
-PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen, 
+PRIVATE WEAK void BermudaAvrTwInit(TWIBUS *twi, const void *tx, unsigned int txlen, 
 	void *rx, unsigned int rxlen, unsigned char sla, uint32_t frq);
 
 /**
@@ -41,13 +41,13 @@ PRIVATE WEAK void BermudaTwInit(TWIBUS *twi, const void *tx, unsigned int txlen,
  * \param bus TWI bus which raised the interrupt.
  * \warning Should only be called by hardware!
  * \note When addressed as a slave receiver, the bus is blocked after the STOP
- *       bit. The user should always respond with BermudaTwiSlaveRespond.
+ *       bit. The user should always respond with BermudaAvrTwSlaveRespond.
  * 
  * Generic handling of the TWI logic. It will first sent all data in the transmit
  * buffer, if present. Then it will receive data in the receive buffer, if a
  * Rx buffer address is configured.
  */
-PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
+PUBLIC __link void BermudaAvrTwISR(TWIBUS *bus)
 {
 	unsigned char sla = bus->sla & (~BIT(0));
 	TW_IOCTL_MODE mode;
@@ -267,7 +267,7 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
 		/*
 		 * The current bus master did sent a stop condition to terminate the
 		 * transfer. The bus will be blocked blocked by holding SCL low. Bus
-		 * operation can be continued by calling BermudaTwiSlaveRespond.
+		 * operation can be continued by calling BermudaAvrTwSlaveRespond.
 		 */
 		case TWI_SR_STOP:
 			bus->error = TWI_SR_STOP;
@@ -387,9 +387,9 @@ PUBLIC __link void BermudaAvrTwiISR(TWIBUS *bus)
  * uses depends of the TWIMODE setting in the TWIBUS structure.
  */
 #ifdef __EVENTS__
-PUBLIC int BermudaTwiMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
+PUBLIC int BermudaTwMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
 #else
-PUBLIC int BermudaTwiMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq)
+PUBLIC int BermudaTwMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq)
 #endif
 TWIBUS        *bus;
 const void*   tx;
@@ -404,7 +404,7 @@ unsigned int  tmo;
 {
 	int rc = -1;
 	
-	BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq);
+	BermudaAvrTwInit(bus, tx, txlen, rx, rxlen, sla, frq);
 	if(tx) {
 		bus->mode = TWI_MASTER_TRANSMITTER;
 	}
@@ -439,7 +439,7 @@ unsigned int  tmo;
  * 
  * Used to initialize the TWI bus before starting a transfer.
  */
-PRIVATE WEAK void BermudaTwInit(bus, tx, txlen, rx, rxlen, sla, frq)
+PRIVATE WEAK void BermudaAvrTwInit(bus, tx, txlen, rx, rxlen, sla, frq)
 TWIBUS*       bus;
 const void*   tx;
 size_t        txlen;
@@ -473,15 +473,15 @@ uint32_t      frq;
  * \return Error code. 0 for success.
  * \warning When this function returns without error, the bus is blocked!
  * \warning If this function responds without error, the application should
- *          respond IMMEDIATLY with BermudaTwiSlaveRespond.
+ *          respond IMMEDIATLY with BermudaAvrTwSlaveRespond.
  * 
  * Listens for requests by a master to this TWI bus interface.
  */
 #ifdef __EVENTS__
-PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
+PUBLIC int BermudaAvrTwSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 	unsigned int tmo)
 #else
-PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen)
+PUBLIC int BermudaAvrTwSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen)
 #endif
 {
 	int rc = -1;
@@ -532,10 +532,10 @@ PUBLIC int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxle
  * will be released.
  */
 #ifdef __EVENTS__
-PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
+PUBLIC int BermudaAvrTwSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 	unsigned int tmo)
 #else
-PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen)
+PUBLIC int BermudaAvrTwSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen)
 #endif
 {
 	int rc = -1;
@@ -589,7 +589,7 @@ PUBLIC int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen)
  * It is safe to use the interface if this function returns -1 (both lines are
  * HIGH).
  */
-PUBLIC int BermudaTwHwIfacBusy(TWIBUS *bus)
+PUBLIC int BermudaAvrTwHwIfacBusy(TWIBUS *bus)
 {
 	HWTWI *hw = BermudaTwiIoData(bus);
 	unsigned char scl = (*(hw->io_in)) & BIT(hw->scl);
@@ -622,7 +622,7 @@ PUBLIC int BermudaTwHwIfacBusy(TWIBUS *bus)
  * \return 0 on success, -1 when an invalid value in <b>mode</b> is given.
  * \see TW_IOCTL_MODE
  */
-PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
+PUBLIC int BermudaAvrTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
 {
 	HWTWI *hw = BermudaTwiIoData(bus);
 	unsigned char sla;
@@ -726,7 +726,7 @@ PUBLIC int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf)
  * \param bus Bus to attatch the ISR to.
  * \param handle The actual ISR.
  */
-PUBLIC void BermudaAvrTwiIrqAttatch(TWIBUS *bus, void (*handle)(TWIBUS*))
+PUBLIC void BermudaAvrTwIrqAttatch(TWIBUS *bus, void (*handle)(TWIBUS*))
 {
 	HWTWI *hw = BermudaTwiIoData(bus);
 	
@@ -739,7 +739,7 @@ PUBLIC void BermudaAvrTwiIrqAttatch(TWIBUS *bus, void (*handle)(TWIBUS*))
  * \param bus TWI bus ones IRQ will be disabled.
  * \note Also the hardware interrupt will be disabled.
  */
-PUBLIC void BermudaAvrTwiIrqDetatch(TWIBUS *bus)
+PUBLIC void BermudaAvrTwIrqDetatch(TWIBUS *bus)
 {
 	HWTWI *hw = BermudaTwiIoData(bus);
 	
@@ -752,7 +752,7 @@ PUBLIC void BermudaAvrTwiIrqDetatch(TWIBUS *bus)
  * \param bus Bus to destroy.
  * \param type Defines the type of the bus (hardware/software).
  */
-PUBLIC void BermudaTwiBusFactoryDestroy(TWIBUS *bus, TWI_BUS_TYPE type)
+PUBLIC void BermudaAvrTwBusFactoryDestroy(TWIBUS *bus, TWI_BUS_TYPE type)
 {
 	BermudaHeapFree(bus->twif);
 	if(type == TWI_SOFTWARE_CONTROLLER) {

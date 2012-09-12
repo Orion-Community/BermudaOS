@@ -134,12 +134,12 @@ PUBLIC TWIBUS *BermudaTwiBusFactoryCreate(unsigned char sla)
 
 	// Initialize the TW interface.
 	bus->twif = twif;
-	bus->twif->transfer = &BermudaTwiMasterTransfer;
-	bus->twif->io = &BermudaTwIoctl;
-	bus->twif->ifbusy = &BermudaTwHwIfacBusy;
-	bus->twif->listen = &BermudaTwiSlaveListen;
-	bus->twif->respond = &BermudaTwiSlaveRespond;
-	BermudaAvrTwiIrqAttatch(bus, &BermudaAvrTwiISR);
+	bus->twif->transfer = &BermudaAvrTwMasterTransfer;
+	bus->twif->io = &BermudaAvrTwIoctl;
+	bus->twif->ifbusy = &BermudaAvrTwHwIfacBusy;
+	bus->twif->listen = &BermudaAvrTwSlaveListen;
+	bus->twif->respond = &BermudaAvrTwSlaveRespond;
+	BermudaAvrTwIrqAttatch(bus, &BermudaAvrTwISR);
 
 	// Initialize other parts of the bus
 	bus->busy = false;

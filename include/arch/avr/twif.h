@@ -27,29 +27,29 @@ extern "C"
 {
 #endif
 
-extern int BermudaTwHwIfacBusy(TWIBUS *bus);
-extern int BermudaTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
+extern int BermudaAvrTwHwIfacBusy(TWIBUS *bus);
+extern int BermudaAvrTwIoctl(TWIBUS *bus, TW_IOCTL_MODE mode, void *conf);
 
-extern void BermudaAvrTwiISR(TWIBUS *bus);
+extern void BermudaAvrTwISR(TWIBUS *bus);
 
 #ifdef __EVENTS__
-extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
+extern int BermudaAvrTwMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
 	void *rx, size_t rxlen, unsigned char sla,
 	uint32_t frq, unsigned int tmo);
-extern int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
+extern int BermudaAvrTwSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen, 
 	unsigned int tmo);
-extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
+extern int BermudaAvrTwSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen,
 	unsigned int tmo);
 #else
-extern int BermudaTwiMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
+extern int BermudaAvrTwMasterTransfer(TWIBUS *twi, const void *tx, size_t txlen,  
 	void *rx, size_t rxlen, unsigned char sla,
 	uint32_t frq);
-extern int BermudaTwiSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen);
-extern int BermudaTwiSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen);
+extern int BermudaAvrTwSlaveListen(TWIBUS *bus, size_t *num, void *rx, size_t rxlen);
+extern int BermudaAvrTwSlaveRespond(TWIBUS *bus, const void *tx, size_t txlen);
 #endif
 
-extern void BermudaAvrTwiIrqAttatch(TWIBUS *bus, void (*handle)(TWIBUS*));
-extern void BermudaAvrTwiIrqDetatch(TWIBUS *bus);
+extern void BermudaAvrTwIrqAttatch(TWIBUS *bus, void (*handle)(TWIBUS*));
+extern void BermudaAvrTwIrqDetatch(TWIBUS *bus);
 
 #ifdef __cplusplus
 }

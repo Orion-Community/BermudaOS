@@ -22,7 +22,8 @@
 
 __DECL
 extern void BermudaAvrPwmInit(PWM *pwm, TIMER *timer, uint32_t freq);
-extern void BermudaAvrPwmChannelInit(PWM *pwm, PWM_CHANNEL_NUM channel);
+extern void BermudaAvrPwmChannelInit(PWM *pwm, PWM_CHANNEL_NUM channel, reg8_t bank,
+									 unsigned char pin);
 extern void BermudaAvrPwmSetDuty(PWM *pwm, uint16_t duty, PWM_CHANNEL_NUM channel);
 __DECL_END
 

@@ -39,16 +39,16 @@
 #define MAX_CHANNELS 4
 
 /**
- * \def CHANNEL_ENABLE
+ * \def PWM_CHANNEL_ENABLE
  * \brief Channel enable flag.
  */
-#define CHANNEL_ENABLE 1
+#define PWM_CHANNEL_ENABLE 1
 
 /**
- * \def CHANNEL_DISABLE
+ * \def PWM_CHANNEL_DISABLE
  * \brief Channel disable flag.
  */
-#define CHANNEL_DISABLE 0
+#define PWM_CHANNEL_DISABLE 0
 
 /**
  * \brief Type definition of the PWM structure.
@@ -62,14 +62,23 @@ typedef struct pwm PWM;
  */
 typedef struct pwm_channel PWM_CHANNEL;
 
+/**
+ * \brief Type definition of the different PWM channels.
+ */
 typedef enum
 {
-	CHANNEL_ONE = 0,
-	CHANNEL_TWO,
-	CHANNEL_THREE,
-	CHANNEL_FOUR,
+	CHANNEL_ONE = 0, //!< First channel.
+	CHANNEL_TWO,     //!< Second channel.
+	CHANNEL_THREE,   //!< Third channel.
+	CHANNEL_FOUR,    //!< Fourth channel.
 } PWM_CHANNEL_NUM;
 
+/**
+ * \brief Definition of the PWM channel.
+ * 
+ * A PWM channel is the actual PWM which can generate a signal. Each PWM structure
+ * can contain 4 channels.
+ */
 struct pwm_channel
 {
 	/**

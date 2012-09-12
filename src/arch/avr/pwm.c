@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file src/arch/avr/pwm.c PWM backend functions.
+
 #if defined(__PWM__) || defined(__DOXYGEN__)
 
 #include <bermuda.h>
@@ -27,12 +29,54 @@
 #include <arch/avr/timer.h>
 #include <arch/avr/pwm.h>
 
+/**
+ * \brief Initialize the given PWM structure.
+ * \param timer Backend timer to support the PWM.
+ * \param freq Frequency to run on the timer.
+ * \todo Implement a frequency calculator.
+ */
 PUBLIC void BermudaAvrPwmInit(PWM *pwm, TIMER *timer, uint32_t freq)
 {
 	pwm->timer = timer;
 	pwm->freq = freq;
 	
 	BermudaTimerSetPrescaler(timer, B001);
+	BermudaAvrTimerSetISR(timer, OVERFLOW_ISR | OUTPUT_COMPAREA_ISR);
+}
+
+/**
+ * \brief Initialize a PWM channel.
+ * \param pwm PWM which contains an empty channel.
+ * \param channel Channel to initialize.
+ * \param bank I/O bank to generate the PWM signal on.
+ * \param pin Pin number in the bank to toggle.
+ * \see PWM_CHANNEL_NUM
+ */
+PUBLIC void BermudaAvrPwmChannelInit(PWM *pwm, PWM_CHANNEL_NUM channel, reg8_t bank,
+									 unsigned char pin)
+{
+	PWM_CHANNEL *chan = BermudaHeapAlloc(sizeof(PWM_CHANNEL));
+	pwm->channels[channel] = chan;
+	
+	chan->bank = bank;
+	chan->pin = pin;
+	chan->duty = 0;
+	chan->flags = 0;
+}
+
+/**
+ * \brief Set the duty cycle for a given PWM channel.
+ * \param pwm PWM which contains <b>channel</b>.
+ * \param duty Duty time to set in microseconds.
+ * \param channel Channel to set the duty for.
+ * \see PWM_CHANNEL_NUM
+ */
+PUBLIC void BermudaAvrPwmSetDuty(PWM *pwm, uint16_t duty, PWM_CHANNEL_NUM channel)
+{
+	PWM_CHANNEL *chan = pwm->channels[channel];
+	
+	chan->duty = duty;
+	chan->flags |= PWM_CHANNEL_ENABLE;
 }
 
 #endif

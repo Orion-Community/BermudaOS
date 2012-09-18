@@ -84,15 +84,15 @@
  * \typedef DEVICE
  * \brief Device type.
  */
-typedef struct _device DEVICE;
+typedef struct device DEVICE;
 
 /**
  * \struct _device
  * \brief Device information structure.
  */
-struct _device
+struct device
 {
-	struct _device *next; //!< Next pointer. Handled by device administration.
+	struct device *next; //!< Next pointer. Handled by device administration.
 	
 	/**
 	 * \brief Device name.
@@ -112,14 +112,14 @@ struct _device
 	 * \param tmo Time out value in milli seconds.
 	 * \return Returns 0 on success, -1 if the device could not be allocated.
 	 */
-	int (*alloc)(struct _device *dev, unsigned int tmo);
+	int (*alloc)(struct device *dev, unsigned int tmo);
 
 	/**
 	 * \brief Release the device.
 	 * \param dev 'This' device.
 	 * \return 0 on success, -1 when the device couldn't be released.
 	 */
-	int (*release)(struct _device *dev);
+	int (*release)(struct device *dev);
 };
 
 #ifdef __cplusplus

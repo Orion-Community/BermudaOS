@@ -45,8 +45,11 @@ typedef void (*thread_handle_t)(void *data);
  * A function which serves a thread should be declared with this macro.
  */
 #define THREAD(fn, param) \
-PRIVATE WEAK void fn(void *param); \
-PRIVATE WEAK void fn(void *param)
+static void fn(void *param); \
+static void fn(void *param)
+
+#define THREAD_DEF(fn, param) \
+static void fn(void *param);
 
 /**
  * \def BERMUDA_DEFAULT_PRIO
@@ -54,6 +57,7 @@ PRIVATE WEAK void fn(void *param)
  */
 
 #define BERMUDA_DEFAULT_PRIO 150
+#define THREAD_DEFAULT_PRIO BERMUDA_DEFAULT_PRIO
 
 /**
  * \def BERMUDA_HIGHEST_PRIO

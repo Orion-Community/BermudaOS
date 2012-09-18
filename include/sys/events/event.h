@@ -38,6 +38,14 @@
 #define BERMUDA_EVENT_WAIT_INFINITE 0
 
 /**
+ * \def EVENT_WAIT_INFINITE
+ * \brief Wait infinite.
+ * 
+ * The thread will wait infinite for a passing event.
+ */
+#define EVENT_WAIT_INFINITE BERMUDA_EVENT_WAIT_INFINITE
+
+/**
  * \def SIGNALED
  * \brief Signaled state.
  * 

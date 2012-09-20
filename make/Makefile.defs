@@ -20,7 +20,7 @@ AVRDUDE_COM_OPTS = -q -V -p $(MCU) -c $(AVRDUDE_ARD_PROGRAMMER) -b \
 
 STDDEFS		= -D __AVR__ -D __BOARD__ -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ \
 		      -D TIMERS=5 -D __ADC__ -D __TWI__ -D __SPI__ -D __SPIRAM__ \
-		      -D __USART__ -D __THREADS__ -D __EVENTS__ -D __PWM__
+		      -D __USART__ -D__THREADS__ -D__EVENTS__
 AVR_LIBC=$(AVRLIB)
 LOCAL_INC=$(LOCAL_LIB)
 

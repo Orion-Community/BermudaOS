@@ -387,9 +387,9 @@ PUBLIC __link void BermudaAvrTwISR(TWIBUS *bus)
  * uses depends of the TWIMODE setting in the TWIBUS structure.
  */
 #ifdef __EVENTS__
-PUBLIC int BermudaTwMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
+PUBLIC int BermudaAvrTwMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq, tmo)
 #else
-PUBLIC int BermudaTwMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq)
+PUBLIC int BermudaAvrTwMasterTransfer(bus, tx, txlen, rx, rxlen, sla, frq)
 #endif
 TWIBUS        *bus;
 const void*   tx;

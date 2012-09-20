@@ -1,5 +1,6 @@
 SUBDIRS=events
-noinst_PROGRAMS=sys.o
-sys_o_SOURCES=mem.c sched.c thread.c virt_timer.c
+lib_LIBRARIES=libsys.a
+libsys_a_SOURCES=mem.c sched.c thread.c virt_timer.c
 LOCAL_LIB=../../include
 include ../../Makefile.flags
+AR=$(AR_TOOL)

@@ -7,30 +7,53 @@ AM_INIT_AUTOMAKE(BermudaOS, 0.0.5)
 #AC_CONFIG_SRCDIR([app/main.c])
 AC_CONFIG_HEADERS([config.h])
 
-# Checks for programs.
-AC_PROG_CXX([avr-g++])
-AC_PROG_CC([avr-gcc])
-AM_PROG_AS([avr-gcc])
-
 CFLAGS=
 CXXFLAGS=
 LDFLAGS=
+ASFLAGS=
+CCASFLAGS=
 
-# Checks for libraries.
-# FIXME: Replace `main' with a function in `-lBermuda':
-#AC_CHECK_LIB([Bermuda], [main])
-# FIXME: Replace `main' with a function in `-lEvents':
-#AC_CHECK_LIB([Events], [main])
-# FIXME: Replace `main' with a function in `-ldevreg':
-#AC_CHECK_LIB([devreg], [main])
-# FIXME: Replace `main' with a function in `-lm':
-#AC_CHECK_LIB([m], [main])
-# FIXME: Replace `main' with a function in `-lspibus':
-#AC_CHECK_LIB([spibus], [main])
-# FIXME: Replace `main' with a function in `-lspiram':
-#AC_CHECK_LIB([spiram], [main])
-# FIXME: Replace `main' with a function in `-ltwidev':
-#AC_CHECK_LIB([twidev], [main])
+# Optional flags
+AC_ARG_ENABLE([atmega328p],
+	AS_HELP_STRING([--enable-atmega328p], [Enable build of atmega328p architecture.]),
+	[enable_atmega328p=yes],
+	[]
+)
+
+AC_ARG_ENABLE([avr],
+	AS_HELP_STRING([--enable-avr], [Enable build of avr architecture.]),
+	[avr=yes],
+	[]
+)
+
+AC_ARG_ENABLE([uno],
+	AS_HELP_STRING([--enable-uno], [Enable build of arduino uno support.]),
+	[enable_uno=yes],
+	[]
+)
+
+AM_CONDITIONAL(ENABLE_ATMEGA328P, test x$enable_atmega328p = xyes)
+AM_CONDITIONAL(ENABLE_UNO, test x$enable_uno = xyes)
+AM_CONDITIONAL(AVR, test x$avr = xyes)
+
+# Checks for programs.
+if test x$avr = xyes; then
+	AC_PROG_CXX([avr-g++])
+	AC_PROG_CC([avr-gcc])
+	AC_PROG_RANLIB([avr-ranlib])
+	AM_PROG_AS([avr-gcc])
+	RANLIB=avr-ranlib
+else
+	AC_PROG_CXX
+	AC_PROG_CC
+	AC_PROG_RANLIB
+	AM_PROG_AS
+
+	RANLIB=ranlib
+fi
+
+# Enable enable object specific options
+AM_PROG_CC_C_O
 
 # Checks for header files.
 #AC_CHECK_HEADERS([netinet/in.h stdlib.h string.h])
@@ -48,10 +71,7 @@ AC_TYPE_UINT8_T
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/arch/Makefile
-                 src/arch/avr/328/Makefile
-                 src/arch/avr/328/dev/Makefile
                  src/arch/avr/Makefile
-                 src/arch/avr/arduino/Makefile
                  src/dev/Makefile
                  src/lib/Makefile
                  src/sys/Makefile

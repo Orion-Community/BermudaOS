@@ -73,6 +73,7 @@ AC_CONFIG_FILES([Makefile
                  src/arch/Makefile
                  src/arch/avr/Makefile
                  src/dev/Makefile
+                 src/dev/i2c/Makefile
                  src/lib/Makefile
                  src/sys/Makefile
                  src/sys/events/Makefile])

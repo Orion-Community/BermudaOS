@@ -6043,7 +6043,7 @@ _ACEOF
 
 # Checks for library functions.
 
-ac_config_files="$ac_config_files Makefile src/Makefile src/arch/Makefile src/arch/avr/Makefile src/dev/Makefile src/lib/Makefile src/sys/Makefile src/sys/events/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile src/arch/Makefile src/arch/avr/Makefile src/dev/Makefile src/dev/i2c/Makefile src/lib/Makefile src/sys/Makefile src/sys/events/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6813,6 +6813,7 @@ do
     "src/arch/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/Makefile" ;;
     "src/arch/avr/Makefile") CONFIG_FILES="$CONFIG_FILES src/arch/avr/Makefile" ;;
     "src/dev/Makefile") CONFIG_FILES="$CONFIG_FILES src/dev/Makefile" ;;
+    "src/dev/i2c/Makefile") CONFIG_FILES="$CONFIG_FILES src/dev/i2c/Makefile" ;;
     "src/lib/Makefile") CONFIG_FILES="$CONFIG_FILES src/lib/Makefile" ;;
     "src/sys/Makefile") CONFIG_FILES="$CONFIG_FILES src/sys/Makefile" ;;
     "src/sys/events/Makefile") CONFIG_FILES="$CONFIG_FILES src/sys/events/Makefile" ;;

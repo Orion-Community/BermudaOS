@@ -100,7 +100,7 @@ static char BermudaIdleThreadStack[64];
  * When there are no other threads ready to run, the scheduler will automaticly
  * execute this thread, until another thread is ready to run.
  */
-PRIVATE WEAK void IdleThread(void *arg);
+static void IdleThread(void *arg);
 
 /**
  * \brief Init scheduling

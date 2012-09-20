@@ -1,0 +1,22 @@
+MCU                     = atmega328p
+F_CPU                   = 16000000
+AVRLIB                  = /usr/lib/avr/include
+
+STDDEFS		= -D __AVR__ -D __BOARD__ -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ \
+		      -D TIMERS=5 -D __ADC__ -D __TWI__ -D __SPI__ -D __SPIRAM__ \
+		      -D __USART__ -D __THREADS__ -D __EVENTS__ -D __PWM__
+AVR_LIBC=$(AVRLIB)
+LOCAL_INC=$(LOCAL_LIB)
+
+CCFLAGS		=-Wall -Os -mcall-prologues -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
+		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS)
+LD_FLAGS	= -r -Os -m avr5
+CPP_FLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
+		  -I$(LOCAL_INC) -DF_CPU=$(F_CPU) -ffunction-sections \
+		  -fdata-sections -w $(STDDEFS)
+ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall
+ARFLAGS		= rcsv
+
+AM_CFLAGS=$(CCFLAGS)
+AM_LDFLAGS=-Wl,-r,-Os,-mavr5
+AM_CCASFLAGS=$(ASFLAGS)

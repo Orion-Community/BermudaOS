@@ -18,7 +18,7 @@
 
 #include <bermuda.h>
 
-#include <lib/bermuda.h>
+#include <lib/binary.h>
 
 #include <arch/io.h>
 #include <arch/avr/timer.h>

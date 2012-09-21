@@ -4,6 +4,7 @@
 AC_PREREQ([2.68])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AM_INIT_AUTOMAKE(BermudaOS, 0.0.5)
+LT_INIT([disable-shared,static])
 #AC_CONFIG_SRCDIR([app/main.c])
 AC_CONFIG_HEADERS([config.h])
 
@@ -40,17 +41,22 @@ AM_CONDITIONAL(AVR, test x$avr = xyes)
 if test x$avr = xyes; then
 	AC_PROG_CXX([avr-g++])
 	AC_PROG_CC([avr-gcc])
-	AC_PROG_RANLIB([avr-ranlib])
 	AM_PROG_AS([avr-gcc])
-	RANLIB=avr-ranlib
+	RANLIB=avr-ranlib # define ranlib for libtool
+	CC=avr-gcc # define c compiler for libtool
+	CCAS=avr-gcc # define assembler for libtool
+	CXX=avr-g++ # c++ compiler
+	AR=avr-ar
+	OBJDUMP=avr-objdump
+	STRIP=avr-strip
+	LD=avr-ld
 else
 	AC_PROG_CXX
 	AC_PROG_CC
-	AC_PROG_RANLIB
 	AM_PROG_AS
-
-	RANLIB=ranlib
 fi
+
+AC_PROG_LIBTOOL
 
 # Enable enable object specific options
 AM_PROG_CC_C_O
@@ -72,6 +78,9 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/arch/Makefile
                  src/arch/avr/Makefile
+                 src/arch/avr/arduino/Makefile
+                 src/arch/avr/328/Makefile
+                 src/arch/avr/328/dev/Makefile
                  src/dev/Makefile
                  src/dev/i2c/Makefile
                  src/lib/Makefile

@@ -1,5 +1,4 @@
-lib_LIBRARIES=libEvents.a
-libEvents_a_SOURCES=event.c
+noinst_LTLIBRARIES=libEvents.la
+libEvents_la_SOURCES=event.c
 LOCAL_LIB=../../../include
 include ../../../Makefile.flags
-AR=$(AR_TOOL)

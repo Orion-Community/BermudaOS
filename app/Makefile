@@ -5,7 +5,7 @@ ARDUINO_LIBS		=
 CSRCS			= main.c
 CPPSRCS			= 
 LIBDIR			= ../lib
-LIBS			= -lavr -lsys -lavr -lEvents -ldev -l24c02 -lspiram
+LIBS			= -lsys -lavr -ldev -l24c02 -lspiram
 BUILDSYS		= linux
 
 include ../make/Makefile.$(BUILDSYS)

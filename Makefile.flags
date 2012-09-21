@@ -1,22 +1,23 @@
 if AVR
-AR_TOOL			= avr-ar
+AR_TOOL=avr-ar
 endif
 
 if ENABLE_ATMEGA328P
-MCU                     = atmega328p
+MCU=atmega328p
 endif
 
 
 if ENABLE_UNO
-F_CPU                   = 16000000
+F_CPU=16000000
 else
-F_CPU			= 8000000
+F_CPU=8000000
 endif
-AVRLIB                  = /usr/lib/avr/include
+
+AVRLIB=/usr/lib/avr/include
 
 STDDEFS		= -D __AVR__ -D __BOARD__ -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ \
-		      -D TIMERS=5 -D __ADC__ -D __TWI__ -D __SPI__ -D __SPIRAM__ \
-		      -D __USART__ -D__THREADS__ -D__EVENTS__
+		  -D TIMERS=5 -D __ADC__ -D __TWI__ -D __SPI__ -D __SPIRAM__ \
+		  -D __USART__ -D__THREADS__ -D__EVENTS__
 AVR_LIBC=$(AVRLIB)
 LOCAL_INC=$(LOCAL_LIB)
 
@@ -31,4 +32,5 @@ ARFLAGS		= rcsv
 
 AM_CFLAGS=$(CCFLAGS)
 AM_CCASFLAGS=$(ASFLAGS)
+AM_CXXFLAGS=$(CPP_FLAGS)
 AM_LDFLAGS=-Wl,-r,-mavr5

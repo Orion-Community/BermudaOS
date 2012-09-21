@@ -4,6 +4,7 @@
 AC_PREREQ([2.68])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AM_INIT_AUTOMAKE(BermudaOS, 0.0.5)
+LT_INIT([disable-shared,static])
 #AC_CONFIG_SRCDIR([app/main.c])
 AC_CONFIG_HEADERS([config.h])
 
@@ -43,6 +44,8 @@ if test x$avr = xyes; then
 	AC_PROG_RANLIB([avr-ranlib])
 	AM_PROG_AS([avr-gcc])
 	RANLIB=avr-ranlib
+	CC=avr-gcc
+	CCAS=avr-gcc
 else
 	AC_PROG_CXX
 	AC_PROG_CC
@@ -51,6 +54,8 @@ else
 
 	RANLIB=ranlib
 fi
+
+AC_PROG_LIBTOOL
 
 # Enable enable object specific options
 AM_PROG_CC_C_O
@@ -72,6 +77,9 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/arch/Makefile
                  src/arch/avr/Makefile
+                 src/arch/avr/arduino/Makefile
+                 src/arch/avr/328/Makefile
+                 src/arch/avr/328/dev/Makefile
                  src/dev/Makefile
                  src/dev/i2c/Makefile
                  src/lib/Makefile

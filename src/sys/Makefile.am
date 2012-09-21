@@ -1,6 +1,7 @@
 SUBDIRS=events
-lib_LIBRARIES=libsys.a
-libsys_a_SOURCES=mem.c sched.c thread.c virt_timer.c
+lib_LTLIBRARIES=libsys.la
+libsys_la_SOURCES=mem.c sched.c thread.c virt_timer.c
+libsys_la_LIBADD=events/libEvents.la
 LOCAL_LIB=../../include
 include ../../Makefile.flags
-AR=$(AR_TOOL)
+LIBTOOL_AR=avr-ar

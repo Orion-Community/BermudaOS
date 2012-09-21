@@ -23,7 +23,13 @@ AC_ARG_ENABLE([atmega328p],
 
 AC_ARG_ENABLE([avr],
 	AS_HELP_STRING([--enable-avr], [Enable build of avr architecture.]),
-	[avr=yes],
+	[arch=avr],
+	[]
+)
+
+AC_ARG_ENABLE([arm],
+	AS_HELP_STRING([--enable-arm], [Enable build of arm architecture.]),
+	[arch=arm-linux-gnueabi],
 	[]
 )
 
@@ -35,26 +41,22 @@ AC_ARG_ENABLE([uno],
 
 AM_CONDITIONAL(ENABLE_ATMEGA328P, test x$enable_atmega328p = xyes)
 AM_CONDITIONAL(ENABLE_UNO, test x$enable_uno = xyes)
-AM_CONDITIONAL(AVR, test x$avr = xyes)
+AM_CONDITIONAL(AVR, test x$arch = xavr)
+AM_CONDITIONAL(ARM, test x$arch = xarm-linux-gnueabi)
 
 # Checks for programs.
-if test x$avr = xyes; then
-	AC_PROG_CXX([avr-g++])
-	AC_PROG_CC([avr-gcc])
-	AM_PROG_AS([avr-gcc])
-	RANLIB=avr-ranlib # define ranlib for libtool
-	CC=avr-gcc # define c compiler for libtool
-	CCAS=avr-gcc # define assembler for libtool
-	CXX=avr-g++ # c++ compiler
-	AR=avr-ar
-	OBJDUMP=avr-objdump
-	STRIP=avr-strip
-	LD=avr-ld
-else
-	AC_PROG_CXX
-	AC_PROG_CC
-	AM_PROG_AS
-fi
+
+AC_PROG_CXX([$arch-g++])
+AC_PROG_CC([$arch-gcc])
+AM_PROG_AS([$arch-gcc])
+RANLIB=$arch-ranlib # define ranlib for libtool
+CC=$arch-gcc # define c compiler for libtool
+CCAS=$arch-gcc # define assembler for libtool
+CXX=$arch-g++ # c++ compiler
+AR=$arch-ar
+OBJDUMP=$arch-objdump
+STRIP=$arch-strip
+LD=$arch-ld
 
 AC_PROG_LIBTOOL
 

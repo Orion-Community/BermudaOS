@@ -31,11 +31,35 @@ struct i2c_client {
 	struct device *dev;
 
 	uint8_t id;
+	bool allocated;
+	void *mutex;
+	void *queue;
+
+#ifdef __THREADS__
+	struct thread *allocator;
+#endif
 } __attribute__((packed));
 
 struct i2c_adapter {
 	struct i2c_client *clients; //!< List of maintained I2C clients.
 
 } __attribute__((packed));
+
+struct i2c_message {
+
+};
+
+__DECL
+extern i2c_client *i2c_get_client_by_id(struct i2c_adapter *adap, uint8_t id);
+extern i2c_client *i2c_alloc_client(struct i2c_adapter *adap);
+extern int i2c_free_client(struct i2c_client *client);
+extern int i2c_move_client(struct i2c_adapter *adap1, struct i2c_adapter *adap2,
+		uint8_t id);
+extern bool i2c_client_is_allocated(struct i2c_client *client);
+extern bool i2c_client_is_allocated_by_caller(struct i2c_client *client);
+
+extern int i2c_client_write(struct i2c_client *client, struct i2c_message *msg);
+__DECL_END
+
 
 #endif /* I2C_H_ */

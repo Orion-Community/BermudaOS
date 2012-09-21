@@ -206,7 +206,7 @@ STDDEFS = -D __AVR__ -D __BOARD__ -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ \
 
 AVR_LIBC = $(AVRLIB)
 LOCAL_INC = $(LOCAL_LIB)
-CCFLAGS = -Wall -Os -mcall-prologues -I$(AVR_LIBC) -I$(LOCAL_INC) \
+CCFLAGS = -Wall -Os -mcall-prologues -I$(LOCAL_INC) -I$(AVR_LIBC) \
 		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS) -mmcu=$(MCU)
 
 LD_FLAGS = -r -Os -m avr5

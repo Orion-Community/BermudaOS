@@ -90,6 +90,18 @@
  */
 #define PUBLIC  __attribute__((externally_visible))
 
+#ifndef __cplusplus
+/**
+ * \def public
+ * \brief Declare a function public.
+ * \note This define is only defined if __cplusplus is <b>NOT</b> defined (i.e. not programming in C++).
+ *
+ * Function declared public are explicitly marked visible, so other compile units
+ * can access the function.
+ */
+#define public PUBLIC
+#endif
+
 /**
  * \def __raw
  * \brief Raw function.

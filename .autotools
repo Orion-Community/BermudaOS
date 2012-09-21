@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurations>
-<configuration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.1618653814">
+<configuration id="org.eclipse.linuxtools.cdt.autotools.core.configuration.build.988809784">
 <option id="configure" value="configure"/>
 <option id="configdir" value=""/>
 <option id="cache-file" value=""/>
@@ -8,10 +8,10 @@
 <option id="no-create" value="false"/>
 <option id="quiet" value="false"/>
 <option id="version" value="false"/>
-<option id="host" value=""/>
+<option id="host" value="x86_64-linux-gnu"/>
 <option id="build" value=""/>
-<option id="target" value=""/>
-<option id="prefix" value=""/>
+<option id="target" value="avr"/>
+<option id="prefix" value="${workspace_loc:/BermudaOS}"/>
 <option id="exec-prefix" value=""/>
 <option id="libdir" value=""/>
 <option id="bindir" value=""/>
@@ -35,7 +35,7 @@
 <flagvalue id="cflags-gprof" value="false"/>
 <flagvalue id="cflags-gcov" value="false"/>
 </flag>
-<option id="user" value=""/>
+<option id="user" value="--enable-avr --enable-atmega328p --enable-uno"/>
 <option id="autogen" value="autogen.sh"/>
 <option id="autogenOpts" value=""/>
 </configuration>

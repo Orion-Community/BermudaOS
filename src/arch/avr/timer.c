@@ -28,11 +28,12 @@ PUBLIC void BermudaAvrTimerSetISR(TIMER *timer, unsigned char isr)
 	unsigned char i = 1;
 	unsigned char int_mask;
 	
-	for(; i <= TIMER_ISRS; i << 1) {
+		while(i <= TIMER_ISRS) {
 		inb(timer->int_mask, &int_mask);
 		if((isr & i) != 0) {
 			outb(timer->int_mask, int_mask | i);
 		}
+		i <<= 1;
 	}
 }
 

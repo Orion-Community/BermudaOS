@@ -23,7 +23,6 @@
 
 #include <bermuda.h>
 
-#include <sys/events/core.h>
 #include <sys/sched.h>
 #include <sys/thread.h>
 

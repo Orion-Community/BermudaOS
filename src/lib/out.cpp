@@ -23,8 +23,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <arch/avr/wiring.h>
-#include <lib/print.h>
 
 // Public Methods //////////////////////////////////////////////////////////////
 

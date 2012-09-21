@@ -253,6 +253,7 @@ lib_LTLIBRARIES = libdev.la
 libdev_la_SOURCES = devreg.c spibus.c twidev.c
 libdev_la_LIBADD = i2c/libi2c.la
 LOCAL_LIB = @top_srcdir@/include
+@AVR_TRUE@AR_TOOL = avr-ar
 @ENABLE_ATMEGA328P_TRUE@MCU = atmega328p
 @ENABLE_UNO_FALSE@F_CPU = 8000000
 @ENABLE_UNO_TRUE@F_CPU = 16000000

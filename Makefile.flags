@@ -1,3 +1,7 @@
+if AVR
+AR_TOOL=avr-ar
+endif
+
 if ENABLE_ATMEGA328P
 MCU=atmega328p
 endif

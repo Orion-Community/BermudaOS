@@ -1,7 +1,3 @@
-if AVR
-AR_TOOL=avr-ar
-endif
-
 if ENABLE_ATMEGA328P
 MCU=atmega328p
 endif
@@ -32,4 +28,5 @@ ARFLAGS		= rcsv
 
 AM_CFLAGS=$(CCFLAGS)
 AM_CCASFLAGS=$(ASFLAGS)
+AM_CXXFLAGS=$(CPP_FLAGS)
 AM_LDFLAGS=-Wl,-r,-mavr5

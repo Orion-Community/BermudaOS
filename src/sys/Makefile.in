@@ -253,7 +253,6 @@ lib_LTLIBRARIES = libsys.la
 libsys_la_SOURCES = mem.c sched.c thread.c virt_timer.c
 libsys_la_LIBADD = events/libEvents.la
 LOCAL_LIB = ../../include
-@AVR_TRUE@AR_TOOL = avr-ar
 @ENABLE_ATMEGA328P_TRUE@MCU = atmega328p
 @ENABLE_UNO_FALSE@F_CPU = 8000000
 @ENABLE_UNO_TRUE@F_CPU = 16000000
@@ -276,8 +275,8 @@ ASFLAGS = -mmcu=$(MCU) -I$(LOCAL_INC) -Wall
 ARFLAGS = rcsv
 AM_CFLAGS = $(CCFLAGS)
 AM_CCASFLAGS = $(ASFLAGS)
+AM_CXXFLAGS = $(CPP_FLAGS)
 AM_LDFLAGS = -Wl,-r,-mavr5
-LIBTOOL_AR = avr-ar
 all: all-recursive
 
 .SUFFIXES:

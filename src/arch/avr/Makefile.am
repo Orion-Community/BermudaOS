@@ -16,4 +16,3 @@ libavr_la_SOURCES=twif.c usartif.c timer.c stack.c spif.c pwm.c out.c io.c byte_
 libavr_la_LIBADD=328/lib328.la arduino/libarduino.la
 libavr_la_LIBTOOLFLAGS=--tag=CC
 LOCAL_LIB=../../../include
-AR=$(AR_TOOL)

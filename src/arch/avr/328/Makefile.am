@@ -1,6 +1,5 @@
 include ../../../../Makefile.flags
 LOCAL_LIB=../../../../include
-AR=$(AR_TOOL)
 
 SUBDIRS=dev
 noinst_LTLIBRARIES = lib328.la

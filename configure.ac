@@ -41,18 +41,19 @@ AM_CONDITIONAL(AVR, test x$avr = xyes)
 if test x$avr = xyes; then
 	AC_PROG_CXX([avr-g++])
 	AC_PROG_CC([avr-gcc])
-	AC_PROG_RANLIB([avr-ranlib])
 	AM_PROG_AS([avr-gcc])
-	RANLIB=avr-ranlib
-	CC=avr-gcc
-	CCAS=avr-gcc
+	RANLIB=avr-ranlib # define ranlib for libtool
+	CC=avr-gcc # define c compiler for libtool
+	CCAS=avr-gcc # define assembler for libtool
+	CXX=avr-g++ # c++ compiler
+	AR=avr-ar
+	OBJDUMP=avr-objdump
+	STRIP=avr-strip
+	LD=avr-ld
 else
 	AC_PROG_CXX
 	AC_PROG_CC
-	AC_PROG_RANLIB
 	AM_PROG_AS
-
-	RANLIB=ranlib
 fi
 
 AC_PROG_LIBTOOL

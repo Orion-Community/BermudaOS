@@ -4,4 +4,3 @@ libspiram_a_SOURCES=spiram.c
 libxorlist_a_SOURCES=xorlist.c
 LOCAL_LIB=../../include
 include ../../Makefile.flags
-AR=$(AR_TOOL)

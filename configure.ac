@@ -87,15 +87,26 @@ AC_ARG_ENABLE([adc],
 	[adc=yes]
 )
 
-# cpu cond
+# -------------------------------------------------------
+# CPU conditionals
+# -------------------------------------------------------
 AM_CONDITIONAL(ENABLE_ATMEGA328P, test x$enable_atmega328p = xyes)
 AM_CONDITIONAL(ENABLE_ATMEGA328, test x$enable_atmega328 = xyes)
-#board cond
+
+# -------------------------------------------------------
+# Board conditionals
+# -------------------------------------------------------
 AM_CONDITIONAL(ENABLE_UNO, test x$enable_uno = xyes)
-#arch cond
+
+# -------------------------------------------------------
+# Arch conditionals
+# -------------------------------------------------------
 AM_CONDITIONAL(AVR, test x$arch = xavr)
 AM_CONDITIONAL(ARM, test x$arch = xarm-linux-gnueabi)
-#code enable cond
+
+# -------------------------------------------------------
+# Code enablers
+# -------------------------------------------------------
 AM_CONDITIONAL(THREADS, test x$threads = xyes)
 AM_CONDITIONAL(IIC, test x$iic = xyes)
 AM_CONDITIONAL(SPI, test x$spi = xyes)
@@ -104,7 +115,6 @@ AM_CONDITIONAL(ADC, test x$adc = xyes)
 AM_CONDITIONAL(PWM, test x$pwm = xyes)
 
 # Checks for programs.
-
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_AS

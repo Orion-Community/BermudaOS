@@ -24,7 +24,6 @@
  * backend functionality is implemented in the correct architecture.
  */
 
-#if defined(__PWM__) || defined(__DOXYGEN__)
 #ifndef __PWMDEV_H
 #define __PWMDEV_H
 
@@ -110,4 +109,3 @@ struct pwm
 } __attribute__((packed));
 
 #endif /* __PWMDEV_H */
-#endif /* __PWM__ || __DOXYGEN__ */

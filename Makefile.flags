@@ -1,17 +1,20 @@
 #lib defs
 AVRLIB=/usr/lib/avr/include
-
+LOCAL_INC=@top_srcdir@/include
 STDDEFS=-DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__
 
-#arch shit
+# -------------------------------------------------------
+# Architectural defines
+# -------------------------------------------------------
 if AVR
-AR_TOOL=avr-ar
 LIBC=-I$(AVRLIB)
 CPU_TYPE=-mmcu=$(MCU)
 STDDEFS+= -D__AVR__
 endif
 
-#mcu shit
+# -------------------------------------------------------
+# MCU specific
+# -------------------------------------------------------
 if ENABLE_ATMEGA328P
 MCU=atmega328p
 STDDEFS+= -DMEM=0x7FF
@@ -22,7 +25,9 @@ MCU=atmega328
 STDDEFS+= -DMEM=0x7FF
 endif
 
-# board shit
+# -------------------------------------------------------
+# Board specific
+# -------------------------------------------------------
 if ENABLE_UNO
 F_CPU=16000000
 STDDEFS+= -D__BOARD__ -D__ARDUINO__
@@ -30,8 +35,9 @@ else
 F_CPU=8000000
 endif
 
-LOCAL_INC=@top_srcdir@/include
-
+# -------------------------------------------------------
+# Compile flags
+# -------------------------------------------------------
 CCFLAGS		=-Wall -Os -mcall-prologues -I$(LOCAL_INC) $(LIBC) \
 		 -std=gnu89 $(CPU_TYPE) -D F_CPU=$(F_CPU) $(STDDEFS) 
 LD_FLAGS	= -r -Os -m avr5
@@ -45,3 +51,4 @@ AM_CFLAGS=$(CCFLAGS)
 AM_CCASFLAGS=$(ASFLAGS)
 AM_CXXFLAGS=$(CPP_FLAGS)
 AM_LDFLAGS=-Wl,-r,-mavr5
+

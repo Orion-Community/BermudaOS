@@ -19,6 +19,8 @@
 #ifndef __PWM_AVR_H
 #define __PWM_AVR_H
 
+#include <dev/pwmdev.h>
+
 #define AVR_PWM_BASE_FRQ 2000UL
 #define AVR_PWM_DEFAULT_PS 32UL
 

@@ -36,6 +36,17 @@ build_triplet = @build@
 host_triplet = @host@
 DIST_COMMON = $(srcdir)/../../Makefile.flags $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
+@AVR_TRUE@am__append_1 = -D__AVR__
+@ENABLE_ATMEGA328P_TRUE@am__append_2 = -DMEM=0x7FF
+@ENABLE_ATMEGA328_TRUE@am__append_3 = -DMEM=0x7FF
+@ENABLE_UNO_TRUE@am__append_4 = -D__BOARD__ -D__ARDUINO__
+
+# code enables
+@THREADS_TRUE@am__append_5 = -D__THREADS__ -D__EVENTS__
+@IIC_TRUE@am__append_6 = -D__I2C__ -D__TWI__
+@USART_TRUE@am__append_7 = -D__USART__
+@SPI_TRUE@am__append_8 = -D__SPI__
+@ADC_TRUE@am__append_9 = -D__ADC__
 subdir = src/lib
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -130,6 +141,7 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+EXTRAM = @EXTRAM@
 FGREP = @FGREP@
 GREP = @GREP@
 INSTALL = @INSTALL@
@@ -226,23 +238,33 @@ lib24c02_a_SOURCES = 24c02.c
 libspiram_a_SOURCES = spiram.c
 libxorlist_a_SOURCES = xorlist.c
 LOCAL_LIB = ../../include
-@AVR_TRUE@AR_TOOL = avr-ar
-@ENABLE_ATMEGA328P_TRUE@MCU = atmega328p
-@ENABLE_UNO_FALSE@F_CPU = 8000000
-@ENABLE_UNO_TRUE@F_CPU = 16000000
-AVRLIB = /usr/lib/avr/include
-STDDEFS = -D __AVR__ -D __BOARD__ -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ \
-		  -D TIMERS=5 -D __ADC__ -D __TWI__ -D __SPI__ -D __SPIRAM__ \
-		  -D __USART__ -D__THREADS__ -D__EVENTS__
 
-AVR_LIBC = $(AVRLIB)
-LOCAL_INC = $(LOCAL_LIB)
-CCFLAGS = -Wall -Os -mcall-prologues -I$(LOCAL_INC) -I$(AVR_LIBC) \
-		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS) -mmcu=$(MCU)
+#lib defs
+AVRLIB = /usr/lib/avr/include
+STDDEFS = -DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__ \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_7) $(am__append_8) $(am__append_9)
+
+#arch shit
+@AVR_TRUE@AR_TOOL = avr-ar
+@AVR_TRUE@LIBC = -I$(AVRLIB)
+@AVR_TRUE@CPU_TYPE = -mmcu=$(MCU)
+
+#mcu shit
+@ENABLE_ATMEGA328P_TRUE@MCU = atmega328p
+@ENABLE_ATMEGA328_TRUE@MCU = atmega328
+@ENABLE_UNO_FALSE@F_CPU = 8000000
+
+# board shit
+@ENABLE_UNO_TRUE@F_CPU = 16000000
+LOCAL_INC = @top_srcdir@/include
+CCFLAGS = -Wall -Os -mcall-prologues -I$(LOCAL_INC) $(LIBC) \
+		 -std=gnu89 $(CPU_TYPE) -D F_CPU=$(F_CPU) $(STDDEFS) 
 
 LD_FLAGS = -r -Os -m avr5
-CPP_FLAGS = -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
-		  -I$(LOCAL_INC) -DF_CPU=$(F_CPU) -ffunction-sections \
+CPP_FLAGS = -fno-exceptions -Os -Wall $(CPU_TYPE) -I$(LOCAL_INC) $(LIBC) \
+		   -DF_CPU=$(F_CPU) -ffunction-sections \
 		  -fdata-sections -w $(STDDEFS)
 
 ASFLAGS = -mmcu=$(MCU) -I$(LOCAL_INC) -Wall

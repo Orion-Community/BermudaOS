@@ -15,12 +15,20 @@ ASFLAGS=
 CCASFLAGS=
 
 # Optional flags
+
+# CPU flags
 AC_ARG_ENABLE([atmega328p],
 	AS_HELP_STRING([--enable-atmega328p], [Enable build of atmega328p architecture.]),
 	[enable_atmega328p=yes],
 	[]
 )
+AC_ARG_ENABLE([atmega328],
+	AS_HELP_STRING([--enable-atmega328], [Enable build of atmega328 architecture.]),
+	[enable_atmega328=yes],
+	[]
+)
 
+# arch flags
 AC_ARG_ENABLE([avr],
 	AS_HELP_STRING([--enable-avr], [Enable build of avr architecture.]),
 	[arch=avr],
@@ -33,38 +41,99 @@ AC_ARG_ENABLE([arm],
 	[]
 )
 
+#board flags
 AC_ARG_ENABLE([uno],
 	AS_HELP_STRING([--enable-uno], [Enable build of arduino uno support.]),
 	[enable_uno=yes],
 	[]
 )
 
+AC_ARG_VAR(EXTRAM, [Amount of !EXTENDED! RAM available.])
+
+# code enable flags
+AC_ARG_ENABLE([threads],
+	AS_HELP_STRING([--disable-threads], [Disable the support of threads.]),
+	[threads=no],
+	[threads=yes] # standard enabled
+)
+
+AC_ARG_ENABLE([i2c],
+	AS_HELP_STRING([--disable-i2c], [Disable the support of I2C.]),
+	[iic=no],
+	[iic=yes]
+)
+
+AC_ARG_ENABLE([spi],
+	AS_HELP_STRING([--disable-spi], [Disable the support of SPI.]),
+	[spi=no],
+	[spi=yes]
+)
+
+AC_ARG_ENABLE([usart],
+	AS_HELP_STRING([--disable-usart], [Disable the support of the USART.]),
+	[usart=no],
+	[usart=yes]
+)
+
+AC_ARG_ENABLE([adc],
+	AS_HELP_STRING([--disable-adc], [Disable the support of the ADC.]),
+	[adc=no],
+	[adc=yes]
+)
+
+# cpu cond
 AM_CONDITIONAL(ENABLE_ATMEGA328P, test x$enable_atmega328p = xyes)
+AM_CONDITIONAL(ENABLE_ATMEGA328, test x$enable_atmega328 = xyes)
+#board cond
 AM_CONDITIONAL(ENABLE_UNO, test x$enable_uno = xyes)
+#arch cond
 AM_CONDITIONAL(AVR, test x$arch = xavr)
 AM_CONDITIONAL(ARM, test x$arch = xarm-linux-gnueabi)
+#code enable cond
+AM_CONDITIONAL(THREADS, test x$threads = xyes)
+AM_CONDITIONAL(IIC, test x$iic = xyes)
+AM_CONDITIONAL(SPI, test x$spi = xyes)
+AM_CONDITIONAL(USART, test x$usart = xyes)
+AM_CONDITIONAL(ADC, test x$adc = xyes)
 
 # Checks for programs.
 
-AC_PROG_CXX([$arch-g++])
-AC_PROG_CC([$arch-gcc])
-AM_PROG_AS([$arch-gcc])
-RANLIB=$arch-ranlib # define ranlib for libtool
-CC=$arch-gcc # define c compiler for libtool
-CCAS=$arch-gcc # define assembler for libtool
-CXX=$arch-g++ # c++ compiler
-AR=$arch-ar
-OBJDUMP=$arch-objdump
-STRIP=$arch-strip
-LD=$arch-ld
-
+AC_PROG_CC
+AC_PROG_CXX
+AM_PROG_AS
 AC_PROG_LIBTOOL
-
-# Enable enable object specific options
 AM_PROG_CC_C_O
 
+#extram
+if test "x$EXTRAM" = "x"; then
+EXTRAM=0
+fi
+
+# autoheader defines
+if test "x$iic" = "xyes"; then
+AC_DEFINE([__I2C__], ["I2C"], [Defines wether I2C is enabled])
+AC_DEFINE([__TWI__], ["I2C"], [Defines wether I2C is enabled])
+fi
+
+if test "x$iic" = "xyes"; then
+AC_DEFINE([__SPI__], ["SPI"], [Defines wether SPI is enabled])
+fi
+
+if test "x$usart" = "xyes"; then
+AC_DEFINE([__USART__], ["USART"], [Defines wether USART is enabled])
+fi
+
+if test "x$adc" = "xyes"; then
+AC_DEFINE([__ADC__], ["ADC"], [Defines wether ADC is enabled])
+fi
+
+if test "x$threads" = "xyes"; then
+AC_DEFINE([__THREADS__], ["THREADS"], [Defines wether threads are enabled])
+AC_DEFINE([__EVENTS__], ["EVENTS"], [Defines wether events are enabled])
+fi
+
 # Checks for header files.
-#AC_CHECK_HEADERS([netinet/in.h stdlib.h string.h])
+AC_CHECK_HEADERS([stdarg.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

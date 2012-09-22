@@ -2,14 +2,18 @@ include ../../../Makefile.flags
 DEP_FILES=
 
 if ENABLE_ATMEGA328P
-MAYBE_328=328
+MAYBE_MCU=328
+endif
+
+if ENABLE_ATMEGA328
+MAYBE_MCU=328
 endif
 
 if ENABLE_UNO
 MAYBE_ARD=arduino
 endif
 
-SUBDIRS=$(MAYBE_328) $(MAYBE_ARD)
+SUBDIRS=$(MAYBE_MCU) $(MAYBE_ARD)
 
 lib_LTLIBRARIES=libavr.la
 libavr_la_SOURCES=twif.c usartif.c timer.c stack.c spif.c pwm.c out.c io.c byte_order.c adc.c task_switch.S $(DEP_FILES)

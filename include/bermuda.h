@@ -57,6 +57,10 @@
 
 #define NEXT(E) ((typeof(E))((E)->next))
 
+#ifndef NULL
+#define NULL (void*)0
+#endif
+
 /**
  * \def __PACK__
  * \brief Packed attribute.

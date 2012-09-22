@@ -29,3 +29,6 @@ tags
 lib/*
 doc/
 autom4te.cache/
+.autotools
+.cproject
+.project

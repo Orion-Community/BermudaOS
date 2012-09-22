@@ -627,6 +627,8 @@ CXXDEPMODE
 ac_ct_CXX
 CXXFLAGS
 CXX
+PWM_FALSE
+PWM_TRUE
 ADC_FALSE
 ADC_TRUE
 USART_FALSE
@@ -773,6 +775,7 @@ enable_arm
 enable_uno
 enable_threads
 enable_i2c
+enable_pwm
 enable_spi
 enable_usart
 enable_adc
@@ -1428,6 +1431,7 @@ Optional Features:
   --enable-uno            Enable build of arduino uno support.
   --disable-threads       Disable the support of threads.
   --disable-i2c           Disable the support of I2C.
+  --disable-pwm           Disable the support of PWM.
   --disable-spi           Disable the support of SPI.
   --disable-usart         Disable the support of the USART.
   --disable-adc           Disable the support of the ADC.
@@ -11559,6 +11563,15 @@ else
 fi
 
 
+# Check whether --enable-pwm was given.
+if test "${enable_pwm+set}" = set; then :
+  enableval=$enable_pwm; pwm=no
+else
+  pwm=yes
+
+fi
+
+
 # Check whether --enable-spi was given.
 if test "${enable_spi+set}" = set; then :
   enableval=$enable_spi; spi=no
@@ -11668,6 +11681,14 @@ fi
 else
   ADC_TRUE='#'
   ADC_FALSE=
+fi
+
+ if test x$pwm = xyes; then
+  PWM_TRUE=
+  PWM_FALSE='#'
+else
+  PWM_TRUE='#'
+  PWM_FALSE=
 fi
 
 
@@ -16209,37 +16230,43 @@ fi
 # autoheader defines
 if test "x$iic" = "xyes"; then
 
-$as_echo "#define __I2C__ \"I2C\"" >>confdefs.h
+$as_echo "#define __I2C__ 1" >>confdefs.h
 
 
-$as_echo "#define __TWI__ \"I2C\"" >>confdefs.h
+$as_echo "#define __TWI__ 1" >>confdefs.h
 
 fi
 
 if test "x$iic" = "xyes"; then
 
-$as_echo "#define __SPI__ \"SPI\"" >>confdefs.h
+$as_echo "#define __SPI__ 1" >>confdefs.h
 
 fi
 
 if test "x$usart" = "xyes"; then
 
-$as_echo "#define __USART__ \"USART\"" >>confdefs.h
+$as_echo "#define __USART__ 1" >>confdefs.h
 
 fi
 
 if test "x$adc" = "xyes"; then
 
-$as_echo "#define __ADC__ \"ADC\"" >>confdefs.h
+$as_echo "#define __ADC__ 1" >>confdefs.h
 
 fi
 
 if test "x$threads" = "xyes"; then
 
-$as_echo "#define __THREADS__ \"THREADS\"" >>confdefs.h
+$as_echo "#define __THREADS__ 1" >>confdefs.h
 
 
-$as_echo "#define __EVENTS__ \"EVENTS\"" >>confdefs.h
+$as_echo "#define __EVENTS__ 1" >>confdefs.h
+
+fi
+
+if test "x$pwm" = "xyes"; then
+
+$as_echo "#define __PWM__ 1" >>confdefs.h
 
 fi
 
@@ -16611,6 +16638,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ADC_TRUE}" && test -z "${ADC_FALSE}"; then
   as_fn_error $? "conditional \"ADC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PWM_TRUE}" && test -z "${PWM_FALSE}"; then
+  as_fn_error $? "conditional \"PWM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then

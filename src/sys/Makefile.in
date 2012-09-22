@@ -34,19 +34,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@THREADS_TRUE@am__append_1 = sched.c thread.c
 DIST_COMMON = $(srcdir)/../../Makefile.flags $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
-@AVR_TRUE@am__append_1 = -D__AVR__
-@ENABLE_ATMEGA328P_TRUE@am__append_2 = -DMEM=0x7FF
-@ENABLE_ATMEGA328_TRUE@am__append_3 = -DMEM=0x7FF
-@ENABLE_UNO_TRUE@am__append_4 = -D__BOARD__ -D__ARDUINO__
-
-# code enables
-@THREADS_TRUE@am__append_5 = -D__THREADS__ -D__EVENTS__
-@IIC_TRUE@am__append_6 = -D__I2C__ -D__TWI__
-@USART_TRUE@am__append_7 = -D__USART__
-@SPI_TRUE@am__append_8 = -D__SPI__
-@ADC_TRUE@am__append_9 = -D__ADC__
+@AVR_TRUE@am__append_2 = -D__AVR__
+@ENABLE_ATMEGA328P_TRUE@am__append_3 = -DMEM=0x7FF
+@ENABLE_ATMEGA328_TRUE@am__append_4 = -DMEM=0x7FF
+@ENABLE_UNO_TRUE@am__append_5 = -D__BOARD__ -D__ARDUINO__
 subdir = src/sys
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -80,7 +74,10 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libsys_la_DEPENDENCIES = events/libEvents.la
-am_libsys_la_OBJECTS = mem.lo sched.lo thread.lo virt_timer.lo
+am__libsys_la_SOURCES_DIST = mem.c virt_timer.c sched.c thread.c
+@THREADS_TRUE@am__objects_1 = sched.lo thread.lo
+am__objects_2 = $(am__objects_1)
+am_libsys_la_OBJECTS = mem.lo virt_timer.lo $(am__objects_2)
 libsys_la_OBJECTS = $(am_libsys_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -96,7 +93,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libsys_la_SOURCES)
-DIST_SOURCES = $(libsys_la_SOURCES)
+DIST_SOURCES = $(am__libsys_la_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -111,7 +108,7 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = events
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
   dir0=`pwd`; \
@@ -260,18 +257,18 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = events
+OPT_SCRS = $(am__append_1)
+@THREADS_TRUE@MAYBE_EVENTS = events
+SUBDIRS = $(MAYBE_EVENTS)
 lib_LTLIBRARIES = libsys.la
-libsys_la_SOURCES = mem.c sched.c thread.c virt_timer.c
+libsys_la_SOURCES = mem.c virt_timer.c $(OPT_SCRS)
 libsys_la_LIBADD = events/libEvents.la
-LOCAL_LIB = ../../include
 
 #lib defs
 AVRLIB = /usr/lib/avr/include
 STDDEFS = -DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__ \
-	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
+	$(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5)
 
 #arch shit
 @AVR_TRUE@AR_TOOL = avr-ar

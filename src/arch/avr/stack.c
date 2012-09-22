@@ -18,7 +18,6 @@
 
 /** \file src/arch/avr/stack.c */
 
-#if defined(__THREADS__) || defined(__DOXYGEN__)
 #include <bermuda.h>
 #include <sys/thread.h>
 
@@ -108,4 +107,4 @@ PUBLIC void BermudaStackFree(THREAD *t)
 {
 	BermudaHeapFree(t->stack);
 }
-#endif
+

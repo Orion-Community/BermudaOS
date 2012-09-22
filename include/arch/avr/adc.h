@@ -18,10 +18,11 @@
 
 //! \file include/arch/avr/adc.h AVR ATmega Analog Digital Converter.
 
-#if defined(__ADC__) || defined(__DOXYGEN__)
 
 #ifndef __AVR_ADC_h
 #define __AVR_ADC_h
+
+#include <bermuda.h>
 
 #include <dev/adc.h>
 #include <arch/adc.h>
@@ -91,4 +92,3 @@ extern unsigned short BermudaADCConvert(ADC *adc, unsigned char pin);
 __DECL_END
 
 #endif /* __AVR_ADC_h */
-#endif

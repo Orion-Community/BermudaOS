@@ -21,8 +21,6 @@
  * \brief Implementation of the TWI/I2C for the AVR ATmega processor family.
  */
 
-#if defined(__TWI__) || defined(__DOXYGEN__)
-
 #include <bermuda.h>
 #include <lib/binary.h>
 
@@ -760,4 +758,4 @@ PUBLIC void BermudaAvrTwBusFactoryDestroy(TWIBUS *bus, TWI_BUS_TYPE type)
 	}
 	BermudaHeapFree(bus);
 }
-#endif /* __TWI__ */
+

@@ -21,6 +21,7 @@
 #ifndef __THREAD_H
 #define __THREAD_H
 
+#include <bermuda.h>
 #include <arch/io.h>
 #include <lib/binary.h>
 #include <sys/virt_timer.h>

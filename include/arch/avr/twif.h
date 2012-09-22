@@ -21,6 +21,7 @@
 #ifndef __AVR_TWIF_H_
 #define __AVR_TWIF_H_
 
+#include <bermuda.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -26,6 +26,8 @@
 #ifndef __BERMUDA_H
 #define __BERMUDA_H
 
+#include <config.h>
+
 #include <arch/types.h>
 #include <sys/out.h>
 

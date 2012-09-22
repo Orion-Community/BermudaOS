@@ -92,6 +92,9 @@
 /* Defines wether I2C is enabled */
 #undef __I2C__
 
+/* Defines wether PWM's are enabled. */
+#undef __PWM__
+
 /* Defines wether SPI is enabled */
 #undef __SPI__
 

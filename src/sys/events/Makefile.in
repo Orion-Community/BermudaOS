@@ -40,13 +40,6 @@ DIST_COMMON = $(srcdir)/../../../Makefile.flags $(srcdir)/Makefile.am \
 @ENABLE_ATMEGA328P_TRUE@am__append_2 = -DMEM=0x7FF
 @ENABLE_ATMEGA328_TRUE@am__append_3 = -DMEM=0x7FF
 @ENABLE_UNO_TRUE@am__append_4 = -D__BOARD__ -D__ARDUINO__
-
-# code enables
-@THREADS_TRUE@am__append_5 = -D__THREADS__ -D__EVENTS__
-@IIC_TRUE@am__append_6 = -D__I2C__ -D__TWI__
-@USART_TRUE@am__append_7 = -D__USART__
-@SPI_TRUE@am__append_8 = -D__SPI__
-@ADC_TRUE@am__append_9 = -D__ADC__
 subdir = src/sys/events
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -208,8 +201,7 @@ LOCAL_LIB = ../../../include
 AVRLIB = /usr/lib/avr/include
 STDDEFS = -DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__ \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
+	$(am__append_4)
 
 #arch shit
 @AVR_TRUE@AR_TOOL = avr-ar

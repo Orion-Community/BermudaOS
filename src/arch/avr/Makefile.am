@@ -1,5 +1,5 @@
 include ../../../Makefile.flags
-DEP_FILES=
+OPT_SCRS=
 
 if ENABLE_ATMEGA328P
 MAYBE_MCU=328
@@ -13,10 +13,34 @@ if ENABLE_UNO
 MAYBE_ARD=arduino
 endif
 
+if USART
+OPT_SCRS+= usartif.c
+endif
+
+if SPI
+OPT_SCRS+= spif.c
+endif
+
+if IIC
+OPT_SCRS+= twif.c
+endif
+
+if ADC
+OPT_SCRS+= adc.c
+endif
+
+if THREADS
+OPT_SCRS+= task_switch.S stack.c
+endif
+
+if PWM
+OPT_SCRS+= pwm.c
+endif
+
 SUBDIRS=$(MAYBE_MCU) $(MAYBE_ARD)
 
 lib_LTLIBRARIES=libavr.la
-libavr_la_SOURCES=twif.c usartif.c timer.c stack.c spif.c pwm.c out.c io.c byte_order.c adc.c task_switch.S $(DEP_FILES)
+libavr_la_SOURCES= timer.c pwm.c out.c io.c byte_order.c $(OPT_SCRS)
 libavr_la_LIBADD=328/lib328.la arduino/libarduino.la
 libavr_la_LIBTOOLFLAGS=--tag=CC
-LOCAL_LIB=../../../include
+

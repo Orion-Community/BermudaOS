@@ -30,27 +30,6 @@ else
 F_CPU=8000000
 endif
 
-# code enables
-if THREADS
-STDDEFS+= -D__THREADS__ -D__EVENTS__
-endif
-
-if IIC
-STDDEFS+= -D__I2C__ -D__TWI__
-endif
-
-if USART
-STDDEFS+= -D__USART__
-endif
-
-if SPI
-STDDEFS+= -D__SPI__
-endif
-
-if ADC
-STDDEFS+= -D__ADC__
-endif
-
 LOCAL_INC=@top_srcdir@/include
 
 CCFLAGS		=-Wall -Os -mcall-prologues -I$(LOCAL_INC) $(LIBC) \

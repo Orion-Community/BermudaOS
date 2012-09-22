@@ -40,13 +40,12 @@ DIST_COMMON = $(srcdir)/../../../Makefile.flags $(srcdir)/Makefile.am \
 @ENABLE_ATMEGA328P_TRUE@am__append_2 = -DMEM=0x7FF
 @ENABLE_ATMEGA328_TRUE@am__append_3 = -DMEM=0x7FF
 @ENABLE_UNO_TRUE@am__append_4 = -D__BOARD__ -D__ARDUINO__
-
-# code enables
-@THREADS_TRUE@am__append_5 = -D__THREADS__ -D__EVENTS__
-@IIC_TRUE@am__append_6 = -D__I2C__ -D__TWI__
-@USART_TRUE@am__append_7 = -D__USART__
-@SPI_TRUE@am__append_8 = -D__SPI__
-@ADC_TRUE@am__append_9 = -D__ADC__
+@USART_TRUE@am__append_5 = usartif.c
+@SPI_TRUE@am__append_6 = spif.c
+@IIC_TRUE@am__append_7 = twif.c
+@ADC_TRUE@am__append_8 = adc.c
+@THREADS_TRUE@am__append_9 = task_switch.S stack.c
+@PWM_TRUE@am__append_10 = pwm.c
 subdir = src/arch/avr
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -80,12 +79,20 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libavr_la_DEPENDENCIES = 328/lib328.la arduino/libarduino.la
-am__objects_1 =
-am_libavr_la_OBJECTS = libavr_la-twif.lo libavr_la-usartif.lo \
-	libavr_la-timer.lo libavr_la-stack.lo libavr_la-spif.lo \
-	libavr_la-pwm.lo libavr_la-out.lo libavr_la-io.lo \
-	libavr_la-byte_order.lo libavr_la-adc.lo \
-	libavr_la-task_switch.lo $(am__objects_1)
+am__libavr_la_SOURCES_DIST = timer.c pwm.c out.c io.c byte_order.c \
+	usartif.c spif.c twif.c adc.c task_switch.S stack.c
+@USART_TRUE@am__objects_1 = libavr_la-usartif.lo
+@SPI_TRUE@am__objects_2 = libavr_la-spif.lo
+@IIC_TRUE@am__objects_3 = libavr_la-twif.lo
+@ADC_TRUE@am__objects_4 = libavr_la-adc.lo
+@THREADS_TRUE@am__objects_5 = libavr_la-task_switch.lo \
+@THREADS_TRUE@	libavr_la-stack.lo
+@PWM_TRUE@am__objects_6 = libavr_la-pwm.lo
+am__objects_7 = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6)
+am_libavr_la_OBJECTS = libavr_la-timer.lo libavr_la-pwm.lo \
+	libavr_la-out.lo libavr_la-io.lo libavr_la-byte_order.lo \
+	$(am__objects_7)
 libavr_la_OBJECTS = $(am_libavr_la_OBJECTS)
 libavr_la_LINK = $(LIBTOOL) --tag=CC $(libavr_la_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -109,7 +116,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libavr_la_SOURCES)
-DIST_SOURCES = $(libavr_la_SOURCES)
+DIST_SOURCES = $(am__libavr_la_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -278,8 +285,7 @@ top_srcdir = @top_srcdir@
 AVRLIB = /usr/lib/avr/include
 STDDEFS = -DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__ \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
+	$(am__append_4)
 
 #arch shit
 @AVR_TRUE@AR_TOOL = avr-ar
@@ -308,16 +314,16 @@ AM_CFLAGS = $(CCFLAGS)
 AM_CCASFLAGS = $(ASFLAGS)
 AM_CXXFLAGS = $(CPP_FLAGS)
 AM_LDFLAGS = -Wl,-r,-mavr5
-DEP_FILES = 
+OPT_SCRS = $(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_8) $(am__append_9) $(am__append_10)
 @ENABLE_ATMEGA328P_TRUE@MAYBE_MCU = 328
 @ENABLE_ATMEGA328_TRUE@MAYBE_MCU = 328
 @ENABLE_UNO_TRUE@MAYBE_ARD = arduino
 SUBDIRS = $(MAYBE_MCU) $(MAYBE_ARD)
 lib_LTLIBRARIES = libavr.la
-libavr_la_SOURCES = twif.c usartif.c timer.c stack.c spif.c pwm.c out.c io.c byte_order.c adc.c task_switch.S $(DEP_FILES)
+libavr_la_SOURCES = timer.c pwm.c out.c io.c byte_order.c $(OPT_SCRS)
 libavr_la_LIBADD = 328/lib328.la arduino/libarduino.la
 libavr_la_LIBTOOLFLAGS = --tag=CC
-LOCAL_LIB = ../../../include
 all: all-recursive
 
 .SUFFIXES:
@@ -453,40 +459,12 @@ libavr_la-task_switch.lo: task_switch.S
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libavr_la-twif.lo: twif.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-twif.lo -MD -MP -MF $(DEPDIR)/libavr_la-twif.Tpo -c -o libavr_la-twif.lo `test -f 'twif.c' || echo '$(srcdir)/'`twif.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-twif.Tpo $(DEPDIR)/libavr_la-twif.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='twif.c' object='libavr_la-twif.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-twif.lo `test -f 'twif.c' || echo '$(srcdir)/'`twif.c
-
-libavr_la-usartif.lo: usartif.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-usartif.lo -MD -MP -MF $(DEPDIR)/libavr_la-usartif.Tpo -c -o libavr_la-usartif.lo `test -f 'usartif.c' || echo '$(srcdir)/'`usartif.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-usartif.Tpo $(DEPDIR)/libavr_la-usartif.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='usartif.c' object='libavr_la-usartif.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-usartif.lo `test -f 'usartif.c' || echo '$(srcdir)/'`usartif.c
-
 libavr_la-timer.lo: timer.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-timer.lo -MD -MP -MF $(DEPDIR)/libavr_la-timer.Tpo -c -o libavr_la-timer.lo `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-timer.Tpo $(DEPDIR)/libavr_la-timer.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='libavr_la-timer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-timer.lo `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
-
-libavr_la-stack.lo: stack.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-stack.lo -MD -MP -MF $(DEPDIR)/libavr_la-stack.Tpo -c -o libavr_la-stack.lo `test -f 'stack.c' || echo '$(srcdir)/'`stack.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-stack.Tpo $(DEPDIR)/libavr_la-stack.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='stack.c' object='libavr_la-stack.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-stack.lo `test -f 'stack.c' || echo '$(srcdir)/'`stack.c
-
-libavr_la-spif.lo: spif.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-spif.lo -MD -MP -MF $(DEPDIR)/libavr_la-spif.Tpo -c -o libavr_la-spif.lo `test -f 'spif.c' || echo '$(srcdir)/'`spif.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-spif.Tpo $(DEPDIR)/libavr_la-spif.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='spif.c' object='libavr_la-spif.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-spif.lo `test -f 'spif.c' || echo '$(srcdir)/'`spif.c
 
 libavr_la-pwm.lo: pwm.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-pwm.lo -MD -MP -MF $(DEPDIR)/libavr_la-pwm.Tpo -c -o libavr_la-pwm.lo `test -f 'pwm.c' || echo '$(srcdir)/'`pwm.c
@@ -516,12 +494,40 @@ libavr_la-byte_order.lo: byte_order.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-byte_order.lo `test -f 'byte_order.c' || echo '$(srcdir)/'`byte_order.c
 
+libavr_la-usartif.lo: usartif.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-usartif.lo -MD -MP -MF $(DEPDIR)/libavr_la-usartif.Tpo -c -o libavr_la-usartif.lo `test -f 'usartif.c' || echo '$(srcdir)/'`usartif.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-usartif.Tpo $(DEPDIR)/libavr_la-usartif.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='usartif.c' object='libavr_la-usartif.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-usartif.lo `test -f 'usartif.c' || echo '$(srcdir)/'`usartif.c
+
+libavr_la-spif.lo: spif.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-spif.lo -MD -MP -MF $(DEPDIR)/libavr_la-spif.Tpo -c -o libavr_la-spif.lo `test -f 'spif.c' || echo '$(srcdir)/'`spif.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-spif.Tpo $(DEPDIR)/libavr_la-spif.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='spif.c' object='libavr_la-spif.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-spif.lo `test -f 'spif.c' || echo '$(srcdir)/'`spif.c
+
+libavr_la-twif.lo: twif.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-twif.lo -MD -MP -MF $(DEPDIR)/libavr_la-twif.Tpo -c -o libavr_la-twif.lo `test -f 'twif.c' || echo '$(srcdir)/'`twif.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-twif.Tpo $(DEPDIR)/libavr_la-twif.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='twif.c' object='libavr_la-twif.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-twif.lo `test -f 'twif.c' || echo '$(srcdir)/'`twif.c
+
 libavr_la-adc.lo: adc.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-adc.lo -MD -MP -MF $(DEPDIR)/libavr_la-adc.Tpo -c -o libavr_la-adc.lo `test -f 'adc.c' || echo '$(srcdir)/'`adc.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-adc.Tpo $(DEPDIR)/libavr_la-adc.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='adc.c' object='libavr_la-adc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-adc.lo `test -f 'adc.c' || echo '$(srcdir)/'`adc.c
+
+libavr_la-stack.lo: stack.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libavr_la-stack.lo -MD -MP -MF $(DEPDIR)/libavr_la-stack.Tpo -c -o libavr_la-stack.lo `test -f 'stack.c' || echo '$(srcdir)/'`stack.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libavr_la-stack.Tpo $(DEPDIR)/libavr_la-stack.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='stack.c' object='libavr_la-stack.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(libavr_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libavr_la-stack.lo `test -f 'stack.c' || echo '$(srcdir)/'`stack.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

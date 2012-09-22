@@ -34,19 +34,14 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@IIC_TRUE@am__append_1 = twidev.c
+@SPI_TRUE@am__append_2 = spibus.c
 DIST_COMMON = $(srcdir)/../../Makefile.flags $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
-@AVR_TRUE@am__append_1 = -D__AVR__
-@ENABLE_ATMEGA328P_TRUE@am__append_2 = -DMEM=0x7FF
-@ENABLE_ATMEGA328_TRUE@am__append_3 = -DMEM=0x7FF
-@ENABLE_UNO_TRUE@am__append_4 = -D__BOARD__ -D__ARDUINO__
-
-# code enables
-@THREADS_TRUE@am__append_5 = -D__THREADS__ -D__EVENTS__
-@IIC_TRUE@am__append_6 = -D__I2C__ -D__TWI__
-@USART_TRUE@am__append_7 = -D__USART__
-@SPI_TRUE@am__append_8 = -D__SPI__
-@ADC_TRUE@am__append_9 = -D__ADC__
+@AVR_TRUE@am__append_3 = -D__AVR__
+@ENABLE_ATMEGA328P_TRUE@am__append_4 = -DMEM=0x7FF
+@ENABLE_ATMEGA328_TRUE@am__append_5 = -DMEM=0x7FF
+@ENABLE_UNO_TRUE@am__append_6 = -D__BOARD__ -D__ARDUINO__
 subdir = src/dev
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -80,7 +75,11 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libdev_la_DEPENDENCIES = $(IIC_LIB)
-am_libdev_la_OBJECTS = devreg.lo spibus.lo twidev.lo
+am__libdev_la_SOURCES_DIST = devreg.c twidev.c spibus.c
+@IIC_TRUE@am__objects_1 = twidev.lo
+@SPI_TRUE@am__objects_2 = spibus.lo
+am__objects_3 = $(am__objects_1) $(am__objects_2)
+am_libdev_la_OBJECTS = devreg.lo $(am__objects_3)
 libdev_la_OBJECTS = $(am_libdev_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -96,7 +95,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libdev_la_SOURCES)
-DIST_SOURCES = $(libdev_la_SOURCES)
+DIST_SOURCES = $(am__libdev_la_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -260,19 +259,19 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+OPT_SCRS = $(am__append_1) $(am__append_2)
 @IIC_TRUE@MAYBE_IIC = i2c
 @IIC_TRUE@IIC_LIB = i2c/libi2c.la
 SUBDIRS = $(MAYBE_IIC)
 lib_LTLIBRARIES = libdev.la
-libdev_la_SOURCES = devreg.c spibus.c twidev.c
+libdev_la_SOURCES = devreg.c $(OPT_SCRS)
 libdev_la_LIBADD = $(IIC_LIB)
 
 #lib defs
 AVRLIB = /usr/lib/avr/include
 STDDEFS = -DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__ \
-	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6)
 
 #arch shit
 @AVR_TRUE@AR_TOOL = avr-ar

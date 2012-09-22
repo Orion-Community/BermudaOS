@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(__SPI__) || defined(__DOXYGEN__)
-
 #include <bermuda.h>
 
 #include <dev/spibus.h>
@@ -75,4 +73,4 @@ PUBLIC __link void BermudaSpiISR(SPIBUS *bus)
 	}
 		
 }
-#endif
+

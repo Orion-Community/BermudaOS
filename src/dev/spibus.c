@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(__SPI__) || defined(__DOXYGEN__)
-
 //! \file src/dev/spibus.c
 
 #include <bermuda.h>
@@ -67,4 +65,4 @@ PUBLIC uint32_t BermudaSpiRateToPrescaler(uint32_t clock, uint32_t rate, unsigne
 	}
 	return pres;
 }
-#endif /* __SPI__ */
+

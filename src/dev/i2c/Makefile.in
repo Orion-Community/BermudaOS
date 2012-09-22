@@ -40,13 +40,7 @@ DIST_COMMON = $(srcdir)/../../../Makefile.flags $(srcdir)/Makefile.am \
 @ENABLE_ATMEGA328P_TRUE@am__append_2 = -DMEM=0x7FF
 @ENABLE_ATMEGA328_TRUE@am__append_3 = -DMEM=0x7FF
 @ENABLE_UNO_TRUE@am__append_4 = -D__BOARD__ -D__ARDUINO__
-
-# code enables
-@THREADS_TRUE@am__append_5 = -D__THREADS__ -D__EVENTS__
-@IIC_TRUE@am__append_6 = -D__I2C__ -D__TWI__
-@USART_TRUE@am__append_7 = -D__USART__
-@SPI_TRUE@am__append_8 = -D__SPI__
-@ADC_TRUE@am__append_9 = -D__ADC__
+@AVR_TRUE@am__append_5 = bus/avr-i2c.c
 subdir = src/dev/i2c
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -60,7 +54,8 @@ LTLIBRARIES = $(noinst_LTLIBRARIES)
 libi2c_la_LIBADD =
 am__libi2c_la_SOURCES_DIST = i2c-dev.c i2c-core.c bus/avr-i2c.c
 @AVR_TRUE@am__objects_1 = avr-i2c.lo
-am_libi2c_la_OBJECTS = i2c-dev.lo i2c-core.lo $(am__objects_1)
+am__objects_2 = $(am__objects_1)
+am_libi2c_la_OBJECTS = i2c-dev.lo i2c-core.lo $(am__objects_2)
 libi2c_la_OBJECTS = $(am_libi2c_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -207,8 +202,7 @@ top_srcdir = @top_srcdir@
 AVRLIB = /usr/lib/avr/include
 STDDEFS = -DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__ \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
+	$(am__append_4)
 
 #arch shit
 @AVR_TRUE@AR_TOOL = avr-ar
@@ -237,7 +231,7 @@ AM_CFLAGS = $(CCFLAGS)
 AM_CCASFLAGS = $(ASFLAGS)
 AM_CXXFLAGS = $(CPP_FLAGS)
 AM_LDFLAGS = -Wl,-r,-mavr5
-@AVR_TRUE@BUS = bus/avr-i2c.c
+BUS = $(am__append_5)
 noinst_LTLIBRARIES = libi2c.la
 libi2c_la_SOURCES = i2c-dev.c i2c-core.c $(BUS)
 all: all-am

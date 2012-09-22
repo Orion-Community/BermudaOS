@@ -1,7 +1,8 @@
 include ../../../Makefile.flags
+BUS=
 
 if AVR
-BUS=bus/avr-i2c.c
+BUS+=bus/avr-i2c.c
 endif
 
 noinst_LTLIBRARIES=libi2c.la

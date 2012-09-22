@@ -40,13 +40,9 @@ DIST_COMMON = $(srcdir)/../../../../../Makefile.flags \
 @ENABLE_ATMEGA328P_TRUE@am__append_2 = -DMEM=0x7FF
 @ENABLE_ATMEGA328_TRUE@am__append_3 = -DMEM=0x7FF
 @ENABLE_UNO_TRUE@am__append_4 = -D__BOARD__ -D__ARDUINO__
-
-# code enables
-@THREADS_TRUE@am__append_5 = -D__THREADS__ -D__EVENTS__
-@IIC_TRUE@am__append_6 = -D__I2C__ -D__TWI__
-@USART_TRUE@am__append_7 = -D__USART__
-@SPI_TRUE@am__append_8 = -D__SPI__
-@ADC_TRUE@am__append_9 = -D__ADC__
+@USART_TRUE@am__append_5 = usart.c
+@SPI_TRUE@am__append_6 = spibus.c
+@IIC_TRUE@am__append_7 = twibus.c
 subdir = src/arch/avr/328/dev
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -58,7 +54,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libdev_la_LIBADD =
-am_libdev_la_OBJECTS = twibus.lo spibus.lo usart.lo
+am__libdev_la_SOURCES_DIST = usart.c spibus.c twibus.c
+@USART_TRUE@am__objects_1 = usart.lo
+@SPI_TRUE@am__objects_2 = spibus.lo
+@IIC_TRUE@am__objects_3 = twibus.lo
+am__objects_4 = $(am__objects_1) $(am__objects_2) $(am__objects_3)
+am_libdev_la_OBJECTS = $(am__objects_4)
 libdev_la_OBJECTS = $(am_libdev_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -74,7 +75,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libdev_la_SOURCES)
-DIST_SOURCES = $(libdev_la_SOURCES)
+DIST_SOURCES = $(am__libdev_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -205,8 +206,7 @@ top_srcdir = @top_srcdir@
 AVRLIB = /usr/lib/avr/include
 STDDEFS = -DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__ \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
+	$(am__append_4)
 
 #arch shit
 @AVR_TRUE@AR_TOOL = avr-ar
@@ -236,8 +236,9 @@ AM_CCASFLAGS = $(ASFLAGS)
 AM_CXXFLAGS = $(CPP_FLAGS)
 AM_LDFLAGS = -Wl,-r,-mavr5
 LOCAL_LIB = @top_srcdir@/include
+OPT_SCRS = $(am__append_5) $(am__append_6) $(am__append_7)
 noinst_LTLIBRARIES = libdev.la
-libdev_la_SOURCES = twibus.c spibus.c usart.c
+libdev_la_SOURCES = $(OPT_SCRS)
 all: all-am
 
 .SUFFIXES:

@@ -18,7 +18,6 @@
 
 //! \file include/arch/avr/328/dev/adc.h Analog Digital Converter.
 
-#if defined(__ADC__) || defined(__DOXYGEN__)
 #ifndef __ATmega328_ADC_H
 #define __ATmega328_ADC_H
 
@@ -45,4 +44,3 @@
 #define ADC0 (&adc0)
 
 #endif /* __ATmega328_ADC_H */
-#endif /* __ADC__ */

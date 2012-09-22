@@ -63,6 +63,12 @@ AC_ARG_ENABLE([i2c],
 	[iic=yes]
 )
 
+AC_ARG_ENABLE([pwm],
+	AS_HELP_STRING([--disable-pwm], [Disable the support of PWM.]),
+	[pwm=no],
+	[pwm=yes]
+)
+
 AC_ARG_ENABLE([spi],
 	AS_HELP_STRING([--disable-spi], [Disable the support of SPI.]),
 	[spi=no],
@@ -95,6 +101,7 @@ AM_CONDITIONAL(IIC, test x$iic = xyes)
 AM_CONDITIONAL(SPI, test x$spi = xyes)
 AM_CONDITIONAL(USART, test x$usart = xyes)
 AM_CONDITIONAL(ADC, test x$adc = xyes)
+AM_CONDITIONAL(PWM, test x$pwm = xyes)
 
 # Checks for programs.
 
@@ -111,25 +118,29 @@ fi
 
 # autoheader defines
 if test "x$iic" = "xyes"; then
-AC_DEFINE([__I2C__], ["I2C"], [Defines wether I2C is enabled])
-AC_DEFINE([__TWI__], ["I2C"], [Defines wether I2C is enabled])
+AC_DEFINE([__I2C__], [1], [Defines wether I2C is enabled])
+AC_DEFINE([__TWI__], [1], [Defines wether I2C is enabled])
 fi
 
 if test "x$iic" = "xyes"; then
-AC_DEFINE([__SPI__], ["SPI"], [Defines wether SPI is enabled])
+AC_DEFINE([__SPI__], [1], [Defines wether SPI is enabled])
 fi
 
 if test "x$usart" = "xyes"; then
-AC_DEFINE([__USART__], ["USART"], [Defines wether USART is enabled])
+AC_DEFINE([__USART__], [1], [Defines wether USART is enabled])
 fi
 
 if test "x$adc" = "xyes"; then
-AC_DEFINE([__ADC__], ["ADC"], [Defines wether ADC is enabled])
+AC_DEFINE([__ADC__], [1], [Defines wether ADC is enabled])
 fi
 
 if test "x$threads" = "xyes"; then
-AC_DEFINE([__THREADS__], ["THREADS"], [Defines wether threads are enabled])
-AC_DEFINE([__EVENTS__], ["EVENTS"], [Defines wether events are enabled])
+AC_DEFINE([__THREADS__], [1], [Defines wether threads are enabled])
+AC_DEFINE([__EVENTS__], [1], [Defines wether events are enabled])
+fi
+
+if test "x$pwm" = "xyes"; then
+AC_DEFINE([__PWM__], [1], [Defines wether PWM's are enabled.])
 fi
 
 # Checks for header files.

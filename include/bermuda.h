@@ -135,6 +135,12 @@
 #define __link __attribute__((used))
 
 /**
+ * \def __noinline
+ * \brief Prevent the compiler from optimizing function calls.
+ */
+#define __noinline __attribute__((noinline))
+
+/**
  * \typedef mutex_t
  * \brief Mutual exclusion type.
  */

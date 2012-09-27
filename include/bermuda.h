@@ -151,11 +151,21 @@ typedef volatile unsigned short*  reg16_t;
 typedef volatile uint32_t*        reg32_t;
 typedef char                      bool;
 
+
+#define printf tfp_printf 
+#define sprintf tfp_sprintf 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern int BermudaInit();
+
+extern void init_printf(void* putp,void (*putf) (void*,char));
+
+extern void tfp_printf(char *fmt, ...);
+extern void tfp_sprintf(char* s,char *fmt, ...);
 
 #ifdef __cplusplus
 }

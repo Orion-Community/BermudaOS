@@ -23,6 +23,15 @@
 
 //! \file fs/vfile.h
 
+#define FILE VFILE
+
+/**
+ * \typedef VFILE
+ * \brief Virtual file type.
+ * \see _vfile
+ */
+typedef struct _vfile VFILE;
+
 /**
  * \struct _vfile
  * \brief Virtual file structure.
@@ -30,6 +39,9 @@
  */
 struct _vfile
 {
+		struct _vfile *next; //!< Next in inode list.
+		
+		char *name; //!< File name.
         unsigned char mode; //!< File mode.
         
         /**
@@ -70,6 +82,9 @@ struct _vfile
          */
         int (*read) (struct _vfile *f, void *buf, size_t len);
         
+		int (*put)(char c, FILE *stream); //!< Put one char.
+		int (*get)(FILE *stream); //!< Get one char.
+		
         /**
          * \brief File data pointer.
          * \see _device
@@ -78,14 +93,9 @@ struct _vfile
          * a device structure.
          */
         void *data;
+		
+		size_t len; //!< Length of the file.
 };
-
-/**
- * \typedef VFILE
- * \brief Virtual file type.
- * \see _vfile
- */
-typedef struct _vfile VFILE;
 
 #ifdef __cplusplus
 extern "C" {

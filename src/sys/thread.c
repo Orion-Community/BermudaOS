@@ -19,7 +19,7 @@
 /** \file thread.c */
 
 #include <bermuda.h>
-#include <string.h>
+#include <lib/string.h>
 
 #include <arch/io.h>
 #include <arch/stack.h>

@@ -5,7 +5,8 @@ ARDUINO_LIBS		=
 CSRCS			= main.c
 CPPSRCS			= 
 LIBDIR			= ../lib
-LIBS			= -lavr -lsys -lavr -ldev -l24c02 -lspiram
+LIBEXEC			= ../libexec
+LIBS			= -lavr -lsys -lavr -ldev -l24c02 -lspiram -lcbermuda -lvfs
 BUILDSYS		= linux
 TOP_SRCDIR		= ../
 
@@ -15,7 +16,8 @@ include ../make/Makefile.defs
 .PHONY: all clean upload $(TARGET)
 
 all: $(TARGET) $(OBJS)
-	$(CC) -mmcu=$(MCU) -mcall-prologues -lm -Wl,--gc-sections -Os -o temp.elf $(OBJS) -L$(LIBDIR) $(LIBS)
+	$(CC) -mmcu=$(MCU) -nostdlib -nostdinc -Wl,--gc-sections -Os -o temp.elf \
+	$(LIBEXEC)/boot.o $(OBJS) -L$(LIBDIR) $(LIBS) -lgcc
 	$(OBJCOPY) -R .eeprom -O ihex temp.elf $(TARGET)
 #	-rm -fv temp.elf
 

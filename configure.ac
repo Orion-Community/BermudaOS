@@ -176,6 +176,11 @@ AC_CONFIG_FILES([Makefile
                  src/dev/Makefile
                  src/dev/i2c/Makefile
                  src/lib/Makefile
+                 src/lib/c/Makefile
+                 src/lib/c/stdlib/Makefile
+                 src/lib/c/stdio/Makefile
+                 src/lib/c/string/Makefile
                  src/sys/Makefile
-                 src/sys/events/Makefile])
+                 src/sys/events/Makefile
+                 src/fs/Makefile])
 AC_OUTPUT

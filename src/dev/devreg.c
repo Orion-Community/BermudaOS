@@ -18,8 +18,9 @@
 
 //! \file dev/devreg.c Device registration and administration.
 
-#include <string.h>
 #include <bermuda.h>
+
+#include <lib/string.h>
 
 #include <sys/thread.h>
 #include <sys/events/event.h>
@@ -71,8 +72,8 @@ PUBLIC int BermudaDeviceRegister(DEVICE *dev, void *ioctl)
  */
 PUBLIC int BermudaDeviceUnregister(DEVICE *dev)
 {
-        DEVICE *lookup = dev_open(dev), **dlp;
-        int rc = -1;
+	DEVICE *lookup = dev_open(dev), **dlp;
+	int rc = -1;
         
 	if(NULL != lookup) {
 		dlp = &BermudaDeviceRoot;

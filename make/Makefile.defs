@@ -23,10 +23,10 @@ STDDEFS		= -D __AVR__ -D __BOARD__ -D BAUD=9600 -D MEM=0x7FF -D __ARDUINO__ \
 AVR_LIBC=$(AVRLIB)
 LOCAL_INC=$(LOCAL_LIB)
 
-CCFLAGS		=-Wall -Os -mcall-prologues -c -mmcu=$(MCU) -I$(AVR_LIBC) -I$(LOCAL_INC) \
-		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS)
-LDFLAGS		= -r -Os -m avr5
-CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU) -I$(AVR_LIBC) \
+CCFLAGS		=-Wall -Os -c -mmcu=$(MCU) -I$(LOCAL_INC) \
+		 -std=gnu89 -D F_CPU=$(F_CPU) $(STDDEFS) -nostdlib -nostdinc -ffreestanding
+LDFLAGS		= -r -Os -m avr5 -nodefaultlibs
+CPPFLAGS	= -fno-exceptions -Os -Wall -mmcu=$(MCU)) \
 		  -I$(LOCAL_INC) -c -DF_CPU=$(F_CPU) -ffunction-sections \
 		  -fdata-sections -w $(STDDEFS)
 ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall -c

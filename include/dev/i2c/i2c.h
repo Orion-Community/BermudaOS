@@ -41,7 +41,8 @@ struct i2c_adapter {
 	struct i2c_client *clients; //!< List of maintained I2C clients.
 
 	struct device *dev; //!< Adapter device.
-	struct thread *handle; //!< I2C handler.
+	struct thread *handle; //!< I2C command handler.
+
 } __attribute__((packed));
 
 struct i2c_message

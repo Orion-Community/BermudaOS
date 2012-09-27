@@ -205,4 +205,7 @@
 
 #define pgm_read_word(address_short)    pgm_read_word_near(address_short)
 
+__DECL
+extern const char *strchr_P(const char *, int val);
+__DECL_END
 #endif

@@ -32,6 +32,9 @@
 #include <dev/usartif.h>
 #include <dev/adc.h>
 
+#include <fs/vfile.h>
+#include <fs/vfs.h>
+
 #include <arch/io.h>
 #include <arch/twi.h>
 #include <arch/usart.h>
@@ -99,14 +102,6 @@ PUBLIC void TestTimer(VTIMER *timer, void *arg)
 	led ^= 1;
 }
 
-int main(void)
-{
-	BermudaInit();
-
-	while(1);
-	return 0;
-}
-
 void setup()
 {
 	BermudaSetPinMode(A0, INPUT);
@@ -134,6 +129,7 @@ unsigned long loop()
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
+	BermudaDigitalPinWrite(5, 1);
 
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;

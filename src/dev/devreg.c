@@ -18,8 +18,9 @@
 
 //! \file dev/devreg.c Device registration and administration.
 
-#include <string.h>
 #include <bermuda.h>
+
+#include <lib/string.h>
 
 #include <sys/thread.h>
 #include <sys/events/event.h>

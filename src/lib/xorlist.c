@@ -21,7 +21,6 @@
  * Maintained by bietje AKA Michel Megens.
  */
 
-#include <stdlib.h>
 #include <bermuda.h>
 
 #include <lib/list/xorlist.h>

@@ -42,10 +42,10 @@ static FILE usart_out = { 0 };
  */
 PUBLIC void BermudaUsartSetupStreams()
 {
-		fdev_setup_stream(&usart_out, &BermudaUsartWriteByte, NULL, _FDEV_SETUP_WRITE);
-		fdev_setup_stream(&usart_in, NULL, &BermudaUsartReadByte, _FDEV_SETUP_READ);
-		stdout = &usart_out;
-		stdin  = &usart_in;
+	fdev_setup_stream(&usart_out, &BermudaUsartWriteByte, NULL, _FDEV_SETUP_WRITE);
+	fdev_setup_stream(&usart_in, NULL, &BermudaUsartReadByte, _FDEV_SETUP_READ);
+	stdout = &usart_out;
+	stdin  = &usart_in;
 }
 
 /**

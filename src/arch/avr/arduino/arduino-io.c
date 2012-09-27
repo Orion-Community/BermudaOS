@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+#include <bermuda.h>
 
 #include <arch/avr/interrupts.h>
 #include <arch/avr/io.h>

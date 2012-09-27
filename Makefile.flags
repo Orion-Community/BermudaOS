@@ -2,6 +2,7 @@
 AVRLIB=/usr/lib/avr/include
 LOCAL_INC=@top_srcdir@/include
 STDDEFS=-DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__
+CCFLAGS=
 
 # -------------------------------------------------------
 # Architectural defines
@@ -10,6 +11,7 @@ if AVR
 LIBC=-I$(AVRLIB)
 CPU_TYPE=-mmcu=$(MCU)
 STDDEFS+= -D__AVR__
+CCFLAGS+= -ffreestanding -nostdinc -nostdlib
 endif
 
 # -------------------------------------------------------
@@ -38,9 +40,9 @@ endif
 # -------------------------------------------------------
 # Compile flags
 # -------------------------------------------------------
-CCFLAGS		=-Wall -Os -mcall-prologues -I$(LOCAL_INC) $(LIBC) \
-		 -std=gnu89 $(CPU_TYPE) -D F_CPU=$(F_CPU) $(STDDEFS) 
-LD_FLAGS	= -r -Os -m avr5
+CCFLAGS		+=-Wall -Os -I$(LOCAL_INC) \
+		 -std=gnu89 $(CPU_TYPE) -D F_CPU=$(F_CPU) $(STDDEFS)
+LD_FLAGS	= -r -Os -m avr5 -nostdlib
 CPP_FLAGS	= -fno-exceptions -Os -Wall $(CPU_TYPE) -I$(LOCAL_INC) $(LIBC) \
 		   -DF_CPU=$(F_CPU) -ffunction-sections \
 		  -fdata-sections -w $(STDDEFS)
@@ -51,4 +53,5 @@ AM_CFLAGS=$(CCFLAGS)
 AM_CCASFLAGS=$(ASFLAGS)
 AM_CXXFLAGS=$(CPP_FLAGS)
 AM_LDFLAGS=-Wl,-r,-mavr5
+CP=cp
 

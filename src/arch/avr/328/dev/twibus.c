@@ -16,12 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(__TWI__) || defined(__DOXYGEN__)
-
-/**
- * \file arch/avr/328/dev/twibus.c Hardware TWI bus controller.
- */
-
 #include <bermuda.h>
 
 #include <sys/thread.h>
@@ -33,6 +27,10 @@
 #include <arch/avr/twif.h>
 #include <arch/avr/328/dev/twibus.h>
 #include <arch/avr/interrupts.h>
+
+/**
+ * \file arch/avr/328/dev/twibus.c Hardware TWI bus controller.
+ */
 
 #ifdef __EVENTS__
 /**
@@ -234,4 +232,4 @@ SIGNAL(TWI_STC_vect)
 {
 	twibus0->twif->isr(twibus0);
 }
-#endif /* __TWI__ */
+

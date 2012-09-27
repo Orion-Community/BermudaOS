@@ -16,6 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bermuda.h>
+
+#include <arch/io.h>
 #include <arch/avr/io.h>
 
 const struct avr_io io =

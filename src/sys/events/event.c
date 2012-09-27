@@ -18,12 +18,6 @@
 
 /** \file event.c */
 
-#if defined(__EVENTS__) || defined(__DOXYGEN__)
-
-#ifndef __THREADS__
-#       error Handling of events is not possible without threading.
-#endif
-
 #include <bermuda.h>
 
 #include <arch/io.h>
@@ -31,6 +25,10 @@
 #include <sys/sched.h>
 #include <sys/thread.h>
 #include <sys/events/event.h>
+
+#ifndef __THREADS__
+#       error Handling of events is not possible without threading.
+#endif
 
 /**
  * \addtogroup event_management Event Management API
@@ -267,4 +265,4 @@ PUBLIC void BermudaEventSignalFromISR(volatile THREAD **tqpp)
 }
 
 // @}
-#endif /* __EVENTS__ */
+

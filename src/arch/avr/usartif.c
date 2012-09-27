@@ -18,8 +18,6 @@
 
 //! \file src/arch/avr/usartif.c ATmega specific USART.
 
-#if defined(__USART__) || defined(__DOXYGEN__)
-
 #include <bermuda.h>
 
 #include <arch/io.h>
@@ -166,4 +164,4 @@ unsigned int tmo;
 #endif
 	return rc;
 }
-#endif
+

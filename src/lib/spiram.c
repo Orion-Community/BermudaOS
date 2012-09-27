@@ -17,8 +17,7 @@
  */
 
 /** \file src/lib/spiram.c 23KXXX library. */
-#if (defined(__SPI__) && defined(__SPIRAM__)) || defined(__DOXYGEN__)
-
+#include <bermuda.h>
 #include <dev/spibus.h>
 
 #include <arch/io.h>
@@ -139,4 +138,4 @@ PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
                 BermudaSPIWrite(ram_bus, buff, 2);
         }
 }
-#endif /* __SPI__ && __SPIRAM__*/
+

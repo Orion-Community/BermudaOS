@@ -9,6 +9,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
 /* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
 
@@ -79,6 +82,30 @@
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 #undef _UINT8_T
+
+/* Defines wether ADC is enabled */
+#undef __ADC__
+
+/* Defines wether events are enabled */
+#undef __EVENTS__
+
+/* Defines wether I2C is enabled */
+#undef __I2C__
+
+/* Defines wether PWM's are enabled. */
+#undef __PWM__
+
+/* Defines wether SPI is enabled */
+#undef __SPI__
+
+/* Defines wether threads are enabled */
+#undef __THREADS__
+
+/* Defines wether I2C is enabled */
+#undef __TWI__
+
+/* Defines wether USART is enabled */
+#undef __USART__
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */

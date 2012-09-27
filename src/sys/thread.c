@@ -17,8 +17,8 @@
  */
 
 /** \file thread.c */
-#if defined(__THREADS__) || defined(__DOXYGEN__)
-#include <stdlib.h>
+
+#include <bermuda.h>
 #include <string.h>
 
 #include <arch/io.h>
@@ -332,4 +332,3 @@ PUBLIC THREAD *BermudaThreadGetByName(char *name)
  * @}
  */
 
-#endif

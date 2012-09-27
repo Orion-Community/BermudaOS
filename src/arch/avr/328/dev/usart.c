@@ -18,8 +18,6 @@
 
 //! \file src/arch/avr/328/dev/usart.c HW specific USART controller.
 
-#if defined(__USART__) || defined(__DOXYGEN__)
-
 #include <stdio.h>
 #include <bermuda.h>
 
@@ -32,7 +30,6 @@
 #include <arch/avr/interrupts.h>
 #include <arch/avr/328/dev/usart.h>
 #include <arch/avr/328/dev/usartreg.h>
-
 
 //<< Private function declarations >>//
 PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
@@ -203,4 +200,4 @@ SIGNAL(USART_RX_STC_vect)
 {
 	USART0->usartif->isr(USART0, USART_RX);
 }
-#endif
+

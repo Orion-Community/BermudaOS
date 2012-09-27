@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define __THREADS__
-#ifdef __THREADS__
 .section .text
 .global BermudaSwitchTask
 .extern BermudaStackSave
@@ -120,4 +118,4 @@ BermudaSwitchTask:
         out  SREG,r0
         pop  r0
         ret
-#endif
+

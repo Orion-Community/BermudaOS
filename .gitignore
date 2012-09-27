@@ -23,10 +23,14 @@ small.ico
 .goutputstream-CJV7EW
 .goutputstream-HWGFFW
 .goutputstream-T01BFW
-make/.goutputstream-13D5EW
+make/.goutputstream-13D5E
 make/.goutputstream-YDO9EW
 tags
 lib/*
 doc/
 autom4te.cache/
+.autotools
+.cproject
+.project
 Makefile.in
+configure

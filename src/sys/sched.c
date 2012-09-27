@@ -17,9 +17,6 @@
  */
 
 /** \file sched.c */
-#if (defined(__THREADS__) || defined(__DOXYGEN__))
-
-#include <stdlib.h>
 #include <bermuda.h>
 
 #include <arch/io.h>
@@ -286,4 +283,4 @@ THREAD(IdleThread, arg)
 /**
  * @}
  */
-#endif
+

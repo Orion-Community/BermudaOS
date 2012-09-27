@@ -16,9 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(__PWM__) || defined(__DOXYGEN__)
 #ifndef __PWM_AVR_H
 #define __PWM_AVR_H
+
+#include <dev/pwmdev.h>
 
 #define AVR_PWM_BASE_FRQ 2000UL
 #define AVR_PWM_DEFAULT_PS 32UL
@@ -31,4 +32,4 @@ extern void BermudaAvrPwmSetDuty(PWM *pwm, uint16_t duty, PWM_CHANNEL_NUM channe
 __DECL_END
 
 #endif /* __PWM_AVR_H */
-#endif /* PWM || DOXYGEN */
+

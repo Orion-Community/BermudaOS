@@ -21,6 +21,7 @@
 #ifndef __THREAD_H
 #define __THREAD_H
 
+#include <bermuda.h>
 #include <arch/io.h>
 #include <lib/binary.h>
 #include <sys/virt_timer.h>
@@ -45,11 +46,17 @@ typedef void (*thread_handle_t)(void *data);
  * A function which serves a thread should be declared with this macro.
  */
 #define THREAD(fn, param) \
-static void fn(void *param); \
-static void fn(void *param)
+static void __link __noinline fn(void *param); \
+static void __link __noinline fn(void *param)
 
+/**
+ * \brief Only the definition of a thread.
+ * \note Usualy used as forward declaration.
+ * 
+ * This define requires no implementation.
+ */
 #define THREAD_DEF(fn, param) \
-static void fn(void *param);
+static void __link __noinline fn(void *param);
 
 /**
  * \def BERMUDA_DEFAULT_PRIO

@@ -29,8 +29,6 @@
 #include <sys/thread.h>
 #include <sys/events/event.h>
 
-#if defined(__ADC__) || defined(__DOXYGEN__)
-
 // private functions
 PRIVATE WEAK void BermudaAdcSetAnalogRef(ADC *adc, const unsigned char aref);
 PRIVATE WEAK int BermudaAdcSetPrescaler(ADC *adc, const unsigned char prescaler);
@@ -165,4 +163,3 @@ SIGNAL(ADC_CC_vect)
 }
 #endif
 
-#endif

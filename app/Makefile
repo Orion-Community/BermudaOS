@@ -5,8 +5,9 @@ ARDUINO_LIBS		=
 CSRCS			= main.c
 CPPSRCS			= 
 LIBDIR			= ../lib
-LIBS			= -lsys -lavr -ldev -l24c02 -lspiram
+LIBS			= -lavr -lsys -lavr -ldev -l24c02 -lspiram
 BUILDSYS		= linux
+TOP_SRCDIR		= ../
 
 include ../make/Makefile.$(BUILDSYS)
 include ../make/Makefile.defs
@@ -19,7 +20,7 @@ all: $(TARGET) $(OBJS)
 #	-rm -fv temp.elf
 
 %o: %c
-	$(CC) $(CCFLAGS) -c -o $@ $<
+	$(CC) $(CCFLAGS) -DHAVE_CONFIG -I$(TOP_SRCDIR) -c -o $@ $<
 
 upload: $(TARGET)
 	$(AVRDUDE) $(AVRDUDE_COM_OPTS) -U flash:w:$(TARGET):i

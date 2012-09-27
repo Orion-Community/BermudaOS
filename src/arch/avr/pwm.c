@@ -18,8 +18,6 @@
 
 //! \file src/arch/avr/pwm.c PWM backend functions.
 
-#if defined(__PWM__) || defined(__DOXYGEN__)
-
 #include <bermuda.h>
 
 #include <lib/binary.h>
@@ -88,4 +86,3 @@ PUBLIC void BermudaAvrPwmSetDuty(PWM *pwm, uint16_t duty, PWM_CHANNEL_NUM channe
 	chan->flags |= PWM_CHANNEL_ENABLE;
 }
 
-#endif

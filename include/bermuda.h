@@ -26,6 +26,8 @@
 #ifndef __BERMUDA_H
 #define __BERMUDA_H
 
+#include <config.h>
+
 #include <arch/types.h>
 #include <sys/out.h>
 
@@ -56,6 +58,10 @@
 #define ARRAY(T, N) (typeof(T[N]))
 
 #define NEXT(E) ((typeof(E))((E)->next))
+
+#ifndef NULL
+#define NULL (void*)0
+#endif
 
 /**
  * \def __PACK__
@@ -127,6 +133,12 @@
  * executable, even if they <b>might</b> appear as unused to the linker.
  */
 #define __link __attribute__((used))
+
+/**
+ * \def __noinline
+ * \brief Prevent the compiler from optimizing function calls.
+ */
+#define __noinline __attribute__((noinline))
 
 /**
  * \typedef mutex_t

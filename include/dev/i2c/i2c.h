@@ -42,6 +42,7 @@ struct i2c_adapter {
 	void *priv; //!< Internal bus data.
 	
 	struct device *dev; //!< Adapter device.
+	struct thread *handle; //!< I2C command handler.
 	
 } __attribute__((packed));
 

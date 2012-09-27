@@ -32,7 +32,7 @@ extern int write(int fd, const void *buff, size_t size);
 extern int read(int fd, void *buff, size_t size);
 
 extern void vfs_add(VFILE *f);
-extern void vfs_delete(VFILE *f);
+extern int vfs_delete(VFILE *f);
 __DECL_END
 
 #endif /* __VFS_H */

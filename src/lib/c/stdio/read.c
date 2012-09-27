@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - getc
+ *  BermudaOS - StdIO - I/O read
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
+#include <stdlib.h>
 #include <stdio.h>
 
-PUBLIC int fgetc(FILE *stream)
+/**
+ * \brief Read from a file.
+ * \param fd File descriptor.
+ * \param buff Buffer to read.
+ * \param size Size of the buffer.
+ */
+PUBLIC int read(int fd, void *buff, size_t size)
 {
-	int rv = -1;
-	
-	if((stream->mode & __SRD) == 0) {
-		return rv;
-	} else {
-		rv = stream->get(stream);
-	}
-	
-	return rv;
+	return __iob[fd]->read(__iob[fd], buff, size);
 }

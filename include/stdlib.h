@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - getc
+ *  BermudaOS - StdLib
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
-#include <stdio.h>
+#ifndef __STDLIB_HEADER_
+#define __STDLIB_HEADER_
 
-PUBLIC int fgetc(FILE *stream)
-{
-	int rv = -1;
-	
-	if((stream->mode & __SRD) == 0) {
-		return rv;
-	} else {
-		rv = stream->get(stream);
-	}
-	
-	return rv;
-}
+#include <bermuda.h>
+
+
+__DECL
+extern int memcmp(const void *s1, const void *s2, size_t n);
+__DECL_END
+
+#endif /* __STDLIB_HEADER_ */

@@ -72,8 +72,8 @@ PUBLIC int BermudaDeviceRegister(DEVICE *dev, void *ioctl)
  */
 PUBLIC int BermudaDeviceUnregister(DEVICE *dev)
 {
-        DEVICE *lookup = dev_open(dev), **dlp;
-        int rc = -1;
+	DEVICE *lookup = dev_open(dev), **dlp;
+	int rc = -1;
         
 	if(NULL != lookup) {
 		dlp = &BermudaDeviceRoot;

@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - getc
+ *  BermudaOS - StdIO - I/O set mode
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
+#include <stdlib.h>
 #include <stdio.h>
 
-PUBLIC int fgetc(FILE *stream)
+/**
+ * \brief Change the file mode of a given file.
+ * \param fd File descriptor of the file to change.
+ * \param mode New file mode.
+ */
+PUBLIC void fdmode(int fd, unsigned char mode)
 {
-	int rv = -1;
-	
-	if((stream->mode & __SRD) == 0) {
-		return rv;
-	} else {
-		rv = stream->get(stream);
-	}
-	
-	return rv;
+	__iob[fd]->mode = mode;
 }

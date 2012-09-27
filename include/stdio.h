@@ -23,6 +23,12 @@
 #include <stddef.h>
 #include <fs/vfs.h>
 
+/**
+ * \def MAX_OPEN
+ * \brief Maximum amount of files opened at the same time.
+ */
+#define MAX_OPEN 16
+
 /* file flags */
 #define __SRD	0x0001		/* OK to read */
 #define __SWR	0x0002		/* OK to write */
@@ -45,7 +51,7 @@
 	do { \
 		(stream)->put = p; \
 		(stream)->get = g; \
-		(stream)->flags = f; \
+		(stream)->mode = f; \
 		(stream)->data = 0; \
 	} while(0)
 
@@ -55,8 +61,15 @@ __DECL
 extern int fputc(int c, FILE *file);
 extern int fputs(char *s, FILE *f);
 extern int putc(int c, FILE *f);
-
 extern int fgetc(FILE *stream);
+
+extern int write(int fd, const void *buff, size_t size);
+extern int read(int fd, void *buff, size_t size);
+extern void fdmode(int fd, unsigned char mode);
+
+extern int fdopen(char *fname, unsigned char mode);
+extern int fdclose(int fd);
+
 extern int vfprintf(FILE *stream, const char *fmt, va_list ap);
 __DECL_END
 

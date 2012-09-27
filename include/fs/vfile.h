@@ -43,7 +43,6 @@ struct _vfile
 		
 		char *name; //!< File name.
         unsigned char mode; //!< File mode.
-        uint8_t flags; //!< File flags.
         
         /**
          * \brief Close the file.
@@ -83,8 +82,9 @@ struct _vfile
          */
         int (*read) (struct _vfile *f, void *buf, size_t len);
         
-		int (*put)(char c, FILE *stream);
-		int (*get)(FILE *stream);
+		int (*put)(char c, FILE *stream); //!< Put one char.
+		int (*get)(FILE *stream); //!< Get one char.
+		
         /**
          * \brief File data pointer.
          * \see _device

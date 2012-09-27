@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - getc
+ *  BermudaOS - StdIO - I/O open
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
-PUBLIC int fgetc(FILE *stream)
+/**
+ * \brief Open a file.
+ * \param fname Name of the file to open.
+ * \param mode File mode to use.
+ * \return The file descriptor.
+ */
+PUBLIC int fdopen(char *fname, unsigned char mode)
 {
-	int rv = -1;
+	int i = 0;
+	FILE *c = 0;
 	
-	if((stream->mode & __SRD) == 0) {
-		return rv;
-	} else {
-		rv = stream->get(stream);
+	for(; c; c = c->next) {
+		if(!strcmp(c->name, fname)) {
+			for(i = 3; i < MAX_OPEN; i++) {
+				if(__iob[i] == NULL) {
+					__iob[i] = c;
+					return i; // file is opened
+				} else if(!strcmp(__iob[i]->name, fname)) {
+					return i; // file is already open
+				}
+			}
+		}
+		if(c->next == NULL) {
+			break;
+		}
 	}
 	
-	return rv;
+	return -1;
 }

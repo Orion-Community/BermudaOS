@@ -26,11 +26,7 @@
 #include <fs/vfile.h>
 #include <fs/vfs.h>
 
-/**
- * \def MAX_OPEN
- * \brief Maximum amount of files opened at the same time.
- */
-#define MAX_OPEN 16
+#include <arch/io.h>
 
 /**
  * \brief Array of files which are currently opened with fopen.
@@ -59,7 +55,7 @@ PUBLIC void vfs_init()
  * \brief Add a new file to the linked list.
  * \param f File to add.
  */
-PUBLIC void vfs_add(VFILE *f)
+PUBLIC void vfs_add(FILE *f)
 {
 	f->next = vfs_head;
 	vfs_head = f;
@@ -69,59 +65,19 @@ PUBLIC void vfs_add(VFILE *f)
  * \brief Delete a file from the inode head.
  * \param f File to delete.
  */
-PUBLIC void vfs_delete(VFILE *f)
+PUBLIC int vfs_delete(FILE *f)
 {
-	//TODO: implement.
-}
-
-/**
- * \brief Open a file.
- * \param fname Name of the file to open.
- * \param mode File mode to use.
- * \return The file descriptor.
- */
-PUBLIC int fdopen(char *fname, unsigned char mode)
-{
-	int i = 0;
-	for(; i < MAX_OPEN; i++) {
-		if(!strcmp(__iob[i]->name, fname)) {
-			fdmode(i, mode);
-			return i;
+	FILE **fpp;
+	
+	BermudaEnterCritical();
+	fpp = &vfs_head;
+	BermudaExitCritical();
+	
+	for(; *fpp; fpp = &(*fpp)->next) {
+		if(*fpp == f) {
+			*fpp = f->next;
+			return 0;
 		}
 	}
 	return -1;
-}
-
-/**
- * \brief Change the file mode of a given file.
- * \param fd File descriptor of the file to change.
- * \param mode New file mode.
- */
-PUBLIC void fdmode(int fd, unsigned char mode)
-{
-	__iob[fd]->mode = mode;
-}
-
-/**
- * \brief Write to a file.
- * \param fd File descriptor.
- * \param buff Buffer to write.
- * \param size Size of the buffer.
- */
-PUBLIC int write(int fd, const void *buff, size_t size)
-{
-	VFILE *file = __iob[fd];
-	
-	return file->write(file, buff, size);
-}
-
-/**
- * \brief Read from a file.
- * \param fd File descriptor.
- * \param buff Buffer to read.
- * \param size Size of the buffer.
- */
-PUBLIC int read(int fd, void *buff, size_t size)
-{
-	return __iob[fd]->read(__iob[fd], buff, size);
 }

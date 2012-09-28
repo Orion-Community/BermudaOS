@@ -25,12 +25,6 @@
 
 __DECL
 extern void vfs_init();
-extern int fdopen(char *fname, unsigned char mode);
-extern void fdmode(int fd, unsigned char mode);
-
-extern int write(int fd, const void *buff, size_t size);
-extern int read(int fd, void *buff, size_t size);
-
 extern void vfs_add(VFILE *f);
 extern int vfs_delete(VFILE *f);
 __DECL_END

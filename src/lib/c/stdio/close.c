@@ -23,7 +23,7 @@
  * \file src/lib/c/stdio/close.c stdio close functions
  */
 
-PUBLIC int fdclose(int fd)
+PUBLIC int close(int fd)
 {
 	__iob[fd] = NULL;
 	return 0;

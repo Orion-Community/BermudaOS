@@ -32,7 +32,7 @@
 /* file flags */
 #define __SRD	0x0001		/* OK to read */
 #define __SWR	0x0002		/* OK to write */
-#define __SSTR	0x0004		/* this is an sprintf/snprintf string */
+#define __SRWB  0x0004		/* Read/write from buffer */
 #define __SPGM	0x0008		/* fmt string is in progmem */
 #define __SERR	0x0010		/* found error */
 #define __SEOF	0x0020		/* found EOF */
@@ -42,6 +42,7 @@
 #define _FDEV_SETUP_READ  __SRD	/**< fdev_setup_stream() with read intent */
 #define _FDEV_SETUP_WRITE __SWR	/**< fdev_setup_stream() with write intent */
 #define _FDEV_SETUP_RW    (__SRD|__SWR)	/**< fdev_setup_stream() with read/write intent */
+#define _FDEV_SETUP_RWB   __SRWB /**< Read/write from buffers */
 
 #define stdin  (__iob[0])
 #define stdout (__iob[1])
@@ -67,8 +68,9 @@ extern int write(int fd, const void *buff, size_t size);
 extern int read(int fd, void *buff, size_t size);
 extern void fdmode(int fd, unsigned char mode);
 
-extern int fdopen(char *fname, unsigned char mode);
-extern int fdclose(int fd);
+extern int open(char *fname, unsigned char mode);
+extern FILE *fdopen(int fd, unsigned char mode);
+extern int close(int fd);
 
 extern int vfprintf(FILE *stream, const char *fmt, va_list ap);
 __DECL_END

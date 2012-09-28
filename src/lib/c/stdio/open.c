@@ -26,7 +26,7 @@
  * \param mode File mode to use.
  * \return The file descriptor.
  */
-PUBLIC int fdopen(char *fname, unsigned char mode)
+PUBLIC int open(char *fname, unsigned char mode)
 {
 	int i = 0;
 	FILE *c = 0;
@@ -48,4 +48,10 @@ PUBLIC int fdopen(char *fname, unsigned char mode)
 	}
 	
 	return -1;
+}
+
+PUBLIC FILE *fdopen(int fd, unsigned char mode)
+{
+	fdmode(fd, mode);
+	return __iob[fd];
 }

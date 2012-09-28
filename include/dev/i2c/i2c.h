@@ -51,17 +51,25 @@ struct i2c_message
 } __attribute__((packed));
 
 struct i2c_client {
-	struct i2c_client *next; //!< Next client in the list.
 	struct device *dev;      //!< COM device.
 	struct i2c_adapter *adapter; //!< The adapter where it belongs to.
+	uint8_t sla;
+
+} __attribute__((packed));
+
+struct i2c_adapter {
+	struct i2c_client *clients; //!< List of maintained I2C clients.
+	struct device *dev; //!< Adapter device.
 	
-	uint8_t id; //!< Client ID.
 	uint8_t flags; //!< Bus flags.
 #define I2C_MASTER_ENABLE 		BIT(0) //!< Master enable bit in the flags member of i2c_client.
 #define I2C_TRANSMITTER 		BIT(1)
 #define I2C_RECEIVER			BIT(2)
 
 #ifdef __THREADS__
+	volatile void *mutex;
+	volatile void *master_queue;
+	volatile void *slave_queue;
 	struct thread *allocator;
 #endif
 	
@@ -69,12 +77,6 @@ struct i2c_client {
 	struct i2c_message *slave_msg;
 	size_t master_index; //!< TWI master buffer index.
 	size_t slave_index;   //!< TWI slave buffer index.
-} __attribute__((packed));
-
-struct i2c_adapter {
-	struct i2c_client *clients; //!< List of maintained I2C clients.
-
-	struct device *dev; //!< Adapter device.
 } __attribute__((packed));
 
 __DECL

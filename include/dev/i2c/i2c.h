@@ -41,24 +41,25 @@ struct i2c_message
 	 * transmission values.
 	 */
 	void (*call_back)(struct i2c_message *msg);
-	const uint8_t *tx_buff; //!< Transmit buffer.
-	size_t tx_length; //!< Transmit buffer length.
 	
-	uint8_t *rx_buff; //!< Receive buffer.
-	size_t rx_length; //!< Receive buffer length.
-	
-	uint8_t sla; //!< Slave address to address in master mode.
+	uint8_t *buff; //!< Message buffer.
+	size_t length; //!< Message length.
+	size_t index;  //!< Buffer index.
 } __attribute__((packed));
 
+/**
+ * \brief The i2c_client represents the sender or receiver.
+ * 
+ * The receiver or sender is responsible for knowing where the post should be
+ * delivered (ie. what is the slave address).
+ */
 struct i2c_client {
 	struct device *dev;      //!< COM device.
 	struct i2c_adapter *adapter; //!< The adapter where it belongs to.
 	uint8_t sla;
-
 } __attribute__((packed));
 
 struct i2c_adapter {
-	struct i2c_client *clients; //!< List of maintained I2C clients.
 	struct device *dev; //!< Adapter device.
 	
 	uint8_t flags; //!< Bus flags.
@@ -73,8 +74,8 @@ struct i2c_adapter {
 	struct thread *allocator;
 #endif
 	
-	struct i2c_message *master_msg;
-	struct i2c_message *slave_msg;
+	struct i2c_message *master_msg[]; //!< TWI master message.
+	struct i2c_message *slave_msg[];  //!< TWI slave message.
 	size_t master_index; //!< TWI master buffer index.
 	size_t slave_index;   //!< TWI slave buffer index.
 } __attribute__((packed));

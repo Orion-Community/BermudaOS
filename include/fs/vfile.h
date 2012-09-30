@@ -82,7 +82,7 @@ struct _vfile
          */
         int (*read) (struct _vfile *f, void *buf, size_t len);
         
-		int (*put)(char c, FILE *stream); //!< Put one char.
+		int (*put)(int c, FILE *stream); //!< Put one char.
 		int (*get)(FILE *stream); //!< Get one char.
 		
         /**

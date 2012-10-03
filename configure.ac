@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AC_INIT([BermudaOS], [0.0.5], [Web: bugs.michelmegens.net :: Mail: report@bugs.michelmegens.net])
 AM_INIT_AUTOMAKE(BermudaOS, 0.0.5)
 LT_INIT([disable-shared,static])
 #AC_CONFIG_SRCDIR([app/main.c])
@@ -19,19 +19,12 @@ CCASFLAGS=
 # CPU flags
 AC_ARG_ENABLE([atmega328p],
 	AS_HELP_STRING([--enable-atmega328p], [Enable build of atmega328p architecture.]),
-	[enable_atmega328p=yes],
+	[enable_atmega328p=yes arch=avr atmega=yes],
 	[]
 )
 AC_ARG_ENABLE([atmega328],
 	AS_HELP_STRING([--enable-atmega328], [Enable build of atmega328 architecture.]),
 	[enable_atmega328=yes],
-	[]
-)
-
-# arch flags
-AC_ARG_ENABLE([avr],
-	AS_HELP_STRING([--enable-avr], [Enable build of avr architecture.]),
-	[arch=avr],
 	[]
 )
 
@@ -103,6 +96,7 @@ AM_CONDITIONAL(ENABLE_UNO, test x$enable_uno = xyes)
 # -------------------------------------------------------
 AM_CONDITIONAL(AVR, test x$arch = xavr)
 AM_CONDITIONAL(ARM, test x$arch = xarm-linux-gnueabi)
+AM_CONDITIONAL(ATMEGA, test x$atmega = xyes)
 
 # -------------------------------------------------------
 # Code enablers
@@ -151,6 +145,10 @@ fi
 
 if test "x$pwm" = "xyes"; then
 AC_DEFINE([__PWM__], [1], [Defines wether PWM's are enabled.])
+fi
+
+if test "x$atmega" = "xyes"; then
+AC_DEFINE([ATMEGA], [1], [Defines weather we are using an atmega based CPU])
 fi
 
 # Checks for header files.

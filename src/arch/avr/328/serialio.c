@@ -27,7 +27,7 @@
 
 // private functions
 PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
-PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream);
+PRIVATE WEAK int BermudaUsartWriteByte(int c, FILE *stream);
 
 static FILE usart_in = { 0 };
 static FILE usart_out = { 0 };
@@ -54,7 +54,7 @@ PUBLIC void BermudaUsartSetupStreams()
  * 
  * Writes a single character (<i>c</i>) to the USART0 (hardware usart).
  */
-PRIVATE WEAK int BermudaUsartWriteByte(char c, FILE *stream)
+PRIVATE WEAK int BermudaUsartWriteByte(int c, FILE *stream)
 {
 	HW_USART *hw = BermudaUsartGetIO(USART0);
 	

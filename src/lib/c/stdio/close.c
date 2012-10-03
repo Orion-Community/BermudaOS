@@ -25,6 +25,7 @@
 
 PUBLIC int close(int fd)
 {
+	__iob[fd]->fd = -1;
 	__iob[fd] = NULL;
 	return 0;
 }

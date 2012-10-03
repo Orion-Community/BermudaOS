@@ -26,30 +26,45 @@
 #include <sys/thread.h>
 #include <sys/events/event.h>
 
-char *i2c_core = "I2C_CORE";
-
-static __link int i2c_bus_router(FILE *file, const void *buff, size_t size)
+PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 {
-	struct i2c_adapter *adapter = (struct i2c_adapter*)buff;
-	struct i2c_message *msg;
-	int fd, status;
+	int rc = -1;
+	adapter->dev = BermudaHeapAlloc(sizeof(*(adapter->dev)));
 	
-	fd = open(adapter->dev->io->name, _FDEV_SETUP_RWB);
-	if(fd < 0) {
-		return -1;
+	if(adapter->dev == NULL) {
+		return rc;
+	} else {
+		rc = 0;
 	}
 	
-	status = adapter->status;
+	adapter->dev->name = fname;
+	BermudaDeviceRegister(adapter->dev, adapter);
 	
-	switch(status) {
-		default:
-			break;
-	}
-	
-	return -1;
+	adapter->flags = 0;
+	return rc;
 }
 
-static __link int i2c_io_controller(struct device *dev, int flags, void *buff)
+PUBLIC int i2c_dev_write(FILE *file, const void *buff, size_t size)
+{
+	struct device *dev = (struct device *)file->data;
+	struct i2c_adapter *adapter = (struct i2c_adapter*)dev->ioctl;
+	static uint8_t index = 0;
+	int rc;
+	
+#ifdef __THREADS__
+	if((rc = dev->alloc(dev, I2C_MASTER_TMO)) == -1) {
+		goto end;
+	}
+#endif
+
+#ifdef __THREADS__
+	rc = dev->release(dev);
+	end:
+#endif
+	return rc;
+}
+
+PUBLIC int i2c_dev_read(FILE *file, void *buff, size_t size)
 {
 	return -1;
 }

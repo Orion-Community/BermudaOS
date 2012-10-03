@@ -83,7 +83,7 @@ PUBLIC int vfprintf(FILE *stream, const char *fmt, va_list ap)
 		}
 	}
 	
-	return stream->len;
+	return stream->length;
 }
 
 static int convert_to_num(uint32_t num, uint8_t base, bool sign, 

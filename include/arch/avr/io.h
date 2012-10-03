@@ -161,6 +161,13 @@ static inline void inb(volatile unsigned char *io, unsigned char *data)
 	*data = *io;
 }
 
+/**
+ * \brief Setup the standard streams.
+ * 
+ * This function sets up stdin, stdout and stderr.
+ */
+#define setup_std_streams() BermudaUsartSetupStreams()
+
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>
         #include <arch/avr/328/dev/usart.h>

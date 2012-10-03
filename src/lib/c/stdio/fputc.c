@@ -16,16 +16,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
-
-#include <lib/string.h>
-#include <fs/vfile.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 PUBLIC int fputc(int c, FILE *file)
 {
-	file->put(c, file);
-	file->len++;
-	return c;
+	int rc = -1;
+	if((file->flags & __SWR) == 0) {
+		rc = file->put(c, file);
+		if(rc != -EOF || rc == c) {
+			file->length++;
+		}
+	}
+	return rc;
 }
 
 PUBLIC int fputs(char *s, FILE *f)

@@ -23,6 +23,8 @@
 
 #include <fs/vfile.h>
 
+extern FILE *vfs_head;
+
 __DECL
 extern void vfs_init();
 extern void vfs_add(VFILE *f);

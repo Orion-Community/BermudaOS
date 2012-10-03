@@ -25,8 +25,6 @@
 
 #include <lib/binary.h>
 
-#include <sys/mem.h>
-
 #define BERMUDA_MM_FREE_MAGIC 0x99
 #define BERMUDA_MM_ALLOC_MAGIC 0x66
 

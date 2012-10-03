@@ -44,17 +44,74 @@
 #define _FDEV_SETUP_RW    (__SRD|__SWR)	/**< fdev_setup_stream() with read/write intent */
 #define _FDEV_SETUP_RWB   __SRWB /**< Read/write from buffers */
 
+/**
+ * \def EOF
+ * \brief Definition of the End Of File condition.
+ * 
+ * Use with a minus sign:
+ * \code{.c}
+ * if(x == -EOF) {
+ *     error();
+ * }
+ * \endcode
+ */
+#define EOF 1
+
+/**
+ * \brief Definition of the standard input stream.
+ * \warning This stream is not initialized by default.
+ * \see setup_std_streams
+ */
 #define stdin  (__iob[0])
+
+/**
+ * \brief Definition of the standard output stream.
+ * \warning This stream is not initialized by default.
+ * \see setup_std_streams
+ */
 #define stdout (__iob[1])
+
+/**
+ * \brief Definition of the standard error stream.
+ * \warning This stream is not initialized by default.
+ * \see setup_std_streams
+ */
 #define stderr (__iob[2])
 
 #define fdev_setup_stream(stream, p, g, f) \
 	do { \
 		(stream)->put = p; \
 		(stream)->get = g; \
-		(stream)->mode = f; \
+		(stream)->flags = f; \
 		(stream)->data = 0; \
 	} while(0)
+
+/**
+ * \brief Define a file stream.
+ * \param defname Variable name of the stream.
+ * \param r Read function pointer.
+ * \param w Write function pointer.
+ * \param p Put function pointer.
+ * \param g Get function pointer.
+ * \param f Flush function pointer.
+ * \param n File name function pointer.
+ * \param fl Flags byte.
+ * \param d Data pointer.
+ * \warning The file name (<b>n</b>) MUST be unique.
+ * 
+ * This defines an initialized file stream structure.
+ */
+#define FDEV_SETUP_STREAM(defname, r, w, p, g, f, n, fl, d) \
+	FILE defname = {	\
+		.write = r,		\
+		.read = w,		\
+		.put = p,		\
+		.get = g,		\
+		.flush = f,		\
+		.name = n,		\
+		.flags = fl,	\
+		.data = d,		\
+	}
 
 extern FILE *__iob[];
 

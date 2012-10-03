@@ -102,7 +102,7 @@ struct device
 	VFILE *io; //!< Virtual file I/O member.
 	void *data; //!< Device specific data.
 	
-	void (*ctrl)(DEVICE *dev, int reg, void *data);
+	void (*ctrl)(struct device *dev, int reg, void *data);
 	void *ioctl; //!< Device I/O control block.
 	volatile void *mutex; //!< Device mutex.
 

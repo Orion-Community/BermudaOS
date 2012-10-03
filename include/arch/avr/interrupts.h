@@ -24,15 +24,24 @@
 #endif
 
 /**
- * \def ISR_ATTRIBS
+ * \def ISR_ENTRY_ATTRIBS
  * \brief ISR attributes.
  * 
  * Function attributes passed to interrupt service handlers.
  */
-#define ISR_ATTRIBS signal, used, externally_visible
+#define ISR_ENTRY_ATTRIBS signal, used, externally_visible
+
+/**
+ * \def ISR_HANDLE_ATTRIBS
+ * \brief ISR handle function attributes.
+ * \see ISR
+ * 
+ * Function attributes which are used in ISR handles.
+ */
+#define ISR_HANDLE_ATTRIBS used, externally_visible
 
 #define SIGNAL(vector) \
-	void vector(void) __attribute__((ISR_ATTRIBS)); \
+	void vector(void) __attribute__((ISR_ENTRY_ATTRIBS)); \
 	void vector(void)
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)

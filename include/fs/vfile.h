@@ -42,7 +42,8 @@ struct _vfile
 		struct _vfile *next; //!< Next in inode list.
 		
 		char *name; //!< File name.
-        unsigned char mode; //!< File mode.
+        uint8_t flags; //!< File flags. Used for file modes.
+        int fd; //!< File descriptor. Assigned to -1 if not opened.
         
         /**
          * \brief Close the file.
@@ -94,7 +95,9 @@ struct _vfile
          */
         void *data;
 		
-		size_t len; //!< Length of the file.
+		volatile uint8_t *buff; //!< File buffer.
+		size_t index; //!< Current index to the buffer.
+		size_t length; //!< Length of the file.
 };
 
 #ifdef __cplusplus

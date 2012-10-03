@@ -25,6 +25,39 @@
 
 #include <dev/dev.h>
 
+/**
+ * \brief Time-out for I2C transfers if threads are enabled.
+ */
+#define I2C_MASTER_TMO 500
+
+/**
+ * \brief Number of I2C messages in one array.
+ * \see I2C_MASTER_TRANSMIT_MSG
+ * \see I2C_MASTER_RECEIVE_MSG
+ * \see I2C_SLAVE_RECEIVE_MSG
+ * \see I2C_SLAVE_TRANSMIT_MSG
+ * 
+ * One of the messages is for transmitting, the other one is for receiving.
+ */
+#define I2C_MSG_NUM 2
+
+/**
+ * \brief Master transmit message array index.
+ */
+#define I2C_MASTER_TRANSMIT_MSG 0
+/**
+ * \brief Master receive message array index.
+ */
+#define I2C_MASTER_RECEIVE_MSG  1
+/**
+ * \brief Slave receive message array index.
+ */
+#define I2C_SLAVE_RECEIVE_MSG   0
+/**
+ * \brief Slave transmit message array index.
+ */
+#define I2C_SLAVE_TRANSMIT_MSG  1
+
 struct i2c_adapter; // forward declaration
 
 /**
@@ -68,28 +101,25 @@ struct i2c_adapter {
 #define I2C_RECEIVER			BIT(2)
 
 #ifdef __THREADS__
-	volatile void *mutex;
-	volatile void *master_queue;
-	volatile void *slave_queue;
-	struct thread *allocator;
+	/* mutex is provided by the device */
+	volatile void *master_queue; //!< Master waiting queue.
+	volatile void *slave_queue; //!< Slave waiting queue.
 #endif
 	
-	struct i2c_message *master_msg[]; //!< TWI master message.
-	struct i2c_message *slave_msg[];  //!< TWI slave message.
-	size_t master_index; //!< TWI master buffer index.
-	size_t slave_index;   //!< TWI slave buffer index.
+	struct i2c_message *master_msg[I2C_MSG_NUM]; //!< TWI master message (0 = transmit, 1 is receive)
+	struct i2c_message *slave_msg[I2C_MSG_NUM];  //!< TWI slave message. (0 = receive, 1 is transmit)
+	void *data; //!< Private data pointer.
 } __attribute__((packed));
 
 __DECL
-extern struct i2c_client *i2c_get_client_by_id(struct i2c_adapter *adap, uint8_t id);
+extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
 extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adap);
 extern int i2c_free_client(struct i2c_client *client);
 extern int i2c_move_client(struct i2c_adapter *adap1, struct i2c_adapter *adap2,
 		uint8_t id);
-extern bool i2c_client_is_allocated(struct i2c_client *client);
-extern bool i2c_client_is_allocated_by_caller(struct i2c_client *client);
 
-extern int i2c_client_write(struct i2c_client *client, struct i2c_message *msg);
+extern int i2c_dev_write(FILE *file, const void *buff, size_t size);
+extern int i2c_dev_read(FILE *file, void *buff, size_t size);
 __DECL_END
 
 

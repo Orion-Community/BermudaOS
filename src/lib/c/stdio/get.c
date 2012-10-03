@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - StdIO - I/O open
+ *  BermudaOS - get
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -18,41 +18,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
-/**
- * \brief Open a file.
- * \param fname Name of the file to open.
- * \param mode File mode to use.
- * \return The file descriptor.
- */
-PUBLIC int open(char *fname, unsigned char mode)
+PUBLIC int get(int fd)
 {
-	int i = 0;
-	FILE *c = vfs_head;
-	
-	for(; c; c = c->next) {
-		if(!strcmp(c->name, fname)) {
-			for(i = 3; i < MAX_OPEN; i++) {
-				if(__iob[i] == NULL) {
-					__iob[i] = c;
-					c->fd = i;
-					return i; /* file is opened */
-				} else if(!strcmp(__iob[i]->name, fname)) {
-					return i; /* file is already open */
-				}
-			}
-		}
-		if(c->next == NULL) {
-			break;
-		}
-	}
-	
-	return -1;
-}
-
-PUBLIC FILE *fdopen(int fd, unsigned char mode)
-{
-	fdmode(fd, mode);
-	return __iob[fd];
+	return fgetc(__iob[fd]);
 }

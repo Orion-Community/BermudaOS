@@ -29,6 +29,34 @@
 
 #include <arch/io.h>
 
+/**
+ * \brief The maximum I2C busses an ATmega MCU can have.
+ */
+#define ATMEGA_BUSSES 1
+
+/* I2C device I/O control features */
+#define I2C_WRITE_DATA	BIT(0)
+#define I2C_READ_DATA	BIT(1)
+#define I2C_WRITE_SLA	BIT(2)
+
+#define I2C_START		BIT(3)
+#define I2C_STOP		BIT(4)
+
+#define I2C_ACK			BIT(5)
+#define I2C_NACK		BIT(6)
+#define I2C_IDLE		BIT(7)
+#define I2C_BLOCK		BIT(8)
+#define I2C_LISTEN		BIT(9)
+/* End of I/O control features */
+
+#define I2C_SLA_READ_BIT BIT(0)
+#define I2C_SLA_WRITE_MASK (~BIT(0))
+
+/**
+ * \brief Name of the ATmega I2C I/O file.
+ */
+#define I2C_FNAME "I2C_IO"
+
 //  ********************************
 //  * Master transmitter           *
 //  ********************************
@@ -227,7 +255,7 @@
  * This structure contains private data, such as I/O registers, which should be
  * hidden from higher layers. It contains an I/O file for communcation purposes.
  */
-struct i2c_atmega_priv
+struct atmega_i2c_priv
 {
 	/**
 	 * \brief TWCR is the ATmega I2C control register.
@@ -305,11 +333,42 @@ struct i2c_atmega_priv
 	reg8_t twamr;
 	
 	/**
-	 * \brief I/O file.
+	 * \brief Name of the I/O file.
 	 * 
 	 * File which is responsible for communcation within the bus.
 	 */
-	FILE *file;
+	char *fname;
 } __attribute__((packed));
+
+__DECL
+static inline int atmega_i2c_reg_write(reg8_t reg, uint8_t *data)
+{
+	if(reg) {
+		outb(reg, *data);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+static inline int atmega_i2c_reg_read(reg8_t reg, uint8_t *data)
+{
+	if(reg) {
+		inb(reg, data);
+		return 0;
+	} else {
+		return -1;
+	}
+
+}
+
+static inline uint8_t atmega_i2c_get_status(struct atmega_i2c_priv *priv)
+{
+	unsigned char status = 0;
+	atmega_i2c_reg_read(priv->twsr, &status);
+	return (status & B11111000);
+}
+
+__DECL_END
 
 #endif /* __I2C_ATMEGA_PRIV_H_ */

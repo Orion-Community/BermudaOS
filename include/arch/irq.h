@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - StdIO - I/O set mode
+ *  BermudaOS - IRQ header
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,29 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-
 /**
- * \brief Change the file mode of a given file.
- * \param fd File descriptor of the file to change.
- * \param mode New file mode.
+ * \file include/irq.h IRQ header.
+ * \brief Definitions IRQ data structures.
  */
-PUBLIC void fdmode(int fd, unsigned char mode)
-{
-	__iob[fd]->flags = mode;
-}
+
+#ifndef __IRQ_DATA_H_
+#define __IRQ_DATA_H_
+
+struct irq_data {
+	struct irq_data *next;
+	
+	unsigned int irq;
+	uint8_t vector;
+	
+	void *data;
+};
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+	#include <arch/avr/interrupts.h>
+#endif
+
+#define ISR(__fname, __arg, __type) \
+	void __fname(typeof (__type) (__arg)) __attribute__((ISR_HANDLE_ATTRIBS)); \
+	void __fname(typeof (__type) (__arg))
+
+#endif

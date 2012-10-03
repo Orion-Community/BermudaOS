@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - I2C device driver
+ *  BermudaOS - I2C registers
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __I2C_REG_H
+#define __I2C_REG_H
+
 #include <stdlib.h>
-#include <stdio.h>
 
-#include <dev/dev.h>
-#include <dev/i2c/i2c.h>
-#include <dev/i2c/reg.h>
+#include <lib/binary.h>
 
-#include <sys/thread.h>
-#include <sys/events/event.h>
 
-#include "atmega-priv.h"
 
+enum i2c_control_action 
+{
+	I2C_START_SENT,
+	I2C_REP_START_SENT,
+	I2C_RECV_STOP,
+	
+	I2C_SLAW_ACK,
+	I2C_SLAW_NACK,
+	I2C_SLAR_ACK,
+	I2C_SLAR_NACK,
+	I2C_DATA_WRITE_ACK,
+	I2C_DATA_WRITE_NACK,
+	I2C_DATA_READ_ACK,
+	I2C_DATA_READ_NACK,
+	I2C_BUS_ARB,
+};
+
+#endif

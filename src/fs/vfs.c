@@ -36,7 +36,7 @@ FILE *__iob[MAX_OPEN];
 /**
  * \brief List head of the virtual files.
  */
-static FILE *vfs_head = NULL;
+FILE *vfs_head = NULL;
 
 /**
  * \brief Initialize the virtual file system.

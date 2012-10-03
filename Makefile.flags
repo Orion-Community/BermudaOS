@@ -8,7 +8,6 @@ CCFLAGS=
 # Architectural defines
 # -------------------------------------------------------
 if AVR
-LIBC=-I$(AVRLIB)
 CPU_TYPE=-mmcu=$(MCU)
 STDDEFS+= -D__AVR__
 CCFLAGS+= -ffreestanding -nostdinc -nostdlib
@@ -43,7 +42,7 @@ endif
 CCFLAGS		+=-Wall -Os -I$(LOCAL_INC) \
 		 -std=gnu89 $(CPU_TYPE) -D F_CPU=$(F_CPU) $(STDDEFS)
 LD_FLAGS	= -r -Os -m avr5 -nostdlib
-CPP_FLAGS	= -fno-exceptions -Os -Wall $(CPU_TYPE) -I$(LOCAL_INC) $(LIBC) \
+CPP_FLAGS	= -fno-exceptions -Os -Wall $(CPU_TYPE) -I$(LOCAL_INC) \
 		   -DF_CPU=$(F_CPU) -ffunction-sections \
 		  -fdata-sections -w $(STDDEFS)
 ASFLAGS		= -mmcu=$(MCU) -I$(LOCAL_INC) -Wall

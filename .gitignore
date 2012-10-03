@@ -34,3 +34,4 @@ autom4te.cache/
 .project
 Makefile.in
 configure
+generate

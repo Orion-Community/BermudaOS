@@ -72,7 +72,7 @@ extern "C" {
 #define SCK  13
 
 #else
-#error Other arduino boards are not supported yet!
+#error Other boards than the Arduino Uno boards are not supported yet!
 #endif
 
 extern void BermudaDigitalPinWrite(unsigned char pin, unsigned char value);

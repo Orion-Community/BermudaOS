@@ -136,16 +136,22 @@ extern int BermudaDeviceOpen(const char *name, unsigned int tmo);
 
 // inline funcs
 
-/**
- * \brief Close a device file.
- * \param file Device file.
- * 
- * The given file will be flushed and closed.
- */
-static inline int BermudaDeviceClose(VFILE *file)
+static inline int fdev_lock(FILE *stream, unsigned int tmo)
 {
-	DEVICE *dev = file->data;
-	return dev->release(dev);
+#ifdef __THREADS__
+	return ((struct device*)stream->data)->alloc(stream->data, tmo);
+#else
+	return 0;
+#endif
+}
+
+static inline int fdev_unlock(FILE *stream)
+{
+#ifdef __THREADS__
+	return ((struct device*)stream->data)->release(stream->data);
+#else
+	return 0;
+#endif
 }
 
 #ifdef __cplusplus

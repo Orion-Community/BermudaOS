@@ -35,10 +35,10 @@
 
 /* static functions */
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
-static int atmega_i2c_setup_file(FILE *stream, struct i2c_message *msg);
+static void atmega_i2c_setup_file(FILE *stream, struct i2c_message *msg);
 static int atmega_i2c_init_transfer(FILE *stream);
 
-static FDEV_SETUP_STREAM(i2c_io, &i2c_dev_write, &i2c_dev_read, 
+static FDEV_SETUP_STREAM(i2c_c0_io, NULL, NULL, 
 						 NULL /*put*/, NULL /*get*/, &atmega_i2c_init_transfer, 
 						 I2C_FNAME, 0 /* flags */, NULL /* data */);
 
@@ -49,7 +49,7 @@ static struct atmega_i2c_priv i2c_c0 = {
 	.twar = &TWSR,
 	.twbr = &TWBR,
 	.twamr = &TWAMR,
-	.fname = I2C_FNAME,
+	.isr = atmega_i2c_isr_handle,
 };
 
 #ifdef __THREADS__
@@ -63,15 +63,17 @@ static volatile void *bus_c0_slave_queue = SIGNALED;
  */
 static struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
 
+static struct i2c_message i2c_c0_msgs[I2C_MSG_NUM];
+
 /**
  * \brief Intialize an I2C bus.
- * \param adapter BUs adapter.
+ * \param adapter Bus adapter.
  * 
  * This function will initialize bus 0 on port c.
  */
 PUBLIC void i2c_c0_hw_init(struct i2c_adapter *adapter)
 {
-	int rc = i2c_init_adapter(adapter, i2c_io.name);
+	int rc = i2c_init_adapter(adapter, i2c_c0_io.name);
 	if(rc < 0) {
 		return;
 	}
@@ -79,27 +81,27 @@ PUBLIC void i2c_c0_hw_init(struct i2c_adapter *adapter)
 	atmega_i2c_busses[0] = adapter;
 	adapter->dev->mutex = &bus_c0_mutex;
 	adapter->dev->ctrl = &atmega_i2c_ioctl;
-	adapter->dev->io = &i2c_io;
-	adapter->dev->io->data = adapter->dev;
+	adapter->dev->io = &i2c_c0_io;
+	
+	adapter->dev->io->buff = (void*)i2c_c0_msgs;
 	
 	adapter->master_queue = &bus_c0_master_queue;
 	adapter->slave_queue = &bus_c0_slave_queue;
 	adapter->data = (void*)&i2c_c0;
 
-	vfs_add(&i2c_io);
+	vfs_add(&i2c_c0_io);
 }
 
-PUBLIC int atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
-									 struct i2c_message *msg[I2C_MSG_NUM])
+static void atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
+									  struct i2c_message *msg[I2C_MSG_NUM])
 {
 	FILE *stream = adapter->dev->io;
 	
 	if(msg[I2C_MASTER_TRANSMIT_MSG]) {
-		return atmega_i2c_setup_file(stream, msg[I2C_MASTER_TRANSMIT_MSG]);
+		atmega_i2c_setup_file(stream, msg[I2C_MASTER_TRANSMIT_MSG]);
 	} else if(msg[I2C_MASTER_RECEIVE_MSG]) {
-		return atmega_i2c_setup_file(stream, msg[I2C_MASTER_RECEIVE_MSG]);
+		atmega_i2c_setup_file(stream, msg[I2C_MASTER_RECEIVE_MSG]);
 	}
-	return -1;
 }
 
 /**
@@ -110,17 +112,14 @@ PUBLIC int atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
  */
 static int atmega_i2c_init_transfer(FILE *stream)
 {
-// 	int rc = -1;
-	
 	return -1;
 }
 
-static int atmega_i2c_setup_file(FILE *stream, struct i2c_message *msg)
+static void atmega_i2c_setup_file(FILE *stream, struct i2c_message *msg)
 {
 	stream->buff = msg->buff;
 	stream->length = msg->length;
-	stream->index = msg->index;
-	return 0;
+	stream->index = 0;
 }
 
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)

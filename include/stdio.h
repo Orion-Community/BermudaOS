@@ -111,6 +111,10 @@
 		.name = n,		\
 		.flags = fl,	\
 		.data = d,		\
+		 /* default initializations */ \
+		.index = 0,		\
+		.length = 0,	\
+		.buff = NULL,	\
 	}
 
 extern FILE *__iob[];

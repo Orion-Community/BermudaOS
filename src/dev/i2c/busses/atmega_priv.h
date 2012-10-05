@@ -55,7 +55,7 @@
 /**
  * \brief Name of the ATmega I2C I/O file.
  */
-#define I2C_FNAME "I2C_IO"
+#define I2C_FNAME "I2C_ATMEGA_C0"
 
 //  ********************************
 //  * Master transmitter           *
@@ -333,11 +333,12 @@ struct atmega_i2c_priv
 	reg8_t twamr;
 	
 	/**
-	 * \brief Name of the I/O file.
+	 * \brief The interrupt service routine which should be called.
+	 * \param adap The bus adapter.
 	 * 
-	 * File which is responsible for communcation within the bus.
+	 * This function should <b>ONLY</b> be called by hardware.
 	 */
-	char *fname;
+	void (*isr)(struct i2c_adapter *adap);
 } __attribute__((packed));
 
 __DECL
@@ -368,6 +369,8 @@ static inline uint8_t atmega_i2c_get_status(struct atmega_i2c_priv *priv)
 	atmega_i2c_reg_read(priv->twsr, &status);
 	return (status & B11111000);
 }
+
+ISR_DEF(atmega_i2c_isr_handle, adapter, struct i2c_adapter *);
 
 __DECL_END
 

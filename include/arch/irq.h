@@ -40,5 +40,8 @@ struct irq_data {
 #define ISR(__fname, __arg, __type) \
 	void __fname(typeof (__type) (__arg)) __attribute__((ISR_HANDLE_ATTRIBS)); \
 	void __fname(typeof (__type) (__arg))
+	
+#define ISR_DEF(__fname, __arg, __type) \
+	extern void __fname(typeof (__type) (__arg)) __attribute__((ISR_HANDLE_ATTRIBS))
 
 #endif

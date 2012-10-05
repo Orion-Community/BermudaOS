@@ -44,27 +44,81 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	return rc;
 }
 
-PUBLIC int i2c_dev_write(FILE *file, const void *buff, size_t size)
+/**
+ * \brief Initializes the buffers for I2C transfer.
+ * \param file I/O file.
+ * \param buff The I2C message.
+ * \param size Should equal sizeof(struct i2c_message).
+ * \return This function returns 0 on success. This means that the bus is
+ *         successfully claimed. If this function returns <b>< 0</b>, the bus
+ *         is not successfully claimed and NO buffers are initialized.
+ */
+PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 {
-	struct device *dev = (struct device *)file->data;
-	struct i2c_adapter *adapter = (struct i2c_adapter*)dev->ioctl;
-	static uint8_t index = 0;
-	int rc;
+	struct i2c_client *client = file->data;
+	struct i2c_message msg;
+	int rc = -1;
 	
-#ifdef __THREADS__
-	if((rc = dev->alloc(dev, I2C_MASTER_TMO)) == -1) {
-		goto end;
+	if(client != NULL) {
+		msg.buff = (void*)buff;
+		msg.length = size;
+		msg.freq = client->freq;
+		msg.addr = client->sla;
+		rc = i2c_setup_master_transfer(file, &msg, I2C_MASTER_TRANSMIT_MSG);
 	}
-#endif
 
-#ifdef __THREADS__
-	rc = dev->release(dev);
-	end:
-#endif
+	
 	return rc;
 }
 
-PUBLIC int i2c_dev_read(FILE *file, void *buff, size_t size)
+PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
+{
+	struct i2c_client *client = file->data;
+	struct i2c_message msg;
+	int rc = -1;
+	
+	if(client != NULL) {
+		msg.buff = (void*)buff;
+		msg.length = size;
+		msg.freq = client->freq;
+		msg.addr = client->sla;
+		rc = i2c_setup_master_transfer(file, &msg, I2C_MASTER_RECEIVE_MSG);
+	}
+
+	
+	return rc;
+}
+
+PUBLIC int i2cdev_socket(struct i2c_client *client, uint8_t flags)
+{
+	struct i2c_adapter *adap;
+	struct device *dev;
+	int rc;
+	
+	if(client == NULL) {
+		return -1;
+	}
+	
+	adap = client->adapter;
+	dev = adap->device;
+
+#ifdef __THREADS__
+	if(flags == I2C_MASTER) {
+		if((rc = dev->alloc(dev, I2C_TMO)) == -1) {
+			rc = -1;
+			goto out;
+		}
+	}
+#endif
+	
+	dev->io->data = client;
+	rc = open(dev->io->name, _FDEV_SETUP_RW);
+	
+	out:
+	return rc;
+}
+
+PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 {
 	return -1;
 }

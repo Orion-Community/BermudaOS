@@ -207,3 +207,4 @@ PUBLIC int BermudaDeviceOpen(const char *name, unsigned int tmo)
 
 	return rc;
 }
+

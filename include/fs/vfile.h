@@ -46,6 +46,14 @@ struct _vfile
         int fd; //!< File descriptor. Assigned to -1 if not opened.
         
         /**
+		 * \brief Open the stream.
+		 * \param stream File to open.
+		 * \param flags File flags.
+		 * \return File descriptor.
+		 */
+        int (*open)(FILE *stream, uint8_t flags);
+        
+        /**
          * \brief Close the file.
          * \param f File to close.
          */

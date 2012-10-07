@@ -56,8 +56,8 @@
  */
 #define I2C_SLAVE_TRANSMIT_MSG  3
 
-#define I2C_MASTER 0xAB
-#define I2C_SLAVE  0xBA
+#define I2C_MASTER 0x100 //!< I2C master flag
+#define I2C_SLAVE  0x200 //!< I2C slave flag
 
 struct i2c_adapter; // forward declaration
 
@@ -112,14 +112,18 @@ struct i2c_adapter {
 } __attribute__((packed));
 
 __DECL
+/* file I/O */
+extern int i2cdev_write(FILE *file, const void *buff, size_t size);
+extern int i2cdev_read(FILE *file, void *buff, size_t size);
+extern int i2cdev_flush(FILE *stream);
+extern int i2cdev_close(FILE *stream);
+extern int i2cdev_socket(struct i2c_client *client, uint16_t flags);
+
 extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
 extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adap);
 extern int i2c_free_client(struct i2c_client *client);
 
-extern int i2cdev_write(FILE *file, const void *buff, size_t size);
-extern int i2cdev_read(FILE *file, void *buff, size_t size);
-
-extern int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg);
+extern int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg, uint8_t flags);
 __DECL_END
 
 

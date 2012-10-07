@@ -42,7 +42,7 @@ struct _vfile
 		struct _vfile *next; //!< Next in inode list.
 		
 		char *name; //!< File name.
-        uint8_t flags; //!< File flags. Used for file modes.
+        uint16_t flags; //!< File flags. Used for file modes.
         int fd; //!< File descriptor. Assigned to -1 if not opened.
         
         /**

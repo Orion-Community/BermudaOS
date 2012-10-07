@@ -31,7 +31,8 @@
  *         1 will be returned. It is up to the caller to react solve (continue or
  *         reset).
  */
-PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg)
+PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg,
+									 uint8_t flags)
 {
 	int rc = -1;
 	

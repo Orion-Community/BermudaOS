@@ -51,6 +51,21 @@ PUBLIC int open(char *fname, unsigned char mode)
 	return -1;
 }
 
+PUBLIC int iob_add(FILE *stream)
+{
+	int rc;
+	
+	for(rc = 0; rc < MAX_OPEN; rc++) {
+		if(__iob[rc] == NULL) {
+			__iob[rc] = stream;
+			stream->fd = rc;
+			return rc;
+		}
+	}
+	
+	return -1;
+}
+
 PUBLIC FILE *fdopen(int fd, unsigned char mode)
 {
 	fdmode(fd, mode);

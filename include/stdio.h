@@ -134,6 +134,9 @@ extern FILE *fdopen(int fd, unsigned char mode);
 extern int close(int fd);
 
 extern int vfprintf(FILE *stream, const char *fmt, va_list ap);
+
+/* non-posix functions */
+extern int iob_add(FILE *stream);
 __DECL_END
 
 

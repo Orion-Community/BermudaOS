@@ -39,9 +39,11 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
 static int atmega_i2c_init_transfer(FILE *stream);
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
 static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
+static int atmega_i2c_put_char(int c, FILE *stream);
+static int atmega_i2c_get_char(FILE *stream);
 
-static FDEV_SETUP_STREAM(i2c_c0_io, NULL, NULL, 
-						 NULL /*put*/, NULL /*get*/, &atmega_i2c_init_transfer, 
+static FDEV_SETUP_STREAM(i2c_c0_io, NULL, NULL, &atmega_i2c_put_char, 
+						 &atmega_i2c_get_char, &atmega_i2c_init_transfer, 
 						 I2C_FNAME, 0 /* flags */, NULL /* data */);
 
 static struct atmega_i2c_priv i2c_c0 = {
@@ -212,15 +214,39 @@ static unsigned char atmega_i2c_calc_prescaler(uint32_t frq)
 	return ret;
 }
 
+static int atmega_i2c_put_char(int c, FILE *stream)
+{
+	struct i2c_adapter *adap = ((struct i2c_client*)stream->data)->adapter;
+	struct atmega_i2c_priv *priv = adap->data;
+	uint8_t data = (uint8_t)c&0xFF;
+	
+	atmega_i2c_reg_write(priv->twdr, &data);
+	
+	return c;
+}
+
+static int atmega_i2c_get_char(FILE *stream)
+{
+	struct i2c_adapter *adap = ((struct i2c_client*)stream->data)->adapter;
+	struct atmega_i2c_priv *priv = adap->data;
+	uint8_t data = 0;
+	
+	atmega_i2c_reg_read(priv->twdr, &data);
+	
+	return (int)data;
+}
+
 ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 {
 	struct atmega_i2c_priv *priv = (struct atmega_i2c_priv*)adapter->data;
+	struct device *dev = adapter->dev;
+	struct i2c_message *msgs = (struct i2c_message*)dev->io->buff;
 	int fd, status = atmega_i2c_get_status(priv);
 	
 	if(adapter->dev->io->fd < 0) {
-		fd = adapter->dev->io->fd;
-	} else {
 		return;
+	} else {
+		fd = adapter->dev->io->fd;
 	}
 	
 	switch(status) {

@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - StdIO - I/O close
+ *  BermudaOS - StdIO - I/O flush
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -20,18 +20,23 @@
 #include <stdio.h>
 
 /**
- * \file src/lib/c/stdio/close.c stdio close functions
+ * \brief Flush the stream.
+ * \param fd File descriptor.
+ * \note The stream must implement the flush function!
  */
-
-PUBLIC int close(int fd)
+PUBLIC int flush(int fd)
 {
-	int rc = 0;
-	if(__iob[fd]->close != NULL) {
-		rc = __iob[fd]->close(__iob[fd]);
-	}
+	if(fd >= 0) {
+		int rc = -1;
+		FILE *stream = __iob[fd];
 	
-	__iob[fd]->fd = -1;
-	__iob[fd] = NULL;
-	return rc;
+		if(stream != NULL) {
+			if(stream->flush != NULL) {
+				rc = return stream->flush(stream);
+			}
+		}
+		return rc;
+	} else {
+		return -1;
+	}
 }
-

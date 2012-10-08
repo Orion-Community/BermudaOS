@@ -33,10 +33,13 @@
  */
 PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg,
 									 uint8_t flags)
-{
-	int rc = -1;
+{	
+	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
 	
-
+	msgs[flags].buff = msg->buff;
+	msg[flags].length = msg->length;
+	msg[flags].freq = msg->freq;
+	msg[flags].addr = msg->addr;
 	
-	return rc;
+	return 0;
 }

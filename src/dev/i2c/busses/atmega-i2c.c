@@ -92,18 +92,6 @@ PUBLIC void i2c_c0_hw_init(struct i2c_adapter *adapter)
 	vfs_add(&i2c_c0_io);
 }
 
-static void atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
-									  struct i2c_message *msg[I2C_MSG_NUM])
-{
-	FILE *stream = adapter->dev->io;
-	
-	if(msg[I2C_MASTER_TRANSMIT_MSG]) {
-		atmega_i2c_setup_file(stream, msg[I2C_MASTER_TRANSMIT_MSG]);
-	} else if(msg[I2C_MASTER_RECEIVE_MSG]) {
-		atmega_i2c_setup_file(stream, msg[I2C_MASTER_RECEIVE_MSG]);
-	}
-}
-
 /**
  * \brief Start a master transfer.
  * \param stream The device I/O file.
@@ -113,13 +101,6 @@ static void atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
 static int atmega_i2c_init_transfer(FILE *stream)
 {
 	return -1;
-}
-
-static void atmega_i2c_setup_file(FILE *stream, struct i2c_message *msg)
-{
-	stream->buff = msg->buff;
-	stream->length = msg->length;
-	stream->index = 0;
 }
 
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)

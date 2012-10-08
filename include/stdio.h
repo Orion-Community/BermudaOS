@@ -128,6 +128,7 @@ extern int fgetc(FILE *stream);
 extern int write(int fd, const void *buff, size_t size);
 extern int read(int fd, void *buff, size_t size);
 extern void fdmode(int fd, unsigned char mode);
+extern int flush(int fd);
 
 extern int open(char *fname, unsigned char mode);
 extern FILE *fdopen(int fd, unsigned char mode);

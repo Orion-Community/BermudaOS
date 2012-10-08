@@ -80,7 +80,7 @@ struct i2c_message
  */
 struct i2c_client {
 	struct i2c_adapter *adapter; //!< The adapter where it belongs to.
-	uint8_t sla;
+	uint16_t sla;
 	uint32_t freq;
 	
 	/**

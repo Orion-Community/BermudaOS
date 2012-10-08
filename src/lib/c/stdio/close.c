@@ -25,8 +25,13 @@
 
 PUBLIC int close(int fd)
 {
+	int rc = 0;
+	if(__iob[fd]->close != NULL) {
+		rc = __iob[fd]->close(__iob[fd]);
+	}
+	
 	__iob[fd]->fd = -1;
 	__iob[fd] = NULL;
-	return 0;
+	return rc;
 }
 

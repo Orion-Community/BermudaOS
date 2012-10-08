@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - I2C registers
+ *  BermudaOS - StdIO - I/O flush
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __I2C_REG_H
-#define __I2C_REG_H
+#include <stdlib.h>
+#include <stdio.h>
 
-
-
-#endif
+/**
+ * \brief Flush the stream.
+ * \param fd File descriptor.
+ * \note The stream must implement the flush function!
+ */
+PUBLIC int flush(int fd)
+{
+	if(fd >= 0) {
+		int rc = -1;
+		FILE *stream = __iob[fd];
+	
+		if(stream != NULL) {
+			if(stream->flush != NULL) {
+				rc = stream->flush(stream);
+			}
+		}
+		return rc;
+	} else {
+		return -1;
+	}
+}

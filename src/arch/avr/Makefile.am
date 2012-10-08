@@ -22,7 +22,7 @@ OPT_SCRS+= spif.c
 endif
 
 if IIC
-OPT_SCRS+= twif.c
+# OPT_SCRS+= twif.c
 endif
 
 if ADC

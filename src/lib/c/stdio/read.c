@@ -27,5 +27,7 @@
  */
 PUBLIC int read(int fd, void *buff, size_t size)
 {
-	return __iob[fd]->read(__iob[fd], buff, size);
+	FILE *stream = __iob[fd];
+	
+	return stream->read(stream, buff, size);
 }

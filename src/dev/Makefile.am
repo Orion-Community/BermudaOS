@@ -3,7 +3,7 @@ OPT_SCRS=
 if IIC
 MAYBE_IIC=i2c
 IIC_LIB=i2c/libi2c.la
-OPT_SCRS+= twidev.c
+# OPT_SCRS+= twidev.c
 endif
 
 if SPI

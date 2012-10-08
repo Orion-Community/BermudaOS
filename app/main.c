@@ -22,26 +22,26 @@
 #include <sys/virt_timer.h>
 #include <sys/events/event.h>
 
-#include <lib/24c02.h>
 #include <lib/spiram.h>
 
 #include <dev/dev.h>
-#include <dev/twif.h>
-#include <dev/twidev.h>
 #include <dev/spibus.h>
 #include <dev/usartif.h>
 #include <dev/adc.h>
+#include <dev/i2c/i2c.h>
+#include <dev/i2c/busses/atmega.h>
 
 #include <fs/vfile.h>
 #include <fs/vfs.h>
 
 #include <arch/io.h>
-#include <arch/twi.h>
 #include <arch/usart.h>
 #include <arch/adc.h>
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
+struct i2c_client *client;
+
 #ifdef __THREADS__
 // static unsigned char twi_slave_tx = 0x0;
 // 
@@ -54,25 +54,32 @@ static VTIMER *timer;
 // 	twi_slave_tx++;
 // }
 // 
-// THREAD(SramThread, arg)
-// {
-// 	unsigned char rx = 0;
-// 	size_t num = 0;
-// 	char *buff[4];
-// 	DEVICE *twi = dev_open("TWI0");
-// 	TWIMSG *msg;
-// 	
-// 	while(1) {
-// 		msg = BermudaTwiMsgCompose(NULL, 0, &rx, 1, 0, 0, 1000, &SlaveResponder);
-// 		num = (size_t)dev_read(twi, msg, sizeof(*msg));
-// 		BermudaTwiMsgDestroy(msg);
-// 		BermudaPrintf("NUM: 0x%X :: RX: 0x%X\n", num, rx);
-// 
-// 		BermudaUsartListen(USART0, buff, 3, 9600, 500);
-// 		buff[3] = '\0';
-// 		BermudaPrintf("%s\n", buff);
-// 	}
-// }
+THREAD(SramThread, arg)
+{
+	unsigned char rx = 0;
+	int fd;
+	char *buff[4];
+	
+	client = BermudaHeapAlloc(sizeof(*client));
+	atmega_i2c_init_client(client, ATMEGA_I2C_C0);
+	client->sla = 0x54;
+	client->freq = 100000UL;
+	
+	while(1) {
+		fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
+		if(fd != -1) {
+			write(fd, &rx, 1);
+			read(fd, NULL, 0);
+			flush(fd);
+			close(fd);
+		}
+
+		BermudaUsartListen(USART0, buff, 3, 9600, 500);
+		buff[3] = '\0';
+		BermudaPrintf("%s\n", buff);
+		BermudaThreadSleep(1000);
+	}
+}
 
 // THREAD(TwiTest, arg)
 // {
@@ -107,8 +114,8 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
-// 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
-// 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
+					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 // 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
 // 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 #endif

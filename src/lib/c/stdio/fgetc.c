@@ -23,7 +23,7 @@ PUBLIC int fgetc(FILE *stream)
 {
 	int rv = -1;
 	
-	if((stream->flags & __SRD) == 0) {
+	if((stream->flags & __SRD) != 0) {
 		return rv;
 	} else {
 		rv = stream->get(stream);

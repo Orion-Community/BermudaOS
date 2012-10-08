@@ -64,7 +64,8 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_master_transfer(file, &msg, I2C_MASTER_TRANSMIT_MSG);
+		rc = i2c_setup_master_transfer(client->adapter->dev->io, &msg, 
+									   I2C_MASTER_TRANSMIT_MSG);
 	}
 
 	
@@ -82,17 +83,19 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_master_transfer(file, &msg, I2C_MASTER_RECEIVE_MSG);
+		rc = i2c_setup_master_transfer(client->adapter->dev->io, 
+									   &msg, I2C_MASTER_RECEIVE_MSG);
 	}
 
 	
 	return rc;
 }
 
-PUBLIC int i2cdev_socket(struct i2c_client *client, uint8_t flags)
+PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 {
 	struct i2c_adapter *adap;
 	struct device *dev;
+	FILE *socket;
 	int rc;
 	
 	if(client == NULL) {
@@ -103,7 +106,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint8_t flags)
 	dev = adap->dev;
 
 #ifdef __THREADS__
-	if(flags == I2C_MASTER) {
+	if((flags & I2C_MASTER) != 0) {
 		if((rc = dev->alloc(dev, I2C_TMO)) == -1) {
 			rc = -1;
 			goto out;
@@ -111,14 +114,78 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint8_t flags)
 	}
 #endif
 	
-	dev->io->data = client;
-	rc = dev->io->fd;
+	socket = BermudaHeapAlloc(sizeof(*socket));
+	rc = iob_add(socket);
+	if(rc < 0) {
+		BermudaHeapFree(socket);
+		goto out;
+	}
+	
+	socket->data = client;
+	socket->name = "I2C";
+	socket->write = &i2cdev_write;
+	socket->read = &i2cdev_read;
+	socket->flush = &i2cdev_flush;
+	socket->close = &i2cdev_close;
+	socket->flags = flags;
 	
 	out:
 	return rc;
 }
 
+PUBLIC int i2cdev_flush(FILE *stream)
+{
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adap = client->adapter;
+	int rc = adap->dev->io->fd;
+	
+	adap->dev->io->data = stream->data;
+	adap->dev->io->flags &= 0xFF;
+	adap->dev->io->flags |= stream->flags & 0xFF00;
+	rc = flush(rc);
+	
+#ifdef __THREADS__
+	adap->dev->release(adap->dev);
+#endif
+	
+	return rc;
+}
+
 PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 {
-	return -1;
+	FILE *stream = __iob[fd];
+	struct i2c_message msg;
+	struct i2c_client *client;
+	int rc;
+	
+	if(stream == NULL) {
+		rc = -1;
+		goto out;
+	}
+	
+	client = stream->data;
+	msg.buff = buff;
+	msg.length = size;
+	msg.addr = client->sla;
+	msg.freq = client->freq;
+	rc = i2c_setup_master_transfer(client->adapter->dev->io, &msg, 
+								   I2C_SLAVE_RECEIVE_MSG);
+	
+	out:
+	return rc;
+}
+
+PUBLIC int i2cdev_close(FILE *stream)
+{
+	int rc = -1;
+	
+	if(stream != NULL) {
+		if(stream->buff != NULL) {
+			BermudaHeapFree((void*)stream->buff);
+		}
+		BermudaHeapFree(stream);
+		rc = 0;
+	}
+	
+	return rc;
 }

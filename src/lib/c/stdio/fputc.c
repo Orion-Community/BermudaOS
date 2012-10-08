@@ -23,7 +23,7 @@
 PUBLIC int fputc(int c, FILE *file)
 {
 	int rc = -1;
-	if((file->flags & __SWR) == 0) {
+	if((file->flags & __SWR) != 0) {
 		rc = file->put(c, file);
 		if(rc != -EOF || rc == c) {
 			file->length++;

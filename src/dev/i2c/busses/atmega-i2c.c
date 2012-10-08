@@ -22,6 +22,7 @@
 #include <dev/dev.h>
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
+#include <dev/i2c/busses/atmega.h>
 
 #include <sys/thread.h>
 #include <sys/events/event.h>
@@ -35,8 +36,9 @@
 
 /* static functions */
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
-static void atmega_i2c_setup_file(FILE *stream, struct i2c_message *msg);
 static int atmega_i2c_init_transfer(FILE *stream);
+static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
+static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
 
 static FDEV_SETUP_STREAM(i2c_c0_io, NULL, NULL, 
 						 NULL /*put*/, NULL /*get*/, &atmega_i2c_init_transfer, 
@@ -71,7 +73,7 @@ static struct i2c_message i2c_c0_msgs[I2C_MSG_NUM];
  * 
  * This function will initialize bus 0 on port c.
  */
-PUBLIC void i2c_c0_hw_init(struct i2c_adapter *adapter)
+PUBLIC void atmega_i2c_c0_hw_init(struct i2c_adapter *adapter)
 {
 	int rc = i2c_init_adapter(adapter, i2c_c0_io.name);
 	if(rc < 0) {
@@ -93,16 +95,9 @@ PUBLIC void i2c_c0_hw_init(struct i2c_adapter *adapter)
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);
 }
 
-static void atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
-									  struct i2c_message *msg[I2C_MSG_NUM])
+PUBLIC void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac)
 {
-	FILE *stream = adapter->dev->io;
-	
-	if(msg[I2C_MASTER_TRANSMIT_MSG]) {
-		atmega_i2c_setup_file(stream, msg[I2C_MASTER_TRANSMIT_MSG]);
-	} else if(msg[I2C_MASTER_RECEIVE_MSG]) {
-		atmega_i2c_setup_file(stream, msg[I2C_MASTER_RECEIVE_MSG]);
-	}
+	client->adapter = atmega_i2c_busses[ifac];
 }
 
 /**
@@ -113,21 +108,13 @@ static void atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
  */
 static int atmega_i2c_init_transfer(FILE *stream)
 {
-	struct i2c_client *client = stream->data;
-	struct i2c_adapter *adapter = client->adapter;
-	struct i2c_message *msgs = stream->buff;
+	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
+	uint8_t twbr = atmega_i2c_calc_twbr(msgs[0].freq, atmega_i2c_calc_prescaler(
+		msgs[0].freq));
 	
-	BermudaPrintf("MSG len: %u :: SlA: %X :: Freq: %u\n", msg[0].length,
-				  msg[0].addr, client->freq);
-	);
+	BermudaPrintf("MSG len: %u :: SlA: %X :: twbr: %u\n", msgs[0].length,
+				  msgs[0].addr, twbr);
 	return -1;
-}
-
-static void atmega_i2c_setup_file(FILE *stream, struct i2c_message *msg)
-{
-	stream->buff = msg->buff;
-	stream->length = msg->length;
-	stream->index = 0;
 }
 
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
@@ -143,6 +130,86 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 	} while(i <= ((sizeof(i)*2UL) - 1UL));
 	
 	return;
+}
+
+/**
+ * \brief Calculate the value of the TWBR register.
+ * \param freq Wanted frequency.
+ * \param pres Used prescaler.
+ * \note The <b>pres</b> parameter can have one of the following values: \n
+ *       * I2C_PRES_1 \n
+ *       * I2C_PRES_4 \n
+ *       * I2C_PRES_16 \n
+ *       * I2C_PRES_64
+ * \see I2C_PRES_1
+ * \see I2C_PRES_4 
+ * \see I2C_PRES_16 
+ * \see I2C_PRES_64
+ * 
+ * The needed value of the TWBR register will be calculated using the given
+ * (and used) prescaler value.
+ */
+static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres)
+{
+	char prescaler;
+	uint32_t twbr;
+	
+	switch(pres) {
+		case I2C_PRES_1:
+			prescaler = 1;
+			break;
+		case I2C_PRES_4:
+			prescaler = 4;
+			break;
+		case I2C_PRES_16:
+			prescaler = 16;
+			break;
+		case I2C_PRES_64:
+			prescaler = 64;
+			break;
+		default:
+			prescaler = -1;
+			break;
+	}
+	
+	if(prescaler == -1) {
+		return 0xFF;
+	}
+	
+	twbr = (F_CPU - (16*freq)) / (2*prescaler*freq);
+	
+	return twbr & 0xFF;
+}
+
+/**
+ * \brief Calculates the I2C prescaler value.
+ * \param frq The desired frequency.
+ * \return The prescaler value in hardware format: \n
+ *         * B0 for a prescaler of 1; \n
+ *         * B1 for a prescaler of 4; \n
+ *         * B10 for a prescaler of 16; \n
+ *         * B11 for a prescaler of 64
+ *
+ * Calculates the prescaler value based on the given frequency.
+ */
+static unsigned char atmega_i2c_calc_prescaler(uint32_t frq)
+{
+	unsigned char ret = 0;
+	
+	if(frq > I2C_FRQ(255,1)) {
+		ret = B0;
+	}
+	else if(frq > I2C_FRQ(255,4) && frq < I2C_FRQ(1,4)) {
+		ret = B11;
+	}
+	else if(frq > I2C_FRQ(255,16) && frq < I2C_FRQ(1,16)) {
+		ret = B10;
+	}
+	else if(frq > I2C_FRQ(255,64) && frq < I2C_FRQ(1,64)) {
+		ret = B1;
+	}
+
+	return ret;
 }
 
 ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)

@@ -20,9 +20,11 @@
 
 #include <lib/spiram.h>
 #include <lib/binary.h>
+
 #include <dev/dev.h>
-#include <dev/twidev.h>
 #include <dev/adc.h>
+#include <dev/i2c/i2c.h>
+#include <dev/i2c/busses/atmega.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
@@ -36,7 +38,6 @@
 #include <arch/avr/timer.h>
 #include <arch/avr/stack.h>
 #include <arch/avr/serialio.h>
-#include <arch/avr/328/dev/twibus.h>
 #include <arch/avr/328/dev/usart.h>
 
 #define LED_DDR  BermudaGetDDRB()
@@ -52,6 +53,10 @@ extern unsigned long loop();
 #endif
 extern void setup();
 
+#ifdef __TWI__
+struct i2c_adapter i2c_adapter;
+#endif
+
 #ifdef __THREADS__
 THREAD(MainThread, data)
 {
@@ -66,6 +71,7 @@ PUBLIC int BermudaInit(void)
 {       
 	BermudaHeapInitBlock((volatile void*)&__heap_start, (EXTRAM+MEM-128) - (size_t)&__heap_start);
 #ifdef __USART__
+	vfs_init();
 	BermudaUsart0Init(USART0);
 	BermudaUsartSetupStreams();
 #endif
@@ -79,8 +85,7 @@ PUBLIC int BermudaInit(void)
 #endif
 
 #ifdef __TWI__
-	BermudaTwi0Init(0x56);
-	BermudaTwiDevInit(TWI0, "TWI0");
+	atmega_i2c_c0_hw_init(&i2c_adapter);
 #endif
 
 	STACK_L = (MEM-128) & 0xFF;

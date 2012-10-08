@@ -11,7 +11,7 @@ OPT_SCRS+= spibus.c
 endif
 
 if IIC
-OPT_SCRS+= twibus.c
+# OPT_SCRS+= twibus.c
 endif
 
 noinst_LTLIBRARIES = libdev.la

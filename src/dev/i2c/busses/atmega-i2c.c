@@ -90,6 +90,7 @@ PUBLIC void i2c_c0_hw_init(struct i2c_adapter *adapter)
 	adapter->data = (void*)&i2c_c0;
 
 	vfs_add(&i2c_c0_io);
+	open(i2c_c0_io.name, _FDEV_SETUP_RW);
 }
 
 static void atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
@@ -112,6 +113,13 @@ static void atmega_i2c_setup_transfer(struct i2c_adapter *adapter,
  */
 static int atmega_i2c_init_transfer(FILE *stream)
 {
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adapter = client->adapter;
+	struct i2c_message *msgs = stream->buff;
+	
+	BermudaPrintf("MSG len: %u :: SlA: %X :: Freq: %u\n", msg[0].length,
+				  msg[0].addr, client->freq);
+	);
 	return -1;
 }
 

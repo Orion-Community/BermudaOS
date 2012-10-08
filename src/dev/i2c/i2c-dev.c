@@ -100,7 +100,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint8_t flags)
 	}
 	
 	adap = client->adapter;
-	dev = adap->device;
+	dev = adap->dev;
 
 #ifdef __THREADS__
 	if(flags == I2C_MASTER) {
@@ -112,7 +112,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint8_t flags)
 #endif
 	
 	dev->io->data = client;
-	rc = open(dev->io->name, _FDEV_SETUP_RW);
+	rc = dev->io->fd;
 	
 	out:
 	return rc;

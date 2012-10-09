@@ -71,7 +71,7 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 	
 	fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
 	if(fd < 0) {
-		return rx;
+		return 0xFF;
 	}
 	
 	write(fd, &tx, 1);

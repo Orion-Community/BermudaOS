@@ -59,23 +59,23 @@ struct i2c_client eeprom_client;
 // 
 THREAD(SramThread, arg)
 {
-	unsigned char rx = 0;
-	int fd;
+// 	unsigned char rx = 0;
+// 	int fd;
 	char *buff[4];
 	
-	client = BermudaHeapAlloc(sizeof(*client));
-	atmega_i2c_init_client(client, ATMEGA_I2C_C0);
-	client->sla = 0x54;
-	client->freq = 100000UL;
-	
+// 	client = BermudaHeapAlloc(sizeof(*client));
+// 	atmega_i2c_init_client(client, ATMEGA_I2C_C0);
+// 	client->sla = 0x54;
+// 	client->freq = 100000UL;
+
 	while(1) {
-		fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
-		if(fd != -1) {
-			write(fd, &rx, 1);
-			read(fd, NULL, 0);
-			flush(fd);
-			close(fd);
-		}
+// 		fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
+// 		if(fd != -1) {
+// 			write(fd, &rx, 1);
+// 			read(fd, NULL, 0);
+// 			flush(fd);
+// 			close(fd);
+// 		}
 
 		BermudaUsartListen(USART0, buff, 3, 9600, 500);
 		buff[3] = '\0';
@@ -127,7 +127,7 @@ void setup()
 	Bermuda24c02Init(&eeprom_client);
 	BermudaSpiRamInit(SPI0, 10);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
-// 	Bermuda24c02WriteByte(100, 0xAC);
+	Bermuda24c02WriteByte(100, 0xAC);
 }
 
 #ifdef __THREADS__
@@ -147,10 +147,10 @@ unsigned long loop()
 	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
 	
 	read_back_sram = BermudaSpiRamReadByte(0x50);
-// 	read_back_eeprom = Bermuda24c02ReadByte(100);
+	read_back_eeprom = Bermuda24c02ReadByte(100);
 
-// 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
-// 		read_back_sram);
+	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
+		read_back_sram);
 // 	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);

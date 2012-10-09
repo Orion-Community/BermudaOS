@@ -97,8 +97,8 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);
 	
 	sla |= B1;
-	atmega_i2c_reg_write(i2c_c0.twar, &sla);
 	adapter->dev->ctrl(adapter->dev, I2C_IDLE, NULL);
+	atmega_i2c_reg_write(i2c_c0.twar, &sla);
 }
 
 PUBLIC void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac)
@@ -121,6 +121,8 @@ static int atmega_i2c_init_transfer(FILE *stream)
 	uint8_t pres = atmega_i2c_calc_prescaler(msgs[0].freq);
 	uint8_t twbr = atmega_i2c_calc_twbr(msgs[0].freq, pres);
 	
+	stream->flags |= _FDEV_SETUP_RW;
+	BermudaPrintf("%s :: flags: %X\n", adap->dev->io->name, adap->dev->io->flags);
 	atmega_i2c_set_bitrate(priv, twbr, pres);
 	adap->dev->ctrl(adap->dev, I2C_START | I2C_ACK, NULL);
 	return BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
@@ -128,7 +130,8 @@ static int atmega_i2c_init_transfer(FILE *stream)
 
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 {
-	struct atmega_i2c_priv *priv = dev->ioctl;
+	struct i2c_adapter *adap = dev->ioctl;
+	struct atmega_i2c_priv *priv = adap->data;
 	int i = 1;
 	uint8_t reg = 0;
 	
@@ -143,21 +146,21 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 				break;
 			
 			/* bus control */
-			case I2C_LISTEN:
 			case I2C_ACK:
-				reg = BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+				reg |= BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
 				atmega_i2c_reg_write(priv->twcr, &reg);
+
 				break;
 			case I2C_NACK:
-				reg = BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
+				reg |= BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
 				atmega_i2c_reg_write(priv->twcr, &reg);
 				break;
 			case I2C_IDLE:
-				reg = BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
+				reg |= BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
 				atmega_i2c_reg_write(priv->twcr, &reg);
 				break;
 			case I2C_BLOCK:
-				reg = BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+				reg |= BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
 				atmega_i2c_reg_write(priv->twcr, &reg);
 				break;
 			default:
@@ -254,7 +257,6 @@ static int atmega_i2c_put_char(int c, FILE *stream)
 	struct i2c_adapter *adap = ((struct i2c_client*)stream->data)->adapter;
 	struct atmega_i2c_priv *priv = adap->data;
 	uint8_t data = (uint8_t)c&0xFF;
-	
 	atmega_i2c_reg_write(priv->twdr, &data);
 	
 	return c;
@@ -268,7 +270,7 @@ static int atmega_i2c_get_char(FILE *stream)
 	
 	atmega_i2c_reg_read(priv->twdr, &data);
 	
-	return (int)data;
+	return (int)(data&0xFF);
 }
 
 ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
@@ -293,14 +295,14 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			
 			if(msgs[I2C_MASTER_TRANSMIT_MSG].length) {
 				adapter->flags |= I2C_TRANSMITTER;
-				msgs[I2C_MASTER_TRANSMIT_MSG].addr |= I2C_SLA_WRITE_MASK;
+				msgs[I2C_MASTER_TRANSMIT_MSG].addr &= I2C_SLA_WRITE_MASK;
 				fdputc(msgs[I2C_MASTER_TRANSMIT_MSG].addr, fd);
 			} else {
 				adapter->flags |= I2C_RECEIVER;
 				msgs[I2C_MASTER_RECEIVE_MSG].addr |= I2C_SLA_READ_BIT;
 				fdputc(msgs[I2C_MASTER_RECEIVE_MSG].addr, fd);
 			}
-			
+
 			dev->ctrl(dev, I2C_ACK, NULL);
 			break;
 			

@@ -35,3 +35,4 @@ autom4te.cache/
 Makefile.in
 configure
 generate
+config.h.in~

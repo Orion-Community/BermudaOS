@@ -37,15 +37,17 @@
 #define ATMEGA_BUSSES 1
 
 /* I2C device I/O control features */
-#define I2C_ACK			BIT(0)
-#define I2C_NACK		BIT(1)
-#define I2C_IDLE		BIT(2)
-#define I2C_RELEASE		I2C_IDLE
-#define I2C_BLOCK		BIT(3)
-#define I2C_LISTEN		BIT(4)
+#define I2C_START		BIT(0)
+#define I2C_STOP		BIT(1)
 
-#define I2C_START		BIT(5)
-#define I2C_STOP		BIT(6)
+#define I2C_ACK			BIT(2)
+#define I2C_NACK		BIT(3)
+#define I2C_IDLE		BIT(4)
+#define I2C_RELEASE		I2C_IDLE
+#define I2C_BLOCK		BIT(5)
+#define I2C_LISTEN		BIT(6)
+
+
 /* End of I/O control features */
 
 #define I2C_SLA_READ_BIT BIT(0)

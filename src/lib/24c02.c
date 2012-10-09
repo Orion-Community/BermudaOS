@@ -18,45 +18,48 @@
 
 //!< \file lib/24c02.c Serial EEPROM library
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <fs/vfile.h>
 
 #include <dev/dev.h>
-#include <dev/twif.h>
-#include <dev/twidev.h>
+#include <dev/i2c/i2c.h>
+#include <dev/i2c/reg.h>
 
 #include <lib/24c02.h>
-#include <arch/twi.h>
 
-static char *eeprom_dev = NULL;
+static struct i2c_client *client;
 
 /**
  * \brief Initialize the 24C02 driver.
- * \param bus Two Wire bus to use.
+ * \param iicc The I2C client
  * \note It is very important that the bus passed to this routine
  *       is initialized.
  * 
  * When this routine is called, the driver is functional and ready to use.
  */
-PUBLIC void Bermuda24c02Init(char *devname)
+PUBLIC void Bermuda24c02Init(struct i2c_client *iicc)
 {
-	eeprom_dev = devname;
+	client = iicc;
+	client->sla = BASE_SLA_24C02;
+	client->freq = SCL_FRQ_24C02;
 }
 
 PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 {
-	int rc = -1;
+	int rc = -1, fd;
 	unsigned char tx[] = { addr, data };
-	DEVICE *dev = dev_open(eeprom_dev);
-	TWIMSG *msg;
 	
-	if(dev) {
-		msg = BermudaTwiMsgCompose((const void*)tx, 2, NULL, 0, BASE_SLA_24C02,
-									  SCL_FRQ_24C02, 500, NULL);
-		rc = dev->io->write(dev->io, msg, sizeof(*msg));
-		BermudaTwiMsgDestroy(msg);
+	fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
+	if(fd < 0) {
+		return rc;
 	}
+	write(fd, tx, 2);
+	read(fd, NULL, 0);
+	rc = flush(fd);
+	close(fd);
+
 	return rc;
 }
 
@@ -64,15 +67,17 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 {
 	unsigned char tx = addr;
 	unsigned char rx = 0;
-	DEVICE *dev = dev_open(eeprom_dev);
-	TWIMSG *msg;
+	int fd;
 	
-	if(dev) {
-		msg = BermudaTwiMsgCompose((const void*)&tx, 1, &rx, 1, BASE_SLA_24C02,
-									  SCL_FRQ_24C02, 500, NULL);
-		dev_write(dev, msg, sizeof(*msg));
-		BermudaTwiMsgDestroy(msg);
+	fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
+	if(fd < 0) {
+		return rx;
 	}
+	
+	write(fd, &tx, 1);
+	read(fd, &rx, 1);
+	flush(fd);
+	close(fd);
 
 	return rx;
 }

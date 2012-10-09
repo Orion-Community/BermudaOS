@@ -75,7 +75,7 @@ static struct i2c_message i2c_c0_msgs[I2C_MSG_NUM];
  * 
  * This function will initialize bus 0 on port c.
  */
-PUBLIC void atmega_i2c_c0_hw_init(struct i2c_adapter *adapter)
+PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 {
 	int rc = i2c_init_adapter(adapter, i2c_c0_io.name);
 	if(rc < 0) {
@@ -96,6 +96,8 @@ PUBLIC void atmega_i2c_c0_hw_init(struct i2c_adapter *adapter)
 	vfs_add(&i2c_c0_io);
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);
 	
+	sla |= B1;
+	atmega_i2c_reg_write(i2c_c0.twar, &sla);
 	adapter->dev->ctrl(adapter->dev, I2C_IDLE, NULL);
 }
 
@@ -113,12 +115,15 @@ PUBLIC void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac)
 static int atmega_i2c_init_transfer(FILE *stream)
 {
 	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
-	uint8_t twbr = atmega_i2c_calc_twbr(msgs[0].freq, atmega_i2c_calc_prescaler(
-		msgs[0].freq));
+	struct i2c_adapter *adap = ((struct i2c_client*)stream->data)->adapter;
+	struct atmega_i2c_priv *priv = adap->data;
 	
-	BermudaPrintf("MSG len: %u :: SlA: %X :: twbr: %u\n", msgs[0].length,
-				  msgs[0].addr, twbr);
-	return -1;
+	uint8_t pres = atmega_i2c_calc_prescaler(msgs[0].freq);
+	uint8_t twbr = atmega_i2c_calc_twbr(msgs[0].freq, pres);
+	
+	atmega_i2c_set_bitrate(priv, twbr, pres);
+	adap->dev->ctrl(adap->dev, I2C_START | I2C_ACK, NULL);
+	return BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
 }
 
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
@@ -342,6 +347,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			
 			if(status == I2C_MASTER_ARB_LOST) {
 				dev->ctrl(dev, I2C_RELEASE, NULL);
+				adapter->flags = 0;
 			}
 			
 			if(msgs[I2C_SLAVE_RECEIVE_MSG].length) {
@@ -355,7 +361,43 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			break;
 			
 		case I2C_MR_DATA_ACK:
+			if(atmega_i2c_get_index(fd) < msgs[I2C_MASTER_RECEIVE_MSG].length) {
+				msgs[I2C_MASTER_RECEIVE_MSG].buff[atmega_i2c_get_index(fd)] = (uint8_t)fdgetc(fd);
+				atmega_i2c_inc_index(fd);
+			}
+			/* fall through to sla ack */
 		case I2C_MR_SLA_ACK:
+			if(atmega_i2c_get_index(fd) + 1 < msgs[I2C_MASTER_RECEIVE_MSG].length) {
+				/*
+				 * ACK if there is more than 1 byte to transfer.
+				 */
+				dev->ctrl(dev, I2C_ACK, NULL);
+			} else {
+				dev->ctrl(dev, I2C_NACK, NULL);
+			}
+			break;
+			
+		case I2C_MR_DATA_NACK:
+			if(atmega_i2c_get_index(fd) < msgs[I2C_MASTER_RECEIVE_MSG].length) {
+				msgs[I2C_MASTER_RECEIVE_MSG].buff[atmega_i2c_get_index(fd)] = (uint8_t)fdgetc(fd);
+			}
+			
+			msgs[I2C_MASTER_RECEIVE_MSG].length = 0;
+			
+			if(msgs[I2C_SLAVE_RECEIVE_MSG].length) {
+				dev->ctrl(dev, I2C_LISTEN | I2C_STOP, NULL);
+				adapter->flags = 0;
+				adapter->flags |= I2C_RECEIVER;
+			} else {
+				dev->ctrl(dev, I2C_IDLE | I2C_STOP, NULL);
+				adapter->flags = 0;
+			}
+#ifdef __THREADS__
+			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
+#else
+			BermudaIoSignal(&(bus->master_queue));
+#endif
+			
 			break;
 		default:
 			break;

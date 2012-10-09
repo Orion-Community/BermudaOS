@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <lib/binary.h>
+
 #include <arch/io.h>
 
 /**
@@ -38,7 +40,7 @@
 #define I2C_ACK			BIT(0)
 #define I2C_NACK		BIT(1)
 #define I2C_IDLE		BIT(2)
-#define I2C_RELEASE		BIT(2)
+#define I2C_RELEASE		I2C_IDLE
 #define I2C_BLOCK		BIT(3)
 #define I2C_LISTEN		BIT(4)
 
@@ -430,6 +432,15 @@ static inline void atmega_i2c_inc_index(int fd)
 static inline void atmega_i2c_reset_index(int fd)
 {
 	fdopen(fd)->index = 0;
+}
+
+static inline void atmega_i2c_set_bitrate(struct atmega_i2c_priv *priv,
+										  uint8_t twbr, uint8_t twps)
+{
+	twps &= B11;
+	
+	atmega_i2c_reg_write(priv->twbr, &twbr);
+	atmega_i2c_reg_write(priv->twsr, &twps);
 }
 
 ISR_DEF(atmega_i2c_isr_handle, adapter, struct i2c_adapter *);

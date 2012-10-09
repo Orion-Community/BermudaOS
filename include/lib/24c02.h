@@ -21,8 +21,8 @@
 #ifndef __24C02EEPROM_H
 #define __24C02EEPROM_H
 
-#include <bermuda.h>
-#include <dev/twif.h>
+#include <stdlib.h>
+#include <dev/i2c/i2c.h>
 
 /**
  * \brief 24C02 base slave address.
@@ -35,7 +35,7 @@
 
 #define SCL_FRQ_24C02 100000UL //! SCL frequency of 100.0KHz
 
-extern void Bermuda24c02Init(char *devname);
+extern void Bermuda24c02Init(struct i2c_client *iicc);
 extern int Bermuda24c02WriteByte(unsigned char addr, unsigned char data);
 extern unsigned char Bermuda24c02ReadByte(unsigned char addr);
 

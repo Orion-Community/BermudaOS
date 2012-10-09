@@ -21,6 +21,8 @@
 
 #include <stdlib.h>
 
+#define ATMEGA_I2C_C0_SLA 0x56
+
 /**
  * \def ATMEGA_I2C_C0
  * \brief I2C bus 0 on port C.
@@ -29,7 +31,7 @@
 
 __DECL
 extern void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac);
-extern void atmega_i2c_c0_hw_init(struct i2c_adapter *adapter);
+extern void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter);
 __DECL_END
 
 #endif /* __ATMEGA_I2C_H */

@@ -16,13 +16,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <sys/thread.h>
 #include <sys/virt_timer.h>
 #include <sys/events/event.h>
 
 #include <lib/spiram.h>
+#include <lib/24c02.h>
 
 #include <dev/dev.h>
 #include <dev/spibus.h>
@@ -41,6 +43,7 @@
 
 static VTIMER *timer;
 struct i2c_client *client;
+struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
 // static unsigned char twi_slave_tx = 0x0;
@@ -120,8 +123,8 @@ void setup()
 // 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
-
-// 	Bermuda24c02Init("TWI0");
+	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);
+	Bermuda24c02Init(&eeprom_client);
 	BermudaSpiRamInit(SPI0, 10);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
 // 	Bermuda24c02WriteByte(100, 0xAC);

@@ -96,7 +96,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	struct i2c_adapter *adap;
 	struct device *dev;
 	FILE *socket;
-	int rc;
+	int rc = -1;
 	
 	if(client == NULL) {
 		return -1;
@@ -142,12 +142,8 @@ PUBLIC int i2cdev_flush(FILE *stream)
 	adap->dev->io->data = stream->data;
 	adap->dev->io->flags &= 0xFF;
 	adap->dev->io->flags |= stream->flags & 0xFF00;
+	
 	rc = flush(rc);
-	
-#ifdef __THREADS__
-	adap->dev->release(adap->dev);
-#endif
-	
 	return rc;
 }
 
@@ -177,6 +173,8 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 
 PUBLIC int i2cdev_close(FILE *stream)
 {
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adap = client->adapter;
 	int rc = -1;
 	
 	if(stream != NULL) {
@@ -187,5 +185,8 @@ PUBLIC int i2cdev_close(FILE *stream)
 		rc = 0;
 	}
 	
+#ifdef __THREADS__
+	adap->dev->release(adap->dev);
+#endif
 	return rc;
 }

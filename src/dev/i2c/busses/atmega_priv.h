@@ -42,10 +42,10 @@
 
 #define I2C_ACK			BIT(2)
 #define I2C_NACK		BIT(3)
-#define I2C_IDLE		BIT(4)
-#define I2C_RELEASE		I2C_IDLE
-#define I2C_BLOCK		BIT(5)
-#define I2C_LISTEN		BIT(6)
+#define I2C_IDLE		I2C_NACK
+#define I2C_RELEASE		I2C_ACK
+#define I2C_LISTEN		I2C_ACK
+#define I2C_BLOCK		BIT(4)
 
 
 /* End of I/O control features */

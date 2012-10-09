@@ -85,7 +85,8 @@ PUBLIC int BermudaInit(void)
 #endif
 
 #ifdef __TWI__
-	atmega_i2c_c0_hw_init(ATMEGA_I2C_C0_SLA, &i2c_adapter);
+// 	atmega_i2c_c0_hw_init(ATMEGA_I2C_C0_SLA, &i2c_adapter);
+	atmega_i2c_c0_hw_init(0x20, &i2c_adapter);
 #endif
 
 	STACK_L = (MEM-128) & 0xFF;

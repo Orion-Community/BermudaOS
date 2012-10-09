@@ -67,7 +67,7 @@ static volatile void *bus_c0_slave_queue = SIGNALED;
  */
 static struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
 
-static struct i2c_message i2c_c0_msgs[I2C_MSG_NUM];
+static struct i2c_message i2c_c0_msgs[I2C_MSG_NUM] = { {0}, {0}, {0}, {0}, };
 
 /**
  * \brief Intialize an I2C bus.
@@ -121,10 +121,8 @@ static int atmega_i2c_init_transfer(FILE *stream)
 	uint8_t pres = atmega_i2c_calc_prescaler(msgs[0].freq);
 	uint8_t twbr = atmega_i2c_calc_twbr(msgs[0].freq, pres);
 	
-	stream->flags |= _FDEV_SETUP_RW;
-	BermudaPrintf("%s :: flags: %X\n", adap->dev->io->name, adap->dev->io->flags);
 	atmega_i2c_set_bitrate(priv, twbr, pres);
-	adap->dev->ctrl(adap->dev, I2C_START | I2C_ACK, NULL);
+	adap->dev->ctrl(adap->dev, I2C_START, NULL);
 	return BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
 }
 
@@ -132,42 +130,45 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 {
 	struct i2c_adapter *adap = dev->ioctl;
 	struct atmega_i2c_priv *priv = adap->data;
-	int i = 1;
 	uint8_t reg = 0;
 	
-	do {
-		switch(cfg & i) {
-			/* transaction control */
-			case I2C_START:
-				reg |= BIT(TWSTA);
-				break;
-			case I2C_STOP:
-				reg |= BIT(TWSTO);
-				break;
+	switch((uint16_t)cfg) {
+		/* transaction control */
+		case I2C_START:
+			reg = BIT(TWSTA) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
 			
-			/* bus control */
-			case I2C_ACK:
-				reg |= BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
-				atmega_i2c_reg_write(priv->twcr, &reg);
+		case I2C_STOP | I2C_ACK:
+			reg = BIT(TWSTO) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_STOP | I2C_NACK:
+			reg = BIT(TWSTO) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+		
+		/* bus control */
+		case I2C_ACK:
+			reg = BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_NACK:
+			reg = BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_BLOCK:
+			reg = BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		default:
+			break;
+	}
 
-				break;
-			case I2C_NACK:
-				reg |= BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
-				atmega_i2c_reg_write(priv->twcr, &reg);
-				break;
-			case I2C_IDLE:
-				reg |= BIT(TWEN) | BIT(TWINT) | BIT(TWIE);
-				atmega_i2c_reg_write(priv->twcr, &reg);
-				break;
-			case I2C_BLOCK:
-				reg |= BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
-				atmega_i2c_reg_write(priv->twcr, &reg);
-				break;
-			default:
-				break;
-		}
-		i <<= 1;
-	} while(i <= (1UL << ((sizeof(i)*8) - 1UL)));
 	
 	return;
 }
@@ -316,8 +317,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				adapter->flags &= ~I2C_TRANSMITTER;
 				adapter->flags |= I2C_RECEIVER;
 				msgs[I2C_MASTER_TRANSMIT_MSG].length = 0;
-				dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+				dev->ctrl(dev, I2C_START, NULL);
 			} else {
+				msgs[I2C_MASTER_TRANSMIT_MSG].length = 0;
+
 				if(msgs[I2C_SLAVE_RECEIVE_MSG].length) {
 					adapter->flags = 0;
 					adapter->flags |= I2C_RECEIVER;
@@ -329,7 +332,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #ifdef __THREADS__
 					BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
 #else
-					BermudaIoSignal(&(bus->master_queue));
+					BermudaIoSignal(&(adapter->master_queue));
 #endif
 			}
 			break;
@@ -350,6 +353,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			if(status == I2C_MASTER_ARB_LOST) {
 				dev->ctrl(dev, I2C_RELEASE, NULL);
 				adapter->flags = 0;
+				break;
 			}
 			
 			if(msgs[I2C_SLAVE_RECEIVE_MSG].length) {
@@ -402,6 +406,12 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			
 			break;
 		default:
+			dev->ctrl(dev, I2C_IDLE, NULL);
+#ifdef __THREADS__
+			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
+#else
+			BermudaIoSignal(&(bus->master_queue));
+#endif
 			break;
 	}
 }

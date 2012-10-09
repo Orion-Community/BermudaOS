@@ -37,8 +37,10 @@ PUBLIC int open(char *fname, unsigned char mode)
 				if(__iob[i] == NULL) {
 					__iob[i] = c;
 					c->fd = i;
+					fdmode(i, mode);
 					return i; /* file is opened */
 				} else if(!strcmp(__iob[i]->name, fname)) {
+					fdmode(i, mode);
 					return i; /* file is already open */
 				}
 			}

@@ -42,7 +42,9 @@
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
-struct i2c_client *client;
+static struct i2c_client *slave_client;
+static struct i2c_client master_client;
+
 struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
@@ -69,13 +71,13 @@ THREAD(SramThread, arg)
 // 	client->freq = 100000UL;
 
 	while(1) {
-// 		fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
-// 		if(fd != -1) {
-// 			write(fd, &rx, 1);
-// 			read(fd, NULL, 0);
-// 			flush(fd);
-// 			close(fd);
-// 		}
+// // 		fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
+// // 		if(fd != -1) {
+// // 			write(fd, &rx, 1);
+// // 			read(fd, NULL, 0);
+// // 			flush(fd);
+// // 			close(fd);
+// // 		}
 
 		BermudaUsartListen(USART0, buff, 3, 9600, 500);
 		buff[3] = '\0';
@@ -84,24 +86,35 @@ THREAD(SramThread, arg)
 	}
 }
 
-// THREAD(TwiTest, arg)
-// {
-// 	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
-// 			     0xDC, 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
-// 			     0x0 };
-// 	DEVICE *twi;
-// 	TWIMSG *msg;
-// 	
-// 	while(1) {
-// 		twi = dev_open("TWI0");
-// 		msg = BermudaTwiMsgCompose(tx, 20, NULL, 0, 0x54, 100000, 500, NULL);
-// 		dev_write(twi, msg, sizeof(*msg));
-// 		BermudaTwiMsgDestroy(msg);
-// 		tx[19]++;
-// 		
-// 		BermudaThreadSleep(1000);
-// 	}
-// }
+THREAD(TwiTest, arg)
+{
+	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
+			     0xDC, 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
+			     0x0 };
+	int fd;
+	
+	atmega_i2c_init_client(&master_client, ATMEGA_I2C_C0);
+	master_client.sla = 0x54;
+	master_client.freq = 100000UL;
+	
+	
+	while(1) {
+		fd = i2cdev_socket(&master_client, _FDEV_SETUP_RW | I2C_MASTER);
+		if(fd < 0) {
+			goto sleep;
+		}
+		
+		write(fd, tx, 20);
+		read(fd, NULL, 0);
+		flush(fd);
+		close(fd);
+
+		tx[19]++;
+		
+		sleep:
+		BermudaThreadSleep(1000);
+	}
+}
 #endif
 
 static unsigned char led = 1;
@@ -119,8 +132,8 @@ void setup()
 #ifdef __THREADS__
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-// 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
-// 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 256,
+					BermudaHeapAlloc(256), BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);

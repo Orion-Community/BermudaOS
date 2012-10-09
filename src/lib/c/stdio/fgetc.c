@@ -21,7 +21,7 @@
 
 PUBLIC int fgetc(FILE *stream)
 {
-	int rv = 0xAB;
+	int rv = -1;
 	
 	if((stream->flags & __SRD) == 0) {
 		return rv;

@@ -125,13 +125,16 @@ extern int fputs(char *s, FILE *f);
 extern int putc(int c, FILE *f);
 extern int fgetc(FILE *stream);
 
+extern int fdputc(int c, int fd);
+extern int fdgetc(int fd);
+
 extern int write(int fd, const void *buff, size_t size);
 extern int read(int fd, void *buff, size_t size);
 extern void fdmode(int fd, unsigned char mode);
 extern int flush(int fd);
 
 extern int open(char *fname, unsigned char mode);
-extern FILE *fdopen(int fd, unsigned char mode);
+extern FILE *fdopen(int fd);
 extern int close(int fd);
 
 extern int vfprintf(FILE *stream, const char *fmt, va_list ap);

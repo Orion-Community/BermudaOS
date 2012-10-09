@@ -66,8 +66,7 @@ PUBLIC int iob_add(FILE *stream)
 	return -1;
 }
 
-PUBLIC FILE *fdopen(int fd, unsigned char mode)
+PUBLIC FILE *fdopen(int fd)
 {
-	fdmode(fd, mode);
 	return __iob[fd];
 }

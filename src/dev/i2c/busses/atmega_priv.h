@@ -35,18 +35,15 @@
 #define ATMEGA_BUSSES 1
 
 /* I2C device I/O control features */
-#define I2C_WRITE_DATA	BIT(0)
-#define I2C_READ_DATA	BIT(1)
-#define I2C_WRITE_SLA	BIT(2)
+#define I2C_ACK			BIT(0)
+#define I2C_NACK		BIT(1)
+#define I2C_IDLE		BIT(2)
+#define I2C_RELEASE		BIT(2)
+#define I2C_BLOCK		BIT(3)
+#define I2C_LISTEN		BIT(4)
 
-#define I2C_START		BIT(3)
-#define I2C_STOP		BIT(4)
-
-#define I2C_ACK			BIT(5)
-#define I2C_NACK		BIT(6)
-#define I2C_IDLE		BIT(7)
-#define I2C_BLOCK		BIT(8)
-#define I2C_LISTEN		BIT(9)
+#define I2C_START		BIT(5)
+#define I2C_STOP		BIT(6)
 /* End of I/O control features */
 
 #define I2C_SLA_READ_BIT BIT(0)
@@ -280,6 +277,22 @@
 #define I2C_FRQ(x, n) \
 	(F_CPU/(16+(2*x*n)))
 
+/* control reg */
+#define TWINT	7
+#define TWEA	6
+#define TWSTA	5
+#define TWSTO	4
+#define TWWC	3
+#define TWEN	2
+#define TWIE	0
+
+/* status reg */
+#define TWPS1	1
+#define TWPS0	0
+
+/* addr reg */
+#define TWGCE 	0
+
 
 /* ---------------------- */
 
@@ -402,6 +415,21 @@ static inline uint8_t atmega_i2c_get_status(struct atmega_i2c_priv *priv)
 	unsigned char status = 0;
 	atmega_i2c_reg_read(priv->twsr, &status);
 	return (status & B11111000);
+}
+
+static inline size_t atmega_i2c_get_index(int fd)
+{
+	return fdopen(fd)->index;
+}
+
+static inline void atmega_i2c_inc_index(int fd)
+{
+	fdopen(fd)->index++;
+}
+
+static inline void atmega_i2c_reset_index(int fd)
+{
+	fdopen(fd)->index = 0;
 }
 
 ISR_DEF(atmega_i2c_isr_handle, adapter, struct i2c_adapter *);

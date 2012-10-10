@@ -114,12 +114,12 @@ PUBLIC void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac)
  */
 static int atmega_i2c_init_transfer(FILE *stream)
 {
-	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
-	struct i2c_adapter *adap = ((struct i2c_client*)stream->data)->adapter;
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adap = client->adapter;
 	struct atmega_i2c_priv *priv = adap->data;
-	
-	uint8_t pres = atmega_i2c_calc_prescaler(msgs[0].freq);
-	uint8_t twbr = atmega_i2c_calc_twbr(msgs[0].freq, pres);
+		
+	uint8_t pres = atmega_i2c_calc_prescaler(client->freq);
+	uint8_t twbr = atmega_i2c_calc_twbr(client->freq, pres);
 	
 	atmega_i2c_set_bitrate(priv, twbr, pres);
 	adap->dev->ctrl(adap->dev, I2C_START, NULL);
@@ -280,7 +280,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 	struct device *dev = adapter->dev;
 	struct i2c_message *msgs = (struct i2c_message*)dev->io->buff;
 	uint8_t status = atmega_i2c_get_status(priv);
-	int fd;
+	int fd, i;
 	
 	if(adapter->dev->io->fd < 0) {
 		return;
@@ -317,7 +317,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				adapter->flags &= ~I2C_TRANSMITTER;
 				adapter->flags |= I2C_RECEIVER;
 				msgs[I2C_MASTER_TRANSMIT_MSG].length = 0;
-				dev->ctrl(dev, I2C_START, NULL);
+				dev->ctrl(dev, I2C_START, NULL); /* sent the repeated start */
 			} else {
 				msgs[I2C_MASTER_TRANSMIT_MSG].length = 0;
 
@@ -347,7 +347,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #ifdef __THREADS__
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
 #else
-			BermudaIoSignal(&(bus->master_queue));
+			BermudaIoSignal(&(adapter->master_queue));
 #endif
 			
 			if(status == I2C_MASTER_ARB_LOST) {
@@ -401,19 +401,29 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #ifdef __THREADS__
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
 #else
-			BermudaIoSignal(&(bus->master_queue));
+			BermudaIoSignal(&(adapter->master_queue));
 #endif
 			
 			break;
 		default:
-			dev->ctrl(dev, I2C_IDLE, NULL);
+			
+			for(i = 0; i < I2C_MSG_NUM; i++) {
+				msgs[i].buff = NULL;
+				msgs[i].length = 0;
+			}
+			
+			atmega_i2c_reset_index(fd);
+			dev->ctrl(dev, I2C_RELEASE, NULL);
 #ifdef __THREADS__
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
+			BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);
 #else
-			BermudaIoSignal(&(bus->master_queue));
+			BermudaIoSignal(&(adapter->master_queue));
+			BermudaIoSignal(&(adapter->slave_queue));
 #endif
 			break;
 	}
+	return;
 }
 
 SIGNAL(TWI_STC_vect)

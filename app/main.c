@@ -61,9 +61,9 @@ struct i2c_client eeprom_client;
 // 
 THREAD(SramThread, arg)
 {
+	char *buff[4];
 // 	unsigned char rx = 0;
 // 	int fd;
-	char *buff[4];
 	
 // 	client = BermudaHeapAlloc(sizeof(*client));
 // 	atmega_i2c_init_client(client, ATMEGA_I2C_C0);
@@ -79,10 +79,9 @@ THREAD(SramThread, arg)
 // // 			close(fd);
 // // 		}
 
-		BermudaUsartListen(USART0, buff, 3, 9600, 500);
+		BermudaUsartListen(USART0, buff, 3, 9600, 0);
 		buff[3] = '\0';
 		BermudaPrintf("%s\n", buff);
-		BermudaThreadSleep(1000);
 	}
 }
 
@@ -130,10 +129,10 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
+					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 256,
-					BermudaHeapAlloc(256), BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);
@@ -152,8 +151,7 @@ unsigned long loop()
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
-	BermudaDigitalPinWrite(5, 1);
-
+	
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
@@ -164,7 +162,7 @@ unsigned long loop()
 
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
-// 	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
+	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
 	return;

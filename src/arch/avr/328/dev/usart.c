@@ -122,7 +122,8 @@ PUBLIC void BermudaUsart0Init()
 
 	// enable completion interrupts
 	BermudaEnterCritical();
-	*(hw->ucsrb) |= BIT(RXCIE0);
+	bus->usartif->io(bus, USART_START, NULL);
+	bus->usartif->io(bus, USART_RX_START, NULL);
 	BermudaExitCritical();
 }
 
@@ -147,6 +148,14 @@ PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *
 		case USART_START:
 			(*(hw->ucsra)) |= BIT(TXCn);
 			(*(hw->ucsrb)) |= BIT(TXCIE0);
+			break;
+			
+		case USART_RX_START:
+			(*(hw->ucsrb)) |= BIT(RXCIE0) | _BV(RXEN0);
+			break;
+			
+		case USART_RX_STOP:
+			(*(hw->ucsrb)) &= ~(BIT(RXCIE0) | _BV(RXEN0));
 			break;
 			
 		case USART_STOP:

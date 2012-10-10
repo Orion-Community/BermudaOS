@@ -118,6 +118,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	rc = iob_add(socket);
 	if(rc < 0) {
 		BermudaHeapFree(socket);
+		dev->release(dev);
 		goto out;
 	}
 	

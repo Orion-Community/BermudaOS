@@ -43,7 +43,6 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 				bus->tx_index++;
 			}
 			else {
-				bus->usartif->io(bus, USART_STOP, NULL);
 				bus->tx_len = 0;
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
@@ -54,11 +53,18 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 			break;
 		
 		case USART_RX:
-			if(bus->rx_index < bus->rx_len) {
+			if(bus->rx_len == 0) {
+				return;
+			}
+			
+			if(bus->rx_index + 1 < bus->rx_len) {
 				bus->usartif->io(bus, USART_RX_DATA, (void*)&(bus->rx[bus->rx_index]));
 				bus->rx_index++;
 			}
 			else {
+				if(bus->rx_index < bus->rx_len) {
+					bus->usartif->io(bus, USART_RX_DATA, (void*)&(bus->rx[bus->rx_index]));
+				}
 				bus->rx_len = 0;
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->rx_queue);
@@ -103,10 +109,7 @@ unsigned int tmo;
 #endif
 {
 	int rc = -1;
-
-	if(txlen == 0) {
-		return -1;
-	}
+	
 #ifdef __EVENTS__
 	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
 		return -1;
@@ -115,7 +118,10 @@ unsigned int tmo;
 	BermudaMutexEnter(&(bus->mutex));
 #endif
 
-	bus->usartif->io(bus, USART_START, NULL);
+	if(txlen == 0) {
+		return -1;
+	}
+
 	bus->tx = tx;
 	bus->tx_len = txlen;
 	bus->tx_index = 1;
@@ -128,6 +134,7 @@ unsigned int tmo;
 	bus->tx_queue = 1;
 	BermudaMutexEnter(&(bus->tx_queue));
 	BermudaMutexRelease(&(bus->mutex));
+	rc = 0;
 #endif
 	return rc;
 }
@@ -154,12 +161,12 @@ unsigned int tmo;
 	bus->rx = rx;
 	bus->rx_len = rxlen;
 	bus->rx_index = 0;
-	bus->usartif->io(bus, USART_START, NULL);
 	
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, tmo);
 #else
 	rc = 0;
+	bus->rx_queue = 1;
 	BermudaMutexEnter(&(bus->rx_queue));
 #endif
 	return rc;

@@ -58,7 +58,10 @@ typedef enum
 	USART_SET_BAUD, //! Set the baud rate.
 	
 	USART_START, //!< Start the USART controller.
+	USART_RX_START, //!< Start the USART receiver.
+	
 	USART_STOP, //!< Stops the USART controller.
+	USART_RX_STOP, //!< Stop the receiver.
 	
 	USART_TX_DATA, //!< Transmit data. 
 	USART_RX_DATA, //!< Read data from the backend buffer.

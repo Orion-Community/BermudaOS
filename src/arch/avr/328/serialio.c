@@ -58,7 +58,6 @@ PRIVATE WEAK int BermudaUsartWriteByte(int c, FILE *stream)
 {
 	HW_USART *hw = BermudaUsartGetIO(USART0);
 	
-	USART0->usartif->io(USART0, USART_STOP, NULL);
 	if(c == '\n') {
 		BermudaUsartWriteByte('\r', stream);
 	}

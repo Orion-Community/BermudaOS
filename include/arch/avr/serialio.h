@@ -22,5 +22,6 @@
 #define __SERIALIO_H_
 
 extern void BermudaUsartSetupStreams();
+extern int BermudaUsartWriteByte(int c, FILE *stream);
 
 #endif /* __SERIALIO_H_ */

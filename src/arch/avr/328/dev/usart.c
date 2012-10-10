@@ -118,12 +118,11 @@ PUBLIC void BermudaUsart0Init()
 #endif
 
 	*(hw->ucsrc) = _BV(UCSZ01) | _BV(UCSZ00); /* sent data in packets of 8 bits */
-	*(hw->ucsrb) = _BV(RXEN0) | _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
+	*(hw->ucsrb) = _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
 
 	// enable completion interrupts
 	BermudaEnterCritical();
-	bus->usartif->io(bus, USART_START, NULL);
-	bus->usartif->io(bus, USART_RX_START, NULL);
+	bus->usartif->io(bus, USART_RX_ENABLE, NULL);
 	BermudaExitCritical();
 }
 
@@ -145,21 +144,19 @@ PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *
 			BermudaUsartConfigBaud(bus, *((unsigned short*)arg));
 			break;
 			
-		case USART_START:
-			(*(hw->ucsra)) |= BIT(TXCn);
+		case USART_TX_ENABLE:
 			(*(hw->ucsrb)) |= BIT(TXCIE0);
 			break;
 			
-		case USART_RX_START:
+		case USART_TX_STOP:
+			(*(hw->ucsrb)) &= ~BIT(TXCIE0);
+			
+		case USART_RX_ENABLE:
 			(*(hw->ucsrb)) |= BIT(RXCIE0) | _BV(RXEN0);
 			break;
 			
 		case USART_RX_STOP:
 			(*(hw->ucsrb)) &= ~(BIT(RXCIE0) | _BV(RXEN0));
-			break;
-			
-		case USART_STOP:
-			(*(hw->ucsrb)) &= ~BIT(TXCIE0);
 			break;
 			
 		case USART_TX_DATA:
@@ -201,12 +198,13 @@ PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 
 SIGNAL(USART_TX_STC_vect)
 {
-	USART0->usartif->isr(USART0, USART_TX);
+// 	USART0->usartif->isr(USART0, USART_TX);
 	return;
 }
 
 SIGNAL(USART_RX_STC_vect)
 {
 	USART0->usartif->isr(USART0, USART_RX);
+	return;
 }
 

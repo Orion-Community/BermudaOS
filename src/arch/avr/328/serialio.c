@@ -54,7 +54,7 @@ PUBLIC void BermudaUsartSetupStreams()
  * 
  * Writes a single character (<i>c</i>) to the USART0 (hardware usart).
  */
-PRIVATE WEAK int BermudaUsartWriteByte(int c, FILE *stream)
+PUBLIC int BermudaUsartWriteByte(int c, FILE *stream)
 {
 	HW_USART *hw = BermudaUsartGetIO(USART0);
 	

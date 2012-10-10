@@ -114,16 +114,47 @@ PUBLIC void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac)
  */
 static int atmega_i2c_init_transfer(FILE *stream)
 {
+	auto void config_bitrate();
 	struct i2c_client *client = stream->data;
+	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
 	struct i2c_adapter *adap = client->adapter;
 	struct atmega_i2c_priv *priv = adap->data;
-		
-	uint8_t pres = atmega_i2c_calc_prescaler(client->freq);
-	uint8_t twbr = atmega_i2c_calc_twbr(client->freq, pres);
+	uint8_t pres, twbr;
+	int rc;
 	
-	atmega_i2c_set_bitrate(priv, twbr, pres);
-	adap->dev->ctrl(adap->dev, I2C_START, NULL);
-	return BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
+	if((stream->flags & I2C_MASTER) == I2C_MASTER) {
+		config_bitrate();
+		adap->dev->ctrl(adap->dev, I2C_START, NULL);
+#ifdef __THREADS__
+			rc = BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
+#else
+			adapter->master_queue = 1;
+			BermudaIoWait(&(adapter->master_queue));
+			rc = 0;
+#endif
+	} else {
+		if(msgs[I2C_MASTER_TRANSMIT_MSG].length || msgs[I2C_MASTER_RECEIVE_MSG].length) {
+			adap->dev->ctrl(adap->dev, I2C_START, NULL);
+		} else {
+			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
+		}
+#ifdef __THREADS__
+			rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, I2C_TMO);
+#else
+			adapter->slave_queue = 1;
+			BermudaIoWait(&(adapter->slave_queue));
+			rc = 0;
+#endif
+	}
+	
+	return rc;
+	
+	auto void config_bitrate()
+	{
+		pres = atmega_i2c_calc_prescaler(client->freq);
+		twbr = atmega_i2c_calc_twbr(client->freq, pres);
+		atmega_i2c_set_bitrate(priv, twbr, pres);
+	}
 }
 
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
@@ -132,36 +163,43 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 	struct atmega_i2c_priv *priv = adap->data;
 	uint8_t reg = 0;
 	
+	atmega_i2c_reg_read(priv->twcr, &reg);
+	
 	switch((uint16_t)cfg) {
 		/* transaction control */
 		case I2C_START:
-			reg = BIT(TWSTA) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			reg |= BIT(TWSTA) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 			
 		case I2C_STOP | I2C_ACK:
-			reg = BIT(TWSTO) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			reg |= BIT(TWSTO) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 			
 		case I2C_STOP | I2C_NACK:
-			reg = BIT(TWSTO) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
+			reg = (reg & ~BIT(TWEA)) | BIT(TWSTO) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 		
 		/* bus control */
 		case I2C_ACK:
-			reg = BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			reg = (reg & ~BIT(TWSTA)) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 			
 		case I2C_NACK:
-			reg = BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
+			reg = (reg & ~(BIT(TWEA | BIT(TWSTA)))) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 			
 		case I2C_BLOCK:
-			reg = BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			reg |= (reg & ~BIT(TWINT)) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_RESET:
+			reg |= BIT(TWSTO);
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 			
@@ -413,7 +451,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			}
 			
 			atmega_i2c_reset_index(fd);
-			dev->ctrl(dev, I2C_RELEASE, NULL);
+			dev->ctrl(dev, I2C_RESET, NULL); // reset the interface
 #ifdef __THREADS__
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);

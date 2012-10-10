@@ -22,6 +22,7 @@
 
 #include <arch/io.h>
 #include <arch/usart.h>
+#include <arch/avr/serialio.h>
 
 #include <dev/usartif.h>
 #include <sys/events/event.h>
@@ -38,11 +39,18 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 {
 	switch(transtype) {
 		case USART_TX:
-			if(bus->tx_index < bus->tx_len) {
+			if(bus->tx_len == 0) {
+				return;
+			}
+				
+			if(bus->tx_index + 1 < bus->tx_len) {
 				bus->usartif->io(bus, USART_TX_DATA, (void*)&(bus->tx[bus->tx_index]));
 				bus->tx_index++;
 			}
 			else {
+				if(bus->tx_index < bus->tx_len) {
+					bus->usartif->io(bus, USART_TX_DATA, (void*)&(bus->tx[bus->tx_index]));
+				}
 				bus->tx_len = 0;
 #ifdef __EVENTS__
 				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
@@ -95,48 +103,23 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
  * The transfer will be started. Based on the parameters it will start a transmit
  * or receive operation. If both should be done it will do a transmit first.
  */
-#ifdef __EVENTS__
-PUBLIC int BermudaUsartTransfer(bus, tx, txlen, baud, tmo)
-#else
 PUBLIC int BermudaUsartTransfer(bus, tx, txlen, baud)
-#endif
 USARTBUS *bus;
 const void *tx;
 unsigned int txlen;
 unsigned int baud;
-#ifdef __EVENTS__
-unsigned int tmo;
-#endif
 {
-	int rc = -1;
-	
-#ifdef __EVENTS__
-	if((rc = BermudaEventWait((volatile THREAD**)bus->mutex, tmo)) == -1) {
-		return -1;
-	}
-#else
-	BermudaMutexEnter(&(bus->mutex));
-#endif
+	unsigned int idx = 0;
 
 	if(txlen == 0) {
 		return -1;
 	}
-
-	bus->tx = tx;
-	bus->tx_len = txlen;
-	bus->tx_index = 1;
-	bus->usartif->io(bus, USART_TX_DATA, (void*)bus->tx);
 	
-#ifdef __EVENTS__
-	rc = BermudaEventWaitNext((volatile THREAD**)bus->tx_queue, tmo);
-	BermudaEventSignal((volatile THREAD**)bus->mutex);
-#else
-	bus->tx_queue = 1;
-	BermudaMutexEnter(&(bus->tx_queue));
-	BermudaMutexRelease(&(bus->mutex));
-	rc = 0;
-#endif
-	return rc;
+	for(; idx < txlen; idx++) {
+		BermudaUsartWriteByte(((const uint8_t*)tx)[idx], NULL);
+	}
+	
+	return 0;
 }
 
 #ifdef __EVENTS__
@@ -161,14 +144,16 @@ unsigned int tmo;
 	bus->rx = rx;
 	bus->rx_len = rxlen;
 	bus->rx_index = 0;
+	bus->usartif->io(bus, USART_RX_ENABLE, NULL);
 	
 #ifdef __EVENTS__
 	rc = BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, tmo);
 #else
-	rc = 0;
 	bus->rx_queue = 1;
 	BermudaMutexEnter(&(bus->rx_queue));
+	rc = 0;
 #endif
+	bus->usartif->io(bus, USART_RX_STOP, NULL);
 	return rc;
 }
 

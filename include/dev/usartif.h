@@ -57,10 +57,10 @@ typedef enum
 {
 	USART_SET_BAUD, //! Set the baud rate.
 	
-	USART_START, //!< Start the USART controller.
-	USART_RX_START, //!< Start the USART receiver.
+	USART_TX_ENABLE, //!< Start the USART controller.
+	USART_RX_ENABLE, //!< Start the USART receiver.
 	
-	USART_STOP, //!< Stops the USART controller.
+	USART_TX_STOP, //!< Stops the USART controller.
 	USART_RX_STOP, //!< Stop the receiver.
 	
 	USART_TX_DATA, //!< Transmit data. 
@@ -128,14 +128,11 @@ struct _usartbus
 } __attribute__((packed));
 
 extern void BermudaUsartISR(USARTBUS *bus, unsigned char transtype);
+extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, unsigned int baud);
 #ifdef __EVENTS__
-extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, 
-								unsigned int baud, unsigned int tmo);
 extern int BermudaUsartListen(USARTBUS *bus, void *rx, unsigned int rxlen,
 							  unsigned int baud, unsigned int tmo);
 #else
-extern int BermudaUsartTransfer(USARTBUS *bus, const void *tx, unsigned int txlen, 
-								unsigned int baud);
 extern int BermudaUsartListen(USARTBUS *bus, void *rx, unsigned int rxlen,
 							  unsigned int baud);
 #endif

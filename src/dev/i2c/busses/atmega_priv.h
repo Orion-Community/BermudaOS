@@ -46,6 +46,7 @@
 #define I2C_RELEASE		I2C_ACK
 #define I2C_LISTEN		I2C_ACK
 #define I2C_BLOCK		BIT(4)
+#define I2C_RESET		BIT(5)
 
 
 /* End of I/O control features */

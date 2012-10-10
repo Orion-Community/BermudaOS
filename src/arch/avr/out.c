@@ -32,7 +32,7 @@
  */
 PUBLIC int BermudaPrintf(const char *fmt, ...)
 {
-	int i = -1;
+	int i;
 #ifdef __EVENTS__
 	if(BermudaEventWait((volatile THREAD**)USART0->mutex, 500) == -1) {
 		i = -1;

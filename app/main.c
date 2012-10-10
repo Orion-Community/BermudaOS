@@ -79,9 +79,10 @@ THREAD(SramThread, arg)
 // // 			close(fd);
 // // 		}
 
-		BermudaUsartListen(USART0, buff, 3, 9600, 0);
+		BermudaUsartListen(USART0, buff, 3, 9600, EVENT_WAIT_INFINITE);
 		buff[3] = '\0';
 		BermudaPrintf("%s\n", buff);
+		BermudaThreadSleep(100);
 	}
 }
 
@@ -126,6 +127,7 @@ PUBLIC void TestTimer(VTIMER *timer, void *arg)
 
 void setup()
 {
+	BermudaPrintf("Booting!\n");
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
@@ -162,7 +164,7 @@ unsigned long loop()
 
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
-	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600, 500);
+	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600);
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
 	return;

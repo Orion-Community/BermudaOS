@@ -135,24 +135,22 @@ unsigned int baud;
 unsigned int tmo;
 #endif
 {
-	int rc = -1;
+	int rc;
+	unsigned int idx = 0;
+	bool done;
 	
-	if(!rxlen) {
-		return rc;
-	}
-	
-	bus->rx = rx;
-	bus->rx_len = rxlen;
-	bus->rx_index = 0;
 	bus->usartif->io(bus, USART_RX_ENABLE, NULL);
+	do {
+		bus->rx = &((uint8_t*)rx)[idx];
+		bus->rx_len = 1;
+		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, tmo)) == -1) {
+			return rc;
+		} else {
+			idx++;
+		}
+		done = (idx == rxlen);
+	} while(!done);
 	
-#ifdef __EVENTS__
-	rc = BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, tmo);
-#else
-	bus->rx_queue = 1;
-	BermudaMutexEnter(&(bus->rx_queue));
-	rc = 0;
-#endif
 	bus->usartif->io(bus, USART_RX_STOP, NULL);
 	return rc;
 }

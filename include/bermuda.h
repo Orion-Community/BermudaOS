@@ -150,7 +150,7 @@ typedef volatile unsigned char mutex_t;
 typedef volatile unsigned char*   reg8_t;
 typedef volatile unsigned short*  reg16_t;
 typedef volatile uint32_t*        reg32_t;
-typedef char                      bool;
+typedef unsigned char             bool;
 
 
 #ifdef __cplusplus

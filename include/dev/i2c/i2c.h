@@ -90,8 +90,11 @@ extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
 extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adap);
 extern int i2c_free_client(struct i2c_client *client);
 
+/* core functions */
 extern int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg, uint8_t flags);
 extern int i2c_call_client(struct i2c_client *client, FILE *stream);
+extern void i2c_cleanup_msg(uint8_t msg);
+extern void i2c_do_clean_msgs(FILE *stream);
 __DECL_END
 
 

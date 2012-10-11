@@ -79,6 +79,9 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 	int rc = -1;
 	
 	if(client != NULL) {
+		if(!buff) {
+			return i2c_setup_master_transfer(client->adapter->dev->io, NULL, I2C_MASTER_RECEIVE_MSG);
+		}
 		msg.buff = (void*)buff;
 		msg.length = size;
 		msg.freq = client->freq;
@@ -145,6 +148,7 @@ PUBLIC int i2cdev_flush(FILE *stream)
 	adap->dev->io->flags |= stream->flags & 0xFF00;
 	
 	rc = flush(rc);
+	i2c_do_clean_msgs(adap->dev->io);
 	return rc;
 }
 
@@ -181,6 +185,7 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 		}
 	}
 	
+	i2c_do_clean_msgs(fdopen(dev));
 	out:
 	return rc;
 }

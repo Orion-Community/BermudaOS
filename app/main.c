@@ -149,12 +149,12 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
-					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 96, 
-					BermudaHeapAlloc(96), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 100,
-						BermudaHeapAlloc(100), BERMUDA_DEFAULT_PRIO);
+// 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
+// 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+// 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 96, 
+// 					BermudaHeapAlloc(96), BERMUDA_DEFAULT_PRIO);
+// 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 100,
+// 						BermudaHeapAlloc(100), BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);

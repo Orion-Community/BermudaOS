@@ -22,6 +22,8 @@
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
 
+static bool cleanup_list[I2C_MSG_NUM] = { 0, 0, 0, 0, };
+
 /**
  * \brief Prepare the driver for an I2C transfer.
  * \param stream Device file.
@@ -35,14 +37,46 @@
 PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg,
 									 uint8_t flags)
 {	
-	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
+	struct i2c_message *msg2;
+	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
 	
-	msgs[flags].buff = msg->buff;
-	msgs[flags].length = msg->length;
-	msgs[flags].freq = msg->freq;
-	msgs[flags].addr = msg->addr;
+
+	if(msg == NULL) {
+		msgs[flags] = NULL;
+		return 0;
+	}
 	
+	msg2 = BermudaHeapAlloc(sizeof(*msg2));
+	if(!msg2) {
+		return -1;
+	}
+	
+	msg2->buff = msg->buff;
+	msg2->length = msg->length;
+	msg2->freq = msg->freq;
+	msg2->addr = msg->addr;
+	
+	msgs[flags] = msg2;
 	return 0;
+}
+
+PUBLIC void i2c_do_clean_msgs(FILE *stream)
+{
+	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
+	uint8_t i = 0;
+	
+	for(; i < I2C_MSG_NUM; i++) {
+		if(cleanup_list[i] != 0) {
+			BermudaHeapFree(msgs[i]);
+			msgs[i] = NULL;
+			cleanup_list[i] = 0;
+		}
+	}
+}
+
+PUBLIC void i2c_cleanup_msg(uint8_t msg)
+{
+	cleanup_list[msg] = true;
 }
 
 /**
@@ -52,8 +86,10 @@ PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg,
  */
 PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 {
-	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
+	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
+	struct i2c_message *msg = BermudaHeapAlloc(sizeof(*msg));
 	
-	client->callback(&(msgs[I2C_SLAVE_TRANSMIT_MSG]));
+	client->callback(msg);
+	msgs[I2C_SLAVE_TRANSMIT_MSG] = msg;
 	return client->adapter->slave_respond(stream);
 }

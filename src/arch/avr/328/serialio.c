@@ -18,19 +18,26 @@
 
 //! \file src/arch/avr/328/serialio.c Stdio backend functions.
 
-#include <bermuda.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <arch/usart.h>
 #include <arch/avr/serialio.h>
 #include <arch/avr/328/dev/usartreg.h>
 
-// private functions
-PRIVATE WEAK int BermudaUsartReadByte(FILE *stream);
-PRIVATE WEAK int BermudaUsartWriteByte(int c, FILE *stream);
+#include <sys/thread.h>
+#include <sys/events/event.h>
 
-static FILE usart_in = { 0 };
-static FILE usart_out = { 0 };
+// private functions
+static int BermudaUsartReadByte(FILE *stream);
+static int BermudaUsartWriteByte(int c, FILE *stream);
+static int usart_write(FILE *stream, const void *buff, size_t size);
+static int usart_read(FILE *stream, void *buff, size_t size);
+
+static FDEV_SETUP_STREAM(usart0_io, &usart_write, &usart_read, &BermudaUsartWriteByte,
+						 &BermudaUsartReadByte, NULL /* flush */, "USART0", _FDEV_SETUP_RW,
+						 USART0);
 
 /**
  * \brief Setup the USART file streams used by functions such as printf.
@@ -42,10 +49,40 @@ static FILE usart_out = { 0 };
  */
 PUBLIC void BermudaUsartSetupStreams()
 {
-	fdev_setup_stream(&usart_out, &BermudaUsartWriteByte, NULL, _FDEV_SETUP_WRITE);
-	fdev_setup_stream(&usart_in, NULL, &BermudaUsartReadByte, _FDEV_SETUP_READ);
-	stdout = &usart_out;
-	stdin  = &usart_in;
+	stdout = &usart0_io;
+	stdin  = &usart0_io;
+	iob_add(&usart0_io);
+}
+
+PUBLIC int usart_open(char *name)
+{
+	int i = 3;
+	for(; i < MAX_OPEN; i++) {
+		if(!strcmp(__iob[i]->name, name)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static int usart_write(FILE *stream, const void *buff, size_t size)
+{
+	size_t x = 0;
+	for(; x < size; x++) {
+		fputc(((uint8_t*)buff)[x], stream);
+	}
+	return 0;
+}
+
+static int usart_read(FILE *stream, void *buff, size_t size)
+{
+	size_t x = 0;
+	
+	for(; x < size; x++) {
+		((uint8_t*)buff)[x] = stream->get(stream);
+	}
+	
+	return 0;
 }
 
 /**
@@ -54,18 +91,19 @@ PUBLIC void BermudaUsartSetupStreams()
  * 
  * Writes a single character (<i>c</i>) to the USART0 (hardware usart).
  */
-PUBLIC int BermudaUsartWriteByte(int c, FILE *stream)
+static int BermudaUsartWriteByte(int c, FILE *stream)
 {
-	HW_USART *hw = BermudaUsartGetIO(USART0);
+	HW_USART *hw = BermudaUsartGetIO((USARTBUS*)stream->data);
 	
 	if(c == '\n') {
 		BermudaUsartWriteByte('\r', stream);
 	}
 
-	while(( (*(hw->ucsra)) & BIT(UDRE0) ) == 0);
 	(*(hw->udr)) = c;
+	while(( (*(hw->ucsra)) & BIT(TXCn) ) == 0);
+	(*(hw->ucsra)) |= BIT(TXCn);
 
-	return 0;
+	return c;
 }
 
 /**
@@ -74,14 +112,24 @@ PUBLIC int BermudaUsartWriteByte(int c, FILE *stream)
  * 
  * Waits for one character on USART0 (hardware usart) for 500 miliseconds.
  */
-PRIVATE WEAK int BermudaUsartReadByte(FILE *stream)
+static int BermudaUsartReadByte(FILE *stream)
 {
 	unsigned char c = 0;
-#ifdef __THREADS__
-	BermudaUsartListen(USART0, &c, 1, 9600, 500);
+	USARTBUS *bus = stream->data;
+	
+	bus->rx_len = 1;
+	bus->rx = &c;
+	bus->rx_index = 0;
+	
+	bus->usartif->io(bus, USART_RX_ENABLE, NULL);
+#ifdef __EVENTS__
+	BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, EVENT_WAIT_INFINITE);
 #else
-	BermudaUsartListen(USART0, &c, 1, 9600);
+	bus->rx_queue = 1;
+	BermudaMutexEnter(&(bus->rx_queue));
 #endif
+	
+	bus->usartif->io(bus, USART_RX_STOP, NULL);
 	return c;
 }
 

@@ -39,25 +39,6 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 {
 	switch(transtype) {
 		case USART_TX:
-			if(bus->tx_len == 0) {
-				return;
-			}
-				
-			if(bus->tx_index + 1 < bus->tx_len) {
-				bus->usartif->io(bus, USART_TX_DATA, (void*)&(bus->tx[bus->tx_index]));
-				bus->tx_index++;
-			}
-			else {
-				if(bus->tx_index < bus->tx_len) {
-					bus->usartif->io(bus, USART_TX_DATA, (void*)&(bus->tx[bus->tx_index]));
-				}
-				bus->tx_len = 0;
-#ifdef __EVENTS__
-				BermudaEventSignalFromISR((volatile THREAD**)bus->tx_queue);
-#else
-				BermudaMutexRelease(&(bus->tx_queue));
-#endif
-			}
 			break;
 		
 		case USART_RX:
@@ -86,72 +67,3 @@ PUBLIC __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 			break;
 	}
 }
-
-/**
- * \brief Initiate a USART transfer.
- * \param bus Bus to use for the transfer.
- * \param tx Transmit buffer.
- * \param txlen Transmit buffer length.
- * \param rx Receive buffer.
- * \param rxlen Receive buffer length.
- * \param baud Desired baudrate.
- * \param tmo Time-out. Maximum time to wait for the transfer to complete.
- * \return An error code will be return. 0 for success -1 on failure (eg wrong
- *         parameters or transmission timed out.
- * \todo Implement the receive interface.
- * 
- * The transfer will be started. Based on the parameters it will start a transmit
- * or receive operation. If both should be done it will do a transmit first.
- */
-PUBLIC int BermudaUsartTransfer(bus, tx, txlen, baud)
-USARTBUS *bus;
-const void *tx;
-unsigned int txlen;
-unsigned int baud;
-{
-	unsigned int idx = 0;
-
-	if(txlen == 0) {
-		return -1;
-	}
-	
-	for(; idx < txlen; idx++) {
-		BermudaUsartWriteByte(((const uint8_t*)tx)[idx], NULL);
-	}
-	
-	return 0;
-}
-
-#ifdef __EVENTS__
-PUBLIC int BermudaUsartListen(bus, rx, rxlen, baud, tmo)
-#else
-PUBLIC int BermudaUsartListen(bus, rx, rxlen, baud)
-#endif
-USARTBUS *bus;
-void *rx;
-unsigned int rxlen;
-unsigned int baud;
-#ifdef __EVENTS__
-unsigned int tmo;
-#endif
-{
-	int rc;
-	unsigned int idx = 0;
-	bool done;
-	
-	bus->usartif->io(bus, USART_RX_ENABLE, NULL);
-	do {
-		bus->rx = &((uint8_t*)rx)[idx];
-		bus->rx_len = 1;
-		if((rc = BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, tmo)) == -1) {
-			return rc;
-		} else {
-			idx++;
-		}
-		done = (idx == rxlen);
-	} while(!done);
-	
-	bus->usartif->io(bus, USART_RX_STOP, NULL);
-	return rc;
-}
-

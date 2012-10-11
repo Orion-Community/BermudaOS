@@ -119,11 +119,6 @@ PUBLIC void BermudaUsart0Init()
 
 	*(hw->ucsrc) = _BV(UCSZ01) | _BV(UCSZ00); /* sent data in packets of 8 bits */
 	*(hw->ucsrb) = _BV(TXEN0);   /* Tx and Rx enable flags to 1 */
-
-	// enable completion interrupts
-	BermudaEnterCritical();
-	bus->usartif->io(bus, USART_RX_ENABLE, NULL);
-	BermudaExitCritical();
 }
 
 /**

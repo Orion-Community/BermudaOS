@@ -62,6 +62,7 @@ struct i2c_client eeprom_client;
 THREAD(SramThread, arg)
 {
 	char *buff[4];
+	int usart;
 // 	unsigned char rx = 0;
 // 	int fd;
 	
@@ -79,10 +80,13 @@ THREAD(SramThread, arg)
 // // 			close(fd);
 // // 		}
 
-		BermudaUsartListen(USART0, buff, 3, 9600, EVENT_WAIT_INFINITE);
+		usart = usart_open("USART0");
+		read(usart, buff, 3);
+		usart_close(usart);
+		
 		buff[3] = '\0';
 		BermudaPrintf("%s\n", buff);
-		BermudaThreadSleep(100);
+		BermudaThreadSleep(500);
 	}
 }
 
@@ -153,6 +157,7 @@ unsigned long loop()
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
+	int fd;
 	
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
@@ -164,7 +169,15 @@ unsigned long loop()
 
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
-	BermudaUsartTransfer(USART0, "USART output\r\n", 14, 9600);
+
+	fd = usart_open("USART0");
+	if(fd < 0) {
+		goto end;
+	}
+	write(fd, "USART OUT\n", 10);
+	usart_close(fd);
+	
+	end:
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
 	return;

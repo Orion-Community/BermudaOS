@@ -170,7 +170,6 @@ static inline void inb(volatile unsigned char *io, unsigned char *data)
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
         #include <arch/avr/328/io.h>
-        #include <arch/avr/328/dev/usart.h>
 #endif
 
 #ifdef __ARDUINO__

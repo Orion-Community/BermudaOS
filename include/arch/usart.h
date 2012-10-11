@@ -19,12 +19,10 @@
 #ifndef __ARCH_TWI_H
 #define __ARCH_TWI_H
 
-#ifdef __AVR__
-	#include <arch/avr/serialio.h>
-#endif
+#include <dev/usart/usart.h>
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
-	#include <arch/avr/328/dev/usart.h>
+#ifdef __AVR__
+	#include <dev/usart/busses/atmega_usart.h>
 #endif
 
 #endif /* __ARCH_TWI_H */

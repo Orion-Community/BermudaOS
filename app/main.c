@@ -31,13 +31,14 @@
 #include <dev/usartif.h>
 #include <dev/adc.h>
 #include <dev/i2c/i2c.h>
+#include <dev/usart/usart.h>
 #include <dev/i2c/busses/atmega.h>
+#include <dev/usart/busses/atmega_usart.h>
 
 #include <fs/vfile.h>
 #include <fs/vfs.h>
 
 #include <arch/io.h>
-#include <arch/usart.h>
 #include <arch/adc.h>
 #include <arch/avr/328/dev/spibus.h>
 
@@ -80,9 +81,9 @@ THREAD(SramThread, arg)
 // // 			close(fd);
 // // 		}
 
-		usart = usart_open("USART0");
+		usart = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
 		read(usart, buff, 3);
-		usart_close(usart);
+		usartdev_close(usart);
 		
 		buff[3] = '\0';
 		BermudaPrintf("%s\n", buff);
@@ -170,12 +171,12 @@ unsigned long loop()
 	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
 		read_back_sram);
 
-	fd = usart_open("USART0");
+	fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
 	if(fd < 0) {
 		goto end;
 	}
 	write(fd, "USART OUT\n", 10);
-	usart_close(fd);
+	usartdev_close(fd);
 	
 	end:
 #ifdef __THREADS__

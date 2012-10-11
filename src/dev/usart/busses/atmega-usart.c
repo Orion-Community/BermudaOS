@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include <dev/dev.h>
-#include <dev/usart.h>
+#include <dev/usart/usart.h>
 #include <dev/usart/busses/atmega_usart.h>
 
 #include <fs/vfile.h>
@@ -29,6 +29,8 @@
 
 #include <sys/thread.h>
 #include <sys/events/event.h>
+
+#include <arch/irq.h>
 
 #include "atmega_priv.h"
 
@@ -39,7 +41,8 @@ static int BermudaUsartReadByte(FILE *stream);
 static int BermudaUsartWriteByte(int c, FILE *stream);
 static int usart_write(FILE *stream, const void *buff, size_t size);
 static int usart_read(FILE *stream, void *buff, size_t size);
-static void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
+static void BermudaUsartISR(USARTBUS *bus, unsigned char transtype);
+static int usart_open(char *name);
 
 #ifdef __EVENTS__
 /**
@@ -194,7 +197,7 @@ PUBLIC void BermudaUsartSetupStreams()
 	iob_add(&usart0_io);
 }
 
-PUBLIC int usart_open(char *name)
+static int usart_open(char *name)
 {
 	int i = 3;
 	for(; i < MAX_OPEN; i++) {

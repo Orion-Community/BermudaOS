@@ -21,10 +21,14 @@
 #include <lib/spiram.h>
 #include <lib/binary.h>
 
+#include <fs/vfs.h>
+
 #include <dev/dev.h>
 #include <dev/adc.h>
 #include <dev/i2c/i2c.h>
+#include <dev/usart/usart.h>
 #include <dev/i2c/busses/atmega.h>
+#include <dev/usart/busses/atmega_usart.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
@@ -37,8 +41,6 @@
 #include <arch/avr/328/dev/spibus.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/stack.h>
-#include <arch/avr/serialio.h>
-#include <arch/avr/328/dev/usart.h>
 
 #define LED_DDR  BermudaGetDDRB()
 #define LED_PORT BermudaGetPORTB()

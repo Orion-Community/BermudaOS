@@ -19,6 +19,10 @@
 #ifndef __AVR_PGM_H
 #define __AVR_PGM_H
 
+#define PROGMEM __attribute__((__progmem__))
+
+# define PSTR(s) (__extension__({static const char __c[] PROGMEM = (s); &__c[0];}))
+
 #define __LPM_classic__(addr)   \
 	(__extension__({                \
 	uint16_t __addr16 = (uint16_t)(addr); \
@@ -205,7 +209,25 @@
 
 #define pgm_read_word(address_short)    pgm_read_word_near(address_short)
 
+typedef char prog_char __attribute__((__progmem__));
+
 __DECL
 extern const char *strchr_P(const char *, int val);
+static inline size_t strlen_P(const char *s)
+{
+	const char *c;
+	
+	for(c = s; pgm_read_byte(c); ++c);
+	
+	return (size_t)(c - s);
+}
+
+static inline void memcpy_P(char *dest, const char *src, size_t size)
+{
+	size_t idx = 0;
+	for(; idx < size; idx++) {
+		dest[idx] = pgm_read_byte((src+idx));
+	}
+}
 __DECL_END
 #endif

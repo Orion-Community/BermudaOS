@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Printing functions.
+ *  BermudaOS - printf
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __OUT_HEADER_
-#define __OUT_HEADER_
+//! \file src/lib/c/stdio/printf_p.c Text output module.
 
-extern int BermudaPrintf(const char *fmt, ...);
-extern int printf_P(const char *fmt, ...);
+#ifdef __AVR__
 
-#endif /* __OUT_HEADER_ */
+#include <stdlib.h>
+#include <stdio.h>
+#include <arch/avr/pgm.h>
+
+PUBLIC int printf_P(const char *fmt, ...)
+{
+	int i;
+
+	va_list va;
+	va_start(va, fmt);
+	i = vfprintf_P(stdout, fmt, va);
+	va_end(va);
+
+	return i;
+}
+#endif

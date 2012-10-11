@@ -137,7 +137,19 @@ extern int open(char *fname, unsigned char mode);
 extern FILE *fdopen(int fd);
 extern int close(int fd);
 
+/**
+ * \brief Print formatted data to the stdout stream.
+ * \param fmt Format.
+ * \note printf is implmented by the architecture, due to queueing and concurrency.
+ */
+extern int printf(const char *fmt, ...);
+#ifdef __AVR__
+extern int printf_P(const char *fmt, ...);
+extern int vfprintf_P(FILE *stream, const char *fmt, va_list ap);
+extern int write_P(int fd, const void *data, size_t size);
+#endif
 extern int vfprintf(FILE *stream, const char *fmt, va_list ap);
+
 
 /* non-posix functions */
 extern int iob_add(FILE *stream);

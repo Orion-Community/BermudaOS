@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Printing functions.
+ *  BermudaOS - StdIO - I/O private header
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __OUT_HEADER_
-#define __OUT_HEADER_
+#ifndef __STDIO_PRIV_H
+#define __STDIO_PRIV_H
 
-extern int BermudaPrintf(const char *fmt, ...);
-extern int printf_P(const char *fmt, ...);
+#define BUFF 16
 
-#endif /* __OUT_HEADER_ */
+extern int convert_to_num(uint32_t num, uint8_t base, bool sign, 
+							  bool caps, FILE *stream);
+
+#endif /* __STDIO_PRIV_H */

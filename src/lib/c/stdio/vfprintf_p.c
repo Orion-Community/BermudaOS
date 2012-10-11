@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Printing functions.
+ *  BermudaOS - putc
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __OUT_HEADER_
-#define __OUT_HEADER_
+#ifdef __AVR__
+#include <stdlib.h>
+#include <stdio.h>
+#include <arch/avr/pgm.h>
 
-extern int BermudaPrintf(const char *fmt, ...);
-extern int printf_P(const char *fmt, ...);
+#include "stdio_priv.h"
 
-#endif /* __OUT_HEADER_ */
+PUBLIC int vfprintf_P(FILE *stream, const char *fmt, va_list ap)
+{
+	size_t strl = strlen_P(fmt)+1;
+	int rc = -1;
+	
+	char *fmt2 = BermudaHeapAlloc(strl);
+	
+	if(fmt2) {
+		memcpy_P(fmt2, fmt, strl);
+		rc = vfprintf(stream, fmt2, ap);
+		BermudaHeapFree(fmt2);
+	}
+	
+	return rc;
+}
+#endif

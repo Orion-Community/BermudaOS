@@ -177,8 +177,7 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 			fdopen(dev)->data = client;
 			rc = i2c_call_client(client, fdopen(dev));
 		} else {
-//			_exit();
-			BermudaPrintf("ERROR!\n");
+			_exit(); /* fatal error, restart */
 		}
 	}
 	

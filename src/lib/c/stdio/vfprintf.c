@@ -23,9 +23,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <stdio.h>
 #include <stddef.h>
 
-#define BUFF 16
+#include "stdio_priv.h"
 
-static int convert_to_num(uint32_t num, uint8_t base, bool sign, bool caps, FILE *f);
+#ifdef __AVR__
+#include <arch/avr/pgm.h>
+#endif
 
 PUBLIC int vfprintf(FILE *stream, const char *fmt, va_list ap)
 {
@@ -79,52 +81,9 @@ PUBLIC int vfprintf(FILE *stream, const char *fmt, va_list ap)
 					
 				default:
 					break; /* oeps */
-			}
+	}
 		}
 	}
 	
 	return stream->length;
-}
-
-static int convert_to_num(uint32_t num, uint8_t base, bool sign, 
-							  bool caps, FILE *stream)
-{
-	char buff[BUFF];
-	char *cp;
-	char *digx;
-	//memset(cp, 0xa, BUFF-1UL);
-
-	if(num == 0) {
-		putc('0', stream);
-		return 0;
-	} else if((int32_t)num < 0 && sign) {
-		putc('-', stream);
-	}
-	
-	if(caps) {
-		digx = "0123456789ABCDEF";
-	} else {
-		digx = "0123456789abcdef";
-	}
-
-	cp = buff + BUFF - 1UL;
-	*cp = '\0';
-	if(base == 16) {
-		do {
-			*--cp = digx[num & 0x0F];
-			num >>= 4;
-		} while(num);
-	} else if(base == 10) {
-		if(num < 10) {
-			*--cp = (char)num + '0';
-		} else {
-			do {
-				*--cp = (char)(num % 10) + '0';
-				num /= 10;
-			} while(num);
-		}
-	}
-	
-	fputs(cp, stream);
-	return 0;
 }

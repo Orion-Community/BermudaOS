@@ -41,6 +41,7 @@
 
 #include <arch/io.h>
 #include <arch/adc.h>
+#include <arch/avr/pgm.h>
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
@@ -60,10 +61,28 @@ static void slave_responder(struct i2c_message *msg)
 	return;
 }
 
-THREAD(SramThread, arg)
+THREAD(StdInput, arg)
 {
-// 	char *buff[4];
-// 	int usart;
+	char *buff[4];
+	int fd;
+	
+	while(1) {
+		fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
+		if(fd < 0) {
+			goto sleep;
+		}
+		read(fd, buff, 3);
+		usartdev_close(fd);
+		
+		sleep:
+		buff[3] = '\0';
+		printf_P(PSTR("%s\n"), buff);
+		BermudaThreadSleep(500);
+	}
+}
+
+THREAD(IIC_slave, arg)
+{
 	unsigned char rx = 0;
 	int fd;
 	
@@ -79,13 +98,7 @@ THREAD(SramThread, arg)
 		close(fd);
 		
 		_usart:
-		BermudaPrintf("RX: %X :: fd: %i\n", rx, fd);
-// 		usart = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
-// 		read(usart, buff, 3);
-// 		usartdev_close(usart);
-// 		
-// 		buff[3] = '\0';
-// 		BermudaPrintf("tx: %X :: %s\n", i2c_slave_tx, buff);
+		printf_P(PSTR("RX: %X :: fd: %i\n"), rx, fd);
 		BermudaThreadSleep(500);
 	}
 
@@ -132,14 +145,16 @@ PUBLIC void TestTimer(VTIMER *timer, void *arg)
 
 void setup()
 {
-	BermudaPrintf("Booting!\n");
+	printf_P(PSTR("Booting!\n"));
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "SRAM", &SramThread, NULL, 128, 
-					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 96, 
+					BermudaHeapAlloc(96), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 100,
+						BermudaHeapAlloc(100), BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);
@@ -163,19 +178,19 @@ unsigned long loop()
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
-	BermudaPrintf("The temperature is: %u :: Free mem: %X\n", temperature, BermudaHeapAvailable());
+	printf_P(PSTR("The temperature is: %u :: Free mem: %X\n"), temperature, BermudaHeapAvailable());
 	
 	read_back_sram = BermudaSpiRamReadByte(0x50);
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
-	BermudaPrintf("Read back value's: %X::%X\n", read_back_eeprom,
+	printf_P(PSTR("Read back value's: %X::%X\n"), read_back_eeprom,
 		read_back_sram);
 
 	fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
 	if(fd < 0) {
 		goto end;
 	}
-	write(fd, "USART OUT\n", 10);
+	write_P(fd, PSTR("USART OUT\n"), 10);
 	usartdev_close(fd);
 	
 	end:

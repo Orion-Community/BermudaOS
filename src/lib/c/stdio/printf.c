@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Printing functions
+ *  BermudaOS - printf
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,64 +16,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file src/sys/out.c Text output module.
+//! \file src/lib/c/stdio/printf.c Text output module.
 
+#include <stdlib.h>
 #include <stdio.h>
-#include <bermuda.h>
-
-#include <arch/usart.h>
-
-#include <sys/events/event.h>
 
 /**
  * \brief Bermudas implementation of printf.
  * \param fmt Format of the string to print.
  * \param ... Variable argument list.
  */
-PUBLIC int BermudaPrintf(const char *fmt, ...)
+PUBLIC int printf(const char *fmt, ...)
 {
 	int i;
-#ifdef __EVENTS__
-	if(BermudaEventWait((volatile THREAD**)USART0->mutex, 500) == -1) {
-		i = -1;
-		goto out;
-	}
-#endif
 
 	va_list va;
 	
 	va_start(va, fmt);
 	i = vfprintf(stdout, fmt, va);
 	va_end(va);
-
-#ifdef __EVENTS__
-
-	BermudaEventSignal((volatile THREAD**)USART0->mutex);
-	out:
-#endif
-
-	return i;
-}
-
-PUBLIC int printf_P(const char *fmt, ...)
-{
-	int i;
-#ifdef __EVENTS__
-	if(BermudaEventWait((volatile THREAD**)USART0->mutex, 500) == -1) {
-		i = -1;
-		goto out;
-	}
-#endif
-
-	va_list va;
-	va_start(va, fmt);
-	vfprintf_P(stdout, fmt, va);
-	va_end(va);
-
-#ifdef __EVENTS__
-	BermudaEventSignal((volatile THREAD**)USART0->mutex);
-	out:
-#endif
 
 	return i;
 }

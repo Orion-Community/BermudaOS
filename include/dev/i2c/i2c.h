@@ -64,6 +64,7 @@ struct i2c_adapter {
 	struct device *dev; //!< Adapter device.
 	
 	uint8_t flags; //!< Bus flags.
+	bool busy;
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */

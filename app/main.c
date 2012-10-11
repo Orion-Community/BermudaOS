@@ -86,7 +86,7 @@ THREAD(SramThread, arg)
 // 		
 // 		buff[3] = '\0';
 // 		BermudaPrintf("tx: %X :: %s\n", i2c_slave_tx, buff);
-// 		BermudaThreadSleep(1000);
+		BermudaThreadSleep(500);
 	}
 
 }

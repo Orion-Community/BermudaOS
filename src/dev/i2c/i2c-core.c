@@ -22,7 +22,7 @@
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
 
-static bool cleanup_list[I2C_MSG_NUM] = { 0, 0, 0, 0, };
+static void *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
 
 /**
  * \brief Prepare the driver for an I2C transfer.
@@ -62,21 +62,21 @@ PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg,
 
 PUBLIC void i2c_do_clean_msgs(FILE *stream)
 {
-	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
 	uint8_t i = 0;
 	
 	for(; i < I2C_MSG_NUM; i++) {
-		if(cleanup_list[i] != 0) {
-			BermudaHeapFree(msgs[i]);
-			msgs[i] = NULL;
-			cleanup_list[i] = 0;
+		if(cleanup_list[i] != NULL) {
+			BermudaHeapFree(cleanup_list[i]);
+			cleanup_list[i] = NULL;
 		}
 	}
 }
 
-PUBLIC void i2c_cleanup_msg(uint8_t msg)
+PUBLIC void i2c_cleanup_msg(FILE *stream, uint8_t msg)
 {
-	cleanup_list[msg] = true;
+	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
+	cleanup_list[msg] = (void*)msgs[msg];
+	msgs[msg] = NULL;
 }
 
 /**

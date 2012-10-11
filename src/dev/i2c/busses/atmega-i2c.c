@@ -377,7 +377,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 {
 	struct atmega_i2c_priv *priv = (struct atmega_i2c_priv*)adapter->data;
 	struct device *dev = adapter->dev;
-	struct i2c_message **msgs = (struct i2c_message**)dev->io->buff;
+	volatile struct i2c_message **msgs = (volatile struct i2c_message**)dev->io->buff;
 	uint8_t status = atmega_i2c_get_status(priv);
 	const int dummy = 0;
 	int fd, i;
@@ -395,25 +395,18 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			adapter->flags = I2C_MASTER_ENABLE;
 			adapter->busy = true;
 			
-			if(msgs[I2C_MASTER_TRANSMIT_MSG] != NULL) {
+			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
 					adapter->flags |= I2C_TRANSMITTER;
 					msgs[I2C_MASTER_TRANSMIT_MSG]->addr &= I2C_SLA_WRITE_MASK;
 					fdputc(msgs[I2C_MASTER_TRANSMIT_MSG]->addr, fd);
-				} 
+				}
 			} else if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-				adapter->flags |= I2C_RECEIVER;
-				msgs[I2C_MASTER_RECEIVE_MSG]->addr |= I2C_SLA_READ_BIT;
-				fdputc(msgs[I2C_MASTER_RECEIVE_MSG]->addr, fd);
+					adapter->flags |= I2C_RECEIVER;
+					msgs[I2C_MASTER_RECEIVE_MSG]->addr |= I2C_SLA_READ_BIT;
+					fdputc(msgs[I2C_MASTER_RECEIVE_MSG]->addr, fd);
 				}
-			} else {
-#ifdef __THREADS__
-				BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
-#else
-				BermudaIoSignal(&(adapter->master_queue));
-#endif
-				break;
 			}
 
 			atmega_i2c_reg_read(priv->twcr, &status);
@@ -427,36 +420,39 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				fdputc((int)msgs[I2C_MASTER_TRANSMIT_MSG]->buff[atmega_i2c_get_index(fd)], fd);
 				atmega_i2c_inc_index(fd);
 				dev->ctrl(dev, I2C_ACK, NULL);
+				break;
 			} else if(msgs[I2C_MASTER_RECEIVE_MSG]) { 
 				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
 					adapter->flags &= ~I2C_TRANSMITTER;
 					adapter->flags |= I2C_RECEIVER;
 					msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-					i2c_cleanup_msg(I2C_MASTER_TRANSMIT_MSG);
+					i2c_cleanup_msg(fdopen(fd), I2C_MASTER_TRANSMIT_MSG);
 					dev->ctrl(dev, I2C_START, NULL); /* sent the repeated start */
+					break;
 				}
-			} else {
-				msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-				i2c_cleanup_msg(I2C_MASTER_TRANSMIT_MSG);
-				adapter->busy = false;
-				
-				if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
-					if(msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
-						adapter->flags = I2C_SLAVE_ENABLE;
-						adapter->flags |= I2C_RECEIVER;
-						dev->ctrl(dev, I2C_STOP | I2C_LISTEN, NULL);
-					}
-				} else {
-					adapter->flags = 0;
-					dev->ctrl(dev, I2C_STOP | I2C_NACK, NULL);
-				}
-				
-#ifdef __THREADS__
-				BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
-#else
-				BermudaIoSignal(&(adapter->master_queue));
-#endif
 			}
+			/* else: no space to write and no master receive operation is pending */
+#ifdef __THREADS__
+			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
+#else
+			BermudaIoSignal(&(adapter->master_queue));
+#endif
+
+			msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
+			i2c_cleanup_msg(fdopen(fd), I2C_MASTER_TRANSMIT_MSG);
+			adapter->busy = false;
+			
+			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
+				if(msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
+					adapter->flags = I2C_SLAVE_ENABLE;
+					adapter->flags |= I2C_RECEIVER;
+					dev->ctrl(dev, I2C_STOP | I2C_LISTEN, NULL);
+					break;
+				}
+			} 
+			/* no slave operation pending */
+			adapter->flags = 0;
+			dev->ctrl(dev, I2C_STOP | I2C_NACK, NULL);
 			break;
 			
 			
@@ -468,12 +464,12 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		case I2C_MT_SLA_NACK:
 		case I2C_MT_DATA_NACK:
 			msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-			i2c_cleanup_msg(I2C_MASTER_TRANSMIT_MSG);
+			i2c_cleanup_msg(fdopen(fd), I2C_MASTER_TRANSMIT_MSG);
 			/* roll through */
 		case I2C_MR_SLA_NACK:
 			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
-				i2c_cleanup_msg(I2C_MASTER_RECEIVE_MSG);
+				i2c_cleanup_msg(fdopen(fd), I2C_MASTER_RECEIVE_MSG);
 			}
 			adapter->busy = false;
 #ifdef __THREADS__
@@ -495,35 +491,29 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			break;
 			
 		case I2C_MR_DATA_ACK:
-			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
-				if(atmega_i2c_get_index(fd) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-					msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(fd)] = (uint8_t)fdgetc(fd);
-					atmega_i2c_inc_index(fd);
-				}
+			if(atmega_i2c_get_index(fd) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+				msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(fd)] = (uint8_t)fdgetc(fd);
+				atmega_i2c_inc_index(fd);
 			}
 			/* fall through to sla ack */
 		case I2C_MR_SLA_ACK:
-			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
-				if(atmega_i2c_get_index(fd) + 1 < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-					/*
-					* ACK if there is more than 1 byte to transfer.
-					*/
-					dev->ctrl(dev, I2C_ACK, NULL);
-				} 
+			if((atmega_i2c_get_index(fd) + 1) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+				/*
+				* ACK if there is more than 1 byte to transfer.
+				*/
+				dev->ctrl(dev, I2C_ACK, NULL);
 			} else {
 				dev->ctrl(dev, I2C_NACK, NULL);
 			}
 			break;
 			
 		case I2C_MR_DATA_NACK:
-			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
-				if(atmega_i2c_get_index(fd) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-					msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(fd)] = (uint8_t)fdgetc(fd);
-				}
+			if(atmega_i2c_get_index(fd) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+				msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(fd)] = (uint8_t)fdgetc(fd);
 			}
 			
 			msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
-			i2c_cleanup_msg(I2C_MASTER_RECEIVE_MSG);
+			i2c_cleanup_msg(fdopen(fd), I2C_MASTER_RECEIVE_MSG);
 			adapter->busy = false;
 			
 			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
@@ -531,11 +521,13 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 					dev->ctrl(dev, I2C_LISTEN | I2C_STOP, NULL);
 					adapter->flags = I2C_SLAVE_ENABLE;
 					adapter->flags |= I2C_RECEIVER;
+					break;
 				} 
-			} else {
-				dev->ctrl(dev, I2C_IDLE | I2C_STOP, NULL);
-				adapter->flags = 0;
 			}
+			
+			/* no slave operation pending, enter sent stop and enter idle mode */
+			dev->ctrl(dev, I2C_IDLE | I2C_STOP, NULL);
+			adapter->flags = 0;
 #ifdef __THREADS__
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
 #else
@@ -554,7 +546,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
 				if(msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
 					dev->ctrl(dev, I2C_ACK, NULL);
-				} 
+				} else {
+				dev->ctrl(dev, I2C_NACK, NULL);
+				adapter->flags |= I2C_ERROR;
+				}
 			} else {
 				dev->ctrl(dev, I2C_NACK, NULL);
 				adapter->flags |= I2C_ERROR;
@@ -582,27 +577,29 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
 					adapter->flags = 0;
 					msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
-					i2c_cleanup_msg(I2C_SLAVE_RECEIVE_MSG);
+					i2c_cleanup_msg(fdopen(fd), I2C_SLAVE_RECEIVE_MSG);
 					dev->ctrl(dev, I2C_START, NULL);
+					break;
 				}
-			} else if(msgs[I2C_MASTER_RECEIVE_MSG]) {
+			} 
+			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-					i2c_cleanup_msg(I2C_SLAVE_RECEIVE_MSG);
+					i2c_cleanup_msg(fdopen(fd), I2C_SLAVE_RECEIVE_MSG);
 					adapter->flags = 0;
 					msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
 					dev->ctrl(dev, I2C_START, NULL);
+					break;
 				}
-			} else {
-				/* No master operation is pending. In this case we will keep NACKing to the master */
-				dev->ctrl(dev, I2C_NACK, NULL);
-			}
+			} 
+			/* No master operation is pending. In this case we will keep NACKing to the master */
+			dev->ctrl(dev, I2C_NACK, NULL);
 			break;
 			
 		case I2C_SR_STOP:
 			adapter->flags &= ~I2C_ERROR;
 			adapter->flags |= I2C_CALL_BACK;
 			msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
-			i2c_cleanup_msg(I2C_SLAVE_RECEIVE_MSG);
+			i2c_cleanup_msg(fdopen(fd), I2C_SLAVE_RECEIVE_MSG);
 			adapter->busy = false;
 			dev->ctrl(dev, I2C_BLOCK, NULL);
 #ifdef __THREADS__
@@ -642,28 +639,31 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		case I2C_ST_LAST_DATA_ACK:
 			adapter->flags &= ~I2C_ERROR;
 			msgs[I2C_SLAVE_TRANSMIT_MSG]->length = 0;
-			i2c_cleanup_msg(I2C_SLAVE_TRANSMIT_MSG);
+			i2c_cleanup_msg(fdopen(fd), I2C_SLAVE_TRANSMIT_MSG);
 			adapter->busy = false;
+			
+#ifdef __THREADS__
+			BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);
+#else
+			BermudaIoSignal(&(bus->slave_queue));
+#endif
 			
 			/* check for pending master operations */
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
 					adapter->flags = 0;
 					dev->ctrl(dev, I2C_START, NULL);
+					break;
 				}
-			} else if(msgs[I2C_MASTER_RECEIVE_MSG]) {
+			}
+			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
 					adapter->flags = 0;
 					dev->ctrl(dev, I2C_START, NULL);
+					break;
 				}
-			} else {
-				dev->ctrl(dev, I2C_IDLE, NULL);
-			}
-#ifdef __THREADS__
-			BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);
-#else
-			BermudaIoSignal(&(bus->slave_queue));
-#endif
+			} 
+			dev->ctrl(dev, I2C_IDLE, NULL);
 			break;
 			
 		case I2C_BUS_ERROR:
@@ -671,7 +671,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			for(i = 0; i < I2C_MSG_NUM; i++) {
 				msgs[i]->buff = NULL;
 				msgs[i]->length = 0;
-				i2c_cleanup_msg(i);
+				i2c_cleanup_msg(fdopen(fd), i);
 			}
 			
 			atmega_i2c_reset_index(fd);

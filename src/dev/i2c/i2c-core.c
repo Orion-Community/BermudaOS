@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include <dev/i2c/i2c.h>
+#include <dev/i2c/reg.h>
 
 /**
  * \brief Prepare the driver for an I2C transfer.
@@ -42,4 +43,17 @@ PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg,
 	msgs[flags].addr = msg->addr;
 	
 	return 0;
+}
+
+/**
+ * \brief Arrange the call back to the client.
+ * \param client Client to call.
+ * \param stream Bus I/O file.
+ */
+PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
+{
+	struct i2c_message *msgs = (struct i2c_message*)stream->buff;
+	
+	client->callback(&(msgs[I2C_SLAVE_TRANSMIT_MSG]));
+	return client->adapter->slave_respond(stream);
 }

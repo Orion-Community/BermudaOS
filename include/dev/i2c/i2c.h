@@ -25,40 +25,6 @@
 
 #include <dev/dev.h>
 
-/**
- * \brief Time-out for I2C transfers if threads are enabled.
- */
-#define I2C_TMO 500
-
-/**
- * \brief Number of I2C messages in one array.
- * \see I2C_MASTER_TRANSMIT_MSG
- * \see I2C_MASTER_RECEIVE_MSG
- * \see I2C_SLAVE_RECEIVE_MSG
- * \see I2C_SLAVE_TRANSMIT_MSG
- */
-#define I2C_MSG_NUM 4
-
-/**
- * \brief Master transmit message array index.
- */
-#define I2C_MASTER_TRANSMIT_MSG 0
-/**
- * \brief Master receive message array index.
- */
-#define I2C_MASTER_RECEIVE_MSG  1
-/**
- * \brief Slave receive message array index.
- */
-#define I2C_SLAVE_RECEIVE_MSG   2
-/**
- * \brief Slave transmit message array index.
- */
-#define I2C_SLAVE_TRANSMIT_MSG  3
-
-#define I2C_MASTER 0x100 //!< I2C master flag
-#define I2C_SLAVE  0x200 //!< I2C slave flag
-
 struct i2c_adapter; // forward declaration
 
 /**
@@ -98,9 +64,6 @@ struct i2c_adapter {
 	struct device *dev; //!< Adapter device.
 	
 	uint8_t flags; //!< Bus flags.
-#define I2C_MASTER_ENABLE 		BIT(0) //!< Master enable bit in the flags member of i2c_client.
-#define I2C_TRANSMITTER 		BIT(1)
-#define I2C_RECEIVER			BIT(2)
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */
@@ -109,6 +72,8 @@ struct i2c_adapter {
 #endif
 	
 	void *data; //!< Private data pointer.
+	int (*slave_listen)(FILE *stream);
+	int (*slave_respond)(FILE *stream);
 } __attribute__((packed));
 
 __DECL
@@ -118,12 +83,14 @@ extern int i2cdev_read(FILE *file, void *buff, size_t size);
 extern int i2cdev_flush(FILE *stream);
 extern int i2cdev_close(FILE *stream);
 extern int i2cdev_socket(struct i2c_client *client, uint16_t flags);
+extern int i2cdev_listen(int fd, void *buff, size_t size);
 
 extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
 extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adap);
 extern int i2c_free_client(struct i2c_client *client);
 
 extern int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg, uint8_t flags);
+extern int i2c_call_client(struct i2c_client *client, FILE *stream);
 __DECL_END
 
 

@@ -150,10 +150,10 @@ PUBLIC int i2cdev_flush(FILE *stream)
 
 PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 {
-	FILE *stream = __iob[fd];
+	FILE *stream = fdopen(fd);
 	struct i2c_message msg;
 	struct i2c_client *client;
-	int rc;
+	int rc, dev;
 	
 	if(stream == NULL) {
 		rc = -1;
@@ -161,12 +161,26 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 	}
 	
 	client = stream->data;
+	dev = client->adapter->dev->io->fd;
+
 	msg.buff = buff;
 	msg.length = size;
 	msg.addr = client->sla;
 	msg.freq = client->freq;
-	rc = i2c_setup_master_transfer(client->adapter->dev->io, &msg, 
-								   I2C_SLAVE_RECEIVE_MSG);
+	i2c_setup_master_transfer(fdopen(dev), &msg, 
+							  I2C_SLAVE_RECEIVE_MSG);
+	fdopen(dev)->data = client;
+	rc = client->adapter->slave_listen(fdopen(dev));
+	
+	if(!rc) {
+		if(client->callback) {
+			fdopen(dev)->data = client;
+			rc = i2c_call_client(client, fdopen(dev));
+		} else {
+//			_exit();
+			BermudaPrintf("ERROR!\n");
+		}
+	}
 	
 	out:
 	return rc;
@@ -187,7 +201,9 @@ PUBLIC int i2cdev_close(FILE *stream)
 	}
 	
 #ifdef __THREADS__
-	adap->dev->release(adap->dev);
+	if(stream->flags & I2C_MASTER) {
+		adap->dev->release(adap->dev);
+	}
 #endif
 	return rc;
 }

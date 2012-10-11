@@ -24,6 +24,7 @@
 
 __DECL
 extern int memcmp(const void *s1, const void *s2, size_t n);
+extern void _exit();
 __DECL_END
 
 #endif /* __STDLIB_HEADER_ */

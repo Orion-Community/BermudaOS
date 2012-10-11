@@ -31,6 +31,7 @@
 #include <dev/usartif.h>
 #include <dev/adc.h>
 #include <dev/i2c/i2c.h>
+#include <dev/i2c/reg.h>
 #include <dev/usart/usart.h>
 #include <dev/i2c/busses/atmega.h>
 #include <dev/usart/busses/atmega_usart.h>
@@ -43,52 +44,51 @@
 #include <arch/avr/328/dev/spibus.h>
 
 static VTIMER *timer;
-static struct i2c_client *slave_client;
+static struct i2c_client slave_client;
 static struct i2c_client master_client;
 
 struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
-// static unsigned char twi_slave_tx = 0x0;
-// 
-// 
-// TWI_HANDLE(SlaveResponder, msg)
-// {
-// 	msg->tx_buff = (const void*)&twi_slave_tx;
-// 	msg->tx_length = 1;
-// 	msg->tmo = 500;
-// 	twi_slave_tx++;
-// }
-// 
+static unsigned char i2c_slave_tx = 0x0;
+
+static void slave_responder(struct i2c_message *msg)
+{
+	msg->buff = &i2c_slave_tx;
+	msg->length = 1;
+	i2c_slave_tx++;
+	return;
+}
+
 THREAD(SramThread, arg)
 {
-	char *buff[4];
-	int usart;
-// 	unsigned char rx = 0;
-// 	int fd;
+// 	char *buff[4];
+// 	int usart;
+	unsigned char rx = 0;
+	int fd;
 	
-// 	client = BermudaHeapAlloc(sizeof(*client));
-// 	atmega_i2c_init_client(client, ATMEGA_I2C_C0);
-// 	client->sla = 0x54;
-// 	client->freq = 100000UL;
+	atmega_i2c_init_client(&slave_client, ATMEGA_I2C_C0);
+	slave_client.callback = &slave_responder;
 
 	while(1) {
-// // 		fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
-// // 		if(fd != -1) {
-// // 			write(fd, &rx, 1);
-// // 			read(fd, NULL, 0);
-// // 			flush(fd);
-// // 			close(fd);
-// // 		}
-
-		usart = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
-		read(usart, buff, 3);
-		usartdev_close(usart);
+		fd = i2cdev_socket(&slave_client, _FDEV_SETUP_RW | I2C_SLAVE);
+		if(fd < 0) {
+			goto _usart;
+		}
+		i2cdev_listen(fd, &rx, 1);
+		close(fd);
 		
-		buff[3] = '\0';
-		BermudaPrintf("%s\n", buff);
-		BermudaThreadSleep(500);
+		_usart:
+		BermudaPrintf("RX: %X :: fd: %i\n", rx, fd);
+// 		usart = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
+// 		read(usart, buff, 3);
+// 		usartdev_close(usart);
+// 		
+// 		buff[3] = '\0';
+// 		BermudaPrintf("tx: %X :: %s\n", i2c_slave_tx, buff);
+// 		BermudaThreadSleep(1000);
 	}
+
 }
 
 THREAD(TwiTest, arg)

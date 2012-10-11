@@ -11,7 +11,7 @@
 
 .macro	vector name
 	.weak \name
-	.set \name, __vectors
+	.set \name, __bad_interrupt
 	jmp \name
 .endm
 
@@ -51,6 +51,6 @@ __final_boot:
 	call BermudaInit ; call main program
 
 __bad_interrupt:
-	jmp __vectors
+	reti
 _exit:
 	jmp __vectors

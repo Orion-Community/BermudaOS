@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - USART interface
+ *  BermudaOS - USART device driver
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,37 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __USART_INTERFACE_H_
-#define __USART_INTERFACE_H_
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
+#include <dev/dev.h>
+#include <dev/usart/usart.h>
 
-#endif /* __USART_INTERFACE_H_ */
+#include <fs/vfile.h>
+#include <fs/vfs.h>
+
+#include <sys/thread.h>
+#include <sys/events/event.h>
+
+PUBLIC int usartdev_socket(struct usartbus *bus, char *name, uint16_t flags)
+{
+	return bus->usartif->open(name);
+}
+
+PUBLIC int usartdev_close(int fd)
+{
+	struct usartbus *bus;
+	FILE *stream = fdopen(fd);
+	
+	if(stream) {
+		bus = stream->data;
+		if(bus->usartif->close) {
+			return bus->usartif->close(fd);
+		} else {
+			return -1;
+		}
+	} else {
+		return -1;
+	}
+}

@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - USART
+ *  BermudaOS - ATmega USART bus controller
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,24 +16,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file src/arch/avr/328/dev/usart.c HW specific USART controller.
-
+#include <stdlib.h>
 #include <stdio.h>
-#include <bermuda.h>
+#include <string.h>
 
-#include <lib/binary.h>
-#include <dev/usartif.h>
+#include <dev/dev.h>
+#include <dev/usart.h>
+#include <dev/usart/busses/atmega_usart.h>
 
+#include <fs/vfile.h>
+#include <fs/vfs.h>
+
+#include <sys/thread.h>
 #include <sys/events/event.h>
 
-#include <arch/avr/io.h>
-#include <arch/avr/interrupts.h>
-#include <arch/avr/328/dev/usart.h>
-#include <arch/avr/328/dev/usartreg.h>
+#include "atmega_priv.h"
 
 //<< Private function declarations >>//
-PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
-PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg);
+static void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud);
+static void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg);
+static int BermudaUsartReadByte(FILE *stream);
+static int BermudaUsartWriteByte(int c, FILE *stream);
+static int usart_write(FILE *stream, const void *buff, size_t size);
+static int usart_read(FILE *stream, void *buff, size_t size);
+static void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 
 #ifdef __EVENTS__
 /**
@@ -59,6 +65,10 @@ static volatile void *usart_tx_queue = SIGNALED;
 static volatile void *usart_rx_queue = SIGNALED;
 #endif
 
+static FDEV_SETUP_STREAM(usart0_io, &usart_write, &usart_read, &BermudaUsartWriteByte,
+						 &BermudaUsartReadByte, NULL /* flush */, "USART0", _FDEV_SETUP_RW,
+						 USART0);
+
 /**
  * \var BermudaUART0
  * \brief Global USART 0 variable.
@@ -77,8 +87,9 @@ static HW_USART hw_usart0 = {
 };
 
 static USARTIF hw_usartif = {
-	.io = BermudaUsartIoCtl,
-	.isr = BermudaUsartISR,
+	.io = &BermudaUsartIoCtl,
+	.close = NULL,
+	.open = &usart_open,
 };
 
 /**
@@ -129,7 +140,7 @@ PUBLIC void BermudaUsart0Init()
  * \warning The argument <i>arg</i> won't be checked for errors.
  * \todo Implement Rx and Tx data.
  */
-PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg)
+static void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *arg)
 {
 	HW_USART *hw = BermudaUsartGetIO(bus);
 	
@@ -169,13 +180,107 @@ PRIVATE WEAK void BermudaUsartIoCtl(USARTBUS *bus, USART_IOCTL_MODE mode, void *
 }
 
 /**
+ * \brief Setup the USART file streams used by functions such as printf.
+ * \see BermudaUsartWriteByte
+ * \see BermudaUsartReadByte
+ * 
+ * Stdout will be redirected to BermudaUsartWriteByte. Stdin is redirected to
+ * the function BermudaUsartReadByte.
+ */
+PUBLIC void BermudaUsartSetupStreams()
+{
+	stdout = &usart0_io;
+	stdin  = &usart0_io;
+	iob_add(&usart0_io);
+}
+
+PUBLIC int usart_open(char *name)
+{
+	int i = 3;
+	for(; i < MAX_OPEN; i++) {
+		if(!strcmp(__iob[i]->name, name)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static int usart_write(FILE *stream, const void *buff, size_t size)
+{
+	size_t x = 0;
+	for(; x < size; x++) {
+		fputc(((uint8_t*)buff)[x], stream);
+	}
+	return 0;
+}
+
+static int usart_read(FILE *stream, void *buff, size_t size)
+{
+	size_t x = 0;
+	
+	for(; x < size; x++) {
+		((uint8_t*)buff)[x] = stream->get(stream);
+	}
+	
+	return 0;
+}
+
+/**
+ * \brief Writes a byte the serial bus.
+ * \note This function is used by <b>stdout</b>
+ * 
+ * Writes a single character (<i>c</i>) to the USART0 (hardware usart).
+ */
+static int BermudaUsartWriteByte(int c, FILE *stream)
+{
+	HW_USART *hw = BermudaUsartGetIO((USARTBUS*)stream->data);
+	
+	if(c == '\n') {
+		BermudaUsartWriteByte('\r', stream);
+	}
+
+	(*(hw->udr)) = c;
+	while(( (*(hw->ucsra)) & BIT(TXCn) ) == 0);
+	(*(hw->ucsra)) |= BIT(TXCn);
+
+	return c;
+}
+
+/**
+ * \brief Tries to read a byte from the serial bus.
+ * \note This function is used by stdin.
+ * 
+ * Waits for one character on USART0 (hardware usart) for 500 miliseconds.
+ */
+static int BermudaUsartReadByte(FILE *stream)
+{
+	unsigned char c = 0;
+	USARTBUS *bus = stream->data;
+	
+	bus->rx_len = 1;
+	bus->rx = &c;
+	bus->rx_index = 0;
+	
+	bus->usartif->io(bus, USART_RX_ENABLE, NULL);
+#ifdef __EVENTS__
+	BermudaEventWaitNext((volatile THREAD**)bus->rx_queue, EVENT_WAIT_INFINITE);
+#else
+	bus->rx_queue = 1;
+	BermudaMutexEnter(&(bus->rx_queue));
+#endif
+	
+	bus->usartif->io(bus, USART_RX_STOP, NULL);
+	return c;
+}
+
+/**
  * \brief Configures the baudrate for the given USART bus.
  * \param bus Bus to configure.
  * \param baud Desired baudrate.
  * 
  * The function will determine if the bus should operate in USART 2x mode.
  */
-PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
+static void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 {
 	unsigned short ubrr = (F_CPU + 8 * baud) / (16 * baud) - 1;
 	HW_USART *hw = (HW_USART*)(bus->io.hwio);
@@ -191,9 +296,49 @@ PRIVATE WEAK void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 	(*(hw->ubrrh)) = (baud >> 8) & 0xF;
 }
 
-SIGNAL(USART_RX_STC_vect)
+/**
+ * \brief After care of the USART transfers.
+ * \param bus The bus which has done a transfer.
+ * \param transtype The type of transfer which has been done.
+ * \warning Should never be called by user applications!
+ * 
+ * This interrupt handler is called by hardware when there is a transfer done.
+ */
+static __link void BermudaUsartISR(USARTBUS *bus, unsigned char transtype)
 {
-	USART0->usartif->isr(USART0, USART_RX);
-	return;
+	switch(transtype) {
+		case USART_TX:
+			break;
+		
+		case USART_RX:
+			if(bus->rx_len == 0) {
+				return;
+			}
+			
+			if(bus->rx_index + 1 < bus->rx_len) {
+				bus->usartif->io(bus, USART_RX_DATA, (void*)&(bus->rx[bus->rx_index]));
+				bus->rx_index++;
+			}
+			else {
+				if(bus->rx_index < bus->rx_len) {
+					bus->usartif->io(bus, USART_RX_DATA, (void*)&(bus->rx[bus->rx_index]));
+				}
+				bus->rx_len = 0;
+#ifdef __EVENTS__
+				BermudaEventSignalFromISR((volatile THREAD**)bus->rx_queue);
+#else
+				BermudaMutexRelease(&(bus->rx_queue));
+#endif
+			}
+			break;
+		
+		default:
+			break;
+	}
 }
 
+SIGNAL(USART_RX_STC_vect)
+{
+	BermudaUsartISR(USART0, USART_RX);
+	return;
+}

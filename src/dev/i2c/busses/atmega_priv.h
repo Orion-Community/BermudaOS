@@ -422,19 +422,19 @@ static inline uint8_t atmega_i2c_get_status(struct atmega_i2c_priv *priv)
 	return (status & B11111000);
 }
 
-static inline size_t atmega_i2c_get_index(int fd)
+static inline size_t atmega_i2c_get_index(FILE *stream)
 {
-	return fdopen(fd)->index;
+	return stream->index;
 }
 
-static inline void atmega_i2c_inc_index(int fd)
+static inline void atmega_i2c_inc_index(FILE *stream)
 {
-	fdopen(fd)->index++;
+	stream->index++;
 }
 
-static inline void atmega_i2c_reset_index(int fd)
+static inline void atmega_i2c_reset_index(FILE *stream)
 {
-	fdopen(fd)->index = 0;
+	stream->index = 0;
 }
 
 static inline void atmega_i2c_set_bitrate(struct atmega_i2c_priv *priv,

@@ -1,10 +1,6 @@
 include ../../../../Makefile.flags
 OPT_SCRS=
 
-if USART
-OPT_SCRS+= serialio.c
-endif
-
 SUBDIRS=dev
 libexec_PROGRAMS=boot.o
 noinst_LTLIBRARIES = lib328.la

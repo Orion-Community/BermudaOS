@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file src/arch/avr/328/serialio.c Stdio backend functions.
+//! \file src/arch/avr/usart-dev.c Stdio backend functions.
 
 #include <stdlib.h>
 #include <stdio.h>

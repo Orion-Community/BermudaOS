@@ -14,15 +14,11 @@ MAYBE_ARD=arduino
 endif
 
 if USART
-OPT_SCRS+= usartif.c
+OPT_SCRS+= usart-dev.c usartif.c
 endif
 
 if SPI
 OPT_SCRS+= spif.c
-endif
-
-if IIC
-# OPT_SCRS+= twif.c
 endif
 
 if ADC

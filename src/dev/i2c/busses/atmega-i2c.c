@@ -391,6 +391,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 	}
 	
 	switch(status) {
+		/*
+		 * I2C_MASTER_START: Start sent with success.
+		 * I2C_MASTER_REP_START Repeated start has been sent with success.
+		 */
 		case I2C_MASTER_START:
 		case I2C_MASTER_REP_START:
 			atmega_i2c_reset_index(stream);
@@ -404,25 +408,33 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 					adapter->flags &= ~I2C_TRANSMITTER;
 					adapter->flags |= I2C_RECEIVER;
 					msgs[I2C_MASTER_RECEIVE_MSG]->addr |= I2C_SLA_READ_BIT;
-					status = msgs[I2C_MASTER_RECEIVE_MSG]->addr;
+					status = msgs[I2C_MASTER_RECEIVE_MSG]->addr; /* use status as a temp variable */
 				}
 			}
+			/* 
+			 * master transmitter has a higher priority than master receiver, 
+			 * therefore this if must be last 
+			 */
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
 					adapter->flags &= ~I2C_RECEIVER;
 					adapter->flags |= I2C_TRANSMITTER;
 					msgs[I2C_MASTER_TRANSMIT_MSG]->addr &= I2C_SLA_WRITE_MASK;
-					status = msgs[I2C_MASTER_TRANSMIT_MSG]->addr;
+					status = msgs[I2C_MASTER_TRANSMIT_MSG]->addr; /* use status as  temp variable */
 					
 				}
 			}
 
-			fputc((int)status, stream);
+			fputc((int)status, stream); /* sent the slave address */
 			atmega_i2c_reg_read(priv->twcr, &status);
+			/* disable the start bit */
 			status = (status & ~BIT(TWSTA)) | BIT(TWEN) | BIT(TWIE) | BIT(TWINT) | BIT(TWEA);
 			atmega_i2c_reg_write(priv->twcr, &status);
 			break;
-			
+		/*
+		 * I2C_MT_SLA_ACK: Slave address has been transmitted and ACK is returned.
+		 * I2C_MT_DATA_ACK: Data byte has been transmitted and ACK is returned.
+		 */
 		case I2C_MT_SLA_ACK:
 		case I2C_MT_DATA_ACK:
 			if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
@@ -462,20 +474,30 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			} 
 			/* no slave operation pending */
 			adapter->flags = 0;
-			dev->ctrl(dev, I2C_STOP | I2C_NACK, NULL);
+			dev->ctrl(dev, I2C_STOP | I2C_IDLE, NULL);
 			break;
 			
-			
+		/*
+		 * I2C_MASTER_ARB_LOST: Lost arbitration as master. Sent another start when the interface
+		 *                      is available again.
+		 */
 		case I2C_MASTER_ARB_LOST:
 			dev->ctrl(dev, I2C_START, NULL);
 			adapter->busy = 0;
 			break;
-			
+		
+		/*
+		 * I2C_MT_SLA_NACK: Slave address has been transmitted, NACK is returned by the slave.
+		 * I2C_MT_DATA_NACK: Data byte has been transmitted as master, NACK is returned.
+		 */
 		case I2C_MT_SLA_NACK:
 		case I2C_MT_DATA_NACK:
 			msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
 			i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
 			/* roll through */
+		/*
+		 * I2C_MR_SLA_NACK: Slave address has been transmitted, NACK is returned by the slave.
+		 */
 		case I2C_MR_SLA_NACK:
 			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
@@ -492,20 +514,28 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 					adapter->flags = I2C_SLAVE_ENABLE;
 					adapter->flags |= I2C_RECEIVER;
 					dev->ctrl(dev, I2C_STOP | I2C_LISTEN, NULL);
+					break;
 				} 
-			} else {
-				adapter->flags = 0;
-				dev->ctrl(dev, I2C_STOP | I2C_IDLE, NULL);
 			}
+			
+			adapter->flags = 0;
+			dev->ctrl(dev, I2C_STOP | I2C_IDLE, NULL);
+
 			adapter->flags |= I2C_ERROR;
 			break;
 			
+		/*
+		 * I2C_MR_DATA_ACK: Data received as master, ACK returned.
+		 */
 		case I2C_MR_DATA_ACK:
 			if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
 				msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
 				atmega_i2c_inc_index(stream);
 			}
 			/* fall through to sla ack */
+		/* 
+		 * I2C_MR_SLA_ACK: Slave address has been ACKed by the slave.
+		 */
 		case I2C_MR_SLA_ACK:
 			if((atmega_i2c_get_index(stream) + 1) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
 				/*
@@ -517,6 +547,9 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			}
 			break;
 			
+		/*
+		 * I2C_MR_DATA_NACK: Data received as a master, NACK returned.
+		 */
 		case I2C_MR_DATA_NACK:
 			if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
 				msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
@@ -525,6 +558,12 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
 			i2c_cleanup_msg(stream, I2C_MASTER_RECEIVE_MSG);
 			adapter->busy = false;
+			
+#ifdef __THREADS__
+			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
+#else
+			BermudaIoSignal(&(adapter->master_queue));
+#endif
 			
 			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
 				if(msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
@@ -538,13 +577,14 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			/* no slave operation pending, enter sent stop and enter idle mode */
 			dev->ctrl(dev, I2C_IDLE | I2C_STOP, NULL);
 			adapter->flags = 0;
-#ifdef __THREADS__
-			BermudaEventSignalFromISR( (volatile THREAD**)adapter->master_queue);
-#else
-			BermudaIoSignal(&(adapter->master_queue));
-#endif	
 			break;
 			
+		/*
+		 * I2C_SR_SLAW_ACK: Device slave address received, ACK returned.
+		 * I2C_SR_GC_ACK: General call address received.
+		 * I2C_SR_GC_ARB_LOST: Arbitration lost as a master, received general call address.
+		 * I2C_SR_SLAW_ARB_LOST: Arbitration lost as a master, received own slave address.
+		 */
 		case I2C_SR_SLAW_ACK:
 		case I2C_SR_GC_ACK:
 		case I2C_SR_GC_ARB_LOST:
@@ -566,6 +606,12 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			}
 			break;
 			
+		/*
+		 * I2C_SR_SLAW_DATA_ACK: Received a data byte while being addressed with its own 
+		 *                       slave address.
+		 * I2C_SR_GC_DATA_ACK: Received a data byte while being addressed with the general
+		 *                     call address.
+		 */
 		case I2C_SR_SLAW_DATA_ACK:
 		case I2C_SR_GC_DATA_ACK:
 			if(atmega_i2c_get_index(stream) < msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
@@ -581,6 +627,12 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			}
 			
 			/* if end of transfer, roll through for possible master transfer */
+		/*
+		 * I2C_SR_SLAW_DATA_NACK: Received a data byte, NACK is returned. The device is being
+		 *                        addressed with its own slave address.
+		 * I2C_SR_GC_DATA_NACK: Received a data byte, NACK is returned. The device is being
+		 *                      addressed with is own slave address.
+		 */
 		case I2C_SR_SLAW_DATA_NACK:
 		case I2C_SR_GC_DATA_NACK:
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
@@ -605,6 +657,9 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			dev->ctrl(dev, I2C_NACK, NULL);
 			break;
 			
+		/*
+		 * I2C_SR_STOP: Received STOP bit from the master. End of transfer.
+		 */
 		case I2C_SR_STOP:
 			adapter->flags &= ~I2C_ERROR;
 			adapter->flags |= I2C_CALL_BACK;
@@ -619,6 +674,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #endif
 			break;
 			
+		/* 
+		 * I2C_ST_ARB_LOST: Lost abitration as a master, received SLA+R.
+		 * I2C_ST_SLAR_ACK: Received SLA+R from master and returned ACK.
+		 */
 		case I2C_ST_ARB_LOST:
 		case I2C_ST_SLAR_ACK:
 			atmega_i2c_reset_index(stream);
@@ -626,6 +685,9 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			adapter->flags = I2C_SLAVE_ENABLE | I2C_TRANSMITTER;
 			
 			/* roll through for first byte */
+		/*
+		 * I2C_ST_DATA_ACK: Transmitted a data byte and ACK has been returned by the master.
+		 */
 		case I2C_ST_DATA_ACK:
 			if(msgs[I2C_SLAVE_TRANSMIT_MSG]) {
 				if(atmega_i2c_get_index(stream) < msgs[I2C_SLAVE_TRANSMIT_MSG]->length) {
@@ -637,7 +699,9 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 						dev->ctrl(dev, I2C_NACK, NULL);
 					}
 					atmega_i2c_inc_index(stream);
-					break;
+				} else {
+					fputc(dummy, stream);
+					dev->ctrl(dev, I2C_NACK, NULL);
 				}
 			} else {
 				fputc(dummy, stream);
@@ -645,7 +709,12 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				break;
 			}
 			break;
-			
+		
+		/*
+		 * I2C_ST_DATA_NACK: Transmitted data byte, NACK is returned.
+		 * I2C_ST_LAST_DATA_ACK: Received an ACK after transmitting the last data byte. After this
+		 *                       byte a STOP is issued by the master.
+		 */
 		case I2C_ST_DATA_NACK:
 		case I2C_ST_LAST_DATA_ACK:
 			adapter->flags &= ~I2C_ERROR;
@@ -676,7 +745,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			} 
 			dev->ctrl(dev, I2C_IDLE, NULL);
 			break;
-			
+		
+		/*
+		 * I2C_BUS_ERROR: A fatal error has occured.
+		 */
 		case I2C_BUS_ERROR:
 		default:
 			for(i = 0; i < I2C_MSG_NUM; i++) {

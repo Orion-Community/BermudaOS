@@ -115,6 +115,10 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 			goto out;
 		}
 	}
+#else
+	if((flags & I2C_MASTER) != 0) {
+		BermudaMutexEnter(&(adap->mutex));
+	}
 #endif
 	
 	socket = BermudaHeapAlloc(sizeof(*socket));
@@ -211,6 +215,10 @@ PUBLIC int i2cdev_close(FILE *stream)
 #ifdef __THREADS__
 	if(stream->flags & I2C_MASTER) {
 		adap->dev->release(adap->dev);
+	}
+#else
+	if(stream->flags & I2C_MASTER) {
+		BermudaMutexRelease(&(adap->mutex));
 	}
 #endif
 	return rc;

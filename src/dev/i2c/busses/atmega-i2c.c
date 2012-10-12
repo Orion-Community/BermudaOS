@@ -86,14 +86,21 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 	}
 
 	atmega_i2c_busses[0] = adapter;
+#ifdef __THREADS__
 	adapter->dev->mutex = &bus_c0_mutex;
+#endif
 	adapter->dev->ctrl = &atmega_i2c_ioctl;
 	adapter->dev->io = &i2c_c0_io;
 	
 	adapter->dev->io->buff = (void*)i2c_c0_msgs;
-	
+#ifdef __THREADS__
 	adapter->master_queue = &bus_c0_master_queue;
 	adapter->slave_queue = &bus_c0_slave_queue;
+#else
+	adapter->mutex = 0;
+	adapter->master_queue = 1;
+	adapter->slave_queue = 1;
+#endif
 	adapter->data = (void*)&i2c_c0;
 	adapter->slave_respond = &atmega_i2c_slave_respond;
 
@@ -149,7 +156,7 @@ static int atmega_i2c_init_transfer(FILE *stream)
 		}
 		
 #ifdef __THREADS__
-	rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, 1000);
+	rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, 500);
 #else
 	adap->slave_queue = 1;
 	BermudaIoWait(&(adap->slave_queue));
@@ -184,7 +191,7 @@ static int atmega_i2c_slave_respond(FILE *stream)
 			}
 #else
 			adapter->slave_queue = 1;
-			BermudaIoWait(&(bus->slave_queue));
+			BermudaIoWait(&(adapter->slave_queue));
 			rc = 0;
 #endif
 		} else {
@@ -389,22 +396,28 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			atmega_i2c_reset_index(stream);
 			adapter->flags = I2C_MASTER_ENABLE;
 			adapter->busy = true;
+			stream->flags &= ~I2C_SLAVE;
+			stream->flags |= I2C_MASTER;
 			
 			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+					adapter->flags &= ~I2C_TRANSMITTER;
 					adapter->flags |= I2C_RECEIVER;
 					msgs[I2C_MASTER_RECEIVE_MSG]->addr |= I2C_SLA_READ_BIT;
-					fputc(msgs[I2C_MASTER_RECEIVE_MSG]->addr, stream);
+					status = msgs[I2C_MASTER_RECEIVE_MSG]->addr;
 				}
 			}
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
+					adapter->flags &= ~I2C_RECEIVER;
 					adapter->flags |= I2C_TRANSMITTER;
 					msgs[I2C_MASTER_TRANSMIT_MSG]->addr &= I2C_SLA_WRITE_MASK;
-					fputc(msgs[I2C_MASTER_TRANSMIT_MSG]->addr, stream);
+					status = msgs[I2C_MASTER_TRANSMIT_MSG]->addr;
+					
 				}
 			}
 
+			fputc((int)status, stream);
 			atmega_i2c_reg_read(priv->twcr, &status);
 			status = (status & ~BIT(TWSTA)) | BIT(TWEN) | BIT(TWIE) | BIT(TWINT) | BIT(TWEA);
 			atmega_i2c_reg_write(priv->twcr, &status);
@@ -602,7 +615,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #ifdef __THREADS__
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);
 #else
-			BermudaIoSignal(&(bus->slave_queue));
+			BermudaIoSignal(&(adapter->slave_queue));
 #endif
 			break;
 			
@@ -643,7 +656,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #ifdef __THREADS__
 			BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);
 #else
-			BermudaIoSignal(&(bus->slave_queue));
+			BermudaIoSignal(&(adapter->slave_queue));
 #endif
 			
 			/* check for pending master operations */

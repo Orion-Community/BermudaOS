@@ -71,6 +71,7 @@ struct i2c_adapter {
 	volatile void *master_queue; //!< Master waiting queue.
 	volatile void *slave_queue; //!< Slave waiting queue.
 #else
+	mutex_t mutex;
 	mutex_t master_queue;
 	mutex_t slave_queue;
 #endif

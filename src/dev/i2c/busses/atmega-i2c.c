@@ -36,7 +36,6 @@
 
 /* static functions */
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
-static int atmega_i2c_slave_listen(FILE *stream);
 static int atmega_i2c_slave_respond(FILE *stream);
 
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
@@ -97,7 +96,6 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 	adapter->slave_queue = &bus_c0_slave_queue;
 	adapter->data = (void*)&i2c_c0;
 	adapter->slave_respond = &atmega_i2c_slave_respond;
-	adapter->slave_listen = &atmega_i2c_slave_listen;
 
 	vfs_add(&i2c_c0_io);
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);
@@ -123,6 +121,7 @@ static int atmega_i2c_init_transfer(FILE *stream)
 	struct i2c_client *client = stream->data;
 	struct i2c_adapter *adap = client->adapter;
 	struct atmega_i2c_priv *priv = adap->data;
+	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->data;
 	uint8_t pres, twbr;
 	int rc = -1;
 	
@@ -134,9 +133,29 @@ static int atmega_i2c_init_transfer(FILE *stream)
 #else
 		adap->master_queue = 1;
 		BermudaIoWait(&(adap->master_queue));
-		rc =s 0;
+		rc = 0;
 #endif
-	} 
+	} else if((stream->flags & I2C_SLAVE) != 0) {
+		if(!msgs[I2C_MASTER_TRANSMIT_MSG] && !msgs[I2C_MASTER_RECEIVE_MSG]) {
+			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
+		} else if((msgs[I2C_MASTER_TRANSMIT_MSG]->length && msgs[I2C_MASTER_RECEIVE_MSG]->length) &&
+			!adap->busy
+		) {
+			stream->flags &= I2C_SLAVE;
+			stream->flags |= I2C_MASTER;
+			adap->dev->ctrl(adap->dev, I2C_START, NULL);
+		} else {
+			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
+		}
+		
+#ifdef __THREADS__
+	rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, 1000);
+#else
+	adap->slave_queue = 1;
+	BermudaIoWait(&(adap->slave_queue));
+	rc = 0;
+#endif
+	}
 	
 	return rc;
 	
@@ -148,76 +167,48 @@ static int atmega_i2c_init_transfer(FILE *stream)
 	}
 }
 
-static int atmega_i2c_slave_listen(FILE *stream)
-{
-	struct i2c_client *client = stream->data;
-	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
-	struct i2c_adapter *adap = client->adapter;
-	int rc = 0;
-
-	if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
-		if(msgs[I2C_MASTER_TRANSMIT_MSG]->length && !adap->busy) {
-			rc = I2C_START;
-				stream->flags &= ~I2C_SLAVE;
-				stream->flags |= I2C_MASTER;
-		}
-	} else if(msgs[I2C_MASTER_RECEIVE_MSG]) {
-		if(msgs[I2C_MASTER_RECEIVE_MSG]->length && !adap->busy) {
-			rc = I2C_START;
-			stream->flags &= ~I2C_SLAVE;
-			stream->flags |= I2C_MASTER;
-		}
-	} else {
-		rc = I2C_LISTEN;
-	}
-	adap->dev->ctrl(adap->dev, rc, NULL);
-	
-#ifdef __THREADS__
-	rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, 1000);
-#else
-	adap->slave_queue = 1;
-	BermudaIoWait(&(adap->slave_queue));
-	rc = 0;
-#endif
-	
-	return rc;
-}
-
 static int atmega_i2c_slave_respond(FILE *stream)
 {
-	int rc = -1;
+	int rc;
+	auto void no_tx();
 	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
 	struct i2c_client *client = stream->data;
 	struct i2c_adapter *adapter = client->adapter;
 	
-	if(msgs[I2C_SLAVE_TRANSMIT_MSG]->length && msgs[I2C_SLAVE_TRANSMIT_MSG]->buff) {
-		adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
+	if(msgs[I2C_SLAVE_TRANSMIT_MSG]) {
+		if(msgs[I2C_SLAVE_TRANSMIT_MSG]->length && msgs[I2C_SLAVE_TRANSMIT_MSG]->buff) {
+			adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
 #ifdef __THREADS__
-		if((rc = BermudaEventWaitNext( (volatile THREAD**)adapter->slave_queue, I2C_TMO)) == -1) {
-			adapter->flags |= I2C_ERROR;
-		}
+			if((rc = BermudaEventWaitNext( (volatile THREAD**)adapter->slave_queue, I2C_TMO)) == -1) {
+				return rc;
+			}
 #else
-		adapter->slave_queue = 1;
-		BermudaIoWait(&(bus->slave_queue));
-		rc = 0;
+			adapter->slave_queue = 1;
+			BermudaIoWait(&(bus->slave_queue));
+			rc = 0;
 #endif
-	} else {
-		if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
-			if(msgs[I2C_MASTER_TRANSMIT_MSG]->length && !adapter->busy) {
-					adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
-					stream->flags &= ~I2C_SLAVE;
-					stream->flags |= I2C_MASTER;
-			}
-		} else if(msgs[I2C_MASTER_RECEIVE_MSG]) {
-			if(msgs[I2C_MASTER_RECEIVE_MSG]->length && !adapter->busy) {
-				adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
-				stream->flags &= ~I2C_SLAVE;
-				stream->flags |= I2C_MASTER;
-			}
+		} else {
+			no_tx();
+			i2c_cleanup_msg(stream, I2C_SLAVE_TRANSMIT_MSG);
 		}
+	} else {
+		no_tx();
 	}
 	
 	return rc;
+	
+	auto void no_tx()
+	{
+		if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
+			stream->flags &= ~I2C_SLAVE;
+			stream->flags |= I2C_MASTER;
+			adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
+			rc = 0;
+		} else {
+			adapter->dev->ctrl(adapter->dev, I2C_NACK, NULL);
+			rc = 0;
+		}
+	}
 }
 
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
@@ -246,6 +237,11 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 			break;
 		
 		/* bus control */
+		case I2C_RELEASE:
+			reg |= BIT(TWEN) | BIT(TWIE) | BIT(TWINT);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
 		case I2C_ACK:
 			reg |= BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
 			atmega_i2c_reg_write(priv->twcr, &reg);
@@ -316,7 +312,7 @@ static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres)
 		return 0xFF;
 	}
 	
-	twbr = (F_CPU - (16*freq)) / (2*prescaler*freq);
+	twbr = I2C_CALC_TWBR(freq, prescaler);
 	
 	return twbr & 0xFF;
 }
@@ -394,17 +390,18 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			adapter->flags = I2C_MASTER_ENABLE;
 			adapter->busy = true;
 			
+			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
+				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+					adapter->flags |= I2C_RECEIVER;
+					msgs[I2C_MASTER_RECEIVE_MSG]->addr |= I2C_SLA_READ_BIT;
+					fputc(msgs[I2C_MASTER_RECEIVE_MSG]->addr, stream);
+				}
+			}
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
 					adapter->flags |= I2C_TRANSMITTER;
 					msgs[I2C_MASTER_TRANSMIT_MSG]->addr &= I2C_SLA_WRITE_MASK;
 					fputc(msgs[I2C_MASTER_TRANSMIT_MSG]->addr, stream);
-				}
-			} else if(msgs[I2C_MASTER_RECEIVE_MSG]) {
-				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-					adapter->flags |= I2C_RECEIVER;
-					msgs[I2C_MASTER_RECEIVE_MSG]->addr |= I2C_SLA_READ_BIT;
-					fputc(msgs[I2C_MASTER_RECEIVE_MSG]->addr, stream);
 				}
 			}
 

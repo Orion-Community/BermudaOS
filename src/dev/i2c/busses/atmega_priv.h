@@ -41,12 +41,13 @@
 #define I2C_STOP		BIT(1)
 
 #define I2C_ACK			BIT(2)
+#define I2C_LISTEN		I2C_ACK
 #define I2C_NACK		BIT(3)
 #define I2C_IDLE		I2C_NACK
-#define I2C_RELEASE		I2C_ACK
-#define I2C_LISTEN		I2C_ACK
-#define I2C_BLOCK		BIT(4)
-#define I2C_RESET		BIT(5)
+#define I2C_RELEASE		BIT(4)
+
+#define I2C_BLOCK		BIT(5)
+#define I2C_RESET		BIT(6)
 
 
 /* End of I/O control features */
@@ -279,8 +280,13 @@
  */
 #define I2C_PRES_64 B11
 
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 #define I2C_FRQ(x, n) \
 	(F_CPU/(16+(2*x*n)))
+	
+#define I2C_CALC_TWBR(__freq, __pres) \
+(F_CPU - (16*__freq)) / (2*__pres*__freq)
+#endif
 
 /* control reg */
 #define TWINT	7

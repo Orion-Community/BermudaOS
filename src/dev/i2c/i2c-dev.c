@@ -64,7 +64,7 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_master_transfer(client->adapter->dev->io, &msg, 
+		rc = i2c_setup_msg(client->adapter->dev->io, &msg, 
 									   I2C_MASTER_TRANSMIT_MSG);
 	}
 
@@ -80,13 +80,13 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 	
 	if(client != NULL) {
 		if(!buff) {
-			return i2c_setup_master_transfer(client->adapter->dev->io, NULL, I2C_MASTER_RECEIVE_MSG);
+			return i2c_setup_msg(client->adapter->dev->io, NULL, I2C_MASTER_RECEIVE_MSG);
 		}
 		msg.buff = (void*)buff;
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_master_transfer(client->adapter->dev->io, 
+		rc = i2c_setup_msg(client->adapter->dev->io, 
 									   &msg, I2C_MASTER_RECEIVE_MSG);
 	}
 
@@ -171,17 +171,21 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 	msg.length = size;
 	msg.addr = client->sla;
 	msg.freq = client->freq;
-	i2c_setup_master_transfer(fdopen(dev), &msg, 
+	i2c_setup_msg(fdopen(dev), &msg, 
 							  I2C_SLAVE_RECEIVE_MSG);
-	fdopen(dev)->data = client;
-	rc = client->adapter->slave_listen(fdopen(dev));
+	
+	fdopen(dev)->data = stream->data;
+	fdopen(dev)->flags &= 0xFF;
+	fdopen(dev)->flags |= stream->flags & 0xFF00;
+	rc = flush(dev);
 	
 	if(!rc) {
 		if(client->callback) {
 			fdopen(dev)->data = client;
 			rc = i2c_call_client(client, fdopen(dev));
 		} else {
-			_exit(); /* fatal error, restart */
+			i2c_setup_msg(fdopen(dev), NULL, I2C_SLAVE_TRANSMIT_MSG);
+			rc = client->adapter->slave_respond(fdopen(dev));
 		}
 	}
 	

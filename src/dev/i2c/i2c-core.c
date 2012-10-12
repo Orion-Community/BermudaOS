@@ -28,13 +28,12 @@ static void *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
  * \brief Prepare the driver for an I2C transfer.
  * \param stream Device file.
  * \param msg Message to add to the buffer.
- * \return -1 if a fatal error has occurred. The user application should allways
- *         respond with <b>i2cdev_reset</b> in this case. If no problems have occurred
+ * \return -1 if a fatal error has occurred. If no problems have occurred
  *         0 will be returned. When there is data overwritten in the stream buffer
  *         1 will be returned. It is up to the caller to react solve (continue or
  *         reset).
  */
-PUBLIC int i2c_setup_master_transfer(FILE *stream, struct i2c_message *msg,
+PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 									 uint8_t flags)
 {	
 	struct i2c_message *msg2;

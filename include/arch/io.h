@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/arch/io.h Arch independent I/O file.
+
 #ifndef __ARCH_IO_H
 #define __ARCH_IO_H
 

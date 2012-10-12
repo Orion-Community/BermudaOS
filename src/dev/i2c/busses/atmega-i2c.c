@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file src/dev/i2c/busses/atmega-i2c.c ATmega I2C bus driver.
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -45,10 +47,16 @@ static int atmega_i2c_put_char(int c, FILE *stream);
 static int atmega_i2c_get_char(FILE *stream);
 static int atmega_i2c_init_transfer(FILE *stream);
 
+/**
+ * \brief File I/O structure for bus 0 on port C.
+ */
 static FDEV_SETUP_STREAM(i2c_c0_io, NULL, NULL, &atmega_i2c_put_char, 
 						 &atmega_i2c_get_char, &atmega_i2c_init_transfer, 
 						 I2C_FNAME, 0 /* flags */, NULL /* data */);
 
+/**
+ * \brief I2C control structure for the bus 0 on port C.
+ */
 static struct atmega_i2c_priv i2c_c0 = {
 	.twcr = &TWCR,
 	.twdr = &TWDR,
@@ -56,12 +64,20 @@ static struct atmega_i2c_priv i2c_c0 = {
 	.twar = &TWAR,
 	.twbr = &TWBR,
 	.twamr = &TWAMR,
-	.isr = atmega_i2c_isr_handle,
 };
 
 #ifdef __THREADS__
+/**
+ * \brief I2C bus 0 mutex.
+ */
 static volatile void *bus_c0_mutex = SIGNALED;
+/**
+ * \brief I2C bus 0 master queue.
+ */
 static volatile void *bus_c0_master_queue = SIGNALED;
+/**
+ * \brief I2C bus 0 slave queue.
+ */
 static volatile void *bus_c0_slave_queue = SIGNALED;
 #endif
 
@@ -70,10 +86,14 @@ static volatile void *bus_c0_slave_queue = SIGNALED;
  */
 static struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
 
+/**
+ * \brief I2C bus 0 message array.
+ */
 static struct i2c_message *i2c_c0_msgs[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
 
 /**
  * \brief Intialize an I2C bus.
+ * \param sla Slave address of this bus.
  * \param adapter Bus adapter.
  * 
  * This function will initialize bus 0 on port c.
@@ -111,168 +131,14 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 	atmega_i2c_reg_write(i2c_c0.twar, &sla);
 }
 
+/**
+ * \brief Initialise a I2C client structure.
+ * \param client Client to initialize.
+ * \param ifac BUs to initialize the client for.
+ */
 PUBLIC void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac)
 {
 	client->adapter = atmega_i2c_busses[ifac];
-}
-
-/**
- * \brief Start a master transfer.
- * \param stream The device I/O file.
- * 
- * This function is called by the user using the <b>flush(fd : int)</b> funtion.
- */
-static int atmega_i2c_init_transfer(FILE *stream)
-{
-	auto void config_bitrate();
-	struct i2c_client *client = stream->data;
-	struct i2c_adapter *adap = client->adapter;
-	struct atmega_i2c_priv *priv = adap->data;
-	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->data;
-	uint8_t pres, twbr;
-	int rc = -1;
-	
-	if(((stream->flags & I2C_MASTER) != 0) && !adap->busy) {
-		config_bitrate();
-		adap->dev->ctrl(adap->dev, I2C_START, NULL);
-#ifdef __THREADS__
-		rc = BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
-#else
-		adap->master_queue = 1;
-		BermudaIoWait(&(adap->master_queue));
-		rc = 0;
-#endif
-	} else if((stream->flags & I2C_SLAVE) != 0) {
-		if(!msgs[I2C_MASTER_TRANSMIT_MSG] && !msgs[I2C_MASTER_RECEIVE_MSG]) {
-			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
-		} else if((msgs[I2C_MASTER_TRANSMIT_MSG]->length && msgs[I2C_MASTER_RECEIVE_MSG]->length) &&
-			!adap->busy
-		) {
-			stream->flags &= I2C_SLAVE;
-			stream->flags |= I2C_MASTER;
-			adap->dev->ctrl(adap->dev, I2C_START, NULL);
-		} else {
-			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
-		}
-		
-#ifdef __THREADS__
-	rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, 500);
-#else
-	adap->slave_queue = 1;
-	BermudaIoWait(&(adap->slave_queue));
-	rc = 0;
-#endif
-	}
-	
-	return rc;
-	
-	auto void config_bitrate()
-	{
-		pres = atmega_i2c_calc_prescaler(client->freq);
-		twbr = atmega_i2c_calc_twbr(client->freq, pres);
-		atmega_i2c_set_bitrate(priv, twbr, pres);
-	}
-}
-
-static int atmega_i2c_slave_respond(FILE *stream)
-{
-	int rc;
-	auto void no_tx();
-	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
-	struct i2c_client *client = stream->data;
-	struct i2c_adapter *adapter = client->adapter;
-	
-	if(msgs[I2C_SLAVE_TRANSMIT_MSG]) {
-		if(msgs[I2C_SLAVE_TRANSMIT_MSG]->length && msgs[I2C_SLAVE_TRANSMIT_MSG]->buff) {
-			adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
-#ifdef __THREADS__
-			if((rc = BermudaEventWaitNext( (volatile THREAD**)adapter->slave_queue, I2C_TMO)) == -1) {
-				return rc;
-			}
-#else
-			adapter->slave_queue = 1;
-			BermudaIoWait(&(adapter->slave_queue));
-			rc = 0;
-#endif
-		} else {
-			no_tx();
-			i2c_cleanup_msg(stream, I2C_SLAVE_TRANSMIT_MSG);
-		}
-	} else {
-		no_tx();
-	}
-	
-	return rc;
-	
-	auto void no_tx()
-	{
-		if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
-			stream->flags &= ~I2C_SLAVE;
-			stream->flags |= I2C_MASTER;
-			adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
-			rc = 0;
-		} else {
-			adapter->dev->ctrl(adapter->dev, I2C_NACK, NULL);
-			rc = 0;
-		}
-	}
-}
-
-static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
-{
-	struct i2c_adapter *adap = dev->ioctl;
-	struct atmega_i2c_priv *priv = adap->data;
-	uint8_t reg = 0;
-	
-	atmega_i2c_reg_read(priv->twcr, &reg);
-	
-	switch((uint16_t)cfg) {
-		/* transaction control */
-		case I2C_START:
-			reg |= BIT(TWSTA) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-			
-		case I2C_STOP | I2C_ACK:
-			reg |= BIT(TWSTO) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-			
-		case I2C_STOP | I2C_NACK:
-			reg = (reg & ~BIT(TWEA)) | BIT(TWSTO) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-		
-		/* bus control */
-		case I2C_RELEASE:
-			reg |= BIT(TWEN) | BIT(TWIE) | BIT(TWINT);
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-			
-		case I2C_ACK:
-			reg |= BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-			
-		case I2C_NACK:
-			reg = (reg & ~BIT(TWEA)) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-
-		case I2C_BLOCK:
-			reg &= ~(BIT(TWINT) | BIT(TWIE));
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-			
-		case I2C_RESET:
-			reg |= BIT(TWSTO);
-			atmega_i2c_reg_write(priv->twcr, &reg);
-			break;
-			
-		default:
-			break;
-	}
-	return;
 }
 
 /**
@@ -355,6 +221,183 @@ static unsigned char atmega_i2c_calc_prescaler(uint32_t frq)
 	return ret;
 }
 
+/**
+ * \brief Start a master transfer.
+ * \param stream The device I/O file.
+ * 
+ * This function is called by the user using the <b>flush(fd : int)</b> funtion and will start the
+ * actial transfer.
+ */
+static int atmega_i2c_init_transfer(FILE *stream)
+{
+	auto void config_bitrate();
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adap = client->adapter;
+	struct atmega_i2c_priv *priv = adap->data;
+	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->data;
+	uint8_t pres, twbr;
+	int rc = -1;
+	
+	if(((stream->flags & I2C_MASTER) != 0) && !adap->busy) {
+		config_bitrate();
+		adap->dev->ctrl(adap->dev, I2C_START, NULL);
+#ifdef __THREADS__
+		rc = BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
+#else
+		adap->master_queue = 1;
+		BermudaIoWait(&(adap->master_queue));
+		rc = 0;
+#endif
+	} else if((stream->flags & I2C_SLAVE) != 0) {
+		if(!msgs[I2C_MASTER_TRANSMIT_MSG] && !msgs[I2C_MASTER_RECEIVE_MSG]) {
+			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
+		} else if((msgs[I2C_MASTER_TRANSMIT_MSG]->length && msgs[I2C_MASTER_RECEIVE_MSG]->length) &&
+			!adap->busy
+		) {
+			stream->flags &= I2C_SLAVE;
+			stream->flags |= I2C_MASTER;
+			adap->dev->ctrl(adap->dev, I2C_START, NULL);
+		} else {
+			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
+		}
+		
+#ifdef __THREADS__
+	rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, 500);
+#else
+	adap->slave_queue = 1;
+	BermudaIoWait(&(adap->slave_queue));
+	rc = 0;
+#endif
+	}
+	
+	return rc;
+	
+	auto void config_bitrate()
+	{
+		pres = atmega_i2c_calc_prescaler(client->freq);
+		twbr = atmega_i2c_calc_twbr(client->freq, pres);
+		atmega_i2c_set_bitrate(priv, twbr, pres);
+	}
+}
+
+/**
+ * \brief Respond to the master after a slave receive transfer.
+ * \param stream File stream.
+ */
+static int atmega_i2c_slave_respond(FILE *stream)
+{
+	int rc;
+	auto void no_tx();
+	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adapter = client->adapter;
+	
+	if(msgs[I2C_SLAVE_TRANSMIT_MSG]) {
+		if(msgs[I2C_SLAVE_TRANSMIT_MSG]->length && msgs[I2C_SLAVE_TRANSMIT_MSG]->buff) {
+			adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
+#ifdef __THREADS__
+			if((rc = BermudaEventWaitNext( (volatile THREAD**)adapter->slave_queue, I2C_TMO)) == -1) {
+				return rc;
+			}
+#else
+			adapter->slave_queue = 1;
+			BermudaIoWait(&(adapter->slave_queue));
+			rc = 0;
+#endif
+		} else {
+			no_tx();
+			i2c_cleanup_msg(stream, I2C_SLAVE_TRANSMIT_MSG);
+		}
+	} else {
+		no_tx();
+	}
+	
+	return rc;
+	
+	auto void no_tx()
+	{
+		if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
+			stream->flags &= ~I2C_SLAVE;
+			stream->flags |= I2C_MASTER;
+			adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
+			rc = 0;
+		} else {
+			adapter->dev->ctrl(adapter->dev, I2C_RELEASE, NULL);
+			rc = 0;
+		}
+	}
+}
+
+/**
+ * \brief ATmega I2C bus controller.
+ * \param dev Bus device.
+ * \param cfg Config options.
+ * \param data Configuration data.
+ */
+static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
+{
+	struct i2c_adapter *adap = dev->ioctl;
+	struct atmega_i2c_priv *priv = adap->data;
+	uint8_t reg = 0;
+	
+	atmega_i2c_reg_read(priv->twcr, &reg);
+	
+	switch((uint16_t)cfg) {
+		/* transaction control */
+		case I2C_START:
+			reg |= BIT(TWSTA) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_STOP | I2C_ACK:
+			reg |= BIT(TWSTO) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_STOP | I2C_NACK:
+			reg = (reg & ~BIT(TWEA)) | BIT(TWSTO) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+		
+		/* bus control */
+		case I2C_RELEASE:
+			reg |= BIT(TWEN) | BIT(TWIE) | BIT(TWINT);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_ACK:
+			reg |= BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_NACK:
+			reg = (reg & ~BIT(TWEA)) | BIT(TWINT) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+
+		case I2C_BLOCK:
+			reg &= ~(BIT(TWINT) | BIT(TWIE));
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_RESET:
+			reg |= BIT(TWSTO);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		default:
+			break;
+	}
+	return;
+}
+
+/**
+ * \brief File I/O put function.
+ * \param c Byte to write.
+ * \param stream File to write to.
+ * 
+ * Write one byte to the data register of the addressed I2C bus.
+ */
 static int atmega_i2c_put_char(int c, FILE *stream)
 {
 	struct i2c_adapter *adap = ((struct i2c_client*)stream->data)->adapter;
@@ -365,6 +408,12 @@ static int atmega_i2c_put_char(int c, FILE *stream)
 	return c;
 }
 
+/**
+ * \brief File I/O get function.
+ * \param stream File to read from.
+ * 
+ * Read one byte from the data register of the addressed I2C bus.
+ */
 static int atmega_i2c_get_char(FILE *stream)
 {
 	struct i2c_adapter *adap = ((struct i2c_client*)stream->data)->adapter;
@@ -376,6 +425,12 @@ static int atmega_i2c_get_char(FILE *stream)
 	return (int)(data&0xFF);
 }
 
+/**
+ * \brief The handler of ATmega I2C busses.
+ * \param adapter I2C adapter which belongs to the calling bus.
+ * \note The name of this function is <i><b>atmega_i2c_isr_handle</b></i>.
+ * \warning This function should only be called by hardware.
+ */
 ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 {
 	struct atmega_i2c_priv *priv = (struct atmega_i2c_priv*)adapter->data;
@@ -390,6 +445,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		return;
 	}
 	
+	/* switch for the status to handle the ISR transaction. */
 	switch(status) {
 		/*
 		 * I2C_MASTER_START: Start sent with success.
@@ -626,7 +682,11 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				break;
 			}
 			
-			/* if end of transfer, roll through for possible master transfer */
+			/*
+			 * If there are no more data bytes to receive, we are at the end of our transfer. In
+			 * this case we will fall through to the NACKs to end the transfer and wake up the
+			 * user application.
+			 */
 		/*
 		 * I2C_SR_SLAW_DATA_NACK: Received a data byte, NACK is returned. The device is being
 		 *                        addressed with its own slave address.
@@ -751,6 +811,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 */
 		case I2C_BUS_ERROR:
 		default:
+			/*
+			 * A fatal error has occured, so all (waiting) transfers will have to be ceased.
+			 * Therefore, all messages will be invallidated and marked for clean up.
+			 */
 			for(i = 0; i < I2C_MSG_NUM; i++) {
 				msgs[i]->buff = NULL;
 				msgs[i]->length = 0;

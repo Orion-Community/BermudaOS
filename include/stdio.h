@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/stdio.h Standard I/O header.
+
 #ifndef __STDIO_H
 #define __STDIO_H
 

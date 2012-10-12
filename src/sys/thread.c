@@ -57,18 +57,9 @@
  * or BermudaThreadWait, the system will be locked up in the thread. \n
  * The example thread can be started with this snippet:
  * \code{.c}
- * BermudaThreadCreate(th, "name" &ExampleThread, arg, stack_size, stack_p, prio);
+ * BermudaThreadCreate(th, "name", &ExampleThread, arg, stack_size, stack_p, prio);
  * \endcode
  * The first argument is an allocated pointer to an uninitialised THREAD structure.
- * 
- * \todo Looping BermudaThreadYield() will cause strange behaviour. Avoid the
- *       following loops meanwhile:
- * \code {.c}
- * while(1)
- * {
- *      BermudaThreadYield();
- * }
- * \endcode
  * 
  * @{
  */

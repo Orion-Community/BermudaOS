@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//!< \file include/stdlib.h Standard library header.
+
 #ifndef __STDLIB_HEADER_
 #define __STDLIB_HEADER_
 

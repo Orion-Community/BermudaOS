@@ -16,16 +16,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file include/dev/i2c/busses/atmega.h ATmega bus header.
+ */
+
 #ifndef __ATMEGA_I2C_H
 #define __ATMEGA_I2C_H
 
 #include <stdlib.h>
 
+/**
+ * \brief Slave address.
+ */
 #define ATMEGA_I2C_C0_SLA 0x56
 
 /**
  * \def ATMEGA_I2C_C0
  * \brief I2C bus 0 on port C.
+ * \see atmega_i2c_init_client
  */
 #define ATMEGA_I2C_C0 0
 

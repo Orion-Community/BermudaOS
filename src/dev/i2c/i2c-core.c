@@ -16,22 +16,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file src/dev/i2c/i2c-core.c I2C core functions.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
 
+/**
+ * \brief List of messages with should be free'd.
+ */
 static void *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
 
 /**
  * \brief Prepare the driver for an I2C transfer.
  * \param stream Device file.
  * \param msg Message to add to the buffer.
- * \return -1 if a fatal error has occurred. If no problems have occurred
- *         0 will be returned. When there is data overwritten in the stream buffer
- *         1 will be returned. It is up to the caller to react solve (continue or
- *         reset).
+ * \return 0 will be returned on success, -1 otherwise.
  */
 PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 									 uint8_t flags)
@@ -59,7 +63,12 @@ PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 	return 0;
 }
 
-PUBLIC void i2c_do_clean_msgs(FILE *stream)
+/**
+ * \brief Clean up all marked I2C messages.
+ * 
+ * All allocated memory will be free'd.
+ */
+PUBLIC void i2c_do_clean_msgs()
 {
 	uint8_t i = 0;
 	
@@ -71,6 +80,11 @@ PUBLIC void i2c_do_clean_msgs(FILE *stream)
 	}
 }
 
+/**
+ * \brief Mark a message to be cleaned up.
+ * \param stream I/O file. The message array should be in the buffer of this I/O file.
+ * \param msg Index of the message to clean up.
+ */
 PUBLIC void i2c_cleanup_msg(FILE *stream, uint8_t msg)
 {
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;

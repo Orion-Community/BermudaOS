@@ -17,7 +17,7 @@
  */
 
 /**
- * \file include/irq.h IRQ header.
+ * \file include/arch/irq.h IRQ header.
  * \brief Definitions IRQ data structures.
  */
 
@@ -37,10 +37,24 @@ struct irq_data {
 	#include <arch/avr/interrupts.h>
 #endif
 
+/**
+ * \def ISR
+ * \brief Define an Interrupt Service Handler.
+ * \param __fname Name of the ISR.
+ * \param __arg Name of the argument.
+ * \param __type Type of the argument <i>__arg</i>.
+ */
 #define ISR(__fname, __arg, __type) \
 	void __fname(typeof (__type) (__arg)) __attribute__((ISR_HANDLE_ATTRIBS)); \
 	void __fname(typeof (__type) (__arg))
-	
+
+/**
+ * \def ISR_DEF
+ * \brief Define an ISR. Useful for header files.
+ * \param __fname Name of the ISR.
+ * \param __arg Name of the argument.
+ * \param __type Type of the argument <i>__arg</i>.
+ */
 #define ISR_DEF(__fname, __arg, __type) \
 	extern void __fname(typeof (__type) (__arg)) __attribute__((ISR_HANDLE_ATTRIBS))
 

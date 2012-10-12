@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//!< \file include/dev/i2c/i2c.h I2C header
+//! \file include/dev/i2c/i2c.h I2C header
 
 #ifndef I2C_H_
 #define I2C_H_
@@ -46,8 +46,8 @@ struct i2c_message
  */
 struct i2c_client {
 	struct i2c_adapter *adapter; //!< The adapter where it belongs to.
-	uint16_t sla;
-	uint32_t freq;
+	uint16_t sla; //!< Slave address.
+	uint32_t freq; //!< Operating frequency in master mode.
 	
 	/**
 	 * \brief Call back used in slave operation.
@@ -64,20 +64,24 @@ struct i2c_adapter {
 	struct device *dev; //!< Adapter device.
 	
 	uint8_t flags; //!< Bus flags.
-	bool busy;
+	bool busy; //!< Defines wether the interface is busy or not.
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */
 	volatile void *master_queue; //!< Master waiting queue.
 	volatile void *slave_queue; //!< Slave waiting queue.
 #else
-	mutex_t mutex;
-	mutex_t master_queue;
-	mutex_t slave_queue;
+	mutex_t mutex; //!< Bus mutex.
+	mutex_t master_queue; //!< Master mutex.
+	mutex_t slave_queue;  //!< Slave mutex.
 #endif
 	
 	void *data; //!< Private data pointer.
-	int (*slave_listen)(FILE *stream);
+	
+	/**
+	 * \brief Function pointer to respond after a slave receive.
+	 * \param stream I/O file.
+	 */
 	int (*slave_respond)(FILE *stream);
 } __attribute__((packed));
 
@@ -90,15 +94,14 @@ extern int i2cdev_close(FILE *stream);
 extern int i2cdev_socket(struct i2c_client *client, uint16_t flags);
 extern int i2cdev_listen(int fd, void *buff, size_t size);
 
+/* init routines */
 extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
-extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adap);
-extern int i2c_free_client(struct i2c_client *client);
 
 /* core functions */
 extern int i2c_setup_msg(FILE *stream, struct i2c_message *msg, uint8_t flags);
 extern int i2c_call_client(struct i2c_client *client, FILE *stream);
 extern void i2c_cleanup_msg(FILE *stream, uint8_t msg);
-extern void i2c_do_clean_msgs(FILE *stream);
+extern void i2c_do_clean_msgs();
 __DECL_END
 
 

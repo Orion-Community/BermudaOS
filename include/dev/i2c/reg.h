@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/dev/i2c/reg.h I2C definitions
+
 #ifndef __I2C_REG_H
 #define __I2C_REG_H
 

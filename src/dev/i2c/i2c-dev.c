@@ -16,6 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file src/dev/i2c/i2c-dev.c I2C device driver.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -26,6 +30,12 @@
 #include <sys/thread.h>
 #include <sys/events/event.h>
 
+/**
+ * \brief Initializes the given adapter.
+ * \param adapter Adapter to initialize.
+ * \param fname Name of the device.
+ * \note Called by the bus driver.
+ */
 PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 {
 	int rc = -1;
@@ -45,13 +55,12 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 }
 
 /**
- * \brief Initializes the buffers for I2C transfer.
+ * \brief Initializes the buffer for an I2C master transmit.
  * \param file I/O file.
  * \param buff The I2C message.
- * \param size Should equal sizeof(struct i2c_message).
- * \return This function returns 0 on success. This means that the bus is
- *         successfully claimed. If this function returns <b>< 0</b>, the bus
- *         is not successfully claimed and NO buffers are initialized.
+ * \param size Length of <i>buff</i>.
+ * \return This function returns 0 on success (i.e. buffers have been allocated successfully) and -1
+ *         otherwise.
  */
 PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 {
@@ -72,6 +81,12 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 	return rc;
 }
 
+/**
+ * \brief Set the master receive buffer.
+ * \param file The I/O file.
+ * \param buff Read buffer.
+ * \param size Size of <i>buff</i>.
+ */
 PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 {
 	struct i2c_client *client = file->data;
@@ -94,6 +109,11 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 	return rc;
 }
 
+/**
+ * \brief Request an I2C I/O file.
+ * \param client I2C driver client.
+ * \param flags File flags.
+ */
 PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 {
 	struct i2c_adapter *adap;
@@ -141,6 +161,12 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	return rc;
 }
 
+/**
+ * \brief Flush the I/O file.
+ * \param stream File to flush.
+ * 
+ * This will start the actual transfer.
+ */
 PUBLIC int i2cdev_flush(FILE *stream)
 {
 	struct i2c_client *client = stream->data;
@@ -152,10 +178,13 @@ PUBLIC int i2cdev_flush(FILE *stream)
 	adap->dev->io->flags |= stream->flags & 0xFF00;
 	
 	rc = flush(rc);
-	i2c_do_clean_msgs(adap->dev->io);
+	i2c_do_clean_msgs();
 	return rc;
 }
 
+/**
+ * \brief Setup the I2C slave interface and wait for incoming master requests.
+ */
 PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 {
 	FILE *stream = fdopen(fd);
@@ -193,11 +222,15 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 		}
 	}
 	
-	i2c_do_clean_msgs(fdopen(dev));
+	i2c_do_clean_msgs();
 	out:
 	return rc;
 }
 
+/**
+ * \brief Close the I2C socket.
+ * \param stream File to close.
+ */
 PUBLIC int i2cdev_close(FILE *stream)
 {
 	struct i2c_client *client = stream->data;

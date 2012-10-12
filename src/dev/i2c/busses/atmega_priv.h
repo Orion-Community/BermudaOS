@@ -17,8 +17,8 @@
  */
 
 /**
- * \file include/dev/i2c/busses/atmega_priv.h ATmega private header.
- * \brief Header file for the I2C bus of the megaAVR architecture.
+ * \file src/dev/i2c/busses/atmega_priv.h ATmega private header.
+ * \brief Header file for the I2C bus of the ATmega AVR architecture.
  */
 
 #ifndef __I2C_ATMEGA_PRIV_H_
@@ -30,6 +30,7 @@
 #include <lib/binary.h>
 
 #include <arch/io.h>
+#include <arch/irq.h>
 
 /**
  * \brief The maximum I2C busses an ATmega MCU can have.
@@ -37,22 +38,54 @@
 #define ATMEGA_BUSSES 1
 
 /* I2C device I/O control features */
+/**
+ * \brief Sent the start condition.
+ */
 #define I2C_START		BIT(0)
+/**
+ * \brief Sent the stop condition.
+ */
 #define I2C_STOP		BIT(1)
 
+/**
+ * \brief Enable the ACKing.
+ */
 #define I2C_ACK			BIT(2)
+/**
+ * \brief Enable listening for master requests.
+ */
 #define I2C_LISTEN		I2C_ACK
+/**
+ * \brief Disable ACKing.
+ */
 #define I2C_NACK		BIT(3)
+/**
+ * \brief Put the bus in idle mode.
+ */
 #define I2C_IDLE		I2C_NACK
+/**
+ * \brief Release the bus.
+ */
 #define I2C_RELEASE		BIT(4)
-
+/**
+ * \brief Block the bus.
+ */
 #define I2C_BLOCK		BIT(5)
+/**
+ * \brief Reset the bus (i.e. recover from an error).
+ */
 #define I2C_RESET		BIT(6)
 
 
 /* End of I/O control features */
 
+/**
+ * \brief SLA+R
+ */
 #define I2C_SLA_READ_BIT BIT(0)
+/**
+ * \brief Mask to create SLA+W
+ */
 #define I2C_SLA_WRITE_MASK (~BIT(0))
 
 /**
@@ -389,17 +422,15 @@ struct atmega_i2c_priv
 	 * </DFN>
 	 */
 	reg8_t twamr;
-	
-	/**
-	 * \brief The interrupt service routine which should be called.
-	 * \param adap The bus adapter.
-	 * 
-	 * This function should <b>ONLY</b> be called by hardware.
-	 */
-	void (*isr)(struct i2c_adapter *adap);
 } __attribute__((packed));
 
 __DECL
+/**
+ * \brief Write to an I2C regiser.
+ * \param reg Register to write to.
+ * \param data Pointer to the data to write.
+ * \return 0 on success, -1 otherwise.
+ */
 static inline int atmega_i2c_reg_write(reg8_t reg, uint8_t *data)
 {
 	if(reg) {
@@ -410,6 +441,12 @@ static inline int atmega_i2c_reg_write(reg8_t reg, uint8_t *data)
 	}
 }
 
+/**
+ * \brief Read data from an I2C register.
+ * \param reg Register to read from.
+ * \param data Pointer to a location in memory to store the read data in.
+ * \return 0 on success, -1 otherwise.
+ */
 static inline int atmega_i2c_reg_read(reg8_t reg, uint8_t *data)
 {
 	if(reg) {
@@ -421,6 +458,11 @@ static inline int atmega_i2c_reg_read(reg8_t reg, uint8_t *data)
 
 }
 
+/**
+ * \brief Get the status bits from the status register.
+ * \param priv Bus control structure.
+ * \return The status bits, all other bits are masked out.
+ */
 static inline uint8_t atmega_i2c_get_status(struct atmega_i2c_priv *priv)
 {
 	unsigned char status = 0;
@@ -428,21 +470,41 @@ static inline uint8_t atmega_i2c_get_status(struct atmega_i2c_priv *priv)
 	return (status & B11111000);
 }
 
+/**
+ * \brief Return the index of the given I/O file.
+ * \param stream I/O file.
+ * \return The index.
+ */
 static inline size_t atmega_i2c_get_index(FILE *stream)
 {
 	return stream->index;
 }
 
+/**
+ * \brief Increase the index of the I/O file.
+ * \param stream I/O file.
+ */
 static inline void atmega_i2c_inc_index(FILE *stream)
 {
 	stream->index++;
 }
 
+/**
+ * \brief Reset the index of the given I/O file.
+ * \param stream I/O file.
+ */
 static inline void atmega_i2c_reset_index(FILE *stream)
 {
 	stream->index = 0;
 }
 
+/**
+ * \brief Configure a new bitrate (BAUD) setting.
+ * \param priv Bus control structure.
+ * \param twbr Value of the TWBR register.
+ * \param twps Prescaler bits.
+ * \note Check the data sheet for bitrate calculations.
+ */
 static inline void atmega_i2c_set_bitrate(struct atmega_i2c_priv *priv,
 										  uint8_t twbr, uint8_t twps)
 {

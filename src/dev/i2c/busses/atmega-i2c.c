@@ -42,6 +42,7 @@ static int atmega_i2c_slave_respond(FILE *stream);
 
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
 static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
+static int atmega_i2c_intf_busy(struct i2c_adapter *bus);
 
 static int atmega_i2c_put_char(int c, FILE *stream);
 static int atmega_i2c_get_char(FILE *stream);
@@ -64,6 +65,8 @@ static struct atmega_i2c_priv i2c_c0 = {
 	.twar = &TWAR,
 	.twbr = &TWBR,
 	.twamr = &TWAMR,
+	.sda = 4,
+	.scl = 5,
 };
 
 #ifdef __THREADS__
@@ -105,6 +108,8 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 		return;
 	}
 
+	i2c_c0.io_in = AvrIO->pinc;
+	
 	atmega_i2c_busses[0] = adapter;
 #ifdef __THREADS__
 	adapter->dev->mutex = &bus_c0_mutex;
@@ -139,6 +144,43 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 PUBLIC void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac)
 {
 	client->adapter = atmega_i2c_busses[ifac];
+}
+
+/**
+ * \brief Checks the status of SCL and SDA.
+ * \param bus Bus interface to check.
+ * \return -1 if the given interface is in idle; \n
+ *         0 if SDA is low and SCL is HIGH; \n
+ *         1 if SCL is low and SDA is high; \n
+ *         2 if SCL and SDA are both low.
+ * \return The default return value is 2.
+ * 
+ * It is safe to use the interface if this function returns -1 (both lines are
+ * HIGH).
+ */
+static int atmega_i2c_intf_busy(struct i2c_adapter *bus)
+{
+	struct atmega_i2c_priv *hw = bus->data;
+	unsigned char scl = (*(hw->io_in)) & BIT(hw->scl);
+	unsigned char sda = (*(hw->io_in)) & BIT(hw->sda);
+	int rc = 2;
+	
+	switch(scl | sda) {
+		case TW_IF_IDLE:
+			rc = -1;
+			break;
+		case TW_IF_BUSY1:
+			rc = 0;
+			break;
+		case TW_IF_BUSY2:
+			rc = 1;
+			break;
+		case TW_IF_BUSY3:
+			rc = 2;
+			break;
+	}
+	
+	return rc;
 }
 
 /**
@@ -238,7 +280,8 @@ static int atmega_i2c_init_transfer(FILE *stream)
 	uint8_t pres, twbr;
 	int rc = -1;
 	
-	if(((stream->flags & I2C_MASTER) != 0) && !adap->busy) {
+	if(((stream->flags & I2C_MASTER) != 0) && !adap->busy && 
+		atmega_i2c_intf_busy(adap) == -1) {
 		config_bitrate();
 		adap->dev->ctrl(adap->dev, I2C_START, NULL);
 #ifdef __THREADS__
@@ -249,11 +292,11 @@ static int atmega_i2c_init_transfer(FILE *stream)
 		rc = 0;
 #endif
 	} else if((stream->flags & I2C_SLAVE) != 0) {
-		if(!msgs[I2C_MASTER_TRANSMIT_MSG] && !msgs[I2C_MASTER_RECEIVE_MSG]) {
+		if(msgs[I2C_MASTER_TRANSMIT_MSG] == NULL && 
+			msgs[I2C_MASTER_RECEIVE_MSG] == NULL) {
 			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
 		} else if((msgs[I2C_MASTER_TRANSMIT_MSG]->length && msgs[I2C_MASTER_RECEIVE_MSG]->length) &&
-			!adap->busy
-		) {
+			!adap->busy && atmega_i2c_intf_busy(adap) == -1) {
 			stream->flags &= I2C_SLAVE;
 			stream->flags |= I2C_MASTER;
 			adap->dev->ctrl(adap->dev, I2C_START, NULL);
@@ -316,7 +359,8 @@ static int atmega_i2c_slave_respond(FILE *stream)
 	
 	auto void no_tx()
 	{
-		if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
+		if((msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) && adapter->busy &&
+			atmega_i2c_intf_busy(adapter) == -1) {
 			stream->flags &= ~I2C_SLAVE;
 			stream->flags |= I2C_MASTER;
 			adapter->dev->ctrl(adapter->dev, I2C_START, NULL);

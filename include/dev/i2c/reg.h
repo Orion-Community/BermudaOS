@@ -22,6 +22,15 @@
 #define __I2C_REG_H
 
 /**
+ * \brief The interface is free.
+ */
+#define TW_IF_IDLE (BIT(SCL) | BIT(SDA))
+
+#define TW_IF_BUSY1 BIT(SCL)
+#define TW_IF_BUSY2 BIT(SDA)
+#define TW_IF_BUSY3 0
+
+/**
  * \brief Time-out for I2C transfers if threads are enabled.
  */
 #define I2C_TMO 500

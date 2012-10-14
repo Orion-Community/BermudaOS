@@ -32,6 +32,9 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
+#define SCL 5
+#define SDA 4
+
 /**
  * \brief The maximum I2C busses an ATmega MCU can have.
  */
@@ -422,6 +425,10 @@ struct atmega_i2c_priv
 	 * </DFN>
 	 */
 	reg8_t twamr;
+	
+	reg8_t io_in; //!< I2C input register.
+	uint8_t sda; //!< Serial data pin.
+	uint8_t scl; //!< Serial clock pin.
 } __attribute__((packed));
 
 __DECL

@@ -142,6 +142,11 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 #endif
 	
 	socket = BermudaHeapAlloc(sizeof(*socket));
+	if(socket == NULL) {
+		rc = -1;
+		goto out;
+	}
+	
 	rc = iob_add(socket);
 	if(rc < 0) {
 		BermudaHeapFree(socket);
@@ -204,8 +209,9 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 	msg.length = size;
 	msg.addr = client->sla;
 	msg.freq = client->freq;
-	i2c_setup_msg(fdopen(dev), &msg, 
-							  I2C_SLAVE_RECEIVE_MSG);
+	if((rc = i2c_setup_msg(fdopen(dev), &msg, I2C_SLAVE_RECEIVE_MSG)) == -1) {
+		goto out;
+	}
 	
 	fdopen(dev)->data = stream->data;
 	fdopen(dev)->flags &= 0xFF;

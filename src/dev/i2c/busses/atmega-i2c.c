@@ -39,9 +39,11 @@
 /* static functions */
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
 static int atmega_i2c_slave_respond(FILE *stream);
+static int atmega_i2c_slave_listen(struct i2c_adapter *adpater, FILE *stream);
 
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
 static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
+
 
 static int atmega_i2c_put_char(int c, FILE *stream);
 static int atmega_i2c_get_char(FILE *stream);
@@ -235,12 +237,22 @@ static int atmega_i2c_init_transfer(FILE *stream)
 	struct i2c_adapter *adap = client->adapter;
 	struct atmega_i2c_priv *priv = adap->data;
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->data;
-	uint8_t pres, twbr;
+	uint8_t pres, twbr, twcr = 0;
 	int rc = -1;
 	
-	if(((stream->flags & I2C_MASTER) != 0) && !adap->busy) {
-		config_bitrate();
-		adap->dev->ctrl(adap->dev, I2C_START, NULL);
+	if((stream->flags & I2C_MASTER) != 0) {
+		if(!adap->busy) {
+			config_bitrate();
+			atmega_i2c_reg_read(priv->twcr, &twcr);
+			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
+				twcr = BIT(TWEN) | BIT(TWEA) | BIT(TWIE) | BIT(TWSTA) | (twcr & BIT(TWSTO));
+				atmega_i2c_reg_write(priv->twcr, &twcr);
+			} else {
+				twcr = BIT(TWEN) | BIT(TWIE) | BIT(TWSTA) | (twcr & BIT(TWSTO));
+				atmega_i2c_reg_write(priv->twcr, &twcr);
+			}
+		}
+
 #ifdef __THREADS__
 		rc = BermudaEventWaitNext( (volatile THREAD**)adap->master_queue, I2C_TMO);
 #else
@@ -248,26 +260,9 @@ static int atmega_i2c_init_transfer(FILE *stream)
 		BermudaIoWait(&(adap->master_queue));
 		rc = 0;
 #endif
-	} else if((stream->flags & I2C_SLAVE) != 0) {
-		if(!msgs[I2C_MASTER_TRANSMIT_MSG] && !msgs[I2C_MASTER_RECEIVE_MSG]) {
-			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
-		} else if((msgs[I2C_MASTER_TRANSMIT_MSG]->length && msgs[I2C_MASTER_RECEIVE_MSG]->length) &&
-			!adap->busy
-		) {
-			stream->flags &= I2C_SLAVE;
-			stream->flags |= I2C_MASTER;
-			adap->dev->ctrl(adap->dev, I2C_START, NULL);
-		} else {
-			adap->dev->ctrl(adap->dev, I2C_LISTEN, NULL);
-		}
 		
-#ifdef __THREADS__
-	rc = BermudaEventWaitNext( (volatile THREAD**)adap->slave_queue, 500);
-#else
-	adap->slave_queue = 1;
-	BermudaIoWait(&(adap->slave_queue));
-	rc = 0;
-#endif
+	} else if((stream->flags & I2C_SLAVE) != 0) {
+		rc = atmega_i2c_slave_listen(adap, stream);
 	}
 	
 	return rc;
@@ -278,6 +273,29 @@ static int atmega_i2c_init_transfer(FILE *stream)
 		twbr = atmega_i2c_calc_twbr(client->freq, pres);
 		atmega_i2c_set_bitrate(priv, twbr, pres);
 	}
+}
+
+static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, FILE *stream)
+{
+	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
+	int rc = -1;
+	
+	if(!adapter->busy) {
+		if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
+			adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
+		} else {
+			adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
+		}
+	}
+	
+#ifdef __THREADS__
+	rc = BermudaEventWaitNext( (volatile THREAD**)adapter->slave_queue, 500);
+#else
+	adapter->slave_queue = 1;
+	BermudaIoWait(&(adapter->slave_queue));
+	rc = 0;
+#endif
+	return rc;
 }
 
 /**

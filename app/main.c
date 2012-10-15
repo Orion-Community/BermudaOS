@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <sys/thread.h>
 #include <sys/virt_timer.h>
@@ -52,6 +53,7 @@ struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
 static unsigned char i2c_slave_tx = 0x0;
+static volatile bool run = false;
 
 static void slave_responder(struct i2c_message *msg)
 {
@@ -63,7 +65,7 @@ static void slave_responder(struct i2c_message *msg)
 
 THREAD(StdInput, arg)
 {
-	char *buff[4];
+	char buff[4];
 	int fd;
 	
 	while(1) {
@@ -76,6 +78,9 @@ THREAD(StdInput, arg)
 		
 		sleep:
 		buff[3] = '\0';
+		if(!strcmp(buff, "run")) {
+			run = true;
+		}
 		printf_P(PSTR("%s\n"), buff);
 		BermudaThreadSleep(500);
 	}
@@ -109,7 +114,7 @@ THREAD(TwiTest, arg)
 	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
 			     0xDC, 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
 			     0x0 };
-	int fd;
+	int fd, rc;
 	
 	atmega_i2c_init_client(&master_client, ATMEGA_I2C_C0);
 	master_client.sla = 0x54;
@@ -122,9 +127,11 @@ THREAD(TwiTest, arg)
 			goto sleep;
 		}
 		
-		write(fd, tx, 20);
-		read(fd, NULL, 0);
-		flush(fd);
+		rc = write(fd, tx, 20);
+		rc += read(fd, NULL, 0);
+		if(rc == 0) {
+			flush(fd);
+		}
 		close(fd);
 
 		tx[19]++;
@@ -149,12 +156,17 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 100,
+					BermudaHeapAlloc(100), BERMUDA_DEFAULT_PRIO);
+	while(!run) {
+		BermudaThreadYield();
+	}
+	
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
 	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 128, 
 					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 100,
-						BermudaHeapAlloc(100), BERMUDA_DEFAULT_PRIO);
+
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);

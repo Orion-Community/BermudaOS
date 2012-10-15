@@ -68,8 +68,8 @@ struct i2c_adapter {
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */
-	volatile void *master_queue; //!< Master waiting queue.
-	volatile void *slave_queue; //!< Slave waiting queue.
+	volatile void **master_queue; //!< Master waiting queue.
+	volatile void **slave_queue; //!< Slave waiting queue.
 #else
 	mutex_t mutex; //!< Bus mutex.
 	mutex_t master_queue; //!< Master mutex.

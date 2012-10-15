@@ -237,19 +237,22 @@ static int atmega_i2c_init_transfer(FILE *stream)
 	struct i2c_adapter *adap = client->adapter;
 	struct atmega_i2c_priv *priv = adap->data;
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->data;
-	uint8_t pres, twbr, twcr = 0;
+	uint8_t pres, twbr, reg = 0;
 	int rc = -1;
 	
 	if((stream->flags & I2C_MASTER) != 0) {
 		if(!adap->busy) {
-			config_bitrate();
-			atmega_i2c_reg_read(priv->twcr, &twcr);
-			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
-				twcr = BIT(TWEN) | BIT(TWEA) | BIT(TWIE) | BIT(TWSTA) | (twcr & BIT(TWSTO));
-				atmega_i2c_reg_write(priv->twcr, &twcr);
-			} else {
-				twcr = BIT(TWEN) | BIT(TWIE) | BIT(TWSTA) | (twcr & BIT(TWSTO));
-				atmega_i2c_reg_write(priv->twcr, &twcr);
+			reg = atmega_i2c_get_status(priv);
+			if(reg == I2C_NOINFO) {
+				atmega_i2c_reg_read(priv->twcr, &reg);
+				config_bitrate();
+				if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
+					reg = BIT(TWEN) | BIT(TWEA) | BIT(TWIE) | BIT(TWSTA) | BIT(TWINT) | (reg & BIT(TWSTO));
+					atmega_i2c_reg_write(priv->twcr, &reg);
+				} else {
+					reg = BIT(TWEN) | BIT(TWIE) | BIT(TWSTA) | BIT(TWINT) | (reg & BIT(TWSTO));
+					atmega_i2c_reg_write(priv->twcr, &reg);
+				}
 			}
 		}
 
@@ -278,13 +281,18 @@ static int atmega_i2c_init_transfer(FILE *stream)
 static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, FILE *stream)
 {
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
+	struct atmega_i2c_priv *priv = adapter->data;
+	uint8_t status;
 	int rc = -1;
 	
 	if(!adapter->busy) {
-		if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
-			adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
-		} else {
-			adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
+		status = atmega_i2c_get_status(priv);
+		if(status == I2C_NOINFO) {
+			if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
+				adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
+			} else {
+				adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
+			}
 		}
 	}
 	
@@ -739,17 +747,31 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 * I2C_SR_STOP: Received STOP bit from the master. End of transfer.
 		 */
 		case I2C_SR_STOP:
-			adapter->flags &= ~I2C_ERROR;
-			adapter->flags |= I2C_CALL_BACK;
-			msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
-			i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
-			adapter->busy = false;
-			dev->ctrl(dev, I2C_BLOCK, NULL);
+			/*
+			 * application gave up waiting
+			 */
+			if(*(adapter->slave_queue) == NULL || *(adapter->slave_queue) == SIGNALED) {
+				if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
+					dev->ctrl(dev, I2C_START, NULL);
+				} else {
+					dev->ctrl(dev, I2C_IDLE, NULL);
+				}
+				adapter->busy = false;
+			} else {
+				if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
+					dev->ctrl(dev, I2C_BLOCK, NULL);
+					msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
+					i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
+				}
+				adapter->flags &= ~I2C_ERROR;
+				adapter->flags |= I2C_CALL_BACK;
+				dev->ctrl(dev, I2C_BLOCK, NULL);
 #ifdef __THREADS__
-			BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);
+				BermudaEventSignalFromISR( (volatile THREAD**)adapter->slave_queue);
 #else
-			BermudaIoSignal(&(adapter->slave_queue));
+				BermudaIoSignal(&(adapter->slave_queue));
 #endif
+			}
 			break;
 			
 		/* 

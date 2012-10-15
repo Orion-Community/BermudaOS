@@ -333,6 +333,7 @@
 /* status reg */
 #define TWPS1	1
 #define TWPS0	0
+#define I2C_NOINFO 0xF8
 
 /* addr reg */
 #define TWGCE 	0

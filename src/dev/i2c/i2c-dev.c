@@ -51,6 +51,7 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	BermudaDeviceRegister(adapter->dev, adapter);
 	
 	adapter->flags = 0;
+	adapter->busy = false;
 	return rc;
 }
 

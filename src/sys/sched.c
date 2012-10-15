@@ -171,7 +171,6 @@ PUBLIC void BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t)
 	if(tqp == SIGNALED)
 	{
 		tqp = 0;
-		t->ec++;
 	}
 	else if(tqp)
 	{

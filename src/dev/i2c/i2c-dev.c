@@ -51,6 +51,7 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	BermudaDeviceRegister(adapter->dev, adapter);
 	
 	adapter->flags = 0;
+	adapter->busy = false;
 	return rc;
 }
 
@@ -73,11 +74,9 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_msg(client->adapter->dev->io, &msg, 
-									   I2C_MASTER_TRANSMIT_MSG);
+		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_TRANSMIT_MSG);
 	}
 
-	
 	return rc;
 }
 
@@ -101,11 +100,9 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_msg(client->adapter->dev->io, 
-									   &msg, I2C_MASTER_RECEIVE_MSG);
+		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_RECEIVE_MSG);
 	}
 
-	
 	return rc;
 }
 
@@ -142,6 +139,11 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 #endif
 	
 	socket = BermudaHeapAlloc(sizeof(*socket));
+	if(!socket) {
+		rc = -1;
+		goto out;
+	}
+	
 	rc = iob_add(socket);
 	if(rc < 0) {
 		BermudaHeapFree(socket);
@@ -204,8 +206,9 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 	msg.length = size;
 	msg.addr = client->sla;
 	msg.freq = client->freq;
-	i2c_setup_msg(fdopen(dev), &msg, 
-							  I2C_SLAVE_RECEIVE_MSG);
+	if((rc = i2c_setup_msg(fdopen(dev), &msg, I2C_SLAVE_RECEIVE_MSG)) == -1) {
+		goto out;
+	}
 	
 	fdopen(dev)->data = stream->data;
 	fdopen(dev)->flags &= 0xFF;

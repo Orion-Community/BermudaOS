@@ -114,7 +114,7 @@ THREAD(TwiTest, arg)
 	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
 			     0xDC, 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
 			     0x0 };
-	int fd;
+	int fd, rc;
 	
 	atmega_i2c_init_client(&master_client, ATMEGA_I2C_C0);
 	master_client.sla = 0x54;
@@ -127,9 +127,11 @@ THREAD(TwiTest, arg)
 			goto sleep;
 		}
 		
-		write(fd, tx, 20);
-		read(fd, NULL, 0);
-		flush(fd);
+		rc = write(fd, tx, 20);
+		rc += read(fd, NULL, 0);
+		if(rc == 0) {
+			flush(fd);
+		}
 		close(fd);
 
 		tx[19]++;

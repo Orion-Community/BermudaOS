@@ -18,7 +18,8 @@
 
 /** \file mem.c */
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <lib/binary.h>
 
 #include <sys/mem.h>
@@ -69,10 +70,11 @@ PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
         }
         
         if(c == NULL)
-	{
-		BermudaMutexRelease(&mem_lock);
-                return NULL;
-	}
+		{
+				printf_P(PSTR("NOMEM!\n"));
+				BermudaMutexRelease(&mem_lock);
+				return NULL;
+		}
         
         BermudaHeapUseBlock(c, prev);
         ret = ((void*)c)+sizeof(*c);

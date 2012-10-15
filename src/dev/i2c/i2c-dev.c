@@ -74,11 +74,9 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_msg(client->adapter->dev->io, &msg, 
-									   I2C_MASTER_TRANSMIT_MSG);
+		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_TRANSMIT_MSG);
 	}
 
-	
 	return rc;
 }
 
@@ -102,11 +100,9 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 		msg.length = size;
 		msg.freq = client->freq;
 		msg.addr = client->sla;
-		rc = i2c_setup_msg(client->adapter->dev->io, 
-									   &msg, I2C_MASTER_RECEIVE_MSG);
+		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_RECEIVE_MSG);
 	}
 
-	
 	return rc;
 }
 
@@ -143,7 +139,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 #endif
 	
 	socket = BermudaHeapAlloc(sizeof(*socket));
-	if(socket == NULL) {
+	if(!socket) {
 		rc = -1;
 		goto out;
 	}

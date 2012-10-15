@@ -247,11 +247,9 @@ static int atmega_i2c_init_transfer(FILE *stream)
 				atmega_i2c_reg_read(priv->twcr, &reg);
 				config_bitrate();
 				if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
-					reg = BIT(TWEN) | BIT(TWEA) | BIT(TWIE) | BIT(TWSTA) | BIT(TWINT) | (reg & BIT(TWSTO));
-					atmega_i2c_reg_write(priv->twcr, &reg);
+					adap->dev->ctrl(adap->dev, I2C_START | I2C_ACK, NULL);
 				} else {
-					reg = BIT(TWEN) | BIT(TWIE) | BIT(TWSTA) | BIT(TWINT) | (reg & BIT(TWSTO));
-					atmega_i2c_reg_write(priv->twcr, &reg);
+					adap->dev->ctrl(adap->dev, I2C_START | I2C_NACK, NULL);
 				}
 			}
 		}
@@ -289,7 +287,7 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, FILE *stream)
 		status = atmega_i2c_get_status(priv);
 		if(status == I2C_NOINFO) {
 			if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
-				adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
+				adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
 			} else {
 				adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
 			}
@@ -345,7 +343,7 @@ static int atmega_i2c_slave_respond(FILE *stream)
 		if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
 			stream->flags &= ~I2C_SLAVE;
 			stream->flags |= I2C_MASTER;
-			adapter->dev->ctrl(adapter->dev, I2C_START, NULL);
+			adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
 			rc = 0;
 		} else {
 			adapter->dev->ctrl(adapter->dev, I2C_RELEASE, NULL);
@@ -370,8 +368,13 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 	
 	switch((uint16_t)cfg) {
 		/* transaction control */
-		case I2C_START:
+		case I2C_START | I2C_ACK:
 			reg |= BIT(TWSTA) | BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
+			atmega_i2c_reg_write(priv->twcr, &reg);
+			break;
+			
+		case I2C_START | I2C_NACK:
+			reg = BIT(TWSTA) | BIT(TWINT) | BIT(TWIE) | BIT(TWEN) | (reg & ~BIT(TWEA));
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 			
@@ -519,20 +522,25 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 */
 		case I2C_MT_SLA_ACK:
 		case I2C_MT_DATA_ACK:
-			if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
-				fputc((int)msgs[I2C_MASTER_TRANSMIT_MSG]->buff[atmega_i2c_get_index(stream)], 
-					  stream);
-				atmega_i2c_inc_index(stream);
-				dev->ctrl(dev, I2C_ACK, NULL);
-				break;
-			} else if(msgs[I2C_MASTER_RECEIVE_MSG]) { 
-				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-					adapter->flags &= ~I2C_TRANSMITTER;
-					adapter->flags |= I2C_RECEIVER;
-					msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-					i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
-					dev->ctrl(dev, I2C_START, NULL); /* sent the repeated start */
+			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
+				if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
+					fputc((int)msgs[I2C_MASTER_TRANSMIT_MSG]->buff[atmega_i2c_get_index(stream)], 
+						stream);
+					atmega_i2c_inc_index(stream);
+					dev->ctrl(dev, I2C_ACK, NULL);
 					break;
+				} else if(msgs[I2C_MASTER_RECEIVE_MSG]) { 
+					if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+						adapter->flags &= ~I2C_TRANSMITTER;
+						adapter->flags |= I2C_RECEIVER;
+						msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
+						i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+						
+						/* sent the repeated start */
+						atmega_i2c_reg_read(priv->twcr, &status);
+						dev->ctrl(dev, I2C_START | ((status & BIT(TWEA)) >> 4), NULL);
+						break;
+					}
 				}
 			}
 			/* else: no space to write and no master receive operation is pending */
@@ -541,9 +549,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #else
 			BermudaIoSignal(&(adapter->master_queue));
 #endif
-
-			msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-			i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
+				msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
+				i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+			}
 			adapter->busy = false;
 			
 			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
@@ -564,7 +573,8 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 *                      is available again.
 		 */
 		case I2C_MASTER_ARB_LOST:
-			dev->ctrl(dev, I2C_START, NULL);
+			atmega_i2c_reg_read(priv->twcr, &status);
+			dev->ctrl(dev, I2C_START | ((status & BIT(TWEA)) >> 4), NULL);
 			adapter->busy = 0;
 			break;
 		
@@ -574,8 +584,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 */
 		case I2C_MT_SLA_NACK:
 		case I2C_MT_DATA_NACK:
-			msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-			i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
+				msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
+				i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+			}
 			/* roll through */
 		/*
 		 * I2C_MR_SLA_NACK: Slave address has been transmitted, NACK is returned by the slave.
@@ -610,20 +622,26 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 * I2C_MR_DATA_ACK: Data received as master, ACK returned.
 		 */
 		case I2C_MR_DATA_ACK:
-			if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-				msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
-				atmega_i2c_inc_index(stream);
+			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
+				if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+					msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
+					atmega_i2c_inc_index(stream);
+				}
 			}
 			/* fall through to sla ack */
 		/* 
 		 * I2C_MR_SLA_ACK: Slave address has been ACKed by the slave.
 		 */
 		case I2C_MR_SLA_ACK:
-			if((atmega_i2c_get_index(stream) + 1) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-				/*
-				* ACK if there is more than 1 byte to transfer.
-				*/
-				dev->ctrl(dev, I2C_ACK, NULL);
+			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
+				if((atmega_i2c_get_index(stream) + 1) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+					/*
+					* ACK if there is more than 1 byte to transfer.
+					*/
+					dev->ctrl(dev, I2C_ACK, NULL);
+				} else {
+					dev->ctrl(dev, I2C_NACK, NULL);
+				}
 			} else {
 				dev->ctrl(dev, I2C_NACK, NULL);
 			}
@@ -633,12 +651,14 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 * I2C_MR_DATA_NACK: Data received as a master, NACK returned.
 		 */
 		case I2C_MR_DATA_NACK:
-			if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-				msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
+			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
+				if(atmega_i2c_get_index(stream) < msgs[I2C_MASTER_RECEIVE_MSG]->length) {
+					msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
+				}
+				
+				msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
+				i2c_cleanup_msg(stream, I2C_MASTER_RECEIVE_MSG);
 			}
-			
-			msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
-			i2c_cleanup_msg(stream, I2C_MASTER_RECEIVE_MSG);
 			adapter->busy = false;
 			
 #ifdef __THREADS__
@@ -679,8 +699,8 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				if(msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
 					dev->ctrl(dev, I2C_ACK, NULL);
 				} else {
-				dev->ctrl(dev, I2C_NACK, NULL);
-				adapter->flags |= I2C_ERROR;
+					dev->ctrl(dev, I2C_NACK, NULL);
+					adapter->flags |= I2C_ERROR;
 				}
 			} else {
 				dev->ctrl(dev, I2C_NACK, NULL);
@@ -696,16 +716,18 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 */
 		case I2C_SR_SLAW_DATA_ACK:
 		case I2C_SR_GC_DATA_ACK:
-			if(atmega_i2c_get_index(stream) < msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
-				msgs[I2C_SLAVE_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
-				
-				if(atmega_i2c_get_index(stream) + 1 < msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
-					dev->ctrl(dev, I2C_ACK, NULL);
-				} else {
-					dev->ctrl(dev, I2C_NACK, NULL);
+			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
+				if(atmega_i2c_get_index(stream) < msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
+					msgs[I2C_SLAVE_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
+					
+					if(atmega_i2c_get_index(stream) + 1 < msgs[I2C_SLAVE_RECEIVE_MSG]->length) {
+						dev->ctrl(dev, I2C_ACK, NULL);
+					} else {
+						dev->ctrl(dev, I2C_NACK, NULL);
+					}
+					atmega_i2c_inc_index(stream);
+					break;
 				}
-				atmega_i2c_inc_index(stream);
-				break;
 			}
 			
 			/*
@@ -721,21 +743,21 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		 */
 		case I2C_SR_SLAW_DATA_NACK:
 		case I2C_SR_GC_DATA_NACK:
+			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
+				msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
+				i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
+			}
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
 					adapter->flags = 0;
-					msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
-					i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
-					dev->ctrl(dev, I2C_START, NULL);
+					dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
 					break;
 				}
 			} 
 			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
-					i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
 					adapter->flags = 0;
-					msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
-					dev->ctrl(dev, I2C_START, NULL);
+					dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
 					break;
 				}
 			} 
@@ -752,7 +774,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			 */
 			if(*(adapter->slave_queue) == NULL || *(adapter->slave_queue) == SIGNALED) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG] || msgs[I2C_MASTER_RECEIVE_MSG]) {
-					dev->ctrl(dev, I2C_START, NULL);
+					dev->ctrl(dev, I2C_START | I2C_NACK, NULL);
 				} else {
 					dev->ctrl(dev, I2C_IDLE, NULL);
 				}
@@ -818,8 +840,10 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		case I2C_ST_DATA_NACK:
 		case I2C_ST_LAST_DATA_ACK:
 			adapter->flags &= ~I2C_ERROR;
-			msgs[I2C_SLAVE_TRANSMIT_MSG]->length = 0;
-			i2c_cleanup_msg(stream, I2C_SLAVE_TRANSMIT_MSG);
+			if(msgs[I2C_SLAVE_TRANSMIT_MSG]) {
+				msgs[I2C_SLAVE_TRANSMIT_MSG]->length = 0;
+				i2c_cleanup_msg(stream, I2C_SLAVE_TRANSMIT_MSG);
+			}
 			adapter->busy = false;
 			
 #ifdef __THREADS__
@@ -832,14 +856,14 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
 					adapter->flags = 0;
-					dev->ctrl(dev, I2C_START, NULL);
+					dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
 					break;
 				}
 			}
 			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				if(msgs[I2C_MASTER_RECEIVE_MSG]->length) {
 					adapter->flags = 0;
-					dev->ctrl(dev, I2C_START, NULL);
+					dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
 					break;
 				}
 			} 

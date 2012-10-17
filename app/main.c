@@ -131,6 +131,8 @@ THREAD(TwiTest, arg)
 		rc += read(fd, NULL, 0);
 		if(rc == 0) {
 			flush(fd);
+		} else {
+			i2cdev_free_master_msg(fd);
 		}
 		close(fd);
 
@@ -156,7 +158,7 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 100,
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 90,
 					BermudaHeapAlloc(100), BERMUDA_DEFAULT_PRIO);
 	while(!run) {
 		BermudaThreadYield();

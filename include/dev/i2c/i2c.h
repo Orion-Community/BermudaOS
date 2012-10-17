@@ -65,6 +65,7 @@ struct i2c_adapter {
 	
 	uint8_t flags; //!< Bus flags.
 	bool busy; //!< Defines wether the interface is busy or not.
+	uint8_t error;
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */
@@ -94,6 +95,8 @@ extern int i2cdev_close(FILE *stream);
 extern int i2cdev_socket(struct i2c_client *client, uint16_t flags);
 extern int i2cdev_listen(int fd, void *buff, size_t size);
 
+extern void i2cdev_free_master_msg(int fd);
+
 /* init routines */
 extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
 
@@ -102,6 +105,7 @@ extern int i2c_setup_msg(FILE *stream, struct i2c_message *msg, uint8_t flags);
 extern int i2c_call_client(struct i2c_client *client, FILE *stream);
 extern void i2c_cleanup_msg(FILE *stream, uint8_t msg);
 extern void i2c_do_clean_msgs();
+extern void i2c_cleanup_master_msgs(FILE *stream);
 __DECL_END
 
 

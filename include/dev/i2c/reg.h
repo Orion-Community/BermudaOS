@@ -35,6 +35,8 @@
  */
 #define I2C_TMO 500
 
+#define I2C_TIMEOUT (-1)
+
 /**
  * \brief Number of I2C messages in one array.
  * \see I2C_MASTER_TRANSMIT_MSG

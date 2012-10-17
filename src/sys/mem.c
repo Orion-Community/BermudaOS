@@ -71,7 +71,7 @@ PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
         
         if(c == NULL)
 		{
-				printf_P(PSTR("NOMEM!\n"));
+				printf("NOMEM\n");
 				BermudaMutexRelease(&mem_lock);
 				return NULL;
 		}

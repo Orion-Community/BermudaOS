@@ -55,6 +55,14 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	return rc;
 }
 
+PUBLIC void i2cdev_free_master_msg(int fd)
+{
+	FILE *stream = fdopen(fd);
+	struct i2c_client *client = stream->data;
+	
+	i2c_cleanup_master_msgs(client->adapter->dev->io);
+}
+
 /**
  * \brief Initializes the buffer for an I2C master transmit.
  * \param file I/O file.
@@ -240,6 +248,7 @@ PUBLIC int i2cdev_close(FILE *stream)
 	struct i2c_adapter *adap = client->adapter;
 	int rc = -1;
 	
+	i2c_do_clean_msgs();
 	if(stream != NULL) {
 		if(stream->buff != NULL) {
 			BermudaHeapFree((void*)stream->buff);

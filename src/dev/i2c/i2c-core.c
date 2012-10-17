@@ -59,8 +59,21 @@ PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 	msg2->freq = msg->freq;
 	msg2->addr = msg->addr;
 	
+	if(msgs[flags] != NULL) {
+		BermudaHeapFree(msgs[flags]);
+	}
 	msgs[flags] = msg2;
 	return 0;
+}
+
+PUBLIC void i2c_cleanup_master_msgs(FILE *stream)
+{
+	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
+	
+	cleanup_list[I2C_MASTER_TRANSMIT_MSG] = (void*)msgs[I2C_MASTER_TRANSMIT_MSG];
+	cleanup_list[I2C_MASTER_RECEIVE_MSG]  = (void*)msgs[I2C_MASTER_RECEIVE_MSG];
+	msgs[I2C_MASTER_TRANSMIT_MSG] = NULL;
+	msgs[I2C_MASTER_RECEIVE_MSG]  = NULL;
 }
 
 /**
@@ -102,7 +115,12 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
 	struct i2c_message *msg = BermudaHeapAlloc(sizeof(*msg));
 	
-	client->callback(msg);
+	if(msg) {
+		client->callback(msg);
+	}
+	if(msgs[I2C_SLAVE_TRANSMIT_MSG] != NULL) {
+		BermudaHeapFree(msgs[I2C_SLAVE_TRANSMIT_MSG]);
+	}
 	msgs[I2C_SLAVE_TRANSMIT_MSG] = msg;
 	return client->adapter->slave_respond(stream);
 }

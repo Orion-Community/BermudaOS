@@ -86,14 +86,8 @@ PUBLIC void BermudaStackSave(stack_t sp)
 	sp += 2;
 	BermudaCurrentThread->sp = sp;
 	// switch the current thread pointer
-	if(BermudaRunQueue->sp <= BermudaRunQueue->stack) {
-		printf("%s", BermudaCurrentThread->name);
-		printf("%s", BermudaRunQueue->name);
-	}
 	BermudaCurrentThread = BermudaRunQueue;
 	BermudaCurrentThread->state = THREAD_RUNNING;
-	
-
 }
 
 /**

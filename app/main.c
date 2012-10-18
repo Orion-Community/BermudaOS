@@ -150,10 +150,10 @@ void setup()
 		BermudaThreadSleep(500);
 	}
 	
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128+45,
-					BermudaHeapAlloc(128+45), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 128+45, 
-					BermudaHeapAlloc(128+45), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 175,
+					BermudaHeapAlloc(175), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 175, 
+					BermudaHeapAlloc(175), BERMUDA_DEFAULT_PRIO);
 
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);

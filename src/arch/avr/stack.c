@@ -18,7 +18,8 @@
 
 /** \file src/arch/avr/stack.c */
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/thread.h>
 
 #include <arch/avr/stack.h>
@@ -66,9 +67,7 @@ thread_handle_t handle;
 	for(; i < 31; i++) {
 		*(t->sp--) = 0;
 	}
-#if defined(__THREAD_DBG__) && (__VERBAL__)
-	printf("Stack: %p - Param: %p\n", t->stack, t->param);
-#endif
+
 	t->sp[8] = ((unsigned short)t->param) & 0xFF;
 	t->sp[7] = (((unsigned short)t->param) >> 8) & 0xFF;
 }
@@ -84,15 +83,17 @@ thread_handle_t handle;
  */
 PUBLIC void BermudaStackSave(stack_t sp)
 {
-	if(BermudaCurrentThread == NULL) {
-		return;
-	}
-
 	sp += 2;
 	BermudaCurrentThread->sp = sp;
 	// switch the current thread pointer
+	if(BermudaRunQueue->sp <= BermudaRunQueue->stack) {
+		printf("%s", BermudaCurrentThread->name);
+		printf("%s", BermudaRunQueue->name);
+	}
 	BermudaCurrentThread = BermudaRunQueue;
 	BermudaCurrentThread->state = THREAD_RUNNING;
+	
+
 }
 
 /**

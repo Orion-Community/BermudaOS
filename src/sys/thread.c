@@ -18,7 +18,8 @@
 
 /** \file thread.c */
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <lib/string.h>
 
 #include <arch/io.h>
@@ -84,7 +85,6 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
         if(NULL == t)
                 return -1;
 
-        BermudaStackInit(t, stack, stack_size, handle);
         t->param = arg;
         t->prio = prio;
         t->state = THREAD_READY;
@@ -92,6 +92,7 @@ int BermudaThreadInit(THREAD *t, char *name, thread_handle_t handle, void *arg,
         t->sleep_time = 0;
         t->q_next = NULL;
         t->next = NULL;
+		BermudaStackInit(t, stack, stack_size, handle);
         return 0;
 }
 
@@ -120,6 +121,7 @@ void BermudaThreadCreate(THREAD *t, char *name, thread_handle_t handle, void *ar
         t->q_next = BermudaThreadHead;
         BermudaThreadHead = t;
         BermudaThreadPrioQueueAdd(&BermudaRunQueue, t);
+// 		printf("%p\n", t->name, t);
 }
 
 /**
@@ -263,7 +265,7 @@ PUBLIC void BermudaThreadNotify(THREAD *t)
  */
 PUBLIC void BermudaThreadExit()
 {
-        if(BermudaCurrentThread != BermudaThreadGetByName("Main Thread"))
+        if(BermudaCurrentThread != BermudaThreadGetByName("MAIN"))
         {
                 BermudaThreadQueueRemove(&BermudaRunQueue, BermudaCurrentThread);
                 BermudaThreadQueueRemove(&BermudaThreadHead, BermudaCurrentThread);

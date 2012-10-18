@@ -72,7 +72,7 @@ PUBLIC int vfprintf(FILE *stream, const char *fmt, va_list ap)
 					break;
 					
 				case 's':
-					fputs(va_arg(ap, char*), stream);
+					fputs((char*)va_arg(ap, size_t), stream);
 					break;
 					
 				case '%':

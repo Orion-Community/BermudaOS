@@ -53,7 +53,6 @@ struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
 static unsigned char i2c_slave_tx = 0x0;
-static volatile bool run = false;
 
 static void slave_responder(struct i2c_message *msg)
 {
@@ -61,29 +60,6 @@ static void slave_responder(struct i2c_message *msg)
 	msg->length = 1;
 	i2c_slave_tx++;
 	return;
-}
-
-THREAD(StdInput, arg)
-{
-	char buff[4];
-	int fd;
-	
-	while(1) {
-		fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
-		if(fd < 0) {
-			goto sleep;
-		}
-		read(fd, buff, 3);
-		usartdev_close(fd);
-		
-		sleep:
-		buff[3] = '\0';
-		if(!strcmp(buff, "run")) {
-			run = true;
-		}
-		printf_P(PSTR("%s\n"), buff);
-		BermudaThreadSleep(500);
-	}
 }
 
 THREAD(IIC_slave, arg)
@@ -158,16 +134,26 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "STDIN", &StdInput, NULL, 90,
-					BermudaHeapAlloc(100), BERMUDA_DEFAULT_PRIO);
-	while(!run) {
-		BermudaThreadYield();
+	int fd;
+	char buff[4];
+	while(1) {
+		fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
+		if(fd < 0) {
+			_exit();
+		}
+		read(fd, buff, 3);
+		usartdev_close(fd);
+		buff[3] = '\0';
+		if(!strcmp(buff, "run")) {
+			break;
+		}
+		BermudaThreadSleep(500);
 	}
 	
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128,
-					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 128, 
-					BermudaHeapAlloc(128), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 128+45,
+					BermudaHeapAlloc(128+45), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 128+45, 
+					BermudaHeapAlloc(128+45), BERMUDA_DEFAULT_PRIO);
 
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);

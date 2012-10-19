@@ -29,7 +29,6 @@
 
 #include <dev/dev.h>
 #include <dev/spibus.h>
-#include <dev/usartif.h>
 #include <dev/adc.h>
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
@@ -53,6 +52,14 @@ struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
 static unsigned char i2c_slave_tx = 0x0;
+static bool run = false;
+
+static unsigned char i2c_slave_stack[128];
+static uint8_t i2c_master_stack[128];
+static uint8_t usart_input_stack[100];
+THREAD i2c_master;
+THREAD i2c_slave;
+THREAD usart_input;
 
 static void slave_responder(struct i2c_message *msg)
 {
@@ -60,6 +67,30 @@ static void slave_responder(struct i2c_message *msg)
 	msg->length = 1;
 	i2c_slave_tx++;
 	return;
+}
+
+THREAD(USART_input, arg)
+{
+	char buff[4];
+	int fd;
+	
+	while(1) {
+		fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
+		if(fd < 0) {
+			goto sleep;
+		}
+		read(fd, buff, 3);
+		usartdev_close(fd);
+		
+		buff[3] = '\0';
+		if(!strcmp(buff, "run")) {
+			run = true;
+		}
+		printf_P(PSTR("%s\n"), buff);
+		
+		sleep:
+		BermudaThreadSleep(500);
+	}
 }
 
 THREAD(IIC_slave, arg)
@@ -134,26 +165,18 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
-	int fd;
-	char buff[4];
-	while(1) {
-		fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
-		if(fd < 0) {
-			_exit();
-		}
-		read(fd, buff, 3);
-		usartdev_close(fd);
-		buff[3] = '\0';
-		if(!strcmp(buff, "run")) {
-			break;
-		}
-		BermudaThreadSleep(500);
+	
+	BermudaThreadCreate(&usart_input, "USART", &USART_input, NULL, 100,
+						usart_input_stack, BERMUDA_DEFAULT_PRIO);
+	
+	while(!run) {
+		BermudaThreadYield();
 	}
 	
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "TWI", &TwiTest, NULL, 175,
-					BermudaHeapAlloc(175), BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(BermudaHeapAlloc(sizeof(THREAD)), "IICS", &IIC_slave, NULL, 175, 
-					BermudaHeapAlloc(175), BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(&i2c_master, "TWI", &TwiTest, NULL, 128,
+					i2c_master_stack, BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(&i2c_slave, "IICS", &IIC_slave, NULL, 128, 
+					i2c_slave_stack, BERMUDA_DEFAULT_PRIO);
 
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
@@ -185,13 +208,6 @@ unsigned long loop()
 
 	printf_P(PSTR("Read back value's: %X::%X\n"), read_back_eeprom,
 		read_back_sram);
-
-	fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
-	if(fd < 0) {
-		goto end;
-	}
-	write_P(fd, PSTR("USART OUT\n"), 10);
-	usartdev_close(fd);
 	
 	end:
 #ifdef __THREADS__

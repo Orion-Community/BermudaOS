@@ -108,7 +108,9 @@ THREAD *BermudaKillQueue = NULL;
  * an infinite loop. It will be ran when there are no other threads to run (e.g.
  * when the main thread is the only thread running and is sleeping).
  */
-static THREAD *BermudaIdleThread = NULL;
+static THREAD BermudaIdleThread;
+
+static THREAD t_main;
 
 /**
  * \var BermudaIdleThreadStack
@@ -116,7 +118,7 @@ static THREAD *BermudaIdleThread = NULL;
  * 
  * Allocated space for the stack of the idle thread.
  */
-static char BermudaIdleThreadStack[128];
+static char BermudaIdleThreadStack[100];
 
 /**
  * \fn IdleThread(void *arg)
@@ -137,12 +139,11 @@ static void IdleThread(void *arg);
 void BermudaSchedulerInit(thread_handle_t handle)
 {    
         // initialise the idle thread
-        BermudaIdleThread = BermudaHeapAlloc(sizeof(*BermudaIdleThread));
-        BermudaThreadCreate(BermudaIdleThread, "IDLE", &IdleThread, 
-                            (void*)handle, 128, &BermudaIdleThreadStack[0], 255);
+        BermudaThreadCreate(&BermudaIdleThread, "IDLE", &IdleThread, 
+                            (void*)handle, 100, &BermudaIdleThreadStack[0], 255);
         
         // switch to the idle thread
-        BermudaCurrentThread = BermudaIdleThread;
+        BermudaCurrentThread = &BermudaIdleThread;
 }
 
 /**
@@ -312,8 +313,7 @@ PUBLIC void BermudaSchedulerExec()
 THREAD(IdleThread, arg)
 {
         // initialise the thread
-        THREAD *t_main = BermudaHeapAlloc(sizeof(*t_main));
-        BermudaThreadCreate(t_main, "MAIN", arg, NULL, 150, NULL,
+        BermudaThreadCreate(&t_main, "MAIN", arg, NULL, 128, NULL,
                                         BERMUDA_DEFAULT_PRIO);
         while(1)
         {

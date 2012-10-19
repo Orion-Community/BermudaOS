@@ -35,7 +35,6 @@ struct i2c_message
 	uint8_t *buff; //!< Message buffer.
 	size_t length; //!< Message length.
 	uint16_t addr; //!< Slave address.
-	uint32_t freq; //!< Frequency.
 } __attribute__((packed));
 
 /**

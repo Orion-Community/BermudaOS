@@ -80,7 +80,6 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 	if(client != NULL) {
 		msg.buff = (void*)buff;
 		msg.length = size;
-		msg.freq = client->freq;
 		msg.addr = client->sla;
 		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_TRANSMIT_MSG);
 	}
@@ -106,7 +105,6 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 		}
 		msg.buff = (void*)buff;
 		msg.length = size;
-		msg.freq = client->freq;
 		msg.addr = client->sla;
 		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_RECEIVE_MSG);
 	}
@@ -213,7 +211,6 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 	msg.buff = buff;
 	msg.length = size;
 	msg.addr = client->sla;
-	msg.freq = client->freq;
 	if((rc = i2c_setup_msg(fdopen(dev), &msg, I2C_SLAVE_RECEIVE_MSG)) == -1) {
 		goto out;
 	}

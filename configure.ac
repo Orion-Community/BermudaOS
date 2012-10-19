@@ -42,6 +42,8 @@ AC_ARG_ENABLE([uno],
 )
 
 AC_ARG_VAR(EXTRAM, [Amount of !EXTENDED! RAM available.])
+AC_ARG_VAR(IDLE_STACK, [Size of the idle stack.])
+AC_ARG_VAR(MAIN_STACK, [Size of the main stack.])
 
 # code enable flags
 AC_ARG_ENABLE([threads],
@@ -120,6 +122,14 @@ if test "x$EXTRAM" = "x"; then
 EXTRAM=0
 fi
 
+if test "x$IDLE_STACK" = "x"; then
+IDLE_STACK=100
+fi
+
+if test "x$MAIN_STACK" = "x"; then
+MAIN_STACK=128
+fi
+
 # autoheader defines
 if test "x$iic" = "xyes"; then
 AC_DEFINE([__I2C__], [1], [Defines wether I2C is enabled])
@@ -150,6 +160,8 @@ fi
 if test "x$atmega" = "xyes"; then
 AC_DEFINE([ATMEGA], [1], [Defines weather we are using an atmega based CPU])
 fi
+
+AH_BOTTOM([#include <configmake.h>])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdarg.h])

@@ -118,7 +118,7 @@ static THREAD t_main;
  * 
  * Allocated space for the stack of the idle thread.
  */
-static char BermudaIdleThreadStack[100];
+static char BermudaIdleThreadStack[IDLE_STACK_SIZE];
 
 /**
  * \fn IdleThread(void *arg)
@@ -140,7 +140,7 @@ void BermudaSchedulerInit(thread_handle_t handle)
 {    
         // initialise the idle thread
         BermudaThreadCreate(&BermudaIdleThread, "IDLE", &IdleThread, 
-                            (void*)handle, 100, &BermudaIdleThreadStack[0], 255);
+                            (void*)handle, IDLE_STACK_SIZE, &BermudaIdleThreadStack[0], 255);
         
         // switch to the idle thread
         BermudaCurrentThread = &BermudaIdleThread;
@@ -313,7 +313,7 @@ PUBLIC void BermudaSchedulerExec()
 THREAD(IdleThread, arg)
 {
         // initialise the thread
-        BermudaThreadCreate(&t_main, "MAIN", arg, NULL, 128, NULL,
+        BermudaThreadCreate(&t_main, "MAIN", arg, NULL, MAIN_STACK_SIZE, NULL,
                                         BERMUDA_DEFAULT_PRIO);
         while(1)
         {

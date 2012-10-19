@@ -196,7 +196,6 @@ unsigned long loop()
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
-	int fd;
 	
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
@@ -209,7 +208,6 @@ unsigned long loop()
 	printf_P(PSTR("Read back value's: %X::%X\n"), read_back_eeprom,
 		read_back_sram);
 	
-	end:
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
 	return;

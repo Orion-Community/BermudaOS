@@ -60,7 +60,6 @@ PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 	
 	msg2->buff = msg->buff;
 	msg2->length = msg->length;
-	msg2->freq = msg->freq;
 	msg2->addr = msg->addr;
 	
 	msgs[flags] = msg2;

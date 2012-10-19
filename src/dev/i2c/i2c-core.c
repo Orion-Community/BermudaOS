@@ -66,6 +66,10 @@ PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 	return 0;
 }
 
+/**
+ * \brief Clean up master buffers.
+ * \param Peripheral I/O file.
+ */
 PUBLIC void i2c_cleanup_master_msgs(FILE *stream)
 {
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
@@ -74,6 +78,20 @@ PUBLIC void i2c_cleanup_master_msgs(FILE *stream)
 	cleanup_list[I2C_MASTER_RECEIVE_MSG]  = (void*)msgs[I2C_MASTER_RECEIVE_MSG];
 	msgs[I2C_MASTER_TRANSMIT_MSG] = NULL;
 	msgs[I2C_MASTER_RECEIVE_MSG]  = NULL;
+}
+
+/**
+ * \brief Clean up slave buffers.
+ * \param Peripheral I/O file.
+ */
+PUBLIC void i2c_cleanup_slave_msgs(FILE *stream)
+{
+	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
+	
+	cleanup_list[I2C_SLAVE_RECEIVE_MSG] = (void*)msgs[I2C_SLAVE_RECEIVE_MSG];
+	cleanup_list[I2C_SLAVE_TRANSMIT_MSG] = (void*)msgs[I2C_SLAVE_TRANSMIT_MSG];
+	msgs[I2C_SLAVE_RECEIVE_MSG] = NULL;
+	msgs[I2C_SLAVE_TRANSMIT_MSG]  = NULL;
 }
 
 /**

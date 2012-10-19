@@ -139,7 +139,7 @@ THREAD(TwiTest, arg)
 		if(rc == 0) {
 			flush(fd);
 		} else {
-			i2cdev_free_master_msg(fd);
+			i2cdev_error(fd);
 		}
 		close(fd);
 

@@ -61,7 +61,7 @@ PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 	if(rc == 0) {
 		rc = flush(fd);
 	} else {
-		i2cdev_free_master_msg(fd);
+		i2cdev_error(fd);
 	}
 	close(fd);
 
@@ -84,7 +84,7 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 	if(rc == 0) {
 		flush(fd);
 	} else {
-		i2cdev_free_master_msg(fd);
+		i2cdev_error(fd);
 	}
 	
 	close(fd);

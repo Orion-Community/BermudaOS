@@ -55,12 +55,23 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	return rc;
 }
 
-PUBLIC void i2cdev_free_master_msg(int fd)
+/**
+ * \brief Handle an I2C file I/O error.
+ * \param flags Set to I2C_MASTER when it occured in a master driver.
+ * 
+ * It will free the correspondending buffers. If I2C_MASTER is given all master buffers will be
+ * free'd if I2C_SLAVE is passed, all slave buffers will be free'd.
+ */
+PUBLIC void i2cdev_error(int fd)
 {
 	FILE *stream = fdopen(fd);
 	struct i2c_client *client = stream->data;
 	
-	i2c_cleanup_master_msgs(client->adapter->dev->io);
+	if((stream->flags & I2C_MASTER) != 0) {
+		i2c_cleanup_master_msgs(client->adapter->dev->io);
+	} else {
+		i2c_cleanup_slave_msgs(client->adapter->dev->io);
+	}
 }
 
 /**

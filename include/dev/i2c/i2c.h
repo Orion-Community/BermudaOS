@@ -93,8 +93,7 @@ extern int i2cdev_flush(FILE *stream);
 extern int i2cdev_close(FILE *stream);
 extern int i2cdev_socket(struct i2c_client *client, uint16_t flags);
 extern int i2cdev_listen(int fd, void *buff, size_t size);
-
-extern void i2cdev_free_master_msg(int fd);
+extern void i2cdev_error(int fd);
 
 /* init routines */
 extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
@@ -105,6 +104,7 @@ extern int i2c_call_client(struct i2c_client *client, FILE *stream);
 extern void i2c_cleanup_msg(FILE *stream, uint8_t msg);
 extern void i2c_do_clean_msgs();
 extern void i2c_cleanup_master_msgs(FILE *stream);
+extern void i2c_cleanup_slave_msgs(FILE *stream);
 __DECL_END
 
 

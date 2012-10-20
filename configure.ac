@@ -185,6 +185,7 @@ AC_CONFIG_FILES([Makefile
                  src/arch/avr/328/dev/Makefile
                  src/dev/Makefile
                  src/dev/i2c/Makefile
+                 src/dev/pwm/Makefile
                  src/dev/usart/Makefile
                  src/lib/Makefile
                  src/lib/c/Makefile

@@ -15,9 +15,14 @@ MAYBE_USART=usart
 USART_LIB=usart/libusart.la
 endif
 
+if PWM
+MAYBYE_PWM=pwm
+PWM_LIB=pwm/libpwm.la
+endif
 
-SUBDIRS=$(MAYBE_IIC) $(MAYBE_USART)
+
+SUBDIRS=$(MAYBE_IIC) $(MAYBYE_PWM) $(MAYBE_USART)
 lib_LTLIBRARIES=libdev.la
 libdev_la_SOURCES=devreg.c $(OPT_SCRS)
-libdev_la_LIBADD=$(IIC_LIB) $(USART_LIB)
+libdev_la_LIBADD=$(IIC_LIB) $(PWM_LIB) $(USART_LIB)
 include ../../Makefile.flags

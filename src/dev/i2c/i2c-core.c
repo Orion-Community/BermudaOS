@@ -18,6 +18,8 @@
 
 /**
  * \file src/dev/i2c/i2c-core.c I2C core functions.
+ * \addtogroup i2c
+ * @{
  */
 
 #include <stdlib.h>
@@ -146,3 +148,6 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 	msgs[I2C_SLAVE_TRANSMIT_MSG] = msg;
 	return client->adapter->slave_respond(stream);
 }
+/**
+ * @}
+ */

@@ -17,6 +17,10 @@
  */
 
 //! \file include/dev/i2c/reg.h I2C definitions
+/**
+ * \addtogroup i2c
+ * @{
+ */
 
 #ifndef __I2C_REG_H
 #define __I2C_REG_H
@@ -26,15 +30,15 @@
  */
 #define TW_IF_IDLE (BIT(SCL) | BIT(SDA))
 
-#define TW_IF_BUSY1 BIT(SCL)
-#define TW_IF_BUSY2 BIT(SDA)
-#define TW_IF_BUSY3 0
-
 /**
  * \brief Time-out for I2C transfers if threads are enabled.
  */
 #define I2C_TMO 500
 
+/**
+ * \def I2C_TIMEOUT
+ * \brief Time-out error.
+ */
 #define I2C_TIMEOUT (-1)
 
 /**
@@ -69,12 +73,29 @@
 
 /* adapter flags */
 #define I2C_MASTER_ENABLE 		BIT(0) //!< Master enable bit in the flags member of i2c_client.
+
+/**
+ * \brief Transmitter enable flag.
+ * \note I2C_RECEIVER <b>or</b> I2C_TRANSMITTER must be active, but not both.
+ */
 #define I2C_TRANSMITTER 		BIT(1)
+
+/**
+ * \brief Receiver enable flag.
+ * \note I2C_RECEIVER <b>or</b> I2C_TRANSMITTER must be active, but not both.
+ */
 #define I2C_RECEIVER			BIT(2)
-#define I2C_ERROR				BIT(3)
+#define I2C_ERROR				BIT(3) //!< Error flag. Indicates an error occured.
+
+/**
+ * \brief Call-back flag. Set when the i2c device driver can safely call back the application.
+ */
 #define I2C_CALL_BACK			BIT(4)
 
-#define I2C_SLAVE_MASK			(~BIT(0))
-#define I2C_SLAVE_ENABLE		0
+#define I2C_SLAVE_MASK			(~BIT(0)) //!< Slave enable mask.
+#define I2C_SLAVE_ENABLE		0 //!< Slave enable.
 
 #endif
+/**
+ * @}
+ */

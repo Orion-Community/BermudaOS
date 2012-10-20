@@ -17,6 +17,10 @@
  */
 
 //! \file include/dev/i2c/i2c.h I2C header
+/**
+ * \addtogroup i2c
+ * @{
+ */
 
 #ifndef I2C_H_
 #define I2C_H_
@@ -109,3 +113,6 @@ __DECL_END
 
 
 #endif /* I2C_H_ */
+/**
+ * @}
+ */

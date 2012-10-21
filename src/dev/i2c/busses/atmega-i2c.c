@@ -46,12 +46,13 @@ static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
 
 static int atmega_i2c_put_char(int c, FILE *stream);
 static int atmega_i2c_get_char(FILE *stream);
+static int atmega_i2c_write(FILE *stream, const void *buff, size_t num);
 static int atmega_i2c_init_transfer(FILE *stream);
 
 /**
  * \brief File I/O structure for bus 0 on port C.
  */
-static FDEV_SETUP_STREAM(i2c_c0_io, NULL, NULL, &atmega_i2c_put_char, 
+static FDEV_SETUP_STREAM(i2c_c0_io, &atmega_i2c_write, NULL, &atmega_i2c_put_char, 
 						 &atmega_i2c_get_char, &atmega_i2c_init_transfer, 
 						 I2C_FNAME, 0 /* flags */, NULL /* data */);
 
@@ -93,6 +94,12 @@ static struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
  * \brief I2C bus 0 message array.
  */
 static struct i2c_message *i2c_c0_msgs[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
+
+/**
+ * \var cleanup_list
+ * \brief List of messages which are not needed anymore and can be free'd.
+ */
+// static struct i2c_message *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
 
 /**
  * \brief Intialize an I2C bus.
@@ -440,6 +447,34 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 			break;
 	}
 	return;
+}
+
+/**
+ * \brief Write to the ATmega I2C message buffer.
+ * \param stream I/O file.
+ * \param buff An I2C message.
+ * \param num The message to write to. This can either be <i>I2C_MASTER_TRANSMIT_MSG</i>, 
+ *            <i>I2C_MASTER_RECEIVE_MSG</i>, <i>I2C_SLAVE_RECEIVE_MSG</i> or 
+ *            <i>I2C_SLAVE_TRANSMIT_MSG</i>.
+ * 
+ * Calling this function with <b>buff</b> set to <i>NULL</i> will release/free the current message
+ * if there is one set.
+ */
+static int atmega_i2c_write(FILE *stream, const void *buff, size_t num)
+{
+	struct i2c_message **msgs = (void*)stream->buff;
+	
+	if(num > I2C_SLAVE_TRANSMIT_MSG) {
+		return -1;
+	}
+	
+	if(msgs[num]) {
+		BermudaHeapFree(msgs[num]);
+	}
+	
+	msgs[num] = buff;
+	
+	return 0;
 }
 
 /**

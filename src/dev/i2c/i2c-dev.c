@@ -130,9 +130,9 @@ PUBLIC void i2cdev_error(int fd)
 	struct i2c_client *client = stream->data;
 	
 	if((stream->flags & I2C_MASTER) != 0) {
-		i2c_cleanup_master_msgs(client->adapter->dev->io);
+		i2c_cleanup_master_msgs(client->adapter->dev->io, client->adapter);
 	} else {
-		i2c_cleanup_slave_msgs(client->adapter->dev->io);
+		i2c_cleanup_slave_msgs(client->adapter->dev->io, client->adapter);
 	}
 }
 
@@ -259,7 +259,7 @@ PUBLIC int i2cdev_flush(FILE *stream)
 	adap->dev->io->flags |= stream->flags & 0xFF00;
 	
 	rc = flush(rc);
-	i2c_do_clean_msgs();
+	i2c_do_clean_msgs(adap);
 	return rc;
 }
 
@@ -303,7 +303,7 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 		}
 	}
 	
-	i2c_do_clean_msgs();
+	i2c_do_clean_msgs(client->adapter);
 	out:
 	return rc;
 }
@@ -318,7 +318,7 @@ PUBLIC int i2cdev_close(FILE *stream)
 	struct i2c_adapter *adap = client->adapter;
 	int rc = -1;
 	
-	i2c_do_clean_msgs();
+	i2c_do_clean_msgs(adap);
 	if(stream != NULL) {
 		if(stream->buff != NULL) {
 			BermudaHeapFree((void*)stream->buff);

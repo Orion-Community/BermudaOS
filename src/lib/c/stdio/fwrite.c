@@ -19,13 +19,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/**
- * \brief Write to a file.
- * \param fd File descriptor.
- * \param buff Buffer to write.
- * \param size Size of the buffer.
- */
-PUBLIC int write(int fd, const void *buff, size_t size)
+PUBLIC int fwrite(FILE *stream, const void *buff, size_t size)
 {
-	return fwrite(fdopen(fd), buff, size);
+	if(stream) {
+		if((stream->flags & __SWR) != 0 && stream->write) {
+			return stream->write(stream, buff, size);
+		} else {
+			return -2;
+		}
+	} else {
+		return -1;
+	}
 }

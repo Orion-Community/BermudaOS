@@ -46,7 +46,7 @@ static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
 
 static int atmega_i2c_put_char(int c, FILE *stream);
 static int atmega_i2c_get_char(FILE *stream);
-static int atmega_i2c_write(FILE *stream, const void *buff, size_t num);
+static int atmega_i2c_write(FILE *stream, const void *msg, size_t msgnum);
 static int atmega_i2c_init_transfer(FILE *stream);
 
 /**
@@ -99,7 +99,7 @@ static struct i2c_message *i2c_c0_msgs[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, 
  * \var cleanup_list
  * \brief List of messages which are not needed anymore and can be free'd.
  */
-// static struct i2c_message *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
+static struct i2c_message *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
 
 /**
  * \brief Intialize an I2C bus.
@@ -135,6 +135,7 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 #endif
 	adapter->data = (void*)&i2c_c0;
 	adapter->slave_respond = &atmega_i2c_slave_respond;
+	adapter->cleanup_list = cleanup_list;
 
 	vfs_add(&i2c_c0_io);
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);
@@ -263,9 +264,9 @@ static int atmega_i2c_init_transfer(FILE *stream)
 					adap->dev->ctrl(adap->dev, I2C_START | I2C_NACK, NULL);
 				}
 			} else {
-				i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
-				i2c_cleanup_msg(stream, I2C_MASTER_RECEIVE_MSG);
-				i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
+				i2c_cleanup_msg(stream, adap, I2C_MASTER_TRANSMIT_MSG);
+				i2c_cleanup_msg(stream, adap, I2C_MASTER_RECEIVE_MSG);
+				i2c_cleanup_msg(stream, adap, I2C_SLAVE_RECEIVE_MSG);
 			}
 		}
 
@@ -315,9 +316,9 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, FILE *stream)
 				adapter->dev->ctrl(adapter->dev, I2C_LISTEN, NULL);
 			}
 		} else {
-			i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
-			i2c_cleanup_msg(stream, I2C_MASTER_RECEIVE_MSG);
-			i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
+			i2c_cleanup_msg(stream, adapter, I2C_MASTER_TRANSMIT_MSG);
+			i2c_cleanup_msg(stream, adapter, I2C_MASTER_RECEIVE_MSG);
+			i2c_cleanup_msg(stream, adapter, I2C_SLAVE_RECEIVE_MSG);
 		}
 	}
 	
@@ -359,7 +360,7 @@ static int atmega_i2c_slave_respond(FILE *stream)
 #endif
 		} else {
 			no_tx();
-			i2c_cleanup_msg(stream, I2C_SLAVE_TRANSMIT_MSG);
+			i2c_cleanup_msg(stream, adapter, I2C_SLAVE_TRANSMIT_MSG);
 		}
 	} else {
 		no_tx();
@@ -449,32 +450,33 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 	return;
 }
 
-/**
- * \brief Write to the ATmega I2C message buffer.
- * \param stream I/O file.
- * \param buff An I2C message.
- * \param num The message to write to. This can either be <i>I2C_MASTER_TRANSMIT_MSG</i>, 
- *            <i>I2C_MASTER_RECEIVE_MSG</i>, <i>I2C_SLAVE_RECEIVE_MSG</i> or 
- *            <i>I2C_SLAVE_TRANSMIT_MSG</i>.
- * 
- * Calling this function with <b>buff</b> set to <i>NULL</i> will release/free the current message
- * if there is one set.
- */
-static int atmega_i2c_write(FILE *stream, const void *buff, size_t num)
+static int atmega_i2c_write(FILE *stream, const void *msg, size_t flags)
 {
-	struct i2c_message **msgs = (void*)stream->buff;
+	int rc = 0;
+	struct i2c_message *msg2;
+	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
 	
-	if(num > I2C_SLAVE_TRANSMIT_MSG) {
-		return -1;
+	if(msgs[flags] != NULL) {
+		BermudaHeapFree(msgs[flags]);
 	}
 	
-	if(msgs[num]) {
-		BermudaHeapFree(msgs[num]);
+	if(!msg) {
+		msgs[flags] = NULL;
+		return 0;
 	}
 	
-	msgs[num] = buff;
+	msg2 = BermudaHeapAlloc(sizeof(*msg2));
 	
-	return 0;
+	if(msg2) {
+		msg2->buff = ((struct i2c_message*)msg)->buff;
+		msg2->length = ((struct i2c_message*)msg)->length;
+		msg2->addr = ((struct i2c_message*)msg)->addr;
+	} else {
+		rc = -1;
+	}
+
+	msgs[flags] = (void*)msg2;
+	return rc;
 }
 
 /**
@@ -589,7 +591,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 						adapter->flags &= ~I2C_TRANSMITTER;
 						adapter->flags |= I2C_RECEIVER;
 						msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-						i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+						i2c_cleanup_msg(stream, adapter, I2C_MASTER_TRANSMIT_MSG);
 						
 						/* sent the repeated start */
 						atmega_i2c_reg_read(priv->twcr, &status);
@@ -606,7 +608,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 #endif
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-				i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+				i2c_cleanup_msg(stream, adapter, I2C_MASTER_TRANSMIT_MSG);
 			}
 			adapter->busy = false;
 			
@@ -641,7 +643,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		case I2C_MT_DATA_NACK:
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				msgs[I2C_MASTER_TRANSMIT_MSG]->length = 0;
-				i2c_cleanup_msg(stream, I2C_MASTER_TRANSMIT_MSG);
+				i2c_cleanup_msg(stream, adapter, I2C_MASTER_TRANSMIT_MSG);
 			}
 			/* roll through */
 		/*
@@ -650,7 +652,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		case I2C_MR_SLA_NACK:
 			if(msgs[I2C_MASTER_RECEIVE_MSG]) {
 				msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
-				i2c_cleanup_msg(stream, I2C_MASTER_RECEIVE_MSG);
+				i2c_cleanup_msg(stream, adapter, I2C_MASTER_RECEIVE_MSG);
 			}
 			adapter->busy = false;
 #ifdef __THREADS__
@@ -717,7 +719,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 					msgs[I2C_MASTER_RECEIVE_MSG]->buff[atmega_i2c_get_index(stream)] = (uint8_t)fgetc(stream);
 				}
 				msgs[I2C_MASTER_RECEIVE_MSG]->length = 0;
-				i2c_cleanup_msg(stream, I2C_MASTER_RECEIVE_MSG);
+				i2c_cleanup_msg(stream, adapter, I2C_MASTER_RECEIVE_MSG);
 			}
 			adapter->busy = false;
 			
@@ -808,7 +810,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 		case I2C_SR_GC_DATA_NACK:
 			if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
 				msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
-				i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
+				i2c_cleanup_msg(stream, adapter, I2C_SLAVE_RECEIVE_MSG);
 			}
 			if(msgs[I2C_MASTER_TRANSMIT_MSG]) {
 				if(msgs[I2C_MASTER_TRANSMIT_MSG]->length) {
@@ -853,7 +855,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 				if(msgs[I2C_SLAVE_RECEIVE_MSG]) {
 					dev->ctrl(dev, I2C_BLOCK, NULL);
 					msgs[I2C_SLAVE_RECEIVE_MSG]->length = 0;
-					i2c_cleanup_msg(stream, I2C_SLAVE_RECEIVE_MSG);
+					i2c_cleanup_msg(stream, adapter, I2C_SLAVE_RECEIVE_MSG);
 					adapter->flags &= ~I2C_ERROR;
 					adapter->flags |= I2C_CALL_BACK;
 					break;
@@ -908,7 +910,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			adapter->flags &= ~I2C_ERROR;
 			if(msgs[I2C_SLAVE_TRANSMIT_MSG]) {
 				msgs[I2C_SLAVE_TRANSMIT_MSG]->length = 0;
-				i2c_cleanup_msg(stream, I2C_SLAVE_TRANSMIT_MSG);
+				i2c_cleanup_msg(stream, adapter, I2C_SLAVE_TRANSMIT_MSG);
 			}
 			adapter->busy = false;
 			
@@ -948,7 +950,7 @@ ISR(atmega_i2c_isr_handle, adapter, struct i2c_adapter *)
 			for(i = 0; i < I2C_MSG_NUM; i++) {
 				msgs[i]->buff = NULL;
 				msgs[i]->length = 0;
-				i2c_cleanup_msg(stream, i);
+				i2c_cleanup_msg(stream, adapter, i);
 			}
 			
 			atmega_i2c_reset_index(stream);

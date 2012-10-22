@@ -131,6 +131,7 @@ extern int fdputc(int c, int fd);
 extern int fdgetc(int fd);
 
 extern int write(int fd, const void *buff, size_t size);
+extern int fwrite(FILE *stream, const void *buff, size_t size);
 extern int read(int fd, void *buff, size_t size);
 extern void fdmode(int fd, unsigned char mode);
 extern int flush(int fd);

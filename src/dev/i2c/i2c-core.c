@@ -29,11 +29,6 @@
 #include <dev/i2c/reg.h>
 
 /**
- * \brief List of messages with should be free'd.
- */
-static void *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
-
-/**
  * \brief Prepare the driver for an I2C transfer.
  * \param stream Device file.
  * \param msg Message to add to the buffer.
@@ -41,43 +36,20 @@ static void *cleanup_list[I2C_MSG_NUM] = { NULL, NULL, NULL, NULL, };
  */
 PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 									 uint8_t flags)
-{	
-	struct i2c_message *msg2;
-	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
-	
-	if(msgs[flags] != NULL) {
-		BermudaHeapFree(msgs[flags]);
-	}
-	
-	if(msg == NULL) {
-		msgs[flags] = NULL;
-		return 0;
-	}
-	
-	
-	msg2 = BermudaHeapAlloc(sizeof(*msg2));
-	if(!msg2) {
-		return -1;
-	}
-	
-	msg2->buff = msg->buff;
-	msg2->length = msg->length;
-	msg2->addr = msg->addr;
-	
-	msgs[flags] = msg2;
-	return 0;
+{
+	return fwrite(stream, msg, flags);
 }
 
 /**
  * \brief Clean up master buffers.
  * \param Peripheral I/O file.
  */
-PUBLIC void i2c_cleanup_master_msgs(FILE *stream)
+PUBLIC void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adapter)
 {
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
 	
-	cleanup_list[I2C_MASTER_TRANSMIT_MSG] = (void*)msgs[I2C_MASTER_TRANSMIT_MSG];
-	cleanup_list[I2C_MASTER_RECEIVE_MSG]  = (void*)msgs[I2C_MASTER_RECEIVE_MSG];
+	adapter->cleanup_list[I2C_MASTER_TRANSMIT_MSG] = (void*)msgs[I2C_MASTER_TRANSMIT_MSG];
+	adapter->cleanup_list[I2C_MASTER_RECEIVE_MSG]  = (void*)msgs[I2C_MASTER_RECEIVE_MSG];
 	msgs[I2C_MASTER_TRANSMIT_MSG] = NULL;
 	msgs[I2C_MASTER_RECEIVE_MSG]  = NULL;
 }
@@ -86,12 +58,12 @@ PUBLIC void i2c_cleanup_master_msgs(FILE *stream)
  * \brief Clean up slave buffers.
  * \param Peripheral I/O file.
  */
-PUBLIC void i2c_cleanup_slave_msgs(FILE *stream)
+PUBLIC void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adapter)
 {
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
 	
-	cleanup_list[I2C_SLAVE_RECEIVE_MSG] = (void*)msgs[I2C_SLAVE_RECEIVE_MSG];
-	cleanup_list[I2C_SLAVE_TRANSMIT_MSG] = (void*)msgs[I2C_SLAVE_TRANSMIT_MSG];
+	adapter->cleanup_list[I2C_SLAVE_RECEIVE_MSG] = (void*)msgs[I2C_SLAVE_RECEIVE_MSG];
+	adapter->cleanup_list[I2C_SLAVE_TRANSMIT_MSG] = (void*)msgs[I2C_SLAVE_TRANSMIT_MSG];
 	msgs[I2C_SLAVE_RECEIVE_MSG] = NULL;
 	msgs[I2C_SLAVE_TRANSMIT_MSG]  = NULL;
 }
@@ -101,14 +73,14 @@ PUBLIC void i2c_cleanup_slave_msgs(FILE *stream)
  * 
  * All allocated memory will be free'd.
  */
-PUBLIC void i2c_do_clean_msgs()
+PUBLIC void i2c_do_clean_msgs(struct i2c_adapter *adapter)
 {
 	uint8_t i = 0;
 	
 	for(; i < I2C_MSG_NUM; i++) {
-		if(cleanup_list[i] != NULL) {
-			BermudaHeapFree(cleanup_list[i]);
-			cleanup_list[i] = NULL;
+		if(adapter->cleanup_list[i] != NULL) {
+			BermudaHeapFree(adapter->cleanup_list[i]);
+			adapter->cleanup_list[i] = NULL;
 		}
 	}
 }
@@ -118,10 +90,10 @@ PUBLIC void i2c_do_clean_msgs()
  * \param stream I/O file. The message array should be in the buffer of this I/O file.
  * \param msg Index of the message to clean up.
  */
-PUBLIC void i2c_cleanup_msg(FILE *stream, uint8_t msg)
+PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t msg)
 {
 	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
-	cleanup_list[msg] = (void*)msgs[msg];
+	adapter->cleanup_list[msg] = (void*)msgs[msg];
 	msgs[msg] = NULL;
 }
 
@@ -132,20 +104,14 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, uint8_t msg)
  */
 PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 {
-	struct i2c_message **msgs = (struct i2c_message**)stream->buff;
-	struct i2c_message *msg;
+	struct i2c_message msg;
 	
-	if(msgs[I2C_SLAVE_TRANSMIT_MSG] != NULL) {
-		BermudaHeapFree(msgs[I2C_SLAVE_TRANSMIT_MSG]);
+	client->callback(&msg);
+	
+	if((fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG)) == -1) {
+		return -1;
 	}
 	
-	msg = BermudaHeapAlloc(sizeof(*msg));
-	
-	if(msg) {
-		client->callback(msg);
-	}
-	
-	msgs[I2C_SLAVE_TRANSMIT_MSG] = msg;
 	return client->adapter->slave_respond(stream);
 }
 /**

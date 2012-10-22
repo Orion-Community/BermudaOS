@@ -80,6 +80,7 @@ struct i2c_adapter {
 	mutex_t slave_queue;  //!< Slave mutex.
 #endif
 	
+	struct i2c_message **cleanup_list;
 	void *data; //!< Private data pointer.
 	
 	/**
@@ -105,10 +106,10 @@ extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
 /* core functions */
 extern int i2c_setup_msg(FILE *stream, struct i2c_message *msg, uint8_t flags);
 extern int i2c_call_client(struct i2c_client *client, FILE *stream);
-extern void i2c_cleanup_msg(FILE *stream, uint8_t msg);
-extern void i2c_do_clean_msgs();
-extern void i2c_cleanup_master_msgs(FILE *stream);
-extern void i2c_cleanup_slave_msgs(FILE *stream);
+extern void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adap, uint8_t msg);
+extern void i2c_do_clean_msgs(struct i2c_adapter *adap);
+extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
+extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
 __DECL_END
 
 

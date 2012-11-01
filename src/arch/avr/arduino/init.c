@@ -71,7 +71,8 @@ THREAD(MainThread, data)
 
 PUBLIC int BermudaInit(void)
 {       
-	BermudaHeapInitBlock((volatile void*)&__heap_start, (EXTRAM+MEM-128) - (size_t)&__heap_start);
+	BermudaHeapInitBlock((volatile void*)&__heap_start, (EXTRAM+MEM-MAIN_STACK_SIZE) - 
+							(size_t)&__heap_start);
 	vfs_init();
 #ifdef __USART__
 	BermudaUsart0Init();

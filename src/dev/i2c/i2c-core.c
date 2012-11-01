@@ -105,12 +105,11 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
 PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 {
 	struct i2c_message msg;
+	int rc;
 	
 	client->callback(&msg);
 	
-	if((fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG)) == -1) {
-		return -1;
-	}
+	rc = fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG);
 	
 	return client->adapter->slave_respond(stream);
 }

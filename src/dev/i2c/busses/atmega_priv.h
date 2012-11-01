@@ -94,7 +94,7 @@
 /**
  * \brief Name of the ATmega I2C I/O file.
  */
-#define I2C_FNAME "I2C_ATMEGA_C0"
+#define I2C_FNAME "I2C_C0"
 
 //  ********************************
 //  * Master transmitter           *

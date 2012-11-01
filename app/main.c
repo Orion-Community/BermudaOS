@@ -87,6 +87,7 @@ THREAD(USART_input, arg)
 		if(!strcmp(buff, "run\n")) {
 			run = true;
 		}
+
 		printf(buff);
 		
 		sleep:

@@ -426,10 +426,6 @@ struct atmega_i2c_priv
 	 * </DFN>
 	 */
 	reg8_t twamr;
-	
-	reg8_t io_in; //!< I2C input register.
-	uint8_t sda; //!< Serial data pin.
-	uint8_t scl; //!< Serial clock pin.
 } __attribute__((packed));
 
 __DECL

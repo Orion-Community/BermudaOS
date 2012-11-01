@@ -57,10 +57,7 @@ PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
                 }
                 
                 if(c->size > size)
-                { // block is to large
-                        if(c->size < size+sizeof(*c)+4)
-                                break; // block size is to small to split
-                        
+                { // block is to large                        
                         // split the node
                         BermudaHeapSplitNode(c, size);
                         break;
@@ -154,7 +151,7 @@ void BermudaHeapPrint()
         unsigned short i = 0;
         while(c)
         {
-                BermudaPrintf("Node[%u]: %p with size %x\n", i, c, c->size);
+                printf("Node[%u]: %p with size %x\n", i, c, c->size);
                 i++;
                 c = c->next;
         }

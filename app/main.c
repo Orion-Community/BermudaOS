@@ -56,9 +56,9 @@ static bool run = false;
 
 static unsigned char i2c_slave_stack[128];
 static uint8_t i2c_master_stack[128];
+
 THREAD i2c_master;
 THREAD i2c_slave;
-THREAD usart_input;
 
 static void slave_responder(struct i2c_message *msg)
 {
@@ -66,30 +66,6 @@ static void slave_responder(struct i2c_message *msg)
 	msg->length = 1;
 	i2c_slave_tx++;
 	return;
-}
-
-THREAD(USART_input, arg)
-{
-	char buff[4];
-	int fd;
-	
-	while(1) {
-		fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
-		if(fd < 0) {
-			goto sleep;
-		}
-		read(fd, buff, 3);
-		usartdev_close(fd);
-		
-		buff[3] = '\0';
-		if(!strcmp(buff, "run")) {
-			run = true;
-		}
-		printf_P(PSTR("%s\n"), buff);
-		
-		sleep:
-		BermudaThreadSleep(500);
-	}
 }
 
 THREAD(IIC_slave, arg)
@@ -109,6 +85,7 @@ THREAD(IIC_slave, arg)
 		close(fd);
 		
 		_usart:
+
 		printf_P(PSTR("RX=%X\n"), rx);
 		BermudaThreadSleep(500);
 	}
@@ -214,7 +191,7 @@ unsigned long loop()
 
 	printf_P(PSTR("T=%u M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
 				read_back_sram);
-	
+
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
 	return;

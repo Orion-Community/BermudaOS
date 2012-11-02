@@ -94,7 +94,7 @@
 /**
  * \brief Name of the ATmega I2C I/O file.
  */
-#define I2C_FNAME "I2C_ATMEGA_C0"
+#define I2C_FNAME "I2C_C0"
 
 //  ********************************
 //  * Master transmitter           *
@@ -426,10 +426,6 @@ struct atmega_i2c_priv
 	 * </DFN>
 	 */
 	reg8_t twamr;
-	
-	reg8_t io_in; //!< I2C input register.
-	uint8_t sda; //!< Serial data pin.
-	uint8_t scl; //!< Serial clock pin.
 } __attribute__((packed));
 
 __DECL

@@ -66,8 +66,6 @@ static struct atmega_i2c_priv i2c_c0 = {
 	.twar = &TWAR,
 	.twbr = &TWBR,
 	.twamr = &TWAMR,
-	.sda = 4,
-	.scl = 5,
 };
 
 #ifdef __THREADS__
@@ -114,8 +112,6 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 	if(rc < 0) {
 		return;
 	}
-
-	i2c_c0.io_in = AvrIO->pinc;
 	
 	atmega_i2c_busses[0] = adapter;
 #ifdef __THREADS__

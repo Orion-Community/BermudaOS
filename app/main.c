@@ -56,7 +56,6 @@ static bool run = false;
 
 static unsigned char i2c_slave_stack[128];
 static uint8_t i2c_master_stack[128];
-static uint8_t usart_input_stack[100];
 THREAD i2c_master;
 THREAD i2c_slave;
 THREAD usart_input;
@@ -110,7 +109,7 @@ THREAD(IIC_slave, arg)
 		close(fd);
 		
 		_usart:
-		printf_P(PSTR("RX: %X :: fd: %i\n"), rx, fd);
+		printf_P(PSTR("RX=%X\n"), rx);
 		BermudaThreadSleep(500);
 	}
 
@@ -165,12 +164,21 @@ void setup()
 	BermudaSetPinMode(A0, INPUT);
 	BermudaSetPinMode(5, OUTPUT);
 #ifdef __THREADS__
-	
-	BermudaThreadCreate(&usart_input, "USART", &USART_input, NULL, 100,
-						usart_input_stack, BERMUDA_DEFAULT_PRIO);
-	
-	while(!run) {
-		BermudaThreadYield();
+	int fd;
+	char buff[4];
+
+	while(1) {
+		fd = usartdev_socket(USART0, "USART0", _FDEV_SETUP_RW);
+		if(fd < 0) {
+			_exit();
+		}
+		read(fd, buff, 3);
+		usartdev_close(fd);
+		buff[3] = '\0';
+		if(!strcmp(buff, "run")) {
+			break;
+		}
+		BermudaThreadSleep(500);
 	}
 	
 	BermudaThreadCreate(&i2c_master, "TWI", &TwiTest, NULL, 128,
@@ -200,13 +208,12 @@ unsigned long loop()
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
 	temperature /= 10;
-	printf_P(PSTR("The temperature is: %u :: Free mem: %X\n"), temperature, BermudaHeapAvailable());
 	
 	read_back_sram = BermudaSpiRamReadByte(0x50);
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
-	printf_P(PSTR("Read back value's: %X::%X\n"), read_back_eeprom,
-		read_back_sram);
+	printf_P(PSTR("T=%u M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
+				read_back_sram);
 	
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);

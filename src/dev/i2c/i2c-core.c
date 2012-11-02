@@ -107,10 +107,7 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 	struct i2c_message msg;
 	
 	client->callback(&msg);
-	
-	if((fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG)) == -1) {
-		return -1;
-	}
+	fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG);
 	
 	return client->adapter->slave_respond(stream);
 }

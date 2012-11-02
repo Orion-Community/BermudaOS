@@ -226,7 +226,13 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	rc = iob_add(socket);
 	if(rc < 0) {
 		BermudaHeapFree(socket);
-		dev->release(dev);
+		if((flags & I2C_MASTER) != 0) {
+#ifdef __THREADS__
+			dev->release(dev);
+#else
+			BermudaMutexRelease(&(adap->mutex));
+#endif
+		}
 		goto out;
 	}
 	

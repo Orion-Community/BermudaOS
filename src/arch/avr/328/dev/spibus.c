@@ -45,10 +45,6 @@ static THREAD *BermudaSPI0Mutex = SIGNALED;
  * \brief Master transmission queue when events are disabled.
  */
 static mutex_t spi_master_queue = 0;
-/**
- * \brief Slave transmission waiting queue when events are disabled.
- */
-static mutex_t spi_slave_queue = 0;
 #endif
 
 // private functions

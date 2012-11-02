@@ -43,42 +43,41 @@ static inline volatile HEAPNODE *BermudaHeapInitHeader(volatile HEAPNODE *node,
  */
 PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size) 
 {
-        if(size > MEM)
-                return NULL;
+	if(size > MEM+EXTRAM) {
+		return NULL;
+	}
 
-        BermudaMutexEnter(&mem_lock);
-        void *ret = NULL;
-        volatile HEAPNODE *c = BermudaHeapHead, *prev = NULL;
-        while(c)
-        {
-                if(c->size == size)
-                { // requested block fits perfectly
-                        break;
-                }
-                
-                if(c->size > size)
-                { // block is to large                        
-                        // split the node
-                        BermudaHeapSplitNode(c, size);
-                        break;
-                }
-                prev = c;
-                c = c->next;
-        }
-        
-        if(c == NULL)
-		{
-				printf("NM");
-				_exit();
-				BermudaMutexRelease(&mem_lock);
-				return NULL;
-		}
-        
-        BermudaHeapUseBlock(c, prev);
-        ret = ((void*)c)+sizeof(*c);
-        
-        BermudaMutexRelease(&mem_lock);
-        return ret;
+	BermudaMutexEnter(&mem_lock);
+	void *ret = NULL;
+	volatile HEAPNODE *c = BermudaHeapHead, *prev = NULL;
+	while(c) {
+			if(c->size == size) { // requested block fits perfectly
+					break;
+			}
+			
+			if(c->size > size) { // block is to large                        
+					if(c->size < size+sizeof(*c)+4) {
+						break; // block size is to small to split
+					}
+					BermudaHeapSplitNode(c, size);
+					break;
+			}
+			prev = c;
+			c = c->next;
+	}
+
+	if(c == NULL) {
+			printf("NM");
+			_exit();
+			BermudaMutexRelease(&mem_lock);
+			return NULL;
+	}
+
+	BermudaHeapUseBlock(c, prev);
+	ret = ((void*)c)+sizeof(*c);
+
+	BermudaMutexRelease(&mem_lock);
+	return ret;
 }
 
 /**

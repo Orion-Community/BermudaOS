@@ -52,7 +52,6 @@ struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
 static unsigned char i2c_slave_tx = 0x0;
-static bool run = false;
 
 static unsigned char i2c_slave_stack[128];
 static uint8_t i2c_master_stack[128];

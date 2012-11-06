@@ -1,0 +1,9 @@
+lib/
+Makefile
+Makefile.in
+*~
+*.cache/
+config.h.in
+config.h
+m4/
+*.m4

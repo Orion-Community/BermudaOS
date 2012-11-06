@@ -1,0 +1,15 @@
+#
+# Makefile includer
+#
+
+LOCAL_INC=@top_srcdir@/include
+CPUFLAG=
+
+if AVR
+CPUFLAG+=-mmcu
+endif
+
+CCFLAGS=-std=gnu89 $(CPUFLAG)=$(CPU) -Wall -ffreestanding -nostdinc -nostdlib -Os -I$(LOCAL_INC) -I$(OS_INCLUDE)
+
+AM_CFLAGS=$(CCFLAGS)
+AM_LDFLAGS=-Wl,-r

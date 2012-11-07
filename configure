@@ -618,6 +618,8 @@ LTLIBOBJS
 LIBOBJS
 AVR_FALSE
 AVR_TRUE
+TX_QU_LENGTH
+RX_QU_LENGTH
 OS_INCLUDE
 CPU
 am__fastdepCCAS_FALSE
@@ -768,7 +770,9 @@ CXXCPP
 CCAS
 CCASFLAGS
 CPU
-OS_INCLUDE'
+OS_INCLUDE
+RX_QU_LENGTH
+TX_QU_LENGTH'
 
 
 # Initialize some variables set by options.
@@ -1423,6 +1427,10 @@ Some influential environment variables:
   CCASFLAGS   assembler compiler flags (defaults to CFLAGS)
   CPU         CPU type which should be passed to -mmcu
   OS_INCLUDE  Absolute path to the include directory of Bermuda/OS
+  RX_QU_LENGTH
+              Maximum length of receive queues
+  TX_QU_LENGTH
+              Maximum length of transmit queues
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -11267,7 +11275,7 @@ CC="$lt_save_CC"
 # Only expand once:
 
 
-ac_config_headers="$ac_config_headers config.h"
+ac_config_headers="$ac_config_headers netconfig.h"
 
 
 
@@ -15816,6 +15824,17 @@ fi
 
 
 
+
+
+# Set default values
+if test "x$RX_QU_LENGTH" = "x"; then
+RX_QU_LENGTH=100
+fi
+
+if test "x$TX_QU_LENGTH" = "x"; then
+TX_QU_LENGTH=100
+fi
+
  if test x$enable_avr = xyes; then
   AVR_TRUE=
   AVR_FALSE='#'
@@ -15827,6 +15846,11 @@ fi
 # Checks for libraries.
 
 # Checks for header files.
+
+
+
+
+
 
 # Checks for typedefs, structures, and compiler characteristics.
 
@@ -16958,7 +16982,7 @@ do
   case $ac_config_target in
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
-    "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+    "netconfig.h") CONFIG_HEADERS="$CONFIG_HEADERS netconfig.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "src/core/Makefile") CONFIG_FILES="$CONFIG_FILES src/core/Makefile" ;;

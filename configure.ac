@@ -5,7 +5,7 @@ AC_PREREQ([2.68])
 AC_INIT([BermudaNet], [0.0.1], [Web: http://bugs.michelmegens.net :: E-Mail: report@bugs.michelmegens.net])
 AM_INIT_AUTOMAKE(BermudaNet, 0.0.1)
 LT_INIT([disable-shared,static])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([netconfig.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Set build variables.
@@ -30,11 +30,27 @@ AC_ARG_ENABLE([avr],
 )
 AC_ARG_VAR(CPU, [CPU type which should be passed to -mmcu])
 AC_ARG_VAR(OS_INCLUDE, [Absolute path to the include directory of Bermuda/OS])
+AC_ARG_VAR(RX_QU_LENGTH, [Maximum length of receive queues])
+AC_ARG_VAR(TX_QU_LENGTH, [Maximum length of transmit queues])
+
+# Set default values
+if test "x$RX_QU_LENGTH" = "x"; then
+RX_QU_LENGTH=100
+fi
+
+if test "x$TX_QU_LENGTH" = "x"; then
+TX_QU_LENGTH=100
+fi
 
 AM_CONDITIONAL(AVR, test x$enable_avr = xyes)
 # Checks for libraries.
 
 # Checks for header files.
+AH_TOP([#ifndef __BERMUDANET_CONF_H])
+AH_TOP([#define __BERMUDANET_CONF_H])
+AH_BOTTOM([#define BERMUDANET_CONFIG 1])
+AH_BOTTOM([#include <bermudanet.h>])
+AH_BOTTOM([#endif])
 
 # Checks for typedefs, structures, and compiler characteristics.
 

@@ -29,6 +29,7 @@ bermudanet.h:
 	  echo '#endif'; \
 	  echo '#define NETIF_MAX_RX_QUEUE_LENGTH $(RX_QU_LENGTH)'; \
 	  echo '#define NETIF_MAX_TX_QUEUE_LENGTH $(TX_QU_LENGTH)'; \
+	  echo '#define NETIF_MAC_ADDR_SIZ 6'; \
 	} | sed '/""/d' > $@
 
 CLEANFILES=bermudanet.h

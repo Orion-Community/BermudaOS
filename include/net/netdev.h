@@ -1,5 +1,5 @@
 /*
- *  BermudaNet - Core layer
+ *  BermudaNet - Net device header
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,15 +16,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <netconfig.h>
-#endif
-
-#include <stdlib.h>
-#include <stdio.h>
-
 #include <dev/dev.h>
 
-#include <net/netbuff.h>
-#include <net/netdev.h>
-#include <net/vlan.h>
+#ifndef __NETDEV_H
+#define __NETDEV_H
+
+/**
+ * \def NETDEV_NAME_SIZ
+ * \brief Defines the size of the name unique name identifier in the netdev structure.
+ */
+#define NETDEV_NAME_SIZ 6
+
+struct netdev
+{
+	struct netdev *next;
+
+	char name[NETDEV_NAME_SIZ]; //!< Unique name identifier.
+	uint16_t mtu; //!< Maximum transmissable unit size which is supported by this device.
+	size_t iobase;
+	
+	volatile void *tx_queue;
+	volatile void *rx_queue;
+};
+
+#endif

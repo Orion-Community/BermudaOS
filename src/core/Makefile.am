@@ -4,7 +4,7 @@
 #
 
 noinst_LTLIBRARIES=libnetcore.la
-libnetcore_la_SOURCES=dev.c
+libnetcore_la_SOURCES=dev.c vlan.c
 
 CLEANFILES=*.lst *.map
 ACLOCAL_AMFLAGS=-I m4

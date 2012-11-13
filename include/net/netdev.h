@@ -27,9 +27,10 @@
 #define __NETDEV_H
 
 #include <stdlib.h>
+#include <tokenbucket.h>
 
 #include <dev/dev.h>
-#include <net/tokenbucket.h>
+
 
 /**
  * \def NETDEV_NAME_SIZ

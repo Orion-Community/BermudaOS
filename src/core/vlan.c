@@ -1,5 +1,5 @@
 /*
- *  BermudaNet - VLAN data structure header.
+ *  BermudaNet - Virtual Lan
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,37 +16,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file include/net/vlan.h VLAN header
-
-#ifndef __VLAN_H
-#define __VLAN_H
-
+#ifdef HAVE_CONFIG_H
+#include <netconfig.h>
+#endif
 #include <stdlib.h>
 
-struct netbuff;
+#include <net/netbuff.h>
+#include <net/netdev.h>
 
-/**
- * \brief Extracted representation of a VLAN.
- * \note Raw VLANS can be extracted using vlan_extract. Extracted VLANS can be converted to raw using
- *       vlan_inflate.
- */
-struct vlan_tag
-{
-	uint16_t protocol_tag; //!< Protocol tag. Should be 0x8100 for a valid VLAN tag.
-	unsigned char prio : 3; //!< Priority flags.
-	unsigned char format : 1; //!< Canonical format idicator.
-	uint16_t vlan_id : 12; //!< VLAN identifier.
-};
-
-/**
- * \brief Create a raw vlan tag based on the given vlan_tag structure.
- * \param tag VLAN-tag to convert to raw - network byte order orientated - format.
- * \return The raw VLAN-tag.
- */
-static inline __32be vlan_inflate(struct vlan_tag *tag)
-{
-	return 0;
-}
+#include <net/core/vlan.h>
+#include <net/core/dev.h>
 
 /**
  * \brief Create a VLAN from a raw VLAN-tag.
@@ -54,9 +33,7 @@ static inline __32be vlan_inflate(struct vlan_tag *tag)
  * \return The raw VLAN tag. If it was impossible to create one, 0 is returned.
  * \note netbuff.raw_vlan must be initialized.
  */
-static inline struct vlan_tag *vlan_extract(struct netbuff *nb)
+PUBLIC struct vlan_tag *vlan_extract(struct netbuff *nb)
 {
 	return NULL;
 }
-
-#endif

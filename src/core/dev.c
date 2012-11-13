@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <tokenbucket.h>
 
 #include <dev/dev.h>
 #include <dev/error.h>
@@ -51,7 +52,9 @@
 
 #include <net/netbuff.h>
 #include <net/netdev.h>
-#include <net/vlan.h>
+
+#include <net/core/dev.h>
+#include <net/core/vlan.h>
 
 /**
  * \brief Receive thread.
@@ -85,12 +88,16 @@ static struct netdev *devRoot = NULL;
 /* static functions */
 static int __netif_init_dev(struct netdev *dev);
 
+#ifdef __DOXYGEN__
 /**
  * \brief Definition of the core layer processor thread.
  * \param netif_processor Name of the thread.
  * \param queue Name of the argument.
  */
+THREAD_DEF(func netif_processor, struct netbuff_queue *queue);
+#else
 THREAD_DEF(netif_processor, queue);
+#endif
 
 /**
  * \brief Initialize the network core layer.
@@ -156,17 +163,21 @@ static int __netif_init_dev(struct netdev *dev)
 	return -1;
 }
 
+#ifdef __DOXYGEN__
 /**
  * \brief Implementation of the core layer processor thread.
  * \param netif_processor Name of the thread.
  * \param queue Name of the argument.
  */
+THREAD(int netif_processor, struct netbuff *queue);
+#else
 THREAD(netif_processor, queue)
 {
 	while(TRUE) {
 		BermudaThreadSleep(100);
 	}
 }
+#endif
 
 /**
  * @}

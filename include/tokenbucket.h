@@ -25,6 +25,8 @@
 
 #include <net/netbuff.h>
 
+struct netbuff;
+
 /**
  * \brief Traffic can be shared equally using a token bucket.
  */
@@ -38,7 +40,7 @@ struct tbucket
 
 __DECL
 extern void pay_packet(struct tbucket *bucket, struct netbuff *packet);
-extern void cash_tokens(struct tbucket *bucket, size_t tokens);
+extern int cash_tokens(struct tbucket *bucket, size_t tokens);
 __DECL_END
 
 #endif /* __TOKENBUCKET_H */

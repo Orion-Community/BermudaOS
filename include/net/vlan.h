@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file include/net/vlan.h VLAN header
+
 #ifndef __VLAN_H
 #define __VLAN_H
 

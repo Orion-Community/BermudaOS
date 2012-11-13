@@ -1,5 +1,5 @@
 /*
- *  BermudaNet - Net device header
+ *  BermudaNet - VLAN data structure header.
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,41 +16,29 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file include/net/netdev.h Net device header.
+//! \file include/tokenbucket.h Token bucket algorithm header.
 
-/**
- * \addtogroup netCore
- * @{
- */
-
-#ifndef __NETDEV_H
-#define __NETDEV_H
+#ifndef __TOKENBUCKET_H
+#define __TOKENBUCKET_H
 
 #include <stdlib.h>
 
-#include <dev/dev.h>
-#include <net/tokenbucket.h>
+#include <net/netbuff.h>
 
 /**
- * \def NETDEV_NAME_SIZ
- * \brief Defines the size of the name unique name identifier in the netdev structure.
+ * \brief Traffic can be shared equally using a token bucket.
  */
-#define NETDEV_NAME_SIZ 6
-
-struct netdev
+struct tbucket
 {
-	struct netdev *next;
-
-	char name[NETDEV_NAME_SIZ]; //!< Unique name identifier.
-	uint16_t mtu; //!< Maximum transmissable unit size which is supported by this device.
-	size_t iobase; //!< I/O base address.
+	volatile struct netbuff_queue *queue; //!< Queue to enqueue packets.
 	
-	struct tbucket *queue;
-	size_t queue_entries; //!< Amount of entries in <i>tx_queue</i>.
-};
+	uint64_t rate; //!< Maximum rate of the uplink.
+	uint64_t tokens; //!< Amount of tokens, which can be used to 'buy' packets.
+} __attribute__((packed));
 
-#endif
+__DECL
+extern void pay_packet(struct tbucket *bucket, struct netbuff *packet);
+extern void cash_tokens(struct tbucket *bucket, size_t tokens);
+__DECL_END
 
-/**
- * @}
- */
+#endif /* __TOKENBUCKET_H */

@@ -1,7 +1,7 @@
 SUBDIRS=src
 ACLOCAL_AMFLAGS=-I m4
 
-all: netconfig.h bermudanet.h
+all: netconfig.h bermudanet.h index.h
 
 bermudanet.h:
 	{ echo '/*'; \
@@ -30,6 +30,29 @@ bermudanet.h:
 	  echo '#define NETIF_MAX_RX_QUEUE_LENGTH $(RX_QU_LENGTH)'; \
 	  echo '#define NETIF_MAX_TX_QUEUE_LENGTH $(TX_QU_LENGTH)'; \
 	  echo '#define NETIF_MAC_ADDR_SIZ 6'; \
+	  echo '#define NETIF_STACK_SIZ $(NETIF_STACK_SIZE)'; \
 	} | sed '/""/d' > $@
 
-CLEANFILES=bermudanet.h
+index.h:
+	{ echo '//! \file index.h Doxygen index file'; \
+	echo '/**'; \
+	echo ' * \mainpage BermudaOS - Index'; \
+	echo ' * \section intro Introduction'; \
+	echo ' *'; \
+	echo ' * BermudaNet is the network stack for the Bermuda project. This project is currently'; \
+	echo ' * under heavy development and should not be used for operational purposes yet.'; \
+	echo ' * \section goals Goals'; \
+	echo ' * The project aims to include the following:\n'; \
+	echo ' * \n'; \
+	echo ' * * TCP, UDP, IP, ARP, ICMP, ETHERNET\n'; \
+	echo ' * * Simple interface to add new network drivers.\n'; \
+	echo ' * * An additional, protocol independant layer above the driver for packet routing and management.\n'; \
+	echo ' * \n'; \
+	echo ' * \section dl Download'; \
+	echo ' * BermudaNet is currently only available via git. The development repository can be found'; \
+	echo ' * <a href="http://git.michelmegens.net/viewgit/?a=summary&p=BermudaNet">here</a>. A'; \
+	echo ' * git clone can be performed from <a href="#">git://git.michelmegens.net/BermudaNet.git</a>'; \
+	echo ' */'; \
+	} | sed '/""/d' > $@
+
+CLEANFILES=bermudanet.h index.h

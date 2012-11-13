@@ -8,3 +8,5 @@ config.h
 m4/
 *.m4
 generate
+doc/
+configure

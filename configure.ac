@@ -32,6 +32,7 @@ AC_ARG_VAR(CPU, [CPU type which should be passed to -mmcu])
 AC_ARG_VAR(OS_INCLUDE, [Absolute path to the include directory of Bermuda/OS])
 AC_ARG_VAR(RX_QU_LENGTH, [Maximum length of receive queues])
 AC_ARG_VAR(TX_QU_LENGTH, [Maximum length of transmit queues])
+AC_ARG_VAR(NETIF_STACK_SIZE, [Maximum size of stacks created by the network interface drivers])
 
 # Set default values
 if test "x$RX_QU_LENGTH" = "x"; then
@@ -40,6 +41,10 @@ fi
 
 if test "x$TX_QU_LENGTH" = "x"; then
 TX_QU_LENGTH=100
+fi
+
+if test "x$NETIF_STACK_SIZE" = "x"; then
+NETIF_STACK_SIZE=128
 fi
 
 AM_CONDITIONAL(AVR, test x$enable_avr = xyes)

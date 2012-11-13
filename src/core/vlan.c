@@ -27,6 +27,8 @@
 #include <net/core/vlan.h>
 #include <net/core/dev.h>
 
+#include <netinet/in.h>
+
 /**
  * \brief Create a VLAN from a raw VLAN-tag.
  * \param nb Netbuff containing the raw VLAN tag.
@@ -35,5 +37,37 @@
  */
 PUBLIC struct vlan_tag *vlan_extract(struct netbuff *nb)
 {
-	return NULL;
+	struct vlan_tag *tag;
+	uint16_t tci;
+	
+	if(!nb->raw_vlan) {
+		return NULL;
+	} else {
+		tag = malloc(sizeof(*tag));
+		tci = ntohs(nb->raw_vlan);
+		tag->protocol_tag = IEEE8021Q_ETHERNET_TYPE;
+		tag->vlan_id = tci & TCI_VLAN_ID_MASK;
+		tag->format = (tci >> TCI_FORMAT_SHIFT) & TCI_FORMAT_MASK;
+		tag->prio = (tci >> TCI_PRIO_SHIFT) & TCI_PRIO_MASK;
+	}
+	return tag;
+}
+
+/**
+ * \brief Create a raw vlan tag based on the given vlan_tag structure.
+ * \param tag VLAN-tag to convert to raw - network byte order orientated - format.
+ * \return The raw VLAN-tag.
+ */
+PUBLIC __32be vlan_inflate(struct vlan_tag *tag)
+{
+	__16be raw;
+	__32be ret = 0;
+	
+	if(tag) {
+		raw = htons(tag->vlan_id | (tag->format << TCI_FORMAT_SHIFT) | 
+					(tag->prio << TCI_PRIO_SHIFT));
+		ret = ((__32be)htons(IEEE8021Q_ETHERNET_TYPE) << 16) | raw;
+	}
+	
+	return ret;
 }

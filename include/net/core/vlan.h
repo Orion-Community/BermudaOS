@@ -23,7 +23,17 @@
 
 #include <stdlib.h>
 
+#include <lib/binary.h>
+
 struct netbuff;
+
+#define IEEE8021Q_ETHERNET_TYPE 0x8100
+
+#define TCI_VLAN_ID_MASK 0xFFF
+#define TCI_FORMAT_SHIFT 12
+#define TCI_FORMAT_MASK B1
+#define TCI_PRIO_SHIFT 13
+#define TCI_PRIO_MASK B111
 
 /**
  * \brief Extracted representation of a VLAN.
@@ -39,16 +49,7 @@ struct vlan_tag
 };
 
 __DECL
-/**
- * \brief Create a raw vlan tag based on the given vlan_tag structure.
- * \param tag VLAN-tag to convert to raw - network byte order orientated - format.
- * \return The raw VLAN-tag.
- */
-static inline __32be vlan_inflate(struct vlan_tag *tag)
-{
-	return 0;
-}
-
+extern __32be vlan_inflate(struct vlan_tag *tag);
 extern struct vlan_tag *vlan_extract(struct netbuff *nb);
 __DECL_END
 #endif

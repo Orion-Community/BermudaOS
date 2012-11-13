@@ -33,7 +33,7 @@
  * \param word Word to convert from host to network order.
  * \return Network endian value of <i>word</i>.
  */
-static __16be htons(uint16_t word)
+static inline __16be htons(uint16_t word)
 {
 	return __byte_swap2(word);
 }
@@ -43,7 +43,7 @@ static __16be htons(uint16_t word)
  * \param dword Double word to convert from host to network order.
  * \return Network endian value of <i>word</i>.
  */
-static __32be htonl(uint32_t dword)
+static inline __32be htonl(uint32_t dword)
 {
 	return __byte_swap4(dword);
 }
@@ -53,7 +53,7 @@ static __32be htonl(uint32_t dword)
  * \param word Word to convert from network to host order.
  * \return Host endian value of <i>word</i>.
  */
-static uint16_t ntohs(__16be word)
+static inline uint16_t ntohs(__16be word)
 {
 	return __byte_swap2(word);
 }
@@ -63,7 +63,7 @@ static uint16_t ntohs(__16be word)
  * \param dword Double word to convert from network to host order.
  * \return Host endian value of <i>dword</i>.
  */
-static uint32_t ntohl(__32be dword)
+static inline uint32_t ntohl(__32be dword)
 {
 	return __byte_swap4(dword);
 }

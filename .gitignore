@@ -36,3 +36,4 @@ Makefile.in
 configure
 generate
 config.h.in~
+m4/

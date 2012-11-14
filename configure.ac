@@ -7,6 +7,7 @@ AM_INIT_AUTOMAKE(BermudaOS, 0.0.5)
 LT_INIT([disable-shared,static])
 #AC_CONFIG_SRCDIR([app/main.c])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 CFLAGS=
 CXXFLAGS=
@@ -161,6 +162,24 @@ if test "x$atmega" = "xyes"; then
 AC_DEFINE([ATMEGA], [1], [Defines weather we are using an atmega based CPU])
 fi
 
+# BermudaNet definitions
+AC_ARG_VAR(RX_QU_LENGTH, [Maximum length of receive queues])
+AC_ARG_VAR(TX_QU_LENGTH, [Maximum length of transmit queues])
+AC_ARG_VAR(NETIF_STACK_SIZE, [Maximum size of stacks created by the network interface drivers])
+
+# Set default values
+if test "x$RX_QU_LENGTH" = "x"; then
+RX_QU_LENGTH=100
+fi
+
+if test "x$TX_QU_LENGTH" = "x"; then
+TX_QU_LENGTH=100
+fi
+
+if test "x$NETIF_STACK_SIZE" = "x"; then
+NETIF_STACK_SIZE=128
+fi
+
 AH_BOTTOM([#include <configmake.h>])
 
 # Checks for header files.
@@ -192,6 +211,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/c/stdlib/Makefile
                  src/lib/c/stdio/Makefile
                  src/lib/c/string/Makefile
+                 src/net/Makefile
+                 src/net/core/Makefile
                  src/sys/Makefile
                  src/sys/events/Makefile
                  src/fs/Makefile])

@@ -26,7 +26,9 @@
 #ifndef __BERMUDA_H
 #define __BERMUDA_H
 
+#ifndef BERMUDANET_CONFIG
 #include <config.h>
+#endif
 
 #include <arch/types.h>
 
@@ -140,6 +142,14 @@
  * \brief Prevent the compiler from optimizing function calls.
  */
 #define __noinline __attribute__((noinline))
+
+/**
+ * \def __force_inline
+ * \brief Make sure a function is inline.
+ * 
+ * The function is treated as an inline function, even if no form of optimization is used.
+ */
+#define __force_inline __attribute__((always_inline))
 
 /**
  * \typedef mutex_t

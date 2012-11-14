@@ -135,7 +135,7 @@ PRIVATE WEAK void BermudaHeapUseBlock(volatile HEAPNODE *node,
  * This function will search for a fitting block of memory. If no fitting block
  * is found it will return <i><b>NULL</b></i>.
  */
-void *BermudaHeapAlloc(size_t size) __attribute__ ((malloc));
+extern void *BermudaHeapAlloc(size_t size) __attribute__ ((malloc));
 
 /**
  * \fn BermudaHeapFree(void *ptr)
@@ -145,7 +145,7 @@ void *BermudaHeapAlloc(size_t size) __attribute__ ((malloc));
  * The given pointer <i>ptr</i>, which points to <b>node+sizeof(*node)</b>, is
  * returned to the heap.
  */
-void BermudaHeapFree(void *ptr);
+extern void BermudaHeapFree(void *ptr);
 
 #ifdef __MM_DEBUG__
 /**
@@ -165,6 +165,24 @@ void BermudaHeapPrint();
  * This function will calculate the available memory in the heap.
  */
 size_t BermudaHeapAvailable();
+
+/**
+ * \brief Alias for BermudaHeapAlloc.
+ * \param size Amount of memory to allocate.
+ */
+static inline __force_inline void *malloc(size_t size)
+{
+	return BermudaHeapAlloc(size);
+}
+
+/**
+ * \brief Alias for BermudaHeapFree.
+ * \param ptr Memory to free.
+ */
+static inline __force_inline void free(void *ptr)
+{
+	BermudaHeapFree(ptr);
+}
 
 __DECL_END
 

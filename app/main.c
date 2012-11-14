@@ -44,86 +44,15 @@
 #include <arch/avr/pgm.h>
 #include <arch/avr/328/dev/spibus.h>
 
-static VTIMER *timer;
-static struct i2c_client slave_client;
-static struct i2c_client master_client;
+#include <net/core/dev.h>
 
+static VTIMER *timer;
 struct i2c_client eeprom_client;
 
 #ifdef __THREADS__
-static unsigned char i2c_slave_tx = 0x0;
 
-static unsigned char i2c_slave_stack[128];
-static uint8_t i2c_master_stack[128];
 
-THREAD i2c_master;
-THREAD i2c_slave;
 
-static void slave_responder(struct i2c_message *msg)
-{
-	msg->buff = &i2c_slave_tx;
-	msg->length = 1;
-	i2c_slave_tx++;
-	return;
-}
-
-THREAD(IIC_slave, arg)
-{
-	unsigned char rx = 0;
-	int fd;
-	
-	atmega_i2c_init_client(&slave_client, ATMEGA_I2C_C0);
-	slave_client.callback = &slave_responder;
-
-	while(1) {
-		fd = i2cdev_socket(&slave_client, _FDEV_SETUP_RW | I2C_SLAVE);
-		if(fd < 0) {
-			goto _usart;
-		}
-		i2cdev_listen(fd, &rx, 1);
-		close(fd);
-		
-		_usart:
-
-		printf_P(PSTR("RX=%X\n"), rx);
-		BermudaThreadSleep(500);
-	}
-
-}
-
-THREAD(TwiTest, arg)
-{
-	unsigned char tx[] = { 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
-			     0xDC, 0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,0xAA, 0xAB, 0xAC,
-			     0x0 };
-	int fd, rc;
-	
-	atmega_i2c_init_client(&master_client, ATMEGA_I2C_C0);
-	master_client.sla = 0x54;
-	master_client.freq = 100000UL;
-	
-	
-	while(1) {
-		fd = i2cdev_socket(&master_client, _FDEV_SETUP_RW | I2C_MASTER);
-		if(fd < 0) {
-			goto sleep;
-		}
-		
-		rc = write(fd, tx, 20);
-		rc += read(fd, NULL, 0);
-		if(rc == 0) {
-			flush(fd);
-		} else {
-			i2cdev_error(fd);
-		}
-		close(fd);
-
-		tx[19]++;
-		
-		sleep:
-		BermudaThreadSleep(1000);
-	}
-}
 #endif
 
 static unsigned char led = 1;
@@ -156,13 +85,9 @@ void setup()
 		}
 		BermudaThreadSleep(500);
 	}
-	
-	BermudaThreadCreate(&i2c_master, "TWI", &TwiTest, NULL, 128,
-					i2c_master_stack, BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(&i2c_slave, "IICS", &IIC_slave, NULL, 128, 
-					i2c_slave_stack, BERMUDA_DEFAULT_PRIO);
 
 #endif
+	netif_init(NULL);
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);
 	Bermuda24c02Init(&eeprom_client);

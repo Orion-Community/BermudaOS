@@ -21,6 +21,17 @@
 
 #include <bermuda.h>
 
+#define __byte_swap2(val) \
+	((((val) & 0xff) << 8) |        \
+	(((val) & 0xff00) >> 8))
+
+#define __byte_swap4(val)			\
+	((((val) & 0xff) << 24) |			\
+	(((val) & 0xff00) << 8) |		\
+	(((val) & 0xff0000) >> 8) |	\
+	(((val) & 0xff000000) >> 24))
+
+typedef unsigned long long int uint64_t;
 typedef unsigned long int uint32_t;
 typedef unsigned int uint16_t;
 typedef unsigned char uint8_t;

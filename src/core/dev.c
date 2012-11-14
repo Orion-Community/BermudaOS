@@ -94,7 +94,7 @@ static int __netif_init_dev(struct netdev *dev);
  * \param netif_processor Name of the thread.
  * \param queue Name of the argument.
  */
-THREAD_DEF(func netif_processor, struct netbuff_queue *queue);
+THREAD_DEF(func netif_processor, void *queue);
 #else
 THREAD_DEF(netif_processor, queue);
 #endif
@@ -109,6 +109,8 @@ PUBLIC int netif_init(struct netdev *dev)
 {
 	if(devRoot) {
 		return -DEV_ALREADY_INITIALIZED;
+	} else if(!dev) {
+		return -DEV_NULL;
 	}
 	
 	BermudaThreadCreate(&tx_thread, "netif_TX", &netif_processor, NULL, NETIF_STACK_SIZ, &tx_stack[0],
@@ -169,7 +171,7 @@ static int __netif_init_dev(struct netdev *dev)
  * \param netif_processor Name of the thread.
  * \param queue Name of the argument.
  */
-THREAD(int netif_processor, struct netbuff *queue);
+THREAD(func netif_processor, void *queue);
 #else
 THREAD(netif_processor, queue)
 {

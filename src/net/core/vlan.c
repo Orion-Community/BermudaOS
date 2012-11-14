@@ -16,6 +16,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file src/net/vlan.c
+ * \brief VLAN support functions.
+ * 
+ * \addtogroup net
+ * @{
+ * \addtogroup vlan Virtual LAN
+ * \brief Virtual LAN support.
+ * @{
+ */
+
 #include <stdlib.h>
 
 #include <net/netbuff.h>
@@ -68,3 +79,6 @@ PUBLIC __32be vlan_inflate(struct vlan_tag *tag)
 	
 	return ret;
 }
+
+//@}
+//@}

@@ -27,7 +27,7 @@
 #define __NETDEV_H
 
 #include <stdlib.h>
-#include <tokenbucket.h>
+#include <net/tokenbucket.h>
 
 #include <dev/dev.h>
 

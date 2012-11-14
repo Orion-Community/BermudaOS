@@ -17,11 +17,17 @@
  */
 
 #include <stdlib.h>
-#include <tokenbucket.h>
+#include <net/tokenbucket.h>
 
 /**
- * \file src/tokenbucket.c.
- * \brief With a tokenbucket, the maximum transfer rate (i.e. bitrate) of the connection can be limited.
+ * \file src/net/tokenbucket.c
+ * \brief Bitrate supression.
+ * 
+ * \addtogroup net
+ * @{
+ * \addtogroup tbucket Token bucket
+ * \brief Tokenbucket bitrate supression.
+ * With a tokenbucket, the maximum transfer rate (i.e. bitrate) of the connection can be limited.
  * 
  * \section algo Algorithm
  * The concept of the algorithm is as follows: \n
@@ -32,7 +38,7 @@
  * * When a network layer PDU arrives of $n$ bytes, $n$ bytes are removed from the bucket, and the
  * PDU is sent to the network driver. \n
  * * If viewer than $n$ tokens are available, the packet will be queued.
- * 
+ * @{
  */
 
 /**
@@ -56,3 +62,6 @@ PUBLIC int cash_tokens(struct tbucket *bucket, size_t tokens)
 		return 0;
 	}
 }
+
+//@}
+//@}

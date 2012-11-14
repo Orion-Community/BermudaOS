@@ -23,7 +23,7 @@
 /** \file doxyindex.h */
 
 /**
- * \mainpage BermudaOS - <b><i>Index</i></b>
+ * \mainpage Home
  * \section intro Introduction
  * 
  * BermudaOS an embedded scalable, modular operating system and API. It comes
@@ -34,6 +34,7 @@
  * * Hardware and software I2C;\n
  * * Hardware and software SPI;\n
  * * RS232 (often used for text output to the screen).\n
+ * * BermudaNet - See <a href="group__net.html">here</a>.
  * \n
  * The schedule algorithm implemented by BermudaOS, is a cooperative single queue
  * priority based algorithm.
@@ -41,7 +42,8 @@
  * \section source Source (download)
  * 
  * Source is available via git. 
- * <a href="http://michelmegens.net/viewgit/?a=summary&p=BermudaOS">Here</a>
+ * <a href="http://git.michelmegens.net/viewgit/?a=summary&p=BermudaOS">Here</a>
  * are source tarballs available. Please use the latest release tag for the most
- * stable version. A git-clone can be performed from git://michelmegens.net/BermudaOS
+ * stable version. A git-clone can be performed from <a href="#">
+ * git://git.michelmegens.net/BermudaOS.git</a>.
  */

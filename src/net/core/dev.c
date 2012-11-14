@@ -17,7 +17,7 @@
  */
 
 /**
- * \file src/core/dev.c Core layer device file.
+ * \file src/net/core/dev.c Core layer device file.
  * \addtogroup net BermudaNet
  * \brief Network stack for BermudaOS.
  * @{

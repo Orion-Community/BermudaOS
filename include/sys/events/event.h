@@ -79,5 +79,8 @@ PRIVATE WEAK void BermudaEventTMO(VTIMER *timer, void *arg);
 
 __DECL_END
 
+#define event_wait(q, tmo) BermudaEventWait(q, tmo)
+#define event_signal(q) BermudaEventSignal(q)
+
 // @}
 #endif

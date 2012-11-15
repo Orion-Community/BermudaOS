@@ -36,6 +36,18 @@ struct netbuff;
 typedef uint16_t netbuff_features_t;
 
 /**
+ * \def NETIF_TX_QUEUE_FLAG
+ * \brief Flag to mark a transmit queue.
+ */
+#define NETIF_TX_QUEUE_FLAG B1
+
+/**
+ * \def NETIF_RX_QUEUE_FLAG
+ * \brief Flag to mark a receive queue.
+ */
+#define NETIF_RX_QUEUE_FLAG B10
+
+/**
  * \brief Network packet identifier.
  * 
  * The size of a packet can be calculated very easily. The size of the total packet should be equal
@@ -49,10 +61,23 @@ struct packet_type
 	struct netbuff* (*gso_segment)(struct netbuff *nb, uint16_t mtu); //!< Function to segment a packet.
 };
 
+/**
+ * \brief Queues used to to queue up packets waiting for processing.
+ */
 struct netbuff_queue
 {
-	struct netbuff_queue *next;
-	struct netbuff *packet;
+	struct netbuff_queue *next; //!< Next packet in the list.
+	
+	struct netbuff *packet;     //!< Queued packet.
+	
+	/**
+	 * \brief Type of the queue.
+	 * \see NETIF_TX_QUEUE_FLAG
+	 * \see NETIF_RX_QUEUE_FLAG
+	 * 
+	 * This member can be set to <i>NETIF_TX_QUEUE_FLAG</i> <b>AND/OR</b> <i>NETIF_RX_QUEUE_FLAG</i>.
+	 */
+	uint8_t type : 2;
 };
 
 /**

@@ -280,6 +280,11 @@ extern THREAD *BermudaThreadHead;
 extern THREAD *BermudaKillQueue;
 
 /**
+ * \brief Yield the current thread.
+ */
+#define thread_yield() BermudaThreadYield()
+
+/**
  * @}
  */
 #endif

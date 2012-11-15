@@ -44,7 +44,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <tokenbucket.h>
 
 #include <dev/dev.h>
 #include <dev/error.h>
@@ -54,6 +53,7 @@
 
 #include <net/netbuff.h>
 #include <net/netdev.h>
+#include <net/tokenbucket.h>
 
 #include <net/core/dev.h>
 #include <net/core/vlan.h>
@@ -87,8 +87,12 @@ static uint8_t rx_stack[NETIF_STACK_SIZ];
  */
 static struct netdev *devRoot = NULL;
 
+static volatile THREAD *tx_queue = SIGNALED;
+static volatile THREAD *rx_queue = SIGNALED;
+
 /* static functions */
 static int __netif_init_dev(struct netdev *dev);
+static __force_inline inline int __netif_tx_queue(struct netbuff *nb, struct netbuff_queue *queue);
 
 #ifdef __DOXYGEN__
 /**
@@ -175,13 +179,46 @@ static int __netif_init_dev(struct netdev *dev)
  */
 THREAD(func netif_processor, void *queue);
 #else
-THREAD(netif_processor, queue)
+THREAD(netif_processor, raw_queue)
 {
+	struct netbuff_queue *queue = raw_queue;
+
 	while(TRUE) {
-		BermudaThreadSleep(100);
+		if(!queue) {
+			event_wait((queue->type & NETIF_TX_QUEUE_FLAG) ? &tx_queue : &rx_queue, 
+					   EVENT_WAIT_INFINITE);
+		} else {
+			thread_yield();
+		}
+		
+		switch(queue->type & (NETIF_TX_QUEUE_FLAG | NETIF_RX_QUEUE_FLAG)) {
+			/*
+			 * Case of TX queue entry.
+			 */
+			case NETIF_TX_QUEUE_FLAG:
+				__netif_tx_queue(queue->packet, queue);
+				break;
+				
+			/*
+			 * Case of an RX queue entry.
+			 */
+			case NETIF_RX_QUEUE_FLAG:
+				break;
+				
+			case NETIF_TX_QUEUE_FLAG | NETIF_RX_QUEUE_FLAG:
+				break;
+				
+			default:
+				break;
+		}
 	}
 }
 #endif
+
+static __force_inline inline int __netif_tx_queue(struct netbuff *nb, struct netbuff_queue *queue)
+{
+	return -1;
+}
 
 /**
  * @}

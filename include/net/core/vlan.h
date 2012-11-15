@@ -48,8 +48,14 @@ struct vlan_tag
 	uint16_t vlan_id : 12; //!< VLAN identifier.
 };
 
+#ifdef __DOXYGEN__
+#else
 __DECL
+#endif
 extern __32be vlan_inflate(struct vlan_tag *tag);
 extern struct vlan_tag *vlan_extract(struct netbuff *nb);
+#ifdef __DOXYGEN__
+#else
 __DECL_END
+#endif
 #endif

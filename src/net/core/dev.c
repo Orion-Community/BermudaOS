@@ -45,6 +45,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <arch/io.h>
+
 #include <dev/dev.h>
 #include <dev/error.h>
 
@@ -87,20 +89,16 @@ static uint8_t rx_stack[NETIF_STACK_SIZ];
  */
 static struct netdev *devRoot = NULL;
 
-static volatile THREAD *tx_queue = SIGNALED;
-static volatile THREAD *rx_queue = SIGNALED;
+static volatile THREAD *tx_wait_queue = SIGNALED;
+static volatile THREAD *rx_wait_queue = SIGNALED;
+static struct netbuff_queue *tx_queue = NULL;
+static struct netbuff_queue *rx_queue = NULL;
 
 /* static functions */
 static int __netif_init_dev(struct netdev *dev);
-static __force_inline inline int __netif_tx_queue(struct netbuff *nb, struct netbuff_queue *queue);
+static __force_inline inline struct netbuff *__netif_tx_queue(volatile struct netbuff_queue **qhpp);
 
 #ifdef __DOXYGEN__
-/**
- * \brief Definition of the core layer processor thread.
- * \param netif_processor Name of the thread.
- * \param queue Name of the argument.
- */
-THREAD_DEF(func netif_processor, void *queue);
 #else
 THREAD_DEF(netif_processor, queue);
 #endif
@@ -119,10 +117,10 @@ PUBLIC int netif_init(struct netdev *dev)
 		return -DEV_NULL;
 	}
 	
-	BermudaThreadCreate(&tx_thread, "netif_TX", &netif_processor, NULL, NETIF_STACK_SIZ, &tx_stack[0],
-						BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(&rx_thread, "netif_RX", &netif_processor, NULL, NETIF_STACK_SIZ, &rx_stack[0],
-						BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(&tx_thread, "netif_TX", &netif_processor, &tx_queue, 
+						NETIF_STACK_SIZ, &tx_stack[0], BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(&rx_thread, "netif_RX", &netif_processor, &rx_queue,
+						NETIF_STACK_SIZ, &rx_stack[0], BERMUDA_DEFAULT_PRIO);
 	devRoot = dev;
 	dev->next = NULL;
 	return 0;
@@ -175,17 +173,24 @@ static int __netif_init_dev(struct netdev *dev)
 /**
  * \brief Implementation of the core layer processor thread.
  * \param netif_processor Name of the thread.
- * \param queue Name of the argument.
+ * \param queue The queue this processor manages.
+ * 
+ * This processor can either manage a transmitting queue or a receiving queue.
  */
 THREAD(func netif_processor, void *queue);
 #else
 THREAD(netif_processor, raw_queue)
 {
-	struct netbuff_queue *queue = raw_queue;
+	volatile struct netbuff_queue **nqpp, *queue;
 
+	nqpp = (volatile struct netbuff_queue**)raw_queue;
 	while(TRUE) {
+		enter_crit();
+		queue = *nqpp;
+		exit_crit();
+		
 		if(!queue) {
-			event_wait((queue->type & NETIF_TX_QUEUE_FLAG) ? &tx_queue : &rx_queue, 
+			event_wait((queue->type & NETIF_TX_QUEUE_FLAG) ? &tx_wait_queue : &rx_wait_queue, 
 					   EVENT_WAIT_INFINITE);
 		} else {
 			thread_yield();
@@ -196,7 +201,8 @@ THREAD(netif_processor, raw_queue)
 			 * Case of TX queue entry.
 			 */
 			case NETIF_TX_QUEUE_FLAG:
-				__netif_tx_queue(queue->packet, queue);
+				/* check if gso is needed */
+				__netif_tx_queue(nqpp);
 				break;
 				
 			/*
@@ -215,9 +221,39 @@ THREAD(netif_processor, raw_queue)
 }
 #endif
 
-static __force_inline inline int __netif_tx_queue(struct netbuff *nb, struct netbuff_queue *queue)
+/**
+ * \brief Enqueue a packet at its network device driver.
+ * \param qhpp The queue head.
+ * 
+ * The complexity of this function is \f$ O(n) \f$, since packets will added to the end of the
+ * netdev queue. If the tokenbucket is disabled the amount of frames/s equels:
+ * 
+ * \f$ F\cdot s^{-1} = \frac{baud}{n\cdot 8\frac{bits}{byte}} \f$ \n
+ * Where \f$ baud \f$ defines the speed in \f$ bits\cdot s^{-1} \f$, \f$ n \f$ the amount of bytes per
+ * frame (including interframe space).
+ */
+static __force_inline inline struct netbuff *__netif_tx_queue(volatile struct netbuff_queue **qhpp)
 {
-	return -1;
+	volatile struct netbuff_queue *qp;
+	struct netbuff *packet;
+	struct netdev *dev;
+	
+	enter_crit();
+	qp = *qhpp;
+	exit_crit();
+	
+	if(qp) {
+		packet = qp->packet;
+		dev = packet->dev;
+	} else {
+		packet = NULL;
+		goto out;
+	}
+	
+	
+	
+	out:
+	return packet;
 }
 
 /**

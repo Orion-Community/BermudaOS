@@ -45,11 +45,17 @@ struct tbucket
 	bool active;
 } __attribute__((packed));
 
+#ifdef __DOXYGEN__
+#else
 __DECL
+#endif
 extern void pay_packet(struct tbucket *bucket, struct netbuff *packet);
 extern bool tbucket_can_afford_packet(struct tbucket *bucket, struct netbuff *packet);
 extern int cash_tokens(struct tbucket *bucket, size_t tokens);
+#ifdef __DOXYGEN__
+#else
 __DECL_END
+#endif
 
 #endif /* __TOKENBUCKET_H */
 

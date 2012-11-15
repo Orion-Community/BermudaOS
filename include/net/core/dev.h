@@ -24,9 +24,14 @@
 #include <net/netdev.h>
 #include <net/netbuff.h>
 
+#ifdef __DOXYGEN__
+#else
 __DECL
+#endif
 extern int netif_init(struct netdev *dev);
 extern int netif_init_dev(struct netdev *dev);
+#ifdef __DOXYGEN__
+#else
 __DECL_END
-
+#endif
 #endif /* __DEV_AGN_H */

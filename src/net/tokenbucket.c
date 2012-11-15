@@ -17,6 +17,8 @@
  */
 
 #include <stdlib.h>
+
+#include <net/netbuff.h>
 #include <net/tokenbucket.h>
 
 /**
@@ -60,6 +62,21 @@ PUBLIC int cash_tokens(struct tbucket *bucket, size_t tokens)
 	} else {
 		bucket->tokens += tokens;
 		return 0;
+	}
+}
+
+/**
+ * \brief Determines wether a packet can be afforded yes or no.
+ * \param bucket Bucket with the tokens.
+ * \param packet Packet to check against <i>bucket</i>.
+ * \return <i>TRUE</i>, if the packet can be afforded, <i>FALSE</i> otherwise.
+ */
+PUBLIC bool tbucket_can_afford_packet(struct tbucket *bucket, struct netbuff *packet)
+{
+	if(bucket->tokens < packet->length) {
+		return false;
+	} else {
+		return true;
 	}
 }
 

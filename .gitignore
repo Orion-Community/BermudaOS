@@ -38,3 +38,4 @@ generate
 config.h.in~
 m4/
 *.bak
+build/

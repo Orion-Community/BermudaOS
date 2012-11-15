@@ -16,7 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file include/tokenbucket.h Token bucket algorithm header.
+/**
+ * \file include/tokenbucket.h Token bucket algorithm header.
+ * \addtogroup net
+ * @{
+ * \addtogroup tbucket Token bucket
+ * @{
+ */
 
 #ifndef __TOKENBUCKET_H
 #define __TOKENBUCKET_H
@@ -36,11 +42,16 @@ struct tbucket
 	
 	uint64_t rate; //!< Maximum rate of the uplink.
 	uint64_t tokens; //!< Amount of tokens, which can be used to 'buy' packets.
+	bool active;
 } __attribute__((packed));
 
 __DECL
 extern void pay_packet(struct tbucket *bucket, struct netbuff *packet);
+extern bool tbucket_can_afford_packet(struct tbucket *bucket, struct netbuff *packet);
 extern int cash_tokens(struct tbucket *bucket, size_t tokens);
 __DECL_END
 
 #endif /* __TOKENBUCKET_H */
+
+//@}
+//@}

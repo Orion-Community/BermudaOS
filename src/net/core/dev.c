@@ -316,6 +316,7 @@ static inline __force_inline int __netif_start_xmit(volatile struct netbuff_queu
 	struct netbuff *nb;
 	struct netdev *dev;
 	struct netif_ptype *ptype;
+	struct tbucket *bucket;
 	volatile struct netbuff_queue *qp;
 	int err;
 	
@@ -360,13 +361,28 @@ static inline __force_inline int __netif_start_xmit(volatile struct netbuff_queu
 	enter_crit();
 	*qhpp = qp->next;
 	exit_crit();
-	free(qp);
+	free((void*)qp);
 	
 	/*
 	 * Enqueue the packet at the device
 	 */
+	bucket = dev->queue;
+	qp = (struct netbuff_queue*)list_last_entry((void*)bucket->queue);
+// 	TODO: tokenbucket_run(nb->dev);
+	
 	do {
-		
+		if(tbucket_can_afford_packet(bucket, nb)) {
+			tbucket_buy_packet(bucket, nb);
+// 			TODO: dev->tx(nb);
+		} else {
+			/*
+			 * queue up the packet
+			 */
+			qp->next = malloc(sizeof(*qp));
+			qp->packet = nb;
+			qp->next = NULL;
+		}
+		nb = nb->next;
 	} while(nb);
 	
 	return DEV_OK;

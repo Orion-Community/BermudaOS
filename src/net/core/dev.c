@@ -97,6 +97,8 @@ static struct netbuff_queue *rx_queue = NULL;
 /* static functions */
 static int __netif_init_dev(struct netdev *dev);
 static __force_inline inline struct netbuff *__netif_tx_queue(volatile struct netbuff_queue **qhpp);
+static bool netif_nb_needs_gso(struct netbuff *nb);
+static inline int __netif_start_xmit(struct netbuff *buff);
 
 #ifdef __DOXYGEN__
 #else
@@ -172,16 +174,17 @@ static int __netif_init_dev(struct netdev *dev)
 #ifdef __DOXYGEN__
 /**
  * \brief Implementation of the core layer processor thread.
- * \param netif_processor Name of the thread.
- * \param queue The queue this processor manages.
+ * \param raw_queue The queue this processor manages.
  * 
  * This processor can either manage a transmitting queue or a receiving queue.
  */
-THREAD(func netif_processor, void *queue);
+static void netif_processor(void *raw_queue)
 #else
 THREAD(netif_processor, raw_queue)
+#endif
 {
 	volatile struct netbuff_queue **nqpp, *queue;
+	struct netbuff *packet;
 
 	nqpp = (volatile struct netbuff_queue**)raw_queue;
 	while(TRUE) {
@@ -190,10 +193,10 @@ THREAD(netif_processor, raw_queue)
 		exit_crit();
 		
 		if(!queue) {
-			event_wait((queue->type & NETIF_TX_QUEUE_FLAG) ? &tx_wait_queue : &rx_wait_queue, 
+			BermudaEventWait((queue->type & NETIF_TX_QUEUE_FLAG) ? &tx_wait_queue : &rx_wait_queue, 
 					   EVENT_WAIT_INFINITE);
 		} else {
-			thread_yield();
+			BermudaThreadYield();
 		}
 		
 		switch(queue->type & (NETIF_TX_QUEUE_FLAG | NETIF_RX_QUEUE_FLAG)) {
@@ -202,7 +205,10 @@ THREAD(netif_processor, raw_queue)
 			 */
 			case NETIF_TX_QUEUE_FLAG:
 				/* check if gso is needed */
-				__netif_tx_queue(nqpp);
+				packet = __netif_tx_queue(nqpp);
+				__netif_start_xmit(packet);
+// 				tokenbucket_run(packet->dev);
+// 				netif_start_xmit(packet->dev);
 				break;
 				
 			/*
@@ -219,7 +225,6 @@ THREAD(netif_processor, raw_queue)
 		}
 	}
 }
-#endif
 
 /**
  * \brief Enqueue a packet at its network device driver.
@@ -232,11 +237,12 @@ THREAD(netif_processor, raw_queue)
  * Where \f$ baud \f$ defines the speed in \f$ bits\cdot s^{-1} \f$, \f$ n \f$ the amount of bytes per
  * frame (including interframe space).
  */
-static __force_inline inline struct netbuff *__netif_tx_queue(volatile struct netbuff_queue **qhpp)
+static inline __force_inline struct netbuff *__netif_tx_queue(volatile struct netbuff_queue **qhpp)
 {
-	volatile struct netbuff_queue *qp;
+	volatile struct netbuff_queue *qp, *tbq, *nqe = NULL; /* queue pointer, tbucket queue, new entry */
 	struct netbuff *packet;
 	struct netdev *dev;
+	struct tbucket *tb;
 	
 	enter_crit();
 	qp = *qhpp;
@@ -250,10 +256,112 @@ static __force_inline inline struct netbuff *__netif_tx_queue(volatile struct ne
 		goto out;
 	}
 	
+	tb = dev->queue;
+	tbq = tb->queue;
+	
+	if(tbucket_can_afford_packet(tb, packet)) {
+		tbucket_buy_packet(tb, packet);
+		
+		do {
+			if(tbq == NULL) {
+				tbq = nqe = malloc(sizeof(*tbq));
+				break;
+			}
+			
+			if(tbq->next == NULL) {
+				nqe = malloc(sizeof(*tbq));
+				break;
+			}
+			
+			tbq = tbq->next;
+		} while(tbq);
+		
+		tb->queue = tbq;
+		nqe->packet = packet;
+		nqe->type = qp->type;
+		nqe->next = NULL;
+	} else {
+		/*
+		 * Packet can not be afforded, leave it enqueud
+		 */
+		packet = NULL;
+		goto out;
+	}
+	
+	/*
+	 * remove the packet from the core queue
+	 */
+	enter_crit();
+	*qhpp = qp->next;
+	exit_crit();
+	free((void*)qp);
 	
 	
 	out:
 	return packet;
+}
+
+/**
+ * \brief Start the transmission of a given packet.
+ * \param nb Buffer to transmit.
+ * \note Should only be called from <i>netif_processor</i>.
+ * \todo 
+ * * First of all, fix the damn VLAN tags. \n
+ * * Secondly, has to be checked for gso. \n
+ * * Thirdly, if GSO needs to be done by software do so. \n
+ * * Fourthly, enqueue the packet at the network device driver. \n
+ * * And last but not least: wake up the network device driver if necessary. \n
+ */
+static inline __force_inline int __netif_start_xmit(struct netbuff *nb)
+{
+	netbuff_features_t features;
+	struct netdev *dev;
+	
+	if(nb_has_tx_tag(nb)) {
+		nb->raw_vlan = vlan_inflate(nb);
+// 		TODO: vlan_put_tag(nb);
+	}
+	
+	features = netbuff_get_features(nb);
+	
+	if(netif_nb_needs_gso(nb)) {
+		if((features & NETBUFF_NO_FRAG) == 0) {
+			/*
+			 * It is allowed to fragmentate the packet.
+			 */
+			
+		} else {
+			/*
+			 * It is not allowed to fragmentate the packet.
+			 */
+		}
+	}
+	
+	dev = netbuff_dev(nb);
+	/*
+	 * TODO: Enqueue packet at the device.
+	 */
+	
+	return DEV_OK;
+}
+
+/**
+ * \brief Check wether the packet is to big to transfer it to the PHY-layer.
+ * \param nb Buffer to check.
+ * \todo If the device supports hardware gso this function will not return false!
+ * 
+ * If this function returns true, software must split up the packet before sending it to the
+ * PHY-layer.
+ */
+static bool netif_nb_needs_gso(struct netbuff *nb)
+{
+	struct netdev *dev = nb->dev;
+	
+	if(nb->length > dev->mtu) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 /**

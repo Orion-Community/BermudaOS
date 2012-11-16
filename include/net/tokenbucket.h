@@ -31,8 +31,6 @@
 
 #include <net/netbuff.h>
 
-struct netbuff;
-
 /**
  * \brief Traffic can be shared equally using a token bucket.
  */
@@ -49,7 +47,19 @@ struct tbucket
 #else
 __DECL
 #endif
-extern void pay_packet(struct tbucket *bucket, struct netbuff *packet);
+/**
+ * \brief Buy the packet using tokens from the given tokenbucket.
+ * \param bucket Bucket with tokens.
+ * \param packet Packet to buy.
+ * \warning This function does <b>NOT</b> check wether the bucket has enough tokens or not.
+ * 
+ * \f$ n \f$ tokens will be removed from the bucket where \f$ n \f$ equals netbuff::length.
+ */
+static inline void tbucket_buy_packet(struct tbucket *bucket, struct netbuff *packet)
+{
+	bucket->tokens -= packet->length;
+}
+
 extern bool tbucket_can_afford_packet(struct tbucket *bucket, struct netbuff *packet);
 extern int cash_tokens(struct tbucket *bucket, size_t tokens);
 #ifdef __DOXYGEN__

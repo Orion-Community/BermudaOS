@@ -52,7 +52,7 @@ struct vlan_tag
 #else
 __DECL
 #endif
-extern __32be vlan_inflate(struct vlan_tag *tag);
+extern __32be vlan_inflate(struct netbuff *nb);
 extern struct vlan_tag *vlan_extract(struct netbuff *nb);
 #ifdef __DOXYGEN__
 #else

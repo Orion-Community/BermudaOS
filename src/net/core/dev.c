@@ -98,7 +98,8 @@ static struct netbuff_queue *rx_queue = NULL;
 static int __netif_init_dev(struct netdev *dev);
 static __force_inline inline struct netbuff *__netif_tx_queue(volatile struct netbuff_queue **qhpp);
 static bool netif_nb_needs_gso(struct netbuff *nb);
-static inline int __netif_start_xmit(struct netbuff *buff);
+static inline int __netif_start_xmit(volatile struct netbuff_queue **qhpp);
+static bool netif_eval_err(int err);
 
 #ifdef __DOXYGEN__
 #else
@@ -184,7 +185,6 @@ THREAD(netif_processor, raw_queue)
 #endif
 {
 	volatile struct netbuff_queue **nqpp, *queue;
-	struct netbuff *packet;
 
 	nqpp = (volatile struct netbuff_queue**)raw_queue;
 	while(TRUE) {
@@ -205,10 +205,8 @@ THREAD(netif_processor, raw_queue)
 			 */
 			case NETIF_TX_QUEUE_FLAG:
 				/* check if gso is needed */
-				packet = __netif_tx_queue(nqpp);
-				__netif_start_xmit(packet);
+				__netif_start_xmit(nqpp);
 // 				tokenbucket_run(packet->dev);
-// 				netif_start_xmit(packet->dev);
 				break;
 				
 			/*
@@ -312,10 +310,23 @@ static inline __force_inline struct netbuff *__netif_tx_queue(volatile struct ne
  * * Fourthly, enqueue the packet at the network device driver. \n
  * * And last but not least: wake up the network device driver if necessary. \n
  */
-static inline __force_inline int __netif_start_xmit(struct netbuff *nb)
+static inline __force_inline int __netif_start_xmit(volatile struct netbuff_queue **qhpp)
 {
 	netbuff_features_t features;
+	struct netbuff *nb;
 	struct netdev *dev;
+	struct netif_ptype *ptype;
+	volatile struct netbuff_queue *qp;
+	int err;
+	
+	enter_crit();
+	qp = *qhpp;
+	exit_crit();
+	
+	nb = qp->packet;
+	if(!nb) {
+		goto out_fail;
+	}
 	
 	if(nb_has_tx_tag(nb)) {
 		nb->raw_vlan = vlan_inflate(nb);
@@ -323,26 +334,45 @@ static inline __force_inline int __netif_start_xmit(struct netbuff *nb)
 	}
 	
 	features = netbuff_get_features(nb);
+	dev = netbuff_dev(nb);
 	
 	if(netif_nb_needs_gso(nb)) {
 		if((features & NETBUFF_NO_FRAG) == 0) {
 			/*
 			 * It is allowed to fragmentate the packet.
 			 */
-			
+			ptype = netbuff_type(nb);
+			err = ptype->gso_segment(nb, dev->mtu);
+		
+			if(netif_eval_err(err)) {
+// 				netbuff_drop(nb);
+				goto out_fail;
+			}
 		} else {
 			/*
 			 * It is not allowed to fragmentate the packet.
 			 */
+// 			TODO: netbuff_drop(nb);
+			goto out_fail;
 		}
 	}
 	
-	dev = netbuff_dev(nb);
+	enter_crit();
+	*qhpp = qp->next;
+	exit_crit();
+	free(qp);
+	
 	/*
-	 * TODO: Enqueue packet at the device.
+	 * Enqueue the packet at the device
 	 */
+	do {
+		
+	} while(nb);
 	
 	return DEV_OK;
+	
+	out_fail:
+	return DEV_ERROR;
 }
 
 /**
@@ -362,6 +392,11 @@ static bool netif_nb_needs_gso(struct netbuff *nb)
 	} else {
 		return false;
 	}
+}
+
+static bool netif_eval_err(int err)
+{
+	return true;
 }
 
 /**

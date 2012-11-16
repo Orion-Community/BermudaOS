@@ -64,12 +64,12 @@ typedef uint16_t netbuff_features_t;
  * The size of a packet can be calculated very easily. The size of the total packet should be equal
  * to <i><b>total := netbuff.end - netbuff.head</b></i>.
  */
-struct packet_type
+struct netif_ptype
 {
-	struct packet_type *next; //!< Next pointer.
+	struct netif_ptype *next; //!< Next pointer.
 	
 	__16be type; //!< 16-bit big-endian (network order) protocol identifier.
-	struct netbuff* (*gso_segment)(struct netbuff *nb, uint16_t mtu); //!< Function to segment a packet.
+	int (*gso_segment)(struct netbuff *nb, uint16_t mtu); //!< Function to segment a packet.
 };
 
 /**
@@ -99,7 +99,7 @@ struct netbuff
 	struct netbuff *next; //!< Next pointer.
 	
 	struct netdev *dev; //!< Linked network device.
-	struct packet_type *ptye; //!< Protocol identifier.
+	struct netif_ptype *ptype; //!< Protocol identifier.
 	
 	netbuff_features_t features; //!< Options active on this netbuff.
 
@@ -148,9 +148,18 @@ static inline bool nb_has_tx_tag(struct netbuff *nb)
  * \brief Get the netdev of this netbuff.
  * \param nb Buffer whose netdev you want.
  */
-static inline struct netdev *dev(struct netbuff *nb)
+static inline struct netdev *netbuff_dev(struct netbuff *nb)
 {
 	return nb->dev;
+}
+
+/**
+ * \brief Get the protocol type of the given netbuff.
+ * \param nb Netbuff whose protocol type you want to have.
+ */
+static inline struct netif_ptype *netbuff_type(struct netbuff *nb)
+{
+	return nb->ptype;
 }
 #ifdef __DOXYGEN__
 #else

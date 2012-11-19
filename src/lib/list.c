@@ -1,5 +1,5 @@
 /*
- *  BermudaNet - Device agnostic header
+ *  BermudaNet - List support functions
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,22 +16,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __DEV_AGN_H
-#define __DEV_AGN_H
-
 #include <stdlib.h>
 
-#include <net/netdev.h>
-#include <net/netbuff.h>
-
-#ifdef __DOXYGEN__
-#else
-__DECL
-#endif
-extern int netif_init(struct netdev *dev);
-extern int netif_init_dev(struct netdev *dev);
-#ifdef __DOXYGEN__
-#else
-__DECL_END
-#endif
-#endif /* __DEV_AGN_H */
+/**
+ * \brief Locate the last entry in a linked list.
+ * \param vp Pointer to the linked list.
+ * \note The list::next member <b>MUST</b> be the first member in the structure.
+ */
+PUBLIC struct list *list_last_entry(void *vp)
+{
+	struct list *list;
+	
+	for(list = vp; list != NULL && list != list->next; list = list->next) {
+		if(list->next == NULL) {
+			return list;
+		}
+	}
+	
+	return NULL;
+}

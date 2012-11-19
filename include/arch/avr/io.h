@@ -70,6 +70,27 @@ extern void BermudaMutexEnter(volatile unsigned char *lock);
 #define BermudaExitCritical() __asm__ __volatile__( \
                               "pop __tmp_reg__"           "\n\t" \
                               "out __SREG__, __tmp_reg__" "\n\t")
+                              
+/**
+ * \def enter_crit
+ * \brief Enter IO safe state.
+ * \note Disables interrupts.
+ * \warning System might get corrupted when exit_crit is not called.
+ */
+#define enter_crit() __asm__ __volatile__( \
+"in __tmp_reg__, __SREG__" "\n\t" \
+                               "cli"                      "\n\t" \
+                               "push __tmp_reg__"         "\n\t")
+
+/**
+ * \def exit_crit
+ * \brief Leave IO safe state.
+ * \note Restores interrupts to saved state.
+ * \warning Do not call without calling enter_crit before.
+ */
+#define exit_crit() __asm__ __volatile__( \
+"pop __tmp_reg__"  "\n\t" \
+"out __SREG__, __tmp_reg__" "\n\t")
 
 /**
  * \def BermudaInterruptsSave

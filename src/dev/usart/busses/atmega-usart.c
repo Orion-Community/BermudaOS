@@ -286,8 +286,8 @@ static void BermudaUsartConfigBaud(USARTBUS *bus, unsigned short baud)
 	}
 	
 	// program the new rate
-	(*(hw->ubrrl)) = baud & 0xFF;
-	(*(hw->ubrrh)) = (baud >> 8) & 0xF;
+	(*(hw->ubrrl)) = ubrr & 0xFF;
+	(*(hw->ubrrh)) = (ubrr >> 8) & 0xF;
 }
 
 /**

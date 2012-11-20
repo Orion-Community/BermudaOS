@@ -93,6 +93,51 @@ PUBLIC struct epl_list *epl_alloc()
 }
 
 /**
+ * \brief Set a reference to an EPL.
+ * \param list List reference.
+ * \param ref Reference to set.
+ * 
+ * When this function returns <b><i>ref</i></b> will point to the the EPL pointer <i><b>list</b></i>.
+ */
+PUBLIC void epl_deref(struct epl_list *list, struct epl_list **ref)
+{
+	enter_crit();
+	*ref = list;
+	exit_crit();
+}
+
+/**
+ * \brief Add a new node to the list.
+ * \param list The EPL pointer which holds the head of nodes.
+ * \param node Node which should be added.
+ * \param a Defines where the node should be added.
+ * \return 0 on success, -1 otherwise.
+ */
+PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum epl_list_action a)
+{
+	struct epl_list_node *head = list->nodes;
+	
+	/*
+	 * If the head is not set, set it.
+	 */
+	if(!nodes) {
+		list->nodes = node;
+		return 0;
+	}
+	
+	switch(a) {
+		case EPL_APPEND:
+			break;
+			
+		case EPL_IN_FRONT:
+			break;
+			
+		default:
+			break;
+	}
+}
+
+/**
  * @}
  * @}
  * @}

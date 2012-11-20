@@ -52,6 +52,15 @@ struct epl_list
 	volatile void *mutex; //!< The mutex which is protecting this list.
 };
 
+/**
+ * \brief Defines what should be done when epl_add_node is called.
+ */
+enum epl_list_action
+{
+	EPL_APPEND, //!< Append the new node to the end.
+	EPL_IN_FRONT, //!< Add the new node in front of the head.
+};
+
 #ifdef __DOXYGEN__
 #else
 __DECL
@@ -66,6 +75,13 @@ static inline size_t epl_entries(struct epl_list *list)
 {
 	return list->list_entries;
 }
+
+extern void epl_deref(struct epl_list *list, struct epl_list **ref);
+extern struct epl_list *epl_alloc();
+extern int epl_unlock(struct epl_list *list);
+extern int epl_lock(struct epl_list *list);
+extern int epl_test_lock(struct epl_list *list);
+extern int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum epl_list_action a);
 
 #ifdef __DOXYGEN__
 #else

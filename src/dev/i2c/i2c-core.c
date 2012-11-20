@@ -121,6 +121,9 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
 static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size)
 {
 	struct i2c_shared_info *sh_info;
+	struct epl_list *clist, *alist;
+	struct epl_list_node *node;
+	struct i2c_message *msg;
 	i2c_features_t features;
 	int action, rc = -1;
 	
@@ -134,6 +137,20 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	
 	switch(action) {
 		case I2C_NEW_QUEUE_ENTRY:
+			epl_deref(sh_info->list, &clist);
+			node = malloc(sizeof(*node));
+			if(node) {
+				msg = malloc(sizeof(*msg));
+				if(msg) {
+					msg->buff = (void*)data;
+					msg->length = size;
+					msg->addr = client->sla;
+				}
+				
+				node->data = msg;
+				node->next = NULL;
+				rc = epl_add_node(clist, node, EPL_APPEND);
+			}
 			break;
 		
 		/*

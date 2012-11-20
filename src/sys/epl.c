@@ -87,7 +87,9 @@ PUBLIC struct epl_list *epl_alloc()
 	list = malloc(sizeof(*list));
 	list->mutex = SIGNALED;
 	list->nodes = NULL;
-	list->entries = 0;
+	list->list_entries = 0;
+	
+	return list;
 }
 
 /**

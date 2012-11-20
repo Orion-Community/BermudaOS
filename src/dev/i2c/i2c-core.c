@@ -111,7 +111,7 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
  * \see list_last_entry
  *
  * Append the given <i>data</i> to the client queue. When a flush signal is given
- * the queue will be moved to the appropriate I2C adapter. If the client has not\
+ * the queue will be moved to the appropriate I2C adapter. If the client has not
  * allocated (i.e. locked) its bus adapter, current I2C transfer may get corrupted.
  *
  * The complexity of this function when appending data is \f$ O(n) \f$, since the new
@@ -137,6 +137,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	
 	switch(action) {
 		case I2C_NEW_QUEUE_ENTRY:
+			epl_lock(sh_info->list);
 			epl_deref(sh_info->list, &clist);
 			node = malloc(sizeof(*node));
 			if(node) {
@@ -151,6 +152,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 				node->next = NULL;
 				rc = epl_add_node(clist, node, EPL_APPEND);
 			}
+			epl_unlock(sh_info->list);
 			break;
 		
 		/*

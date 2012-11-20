@@ -28,6 +28,11 @@
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
 
+#include <lib/list/list.h>
+#include <lib/list/rcu.h>
+
+static inline int i2c_eval_action(struct i2c_client *client);
+
 /**
  * \brief Prepare the driver for an I2C transfer.
  * \param stream Device file.
@@ -115,7 +120,47 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
  */
 static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size)
 {
-	return -1;
+	struct i2c_shared_info *sh_info;
+	i2c_features_t features;
+	int action, rc = -1;
+	
+	if(data == NULL) {
+		action = I2C_DELETE_QUEUE_ENTRY;
+	} else {
+		action = i2c_eval_action(client);
+	}
+	sh_info = i2c_shinfo(client);
+	features = i2c_client_features(client);
+	
+	switch(action) {
+		case I2C_NEW_QUEUE_ENTRY:
+			break;
+		
+		/*
+		 * Insert an entry at the start of the list of the adapter. This case is usually used
+		 * after a call back to the application to insert a new I2C message.
+		 */
+		case I2C_INSERT_QUEUE_ENTRY:
+			break;
+		
+		case I2C_FLUSH_QUEUE_ENTRIES:
+			break;
+			
+		case I2C_DELETE_QUEUE_ENTRY:
+			break;
+			
+		default:
+			break;
+	}
+	
+	return rc;
+}
+
+static inline int i2c_eval_action(struct i2c_client *client)
+{
+	i2c_features_t features = i2c_client_features(client);
+	
+	return (int)((features & I2C_QUEUE_ACTION_MASK) >> I2C_QUEUE_ACTION_SHIFT);
 }
 
 /**

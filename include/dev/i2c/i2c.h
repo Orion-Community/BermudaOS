@@ -26,11 +26,12 @@
 #define I2C_H_
 
 #include <stdlib.h>
-
 #include <lib/binary.h>
+#include <sys/epl.h>
 #include <dev/dev.h>
 
 struct i2c_adapter; // forward declaration
+struct i2c_client;
 
 typedef uint8_t i2c_features_t;
 
@@ -48,15 +49,18 @@ typedef uint8_t i2c_features_t;
 #define I2C_CALL_BACK_FLAG B1
 #define I2C_CLIENT_HAS_LOCK_FLAG B10
 
-#define I2C_QUEUE_ACTION_MASK B11 //!< Masks the bits 2-3 in i2c_shared_info::features.
+#define I2C_QUEUE_ACTION_MASK B11100 //!< Masks the bits 2-3 in i2c_shared_info::features.
 #define I2C_QUEUE_ACTION_SHIFT 2  //!< Shift to reach the queue action bits.
-#define I2C_QUEUE_ACTION_NEW B00  //!< Flag to create a new queue entry.
-#define I2C_QUEUE_ACTION_INSERT B01 //!< Flag to insert a queue entry at the start
-#define I2C_QUEUE_ACTION_FLUSH B10 //!< Flag to flush the queue to the adapter.
+#define I2C_QUEUE_ACTION_NEW B100  //!< Flag to create a new queue entry.
+#define I2C_QUEUE_ACTION_INSERT B1000 //!< Flag to insert a queue entry at the start
+#define I2C_QUEUE_ACTION_FLUSH B10000 //!< Flag to flush the queue to the adapter.
+#define I2C_ERROR_FLAG B100000
 
-#define I2C_NEW_QUEUE_ENTRY B00
-#define I2C_INSERT_QUEUE_ENTRY B01
-#define I2C_FLUSH_QUEUE B10
+#define I2C_DELETE_QUEUE_ENTRY B000
+#define I2C_NEW_QUEUE_ENTRY B1
+#define I2C_INSERT_QUEUE_ENTRY B10
+#define I2C_FLUSH_QUEUE_ENTRIES B100
+
 
 /**
  * \brief Structure which defines the data to be transfered in the next transaction.
@@ -75,8 +79,7 @@ struct i2c_message
  */
 struct i2c_shared_info
 {
-	struct rcu_list *list; //!< RCU list of messages.
-	size_t rcu_list_size; //!< Amount of messages in the list.
+	struct epl_list *list; //!< EPL list of messages.
 	
 	/**
 	 * \brief Call back function which can be called after a buffer has been sent by the driver.
@@ -122,7 +125,7 @@ struct i2c_adapter {
 	bool busy; //!< Defines wether the interface is busy or not.
 	uint8_t error;
 	
-	struct rcu_list *msgs;
+	struct epl_list *msgs;
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */
@@ -164,6 +167,26 @@ extern void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adap, uint8_t msg)
 extern void i2c_do_clean_msgs(struct i2c_adapter *adap);
 extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
 extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
+
+/**
+ * \brief Get the shared info of the given I2C client.
+ * \param client Client whose shared info you want.
+ * \return The shared info of the given client.
+ */
+static inline struct i2c_shared_info *i2c_shinfo(struct i2c_client *client)
+{
+	return client->sh_info;
+}
+
+/**
+ * \brief Get the I2C features of the given client.
+ * \param client Client whose features you want.
+ * \return The features of the given client.
+ */
+static inline i2c_features_t i2c_client_features(struct i2c_client *client)
+{
+	return i2c_shinfo(client)->features;
+}
 __DECL_END
 
 

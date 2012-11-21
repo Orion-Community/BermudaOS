@@ -38,13 +38,28 @@ typedef uint8_t i2c_features_t;
 /*
  * i2c message features
  */
-#define I2C_SENT_STOP_FLAG B10
-#define I2C_SENT_REP_START_FLAG B100
-#define I2C_MASTER_MSG_FLAG B1000
-#define I2C_TRANSMIT_MSG_FLAG B10000
+#define I2C_MSG_CALL_BACK_FLAG B1 //!< Defines that the application should be called after transmission.
+#define I2C_MSG_MASTER_MSG_FLAG B10 //!< Defines that this message is sent from master perspective.
+#define I2C_MSG_TRANSMIT_MSG_FLAG B100 //!< Defines the message holds a transmit buffer, not a receive buffer.
+#define I2C_MSG_SENT_STOP_FLAG B1000 //!< Defines that a stop bit should be sent after transmission.
+#define I2C_MSG_SENT_REP_START_FLAG B10000 //!< Defines that a repeated start should be sent after transmission.
+
+#define I2C_MSG_CALL_BACK_FLAG_SHIFT 0
+#define I2C_MSG_MASTER_MSG_FLAG_SHIFT 1
+#define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2
+#define I2C_MSG_SENT_STOP_FLAG_SHIFT 3
+#define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4
+
+#define I2C_MSG_FEATURE_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG | \
+                              I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG | \
+                              I2C_MSG_SENT_REP_START_FLAG)
 
 /*
  * i2c shared info features
+ */
+/**
+ * \brief Defines that messages have to be called back.
+ * \deprecated Each message has its own bit defining call back functionallity.
  */
 #define I2C_CALL_BACK_FLAG B1
 #define I2C_CLIENT_HAS_LOCK_FLAG B10

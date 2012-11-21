@@ -42,7 +42,14 @@ typedef uint8_t i2c_features_t;
 #define I2C_MSG_MASTER_MSG_FLAG B10 //!< Defines that this message is sent from master perspective.
 #define I2C_MSG_TRANSMIT_MSG_FLAG B100 //!< Defines the message holds a transmit buffer, not a receive buffer.
 #define I2C_MSG_SENT_STOP_FLAG B1000 //!< Defines that a stop bit should be sent after transmission.
-#define I2C_MSG_SENT_REP_START_FLAG B10000 //!< Defines that a repeated start should be sent after transmission.
+/**
+ * \brief Defines that a repeated start should be sent after transmission.
+ * \warning This bit does NOT exist in the i2c_message::features.
+ * \see i2c_edit_queue
+ * 
+ * This symbol is used as bit in the flags argument to <i>i2c_edit_queue</i>.
+ */
+#define I2C_MSG_SENT_REP_START_FLAG B10000
 
 #define I2C_MSG_CALL_BACK_FLAG_SHIFT 0
 #define I2C_MSG_MASTER_MSG_FLAG_SHIFT 1
@@ -50,7 +57,7 @@ typedef uint8_t i2c_features_t;
 #define I2C_MSG_SENT_STOP_FLAG_SHIFT 3
 #define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4
 
-#define I2C_MSG_FEATURE_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG | \
+#define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG | \
                               I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG | \
                               I2C_MSG_SENT_REP_START_FLAG)
 

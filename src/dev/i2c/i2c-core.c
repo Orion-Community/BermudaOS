@@ -159,8 +159,8 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 					if(flags) {
 						features = (flags & I2C_MSG_SENT_STOP_FLAG) ? I2C_MSG_SENT_STOP_FLAG :
 									I2C_MSG_SENT_REP_START_FLAG;
-						features |= flags & ~(I2C_MSG_SENT_STOP_FLAG | I2C_MSG_SENT_REP_START_FLAG);
-						features &= I2C_MSG_FEATURE_MASK ^ I2C_MSG_SENT_REP_START_FLAG;
+						features |= flags & (I2C_MSG_FEATURES_MASK ^ (I2C_MSG_SENT_STOP_FLAG | 
+									I2C_MSG_SENT_REP_START_FLAG));
 					} else {
 						features = 0;
 					}

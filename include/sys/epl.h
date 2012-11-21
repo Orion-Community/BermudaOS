@@ -32,6 +32,9 @@
 
 #define DEF_EPL(__mutex) struct epl_list = { SIGNALED, 0, &(__mutex) };
 
+#define for_each_epl_node(__list, __car) for((__car) = (__list)->nodes; (__car) != NULL && \
+										 (__car)->next != (__car); (__car) = (__car)->next)
+
 /**
  * \brief List node data structure for the EPL list.
  */
@@ -82,6 +85,8 @@ extern int epl_unlock(struct epl_list *list);
 extern int epl_lock(struct epl_list *list);
 extern int epl_test_lock(struct epl_list *list);
 extern int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum epl_list_action a);
+extern int epl_delete_node(struct epl_list *list, struct epl_list_node *node);
+extern struct epl_list_node *epl_node_at(struct epl_list *list, size_t index);
 
 #ifdef __DOXYGEN__
 #else

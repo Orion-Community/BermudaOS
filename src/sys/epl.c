@@ -117,10 +117,11 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
 {
 	struct epl_list_node *head = list->nodes;
 	
+	list->list_entries++;
 	/*
 	 * If the head is not set, set it.
 	 */
-	if(!nodes) {
+	if(!head) {
 		list->nodes = node;
 		return 0;
 	}
@@ -135,6 +136,50 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
 		default:
 			break;
 	}
+}
+
+PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
+{
+	struct epl_list_node *head = list->nodes, *carriage, *prev;
+	int rc = -1;
+	
+	if(head) {
+		if(head == node) {
+			head = node->next;
+			list->list_entries--;
+			rc = 0;
+		} else {
+			prev = head;
+			for_each_epl_node(list, carriage) {
+				if(carriage == node) {
+					prev->next = node->next;
+					node->next = NULL;
+					list->list_entries--;
+					rc = 0;
+					break;
+				}
+				prev = carriage;
+			}
+		}
+	} 
+	
+	list->nodes = head;
+	return rc;
+}
+
+PUBLIC struct epl_list_node *epl_node_at(struct epl_list *list, size_t index)
+{
+	struct epl_list_node *carriage = list->nodes;
+	int i;
+	
+	for(i = 0; i < index; i++) {
+		if(carriage->next == NULL) {
+			return NULL;
+		}
+		carriage = carriage->next;
+	}
+	
+	return carriage;
 }
 
 /**

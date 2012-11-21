@@ -81,6 +81,8 @@ struct i2c_shared_info
 {
 	struct epl_list *list; //!< EPL list of messages.
 	
+	struct i2c_adapter *adapter; //!< The I2C adapter.
+	
 	/**
 	 * \brief Call back function which can be called after a buffer has been sent by the driver.
 	 * \param msg Message used in the operation.

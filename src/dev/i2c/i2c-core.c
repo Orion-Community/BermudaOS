@@ -130,6 +130,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	struct i2c_adapter *adpt;
 	i2c_features_t features;
 	int action, rc = -1;
+	FILE *socket;
 	
 	if(data == NULL) {
 		action = I2C_DELETE_QUEUE_ENTRY;
@@ -139,6 +140,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	sh_info = i2c_shinfo(client);
 	features = i2c_client_features(client);
 	adpt = client->adapter;
+	socket = sh_info->socket;
 	
 	if((features & I2C_CLIENT_HAS_LOCK_FLAG) == 0) {
 		return rc;
@@ -156,8 +158,10 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 					msg->length = size;
 					msg->addr = client->sla;
 					
-					features = (sh_info->socket->flags & I2C_MASTER) ? I2C_MASTER_MSG_FLAG : 0;
+					features = (socket->flags & I2C_MASTER) ? I2C_MASTER_MSG_FLAG : 0;
 					features |= (xfer) ? I2C_TRANSMIT_MSG_FLAG : 0;
+					features |= (socket->flags & I2CDEV_CALL_BACK) >> 
+								I2CDEV_CALL_BACK_SHIFT;
 					i2c_msg_set_features(msg, features);
 				}
 				

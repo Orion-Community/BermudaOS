@@ -70,6 +70,8 @@
 /* file flags */
 #define I2C_MASTER 0x100 //!< I2C master flag
 #define I2C_SLAVE  0x200 //!< I2C slave flag
+#define I2CDEV_CALL_BACK 0x400
+#define I2CDEV_CALL_BACK_SHIFT 10
 
 /* adapter flags */
 #define I2C_MASTER_ENABLE 		BIT(0) //!< Master enable bit in the flags member of i2c_client.

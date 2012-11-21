@@ -38,10 +38,10 @@ typedef uint8_t i2c_features_t;
 /*
  * i2c message features
  */
-#define I2C_SENT_STOP_FLAG B1
-#define I2C_SENT_REP_START_FLAG B10
-#define I2C_MASTER_MSG_FLAG B100
-#define I2C_TRANSMIT_MSG_FLAG B1000
+#define I2C_SENT_STOP_FLAG B10
+#define I2C_SENT_REP_START_FLAG B100
+#define I2C_MASTER_MSG_FLAG B1000
+#define I2C_TRANSMIT_MSG_FLAG B10000
 
 /*
  * i2c shared info features

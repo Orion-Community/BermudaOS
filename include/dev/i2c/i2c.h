@@ -82,6 +82,7 @@ struct i2c_shared_info
 	struct epl_list *list; //!< EPL list of messages.
 	
 	struct i2c_adapter *adapter; //!< The I2C adapter.
+	FILE *socket; //!< I/O socket.
 	
 	/**
 	 * \brief Call back function which can be called after a buffer has been sent by the driver.
@@ -188,6 +189,11 @@ static inline struct i2c_shared_info *i2c_shinfo(struct i2c_client *client)
 static inline i2c_features_t i2c_client_features(struct i2c_client *client)
 {
 	return i2c_shinfo(client)->features;
+}
+
+static inline void i2c_msg_set_features(struct i2c_message *msg, i2c_features_t features)
+{
+	msg->features = features;
 }
 __DECL_END
 

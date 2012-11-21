@@ -32,6 +32,7 @@
 #include <lib/list/rcu.h>
 
 static inline int i2c_eval_action(struct i2c_client *client);
+static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, bool xfer);
 
 /**
  * \brief Prepare the driver for an I2C transfer.
@@ -107,6 +108,8 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
  * \param client Client to edit the queues of.
  * \param data Data to append to the queue.
  * \param size Length of <i>data</i>.
+ * \param xfer If <i>xfer</i> is set to true, <i>data</i> will contain a transmit message. If not
+ *             it will be a receive buffer.
  * \note The given I2C client must have allocated its bus adapter.
  * \see list_last_entry
  *
@@ -118,7 +121,7 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
  * data is appended at the end of the queue. See list_last_entry for more information
  * about the editting of queues.
  */
-static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size)
+static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, bool xfer)
 {
 	struct i2c_shared_info *sh_info;
 	struct epl_list *clist, *alist;
@@ -152,6 +155,10 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 					msg->buff = (void*)data;
 					msg->length = size;
 					msg->addr = client->sla;
+					
+					features = (sh_info->socket->flags & I2C_MASTER) ? I2C_MASTER_MSG_FLAG : 0;
+					features |= (xfer) ? I2C_TRANSMIT_MSG_FLAG : 0;
+					i2c_msg_set_features(msg, features);
 				}
 				
 				node->data = msg;

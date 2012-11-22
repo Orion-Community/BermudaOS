@@ -27,9 +27,36 @@
 
 #include <stdlib.h>
 
+#include <lib/binary.h>
 #include <dev/dev.h>
 
 struct i2c_adapter; // forward declaration
+
+typedef uint8_t i2c_features_t;
+
+/*
+ * i2c message features
+ */
+#define I2C_SENT_STOP_FLAG B1
+#define I2C_SENT_REP_START_FLAG B10
+#define I2C_MASTER_MSG_FLAG B100
+#define I2C_TRANSMIT_MSG_FLAG B1000
+
+/*
+ * i2c shared info features
+ */
+#define I2C_CALL_BACK_FLAG B1
+#define I2C_CLIENT_HAS_LOCK_FLAG B10
+
+#define I2C_QUEUE_ACTION_MASK B11 //!< Masks the bits 2-3 in i2c_shared_info::features.
+#define I2C_QUEUE_ACTION_SHIFT 2  //!< Shift to reach the queue action bits.
+#define I2C_QUEUE_ACTION_NEW B00  //!< Flag to create a new queue entry.
+#define I2C_QUEUE_ACTION_INSERT B01 //!< Flag to insert a queue entry at the start
+#define I2C_QUEUE_ACTION_FLUSH B10 //!< Flag to flush the queue to the adapter.
+
+#define I2C_NEW_QUEUE_ENTRY B00
+#define I2C_INSERT_QUEUE_ENTRY B01
+#define I2C_FLUSH_QUEUE B10
 
 /**
  * \brief Structure which defines the data to be transfered in the next transaction.
@@ -39,7 +66,30 @@ struct i2c_message
 	uint8_t *buff; //!< Message buffer.
 	size_t length; //!< Message length.
 	uint16_t addr; //!< Slave address.
+	
+	i2c_features_t features;
 } __attribute__((packed));
+
+/**
+ * \brief Structure shared by all from a certain client.
+ */
+struct i2c_shared_info
+{
+	struct rcu_list *list; //!< RCU list of messages.
+	size_t rcu_list_size; //!< Amount of messages in the list.
+	
+	/**
+	 * \brief Call back function which can be called after a buffer has been sent by the driver.
+	 * \param msg Message used in the operation.
+	 * \param client I2C client which ordered the transmission.
+	 * 
+	 * This function pointer will be called when a transmission is done. The
+	 * application can then insert another message in the queue if that is nessecary.
+	 */
+	int (*shared_callback)(struct i2c_client *client, struct i2c_message *msg);
+	
+	i2c_features_t features; //!< Feature option flags.
+};
 
 /**
  * \brief The i2c_client represents the sender or receiver.
@@ -51,6 +101,8 @@ struct i2c_client {
 	struct i2c_adapter *adapter; //!< The adapter where it belongs to.
 	uint16_t sla; //!< Slave address.
 	uint32_t freq; //!< Operating frequency in master mode.
+	
+	struct i2c_shared_info *sh_info; //!< 
 	
 	/**
 	 * \brief Call back used in slave operation.
@@ -69,6 +121,8 @@ struct i2c_adapter {
 	uint8_t flags; //!< Bus flags.
 	bool busy; //!< Defines wether the interface is busy or not.
 	uint8_t error;
+	
+	struct rcu_list *msgs;
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */

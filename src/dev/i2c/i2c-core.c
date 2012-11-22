@@ -98,6 +98,27 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
 }
 
 /**
+ * \brief Edit the queues of the given I2C client.
+ * \param client Client to edit the queues of.
+ * \param data Data to append to the queue.
+ * \param size Length of <i>data</i>.
+ * \note The given I2C client must have allocated its bus adapter.
+ * \see list_last_entry
+ *
+ * Append the given <i>data</i> to the client queue. When a flush signal is given
+ * the queue will be moved to the appropriate I2C adapter. If the client has not\
+ * allocated (i.e. locked) its bus adapter, current I2C transfer may get corrupted.
+ *
+ * The complexity of this function when appending data is \f$ O(n) \f$, since the new
+ * data is appended at the end of the queue. See list_last_entry for more information
+ * about the editting of queues.
+ */
+static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size)
+{
+	return -1;
+}
+
+/**
  * \brief Arrange the call back to the client.
  * \param client Client to call.
  * \param stream Bus I/O file.

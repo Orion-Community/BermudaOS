@@ -20,6 +20,13 @@
  * \file src/dev/i2c/i2c-core.c I2C core functions.
  * \addtogroup i2c
  * @{
+ * \addtogroup i2c-core I2C Core
+ * \brief I2C core module.
+ * \todo Rewrite the I2C core module.
+ * 
+ * The I2C core module is a device/peripheral agnostic layer. It is responsible for editting
+ * all queue data, creating and deleting new messages, handling of call backs, initializing data
+ * transfers at the device/peripheral driver, etc..
  */
 
 #include <stdlib.h>
@@ -31,8 +38,12 @@
 #include <lib/list/list.h>
 #include <lib/list/rcu.h>
 
-static inline int i2c_eval_action(struct i2c_client *client);
+/*
+ * Static functions.
+ */
+static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
 static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags);
+static inline bool i2c_has_action(i2c_features_t features);
 
 /**
  * \brief Prepare the driver for an I2C transfer.
@@ -103,6 +114,24 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
 	msgs[msg] = NULL;
 }
 
+PUBLIC int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force)
+{
+	i2c_features_t features = i2c_client_features(client);
+	
+	if((features & I2C_ACTION_PENDING) == 0 || force) {
+		action <<= I2C_QUEUE_ACTION_SHIFT;
+		features |= action;
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+static inline bool i2c_has_action(i2c_features_t features)
+{
+	return ((features & I2C_ACTION_PENDING) != 0);
+}
+
 /**
  * \brief Edit the queues of the given I2C client.
  * \param client Client to edit the queues of.
@@ -111,7 +140,7 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
  * \param flags <i>flags</i> gives information about the data passed to <i><b>i2c_edit_queue</b></i>.
  * \note The given I2C client must have allocated its bus adapter.
  * \see list_last_entry I2C_MSG_CALL_BACK_FLAG I2C_MSG_SENT_STOP_FLAG I2C_MSG_SENT_REP_START_FLAG
- * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG
+ * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
  *
  * Append the given <i>data</i> to the client queue. When a flush signal is given
  * the queue will be moved to the appropriate I2C adapter. If the client has not
@@ -129,7 +158,8 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	struct i2c_message *msg;
 	struct i2c_adapter *adpt;
 	i2c_features_t features;
-	int action, rc = -1;
+	i2c_action_t action;
+	int rc = -1;
 	
 	if(data == NULL) {
 		action = I2C_DELETE_QUEUE_ENTRY;
@@ -140,7 +170,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	features = i2c_client_features(client);
 	adpt = client->adapter;
 	
-	if((features & I2C_CLIENT_HAS_LOCK_FLAG) == 0) {
+	if((features & I2C_CLIENT_HAS_LOCK_FLAG) == 0 && i2c_has_action(features)) {
 		return rc;
 	}
 	
@@ -160,7 +190,8 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 							features = (flags & I2C_MSG_SENT_STOP_FLAG) ? I2C_MSG_SENT_STOP_FLAG :
 										I2C_MSG_SENT_REP_START_FLAG;
 							features |= flags & (I2C_MSG_FEATURES_MASK ^ (I2C_MSG_SENT_STOP_FLAG | 
-										I2C_MSG_SENT_REP_START_FLAG));
+										I2C_MSG_SENT_REP_START_FLAG)); /* Do not OR stop 
+																		and rep start */
 						} else {
 							features = 0;
 						}
@@ -239,14 +270,17 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 			break;
 	}
 	
+	features = i2c_client_features(client); /* features could be compromised */
+	features &= ~I2C_ACTION_PENDING;
+	
 	return rc;
 }
 
-static inline int i2c_eval_action(struct i2c_client *client)
+static inline i2c_action_t i2c_eval_action(struct i2c_client *client)
 {
 	i2c_features_t features = i2c_client_features(client);
 	
-	return (int)((features & I2C_QUEUE_ACTION_MASK) >> I2C_QUEUE_ACTION_SHIFT);
+	return (i2c_action_t)((features & I2C_QUEUE_ACTION_MASK) >> I2C_QUEUE_ACTION_SHIFT);
 }
 
 /**

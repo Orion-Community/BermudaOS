@@ -33,7 +33,15 @@
 struct i2c_adapter; // forward declaration
 struct i2c_client;
 
+/**
+ * \brief Definition of the I2C features type.
+ */
 typedef uint8_t i2c_features_t;
+
+/**
+ * \brief Definition of the I2C action type.
+ */
+typedef uint8_t i2c_action_t;
 
 /*
  * i2c message features
@@ -42,21 +50,25 @@ typedef uint8_t i2c_features_t;
 #define I2C_MSG_MASTER_MSG_FLAG B10 //!< Defines that this message is sent from master perspective.
 #define I2C_MSG_TRANSMIT_MSG_FLAG B100 //!< Defines the message holds a transmit buffer, not a receive buffer.
 #define I2C_MSG_SENT_STOP_FLAG B1000 //!< Defines that a stop bit should be sent after transmission.
+
 /**
  * \brief Defines that a repeated start should be sent after transmission.
- * \warning This bit does NOT exist in the i2c_message::features.
+ * \warning This bit does NOT exist in the flags argument to i2c_edit_queue.
  * \see i2c_edit_queue
- * 
- * This symbol is used as bit in the flags argument to <i>i2c_edit_queue</i>.
  */
 #define I2C_MSG_SENT_REP_START_FLAG B10000
 
-#define I2C_MSG_CALL_BACK_FLAG_SHIFT 0
-#define I2C_MSG_MASTER_MSG_FLAG_SHIFT 1
-#define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2
-#define I2C_MSG_SENT_STOP_FLAG_SHIFT 3
-#define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4
+#define I2C_MSG_CALL_BACK_FLAG_SHIFT 0 //!< Shift value of I2C_MSG_CALL_BACK_FLAG
+#define I2C_MSG_MASTER_MSG_FLAG_SHIFT 1 //!< Shift value of I2C_MSG_MASTER_MSG_FLAG
+#define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
+#define I2C_MSG_SENT_STOP_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
+#define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
 
+/**
+ * \brief I2C message features mask.
+ * 
+ * Mask which masks all bits in the i2c_message::features field.
+ */
 #define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG | \
                               I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG | \
                               I2C_MSG_SENT_REP_START_FLAG)
@@ -69,19 +81,19 @@ typedef uint8_t i2c_features_t;
  * \deprecated Each message has its own bit defining call back functionallity.
  */
 #define I2C_CALL_BACK_FLAG B1
-#define I2C_CLIENT_HAS_LOCK_FLAG B10
+#define I2C_CLIENT_HAS_LOCK_FLAG B10 //!< Defines that the client has locked the adapter.
 
 #define I2C_QUEUE_ACTION_MASK B11100 //!< Masks the bits 2-3 in i2c_shared_info::features.
 #define I2C_QUEUE_ACTION_SHIFT 2  //!< Shift to reach the queue action bits.
 #define I2C_QUEUE_ACTION_NEW B100  //!< Flag to create a new queue entry.
 #define I2C_QUEUE_ACTION_INSERT B1000 //!< Flag to insert a queue entry at the start
 #define I2C_QUEUE_ACTION_FLUSH B10000 //!< Flag to flush the queue to the adapter.
-#define I2C_ERROR_FLAG B100000
+#define I2C_ACTION_PENDING B100000 //!< If set, the currently set action is not executed yet.
 
-#define I2C_DELETE_QUEUE_ENTRY B000
-#define I2C_NEW_QUEUE_ENTRY B1
-#define I2C_INSERT_QUEUE_ENTRY B10
-#define I2C_FLUSH_QUEUE_ENTRIES B100
+#define I2C_DELETE_QUEUE_ENTRY B000 //!< Defines the deletion of a queue entry.
+#define I2C_NEW_QUEUE_ENTRY B1 //!< Defines the creation of a queue entry.
+#define I2C_INSERT_QUEUE_ENTRY B10 //!< Defines the insertion of a queue entry.
+#define I2C_FLUSH_QUEUE_ENTRIES B100 //!< Definition of the flush action.
 
 
 /**
@@ -93,7 +105,7 @@ struct i2c_message
 	size_t length; //!< Message length.
 	uint16_t addr; //!< Slave address.
 	
-	i2c_features_t features;
+	i2c_features_t features; //!< I2C message features.
 } __attribute__((packed));
 
 /**
@@ -130,7 +142,7 @@ struct i2c_client {
 	uint16_t sla; //!< Slave address.
 	uint32_t freq; //!< Operating frequency in master mode.
 	
-	struct i2c_shared_info *sh_info; //!< 
+	struct i2c_shared_info *sh_info; //!< Shared info.
 	
 	/**
 	 * \brief Call back used in slave operation.
@@ -192,6 +204,7 @@ extern void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adap, uint8_t msg)
 extern void i2c_do_clean_msgs(struct i2c_adapter *adap);
 extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
 extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
+extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
 
 /**
  * \brief Get the shared info of the given I2C client.

@@ -63,7 +63,7 @@ PUBLIC int epl_test_lock(struct epl_list *list)
  */
 PUBLIC int epl_lock(struct epl_list *list)
 {
-	return BermudaEventWait((volatile THREAD**)&list->mutex, EVENT_WAIT_INFINITE);
+	return BermudaEventWait((volatile THREAD**)list->mutex, EVENT_WAIT_INFINITE);
 }
 
 /**
@@ -73,7 +73,7 @@ PUBLIC int epl_lock(struct epl_list *list)
  */
 PUBLIC int epl_unlock(struct epl_list *list)
 {
-	return BermudaEventSignal((volatile THREAD**)&list->mutex);
+	return BermudaEventSignal((volatile THREAD**)list->mutex);
 }
 
 /**
@@ -115,27 +115,42 @@ PUBLIC void epl_deref(struct epl_list *list, struct epl_list **ref)
  */
 PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum epl_list_action a)
 {
-	struct epl_list_node *head = list->nodes;
+	struct epl_list_node *head = list->nodes, *car;
+	int rc = 0;
 	
 	list->list_entries++;
 	/*
 	 * If the head is not set, set it.
 	 */
-	if(!head) {
+	if(head == NULL) {
 		list->nodes = node;
-		return 0;
+		node->next = NULL;
+		goto out;
 	}
 	
 	switch(a) {
 		case EPL_APPEND:
+			for_each_epl_node(list, car) {
+				if(car->next == NULL) {
+					car->next = node;
+					node->next = NULL;
+					break;
+				}
+			}
 			break;
 			
 		case EPL_IN_FRONT:
+			node->next = head;
+			list->nodes = node;
 			break;
 			
 		default:
+			rc = -1;
 			break;
 	}
+	
+	out:
+	return rc;
 }
 
 PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
@@ -165,6 +180,15 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 	
 	list->nodes = head;
 	return rc;
+}
+
+PUBLIC int epl_delete_node_at(struct epl_list *list, size_t num)
+{
+	struct epl_list_node *node = epl_node_at(list, num);
+	if(node) {
+		return epl_delete_node(list, node);
+	}
+	return -1;
 }
 
 PUBLIC struct epl_list_node *epl_node_at(struct epl_list *list, size_t index)

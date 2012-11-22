@@ -146,32 +146,33 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	
 	switch(action) {
 		case I2C_NEW_QUEUE_ENTRY:
-			epl_lock(sh_info->list);
-			epl_deref(sh_info->list, &clist);
-			node = malloc(sizeof(*node));
-			if(node) {
-				msg = malloc(sizeof(*msg));
-				if(msg) {
-					msg->buff = (void*)data;
-					msg->length = size;
-					msg->addr = client->sla;
-					
-					if(flags) {
-						features = (flags & I2C_MSG_SENT_STOP_FLAG) ? I2C_MSG_SENT_STOP_FLAG :
-									I2C_MSG_SENT_REP_START_FLAG;
-						features |= flags & (I2C_MSG_FEATURES_MASK ^ (I2C_MSG_SENT_STOP_FLAG | 
-									I2C_MSG_SENT_REP_START_FLAG));
-					} else {
-						features = 0;
+			if(epl_lock(sh_info->list) == 0) {
+				epl_deref(sh_info->list, &clist);
+				node = malloc(sizeof(*node));
+				if(node) {
+					msg = malloc(sizeof(*msg));
+					if(msg) {
+						msg->buff = (void*)data;
+						msg->length = size;
+						msg->addr = client->sla;
+						
+						if(flags) {
+							features = (flags & I2C_MSG_SENT_STOP_FLAG) ? I2C_MSG_SENT_STOP_FLAG :
+										I2C_MSG_SENT_REP_START_FLAG;
+							features |= flags & (I2C_MSG_FEATURES_MASK ^ (I2C_MSG_SENT_STOP_FLAG | 
+										I2C_MSG_SENT_REP_START_FLAG));
+						} else {
+							features = 0;
+						}
+						i2c_msg_set_features(msg, features);
 					}
-					i2c_msg_set_features(msg, features);
+					
+					node->data = msg;
+					node->next = NULL;
+					rc = epl_add_node(clist, node, EPL_APPEND);
 				}
-				
-				node->data = msg;
-				node->next = NULL;
-				rc = epl_add_node(clist, node, EPL_APPEND);
+				epl_unlock(sh_info->list);
 			}
-			epl_unlock(sh_info->list);
 			break;
 		
 		/*

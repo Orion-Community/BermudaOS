@@ -52,22 +52,22 @@ struct i2c_client eeprom_client;
 static char epl_stack[128];
 THREAD epl_thread;
 
-volatile void *epl_mutex = SIGNALED;
-DEF_EPL(i2c_epl, epl_mutex);
+static struct epl_list *i2c_epl = NULL;
 
 #ifdef __THREADS__
 
 THREAD(epl_test, arg)
 {
+	i2c_epl = epl_alloc();
 	struct epl_list_node *node;
 	int i = 0;
 	while(1) {
-		if(epl_lock(&i2c_epl) == 0) {
+		if(epl_lock(i2c_epl) == 0) {
 			node = malloc(sizeof(*node));
 			node->data = (void*)i;
 			i++;
-			epl_add_node(&i2c_epl, node, EPL_APPEND);
-			epl_unlock(&i2c_epl);
+			epl_add_node(i2c_epl, node, EPL_IN_FRONT);
+			epl_unlock(i2c_epl);
 		}
 		BermudaThreadSleep(2000);
 	}
@@ -126,7 +126,7 @@ unsigned long loop()
 	float tmp = 0;
 	int temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
-	struct epl_list_node *car;
+	struct epl_list_node *car, *n_car;
 	
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
@@ -138,21 +138,18 @@ unsigned long loop()
 	printf_P(PSTR("T=%u M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
 				read_back_sram);
 	
-	if(epl_lock(&i2c_epl) == 0) {
-		for(car = (&i2c_epl)->nodes; car != NULL; car = car->next) {
-			printf("%p ", car->data);
-			if(car->next == NULL) {
-				putc('\n', stdout);
-				if(epl_entries(&i2c_epl)) {
-// 					epl_delete_node_at(&i2c_epl, epl_entries(&i2c_epl)-1);
-					printf("Entries: %u\n", epl_entries(&i2c_epl));
+	if(epl_entries(i2c_epl) > 4) {
+		if(epl_lock(i2c_epl) == 0) {
+			if(epl_entries(i2c_epl) > 4) {
+				for_each_epl_node_safe(i2c_epl, car, n_car) {
+					epl_delete_node(i2c_epl, car);
 				}
-				break;
 			}
 		}
-		epl_unlock(&i2c_epl);
+		epl_unlock(i2c_epl);
+		printf_P(PSTR("Deleting nodes: %u\n"), epl_entries(i2c_epl));
 	}
-
+	
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);
 	return;

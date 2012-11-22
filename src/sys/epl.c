@@ -63,7 +63,7 @@ PUBLIC int epl_test_lock(struct epl_list *list)
  */
 PUBLIC int epl_lock(struct epl_list *list)
 {
-	return BermudaEventWait((volatile THREAD**)list->mutex, EVENT_WAIT_INFINITE);
+	return BermudaEventWait((volatile THREAD**)&list->mutex, EPL_LOCK_WAIT);
 }
 
 /**
@@ -73,7 +73,7 @@ PUBLIC int epl_lock(struct epl_list *list)
  */
 PUBLIC int epl_unlock(struct epl_list *list)
 {
-	return BermudaEventSignal((volatile THREAD**)list->mutex);
+	return BermudaEventSignal((volatile THREAD**)&list->mutex);
 }
 
 /**
@@ -162,6 +162,7 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 		if(head == node) {
 			head = node->next;
 			list->list_entries--;
+			list->nodes = head;
 			rc = 0;
 		} else {
 			prev = head;
@@ -178,7 +179,6 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 		}
 	} 
 	
-	list->nodes = head;
 	return rc;
 }
 
@@ -195,6 +195,10 @@ PUBLIC struct epl_list_node *epl_node_at(struct epl_list *list, size_t index)
 {
 	struct epl_list_node *carriage = list->nodes;
 	int i;
+	
+	if(index == 0) {
+		return carriage;
+	}
 	
 	for(i = 0; i < index; i++) {
 		if(carriage->next == NULL) {

@@ -34,6 +34,10 @@
 
 #define for_each_epl_node(__list, __car) for((__car) = (__list)->nodes; (__car) != NULL && \
 										 (__car)->next != (__car); (__car) = (__car)->next)
+										 
+#define for_each_epl_node_safe(__list, __car, __tmp) \
+					for(__car = (__list)->nodes, __tmp = (__list)->nodes->next; __car != NULL && \
+						__car != __tmp; __car = (__tmp), __tmp = (__car)->next)
 
 /**
  * \brief List node data structure for the EPL list.

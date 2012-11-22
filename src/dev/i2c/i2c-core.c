@@ -180,58 +180,59 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 		 * after a call back to the application to insert a new I2C message.
 		 */
 		case I2C_INSERT_QUEUE_ENTRY:
-			epl_lock(sh_info->list);
-			epl_deref(sh_info->list, &clist);
-			
-			msg = (struct i2c_message*)data;
-			if(msg->length == size) {
-				node = malloc(sizeof(*node));
-				if(node) {
-					node->next = NULL;
-					node->data = (void*)msg;
-					rc = epl_add_node(clist, node, EPL_IN_FRONT);
+			if(epl_lock(sh_info->list) == 0) {
+				epl_deref(sh_info->list, &clist);
+				
+				msg = (struct i2c_message*)data;
+				if(msg->length == size) {
+					node = malloc(sizeof(*node));
+					if(node) {
+						node->next = NULL;
+						node->data = (void*)msg;
+						rc = epl_add_node(clist, node, EPL_IN_FRONT);
+					}
 				}
+				epl_unlock(sh_info->list);
 			}
-			epl_unlock(sh_info->list);
 			break;
 		
 		case I2C_FLUSH_QUEUE_ENTRIES:
-			epl_lock(sh_info->list);
-			epl_lock(adpt->msgs);
-			epl_deref(sh_info->list, &clist);
-			epl_deref(adpt->msgs, &alist);
-			
-			for_each_epl_node(clist, node) {
-				rc = epl_add_node(alist, node, EPL_APPEND);
-				if(rc) {
-					break;
+			if(epl_lock(sh_info->list) == 0) {
+
+				epl_deref(sh_info->list, &clist);
+				epl_deref(adpt->msgs, &alist);
+				
+				if(epl_lock(adpt->msgs) == 0) {
+					for_each_epl_node_safe(clist, node, n_node) {
+						rc = epl_add_node(alist, node, EPL_APPEND);
+						if(rc) {
+							break;
+						}
+						
+						epl_delete_node(clist, node);
+						
+						if(!node) {
+							break;
+						}
+					}
+					epl_unlock(adpt->msgs);
 				}
 				
-				n_node = node->next;
-				epl_delete_node(clist, node);
-				node = n_node;
-				
-				if(!node) {
-					break;
-				} else if(node->next == NULL) {
-					break;
-				}
+				epl_unlock(sh_info->list);
 			}
-			
-			epl_unlock(sh_info->list);
-			epl_unlock(adpt->msgs);
 			break;
 			
 		case I2C_DELETE_QUEUE_ENTRY:
-			epl_lock(adpt->msgs);
-			epl_deref(adpt->msgs, &alist);
-			
-			node = epl_node_at(alist, size);
-			epl_delete_node(alist, node);
-			free((void*)node->data);
-			free(node);
-			epl_unlock(adpt->msgs);
-			rc = 0;
+			if(epl_lock(adpt->msgs) == 0) {
+				epl_deref(adpt->msgs, &alist);
+				
+				node = epl_node_at(alist, size);
+				epl_delete_node(alist, node);
+				free((void*)node->data);
+				free(node);
+				epl_unlock(adpt->msgs);
+				rc = 0;
+			}
 			break;
 			
 		default:

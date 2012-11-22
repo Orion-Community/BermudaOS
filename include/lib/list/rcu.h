@@ -1,6 +1,6 @@
 /*
- *  BermudaNet - Device agnostic header
- *  Copyright (C) 2012   Michel Megens
+ *  BermudaOS - RCU list header
+ *  Copyright (C) 2012   AVR-LibC
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,22 +16,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __DEV_AGN_H
-#define __DEV_AGN_H
+/**
+ * \file include/lib/list/rcu.h
+ */
+
+#ifndef __RCU_LIST_H
+#define __RCU_LIST_H
 
 #include <stdlib.h>
 
-#include <net/netdev.h>
-#include <net/netbuff.h>
+/**
+ * \brief Read copy update list.
+ */
+struct rcu_list
+{
+	struct rcu_list *next; //!< Next pointer.
+	volatile void *data; //!< Data of this RCU node.
+} __attribute__((packed));
 
-#ifdef __DOXYGEN__
-#else
-__DECL
-#endif
-extern int netif_init(struct netdev *dev);
-extern int netif_init_dev(struct netdev *dev);
-#ifdef __DOXYGEN__
-#else
-__DECL_END
-#endif
-#endif /* __DEV_AGN_H */
+#endif /* __RCU_LIST_H */

@@ -33,13 +33,14 @@
  * 
  * \section algo Algorithm
  * The concept of the algorithm is as follows: \n
- * * Let \(R \) be the bitrate, \(t \) the amount of tokens added and $n$ the amount of tokens needed.\n
- * &nbsp;&nbsp; \(f(t) = 1/R \) \n
- * * The bucket can have at the most $B$ tokens. If a token arrives when the bucket is full, it is
+ * * Let \f$R\f$ be the bitrate, \f$ t \f$ the amount of tokens added and \f$ n \f$ the amount 
+ * of tokens needed.\n
+ * \f$ f(t) = 1/R \f$ \n
+ * * The bucket can have at the most \f$ B \f$ tokens. If a token arrives when the bucket is full, it is
  * discarded. \n
- * * When a network layer PDU arrives of $n$ bytes, $n$ bytes are removed from the bucket, and the
+ * * When a network layer PDU arrives of \f$ n \f$ bytes, \f$ n \f$ bytes are removed from the bucket, and the
  * PDU is sent to the network driver. \n
- * * If viewer than $n$ tokens are available, the packet will be queued.
+ * * If viewer than \f$ n \f$ tokens are available, the packet will be queued.
  * @{
  */
 

@@ -248,7 +248,7 @@ PRIVATE WEAK char BermudaHeapNodeReturn(volatile HEAPNODE *block)
         }
         
         volatile HEAPNODE *node = BermudaHeapHead;
-        volatile HEAPNODE *prev = NULL;
+//         volatile HEAPNODE *prev = NULL;
         while(node)
         {
                 if(block > node && block < node->next)
@@ -265,7 +265,7 @@ PRIVATE WEAK char BermudaHeapNodeReturn(volatile HEAPNODE *block)
                         return 0;
                 }
                 
-                prev = node;
+//                 prev = node;
                 node = node->next;
         }
         return -1;

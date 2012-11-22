@@ -26,14 +26,25 @@
 #ifndef __NETBUFF_H
 #define __NETBUFF_H
 
-#include <net/netdev.h>
-
+struct netdev;
 struct netbuff;
 
 /**
- * Type definition of the netbuff flags data field(s).
+ * \brief Type definition of the netbuff flags data field(s).
  */
 typedef uint16_t netbuff_features_t;
+
+/**
+ * \def NETIF_TX_VLAN_TAG
+ * \brief Defines that there is a VLAN transmission tag set.
+ */
+#define NETIF_TX_VLAN_TAG B1
+
+/**
+ * \brief Defines that the packet may not be fragmented.
+ * \warning Packets which are to large and are flagged with this flag are discarded.
+ */
+#define NETBUFF_NO_FRAG B10
 
 /**
  * \def NETIF_TX_QUEUE_FLAG
@@ -53,12 +64,12 @@ typedef uint16_t netbuff_features_t;
  * The size of a packet can be calculated very easily. The size of the total packet should be equal
  * to <i><b>total := netbuff.end - netbuff.head</b></i>.
  */
-struct packet_type
+struct netif_ptype
 {
-	struct packet_type *next; //!< Next pointer.
+	struct netif_ptype *next; //!< Next pointer.
 	
 	__16be type; //!< 16-bit big-endian (network order) protocol identifier.
-	struct netbuff* (*gso_segment)(struct netbuff *nb, uint16_t mtu); //!< Function to segment a packet.
+	int (*gso_segment)(struct netbuff *nb, uint16_t mtu); //!< Function to segment a packet.
 };
 
 /**
@@ -88,11 +99,13 @@ struct netbuff
 	struct netbuff *next; //!< Next pointer.
 	
 	struct netdev *dev; //!< Linked network device.
-	struct packet_type *ptye; //!< Protocol identifier.
+	struct netif_ptype *ptype; //!< Protocol identifier.
 	
 	netbuff_features_t features; //!< Options active on this netbuff.
 
 	__32be raw_vlan; //!< Raw VLAN tag. It is tagged or detagged by the core layer.
+	struct vlan_tag *vlan; //!< The VLAN tag.
+	
 	size_t 	length, //!< Total length of this segment.
 			data_length; //!< Total length of the payload in this segment.
 	
@@ -106,6 +119,52 @@ struct netbuff
 			*tail,       //!< Tail pointer (end of data).
 			*end;        //!< End of packet pointer.
 };
+
+#ifdef __DOXYGEN__
+#else
+__DECL
+#endif
+/**
+ * \brief Returns the features of the netbuff.
+ * \param nb Netbuff whose features you want.
+ * \return <i>nb</i>'s features.
+ */
+static inline netbuff_features_t netbuff_get_features(struct netbuff *nb)
+{
+	return nb->features;
+}
+
+/**
+ * \brief Returns wether this packet is in a VLAN or not.
+ * \param nb Packet to check.
+ * \return If in a VLAN <b>TRUE</b>, if not <b>FALSE</b>.
+ */
+static inline bool nb_has_tx_tag(struct netbuff *nb)
+{
+	return (nb->features & NETIF_TX_VLAN_TAG);
+}
+
+/**
+ * \brief Get the netdev of this netbuff.
+ * \param nb Buffer whose netdev you want.
+ */
+static inline struct netdev *netbuff_dev(struct netbuff *nb)
+{
+	return nb->dev;
+}
+
+/**
+ * \brief Get the protocol type of the given netbuff.
+ * \param nb Netbuff whose protocol type you want to have.
+ */
+static inline struct netif_ptype *netbuff_type(struct netbuff *nb)
+{
+	return nb->ptype;
+}
+#ifdef __DOXYGEN__
+#else
+__DECL_END
+#endif
 
 #endif
 

@@ -39,3 +39,13 @@ config.h.in~
 m4/
 *.bak
 build/
+aclocal.m4
+compile
+config.guess
+config.h.in
+config.sub
+depcomp
+install-sh
+ltmain.sh
+missing
+

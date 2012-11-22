@@ -32,6 +32,14 @@
                                 for(c = (list); c; c = (c)->next)
 
 /**
+ * \brief Linked list prototype.
+ */
+struct list
+{
+	struct list *next; //!< Next entry in the list.
+};
+
+/**
  * \def foreach_safe
  * \brief Linked list loop construction.
  * 
@@ -44,6 +52,17 @@
                                 
 #define ForEachpp(lpp, lp) \
                         for(; lp != NULL; lp = (lp)->next, lpp = &((lp)->next))
-                        
+
+#ifdef __DOXYGEN__
+#else
+__DECL
+#endif
+
+extern struct list *list_last_entry(void *vp);
+
+#ifdef __DOXYGEN__
+#else
+__DECL_END
+#endif                        
 
 #endif

@@ -66,8 +66,9 @@ PUBLIC struct vlan_tag *vlan_extract(struct netbuff *nb)
  * \param tag VLAN-tag to convert to raw - network byte order orientated - format.
  * \return The raw VLAN-tag.
  */
-PUBLIC __32be vlan_inflate(struct vlan_tag *tag)
+PUBLIC __32be vlan_inflate(struct netbuff *nb)
 {
+	struct vlan_tag *tag = nb->vlan;
 	__16be raw;
 	__32be ret = 0;
 	

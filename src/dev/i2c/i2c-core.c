@@ -27,6 +27,7 @@
  * The I2C core module is a device/peripheral agnostic layer. It is responsible for editting
  * all queue data, creating and deleting new messages, handling of call backs, initializing data
  * transfers at the device/peripheral driver, etc..
+ * @{
  */
 
 #include <stdlib.h>
@@ -43,7 +44,9 @@
  */
 static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
 static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags);
-static inline bool i2c_has_action(i2c_features_t features);
+static inline bool i2c_client_has_action(i2c_features_t features);
+static inline __force_inline bool i2c_check_msg(i2c_features_t msg, i2c_features_t adapter);
+static void i2c_init_transfer(struct i2c_adapter *adapter);
 
 /**
  * \brief Prepare the driver for an I2C transfer.
@@ -114,6 +117,14 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
 	msgs[msg] = NULL;
 }
 
+/**
+ * \brief Sets a new action for the given I2C client.
+ * \param client Client to set the action for.
+ * \param action Action to set.
+ * \param force If set to <b><i>TRUE</i></b>, this function will override any pending action.
+ * \return 0 on success, -1 if there is an action pending and <i>force</i> is set to 
+ *         <b><i>FALSE</i></b>.
+ */
 PUBLIC int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force)
 {
 	i2c_features_t features = i2c_client_features(client);
@@ -127,9 +138,42 @@ PUBLIC int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool f
 	}
 }
 
-static inline bool i2c_has_action(i2c_features_t features)
+/**
+ * \brief Checks if the client has an action pending.
+ * \param features Features of the given client.
+ * \see I2C_ACTION_PENDING i2c_set_action
+ */
+static inline bool i2c_client_has_action(i2c_features_t features)
 {
 	return ((features & I2C_ACTION_PENDING) != 0);
+}
+
+/**
+ * \brief Check the current action.
+ * \param client Client which should be checked for actions.
+ * \warning This function does not check for pending actions.
+ * \return The current configured action.
+ */
+static inline i2c_action_t i2c_eval_action(struct i2c_client *client)
+{
+	i2c_features_t features = i2c_client_features(client);
+	
+	return (i2c_action_t)((features & I2C_QUEUE_ACTION_MASK) >> I2C_QUEUE_ACTION_SHIFT);
+}
+
+/**
+ * \brief Arrange the call back to the client.
+ * \param client Client to call.
+ * \param stream Bus I/O file.
+ */
+PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
+{
+	struct i2c_message msg;
+	
+	client->callback(&msg);
+	fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG);
+	
+	return client->adapter->slave_respond(stream);
 }
 
 /**
@@ -140,7 +184,8 @@ static inline bool i2c_has_action(i2c_features_t features)
  * \param flags <i>flags</i> gives information about the data passed to <i><b>i2c_edit_queue</b></i>.
  * \note The given I2C client must have allocated its bus adapter.
  * \see list_last_entry I2C_MSG_CALL_BACK_FLAG I2C_MSG_SENT_STOP_FLAG I2C_MSG_SENT_REP_START_FLAG
- * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
+ * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action i2c_check_msg
+ * \note To check wether a message is flussable or not it will be test against i2c_check_msg.
  *
  * Append the given <i>data</i> to the client queue. When a flush signal is given
  * the queue will be moved to the appropriate I2C adapter. If the client has not
@@ -157,7 +202,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	struct epl_list_node *node, *n_node;
 	struct i2c_message *msg;
 	struct i2c_adapter *adpt;
-	i2c_features_t features;
+	i2c_features_t features, b_features; /* client and bus features */
 	i2c_action_t action;
 	int rc = -1;
 	
@@ -170,7 +215,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	features = i2c_client_features(client);
 	adpt = client->adapter;
 	
-	if((features & I2C_CLIENT_HAS_LOCK_FLAG) == 0 && i2c_has_action(features)) {
+	if((features & I2C_CLIENT_HAS_LOCK_FLAG) == 0 && i2c_client_has_action(features)) {
 		return rc;
 	}
 	
@@ -234,22 +279,31 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 				epl_deref(adpt->msgs, &alist);
 				
 				if(epl_lock(adpt->msgs) == 0) {
+					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
+																		I2C_SLAVE_SUPPORT);
 					for_each_epl_node_safe(clist, node, n_node) {
-						rc = epl_add_node(alist, node, EPL_APPEND);
-						if(rc) {
-							break;
-						}
-						
-						epl_delete_node(clist, node);
-						
-						if(!node) {
-							break;
+						features = i2c_msg_features((void*)node->data) & I2C_MSG_MASTER_MSG_FLAG;
+						if(i2c_check_msg(features, b_features)) {
+							rc = epl_add_node(alist, node, EPL_APPEND);
+							if(rc) {
+								i2c_set_error(client);
+								rc = -1;
+								break;
+							}
+							epl_delete_node(clist, node);
+						} else {
+							i2c_set_error(client);
+							epl_delete_node(clist, node);
+							msg = (struct i2c_message*) node->data;
+							free(msg);
+							free(node);
 						}
 					}
 					epl_unlock(adpt->msgs);
+					
 				}
-				
 				epl_unlock(sh_info->list);
+				i2c_init_transfer(adpt);
 			}
 			break;
 			
@@ -276,27 +330,40 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	return rc;
 }
 
-static inline i2c_action_t i2c_eval_action(struct i2c_client *client)
+/**
+ * \brief Check wether the message can be sent with its adapter or not.
+ * \param msg I2C message features.
+ * \param adapter I2C adapter features.
+ * \note <b><i>msg</i></b> and <b><i>adapter</i></b> should be masked.
+ * 
+ * This function returns the result of \f$ f(x)= \left [ \left ( z_{m} \gg 1 \right ) \land \left 
+ * ( y_{m} \land 1 \right ) \right ] \oplus \left [ \left ( z_{m} \land y_{m} \right ) \gg 1 \right ] 
+ * \f$.
+ */
+static inline __force_inline bool i2c_check_msg(i2c_features_t msg, i2c_features_t adapter)
 {
-	i2c_features_t features = i2c_client_features(client);
+	return (((msg >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (adapter & I2C_MASTER_SUPPORT)) ^ 
+			((msg & adapter) >> I2C_SLAVE_SUPPORT_SHIFT));
+}
+
+static void i2c_init_transfer(struct i2c_adapter *adapter)
+{
 	
-	return (i2c_action_t)((features & I2C_QUEUE_ACTION_MASK) >> I2C_QUEUE_ACTION_SHIFT);
 }
 
 /**
- * \brief Arrange the call back to the client.
- * \param client Client to call.
- * \param stream Bus I/O file.
+ * \brief Allocate an I2C client.
+ * \param adapter The peripheral adapter.
+ * \return The allocated client. If NULL is returned either an error occurred or the system ran out
+ *         of memory.
  */
-PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
+PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter)
 {
-	struct i2c_message msg;
-	
-	client->callback(&msg);
-	fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG);
-	
-	return client->adapter->slave_respond(stream);
+	return NULL;
 }
+
+
 /**
+ * @}
  * @}
  */

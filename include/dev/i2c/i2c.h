@@ -34,6 +34,11 @@ struct i2c_adapter; // forward declaration
 struct i2c_client;
 
 /**
+ * \addtogroup i2c-core
+ * @{
+ */
+
+/**
  * \brief Definition of the I2C features type.
  */
 typedef uint8_t i2c_features_t;
@@ -54,7 +59,8 @@ typedef uint8_t i2c_action_t;
 /**
  * \brief Defines that a repeated start should be sent after transmission.
  * \warning This bit does NOT exist in the flags argument to i2c_edit_queue.
- * \see i2c_edit_queue
+ * 
+ * Either this bit has to be set or I2C_MSG_SENT_STOP_FLAG has to be set.
  */
 #define I2C_MSG_SENT_REP_START_FLAG B10000
 
@@ -89,11 +95,19 @@ typedef uint8_t i2c_action_t;
 #define I2C_QUEUE_ACTION_INSERT B1000 //!< Flag to insert a queue entry at the start
 #define I2C_QUEUE_ACTION_FLUSH B10000 //!< Flag to flush the queue to the adapter.
 #define I2C_ACTION_PENDING B100000 //!< If set, the currently set action is not executed yet.
+#define I2C_QUEUE_ERROR B1000000 //!< An error has occured while queuing a message.
 
 #define I2C_DELETE_QUEUE_ENTRY B000 //!< Defines the deletion of a queue entry.
 #define I2C_NEW_QUEUE_ENTRY B1 //!< Defines the creation of a queue entry.
 #define I2C_INSERT_QUEUE_ENTRY B10 //!< Defines the insertion of a queue entry.
 #define I2C_FLUSH_QUEUE_ENTRIES B100 //!< Definition of the flush action.
+
+/*
+ * I2C adapter features
+ */
+#define I2C_MASTER_SUPPORT B1
+#define I2C_SLAVE_SUPPORT  B10
+#define I2C_SLAVE_SUPPORT_SHIFT 1
 
 
 /**
@@ -130,6 +144,8 @@ struct i2c_shared_info
 	
 	i2c_features_t features; //!< Feature option flags.
 };
+
+//@}
 
 /**
  * \brief The i2c_client represents the sender or receiver.
@@ -198,6 +214,10 @@ extern void i2cdev_error(int fd);
 extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
 
 /* core functions */
+/**
+ * \addtogroup i2c-core
+ * @{
+ */
 extern int i2c_setup_msg(FILE *stream, struct i2c_message *msg, uint8_t flags);
 extern int i2c_call_client(struct i2c_client *client, FILE *stream);
 extern void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adap, uint8_t msg);
@@ -226,10 +246,50 @@ static inline i2c_features_t i2c_client_features(struct i2c_client *client)
 	return i2c_shinfo(client)->features;
 }
 
+/**
+ * \brief Get the I2C features of the given adapter.
+ * \param adapter The adapter whose features are wanted.
+ * \return The features of the given adapter.
+ */
+static inline i2c_features_t i2c_adapter_features(struct i2c_adapter *adapter)
+{
+	return adapter->flags;
+}
+
+/**
+ * \brief Mask the client for queue a queue error.
+ * \param client Client to mask.
+ */
+static inline void i2c_set_error(struct i2c_client *client)
+{
+	i2c_features_t features = i2c_client_features(client);
+	
+	features |= I2C_QUEUE_ERROR;
+	i2c_shinfo(client)->features = features;
+}
+
+/**
+ * \brief Set the features of an I2C message.
+ * \param msg Message to set the features for.
+ * \param features Features to set.
+ * 
+ * Sets the i2c_message::features field.
+ */
 static inline void i2c_msg_set_features(struct i2c_message *msg, i2c_features_t features)
 {
 	msg->features = features;
 }
+
+/**
+ * \brief Get the features of a msg.
+ * \param msg The message which features are needed.
+ * \return The features of the given I2C message.
+ */
+static inline i2c_features_t i2c_msg_features(struct i2c_message *msg)
+{
+	return msg->features;
+}
+//@}
 __DECL_END
 
 

@@ -45,7 +45,6 @@
 static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
 static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags);
 static inline bool i2c_client_has_action(i2c_features_t features);
-static inline __force_inline bool i2c_check_msg(i2c_features_t msg, i2c_features_t adapter);
 static void i2c_init_transfer(struct i2c_adapter *adapter);
 
 /**
@@ -188,14 +187,21 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \note To check wether a message is flussable or not it will be test against i2c_check_msg.
  *
  * Append the given <i>data</i> to the client queue. When a flush signal is given
- * the queue will be moved to the appropriate I2C adapter. If the client has not
- * allocated (i.e. locked) its bus adapter, current I2C transfer may get corrupted.
+ * the queue will be moved to the appropriate I2C adapter. When this is done, all messages will
+ * be checked against \f$ f(x)= \left [ \left ( z_{m} \gg 1 \right ) \land \left ( y_{m} \land 1 
+ * \right ) \right ] \oplus \left [ \left ( z_{m} \land y_{m} \right ) \gg 1 \right ] \f$. \n
+ * Where \f$ z_{m} \f$ are the masked message features and \f$ y_{m} \f$ are the masked client
+ * features. If this function is <i>1</i>, the adapter supports the message, if <i>0</i> the
+ * adapter is unable to send the message.
+ * 
+ * If the client has not allocated (i.e. locked) its bus adapter, current I2C transfers may get 
+ * corrupted.
  *
  * The complexity of this function when appending data is \f$ O(n) \f$, since the new
  * data is appended at the end of the queue. See list_last_entry for more information
  * about the editting of queues.
  */
-static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags)
+static int __link i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags)
 {
 	struct i2c_shared_info *sh_info;
 	struct epl_list *clist, *alist;
@@ -282,8 +288,18 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
 																		I2C_SLAVE_SUPPORT);
 					for_each_epl_node_safe(clist, node, n_node) {
-						features = i2c_msg_features((void*)node->data) & I2C_MSG_MASTER_MSG_FLAG;
-						if(i2c_check_msg(features, b_features)) {
+						features = i2c_msg_features((void*)node->data);
+						if((features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
+							sh_info->shared_callback == NULL) {
+							features &= (features & ~I2C_MSG_CALL_BACK_FLAG);
+						}
+						msg = (struct i2c_message*) node->data;
+						msg->features = features;
+						features &= I2C_MSG_MASTER_MSG_FLAG;
+						
+						if(((features >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (b_features & 
+							I2C_MASTER_SUPPORT)) ^ ((features & b_features) >> 
+							I2C_SLAVE_SUPPORT_SHIFT)) {
 							rc = epl_add_node(alist, node, EPL_APPEND);
 							if(rc) {
 								i2c_set_error(client);
@@ -294,7 +310,6 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						} else {
 							i2c_set_error(client);
 							epl_delete_node(clist, node);
-							msg = (struct i2c_message*) node->data;
 							free(msg);
 							free(node);
 						}
@@ -328,22 +343,6 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 	features &= ~I2C_ACTION_PENDING;
 	
 	return rc;
-}
-
-/**
- * \brief Check wether the message can be sent with its adapter or not.
- * \param msg I2C message features.
- * \param adapter I2C adapter features.
- * \note <b><i>msg</i></b> and <b><i>adapter</i></b> should be masked.
- * 
- * This function returns the result of \f$ f(x)= \left [ \left ( z_{m} \gg 1 \right ) \land \left 
- * ( y_{m} \land 1 \right ) \right ] \oplus \left [ \left ( z_{m} \land y_{m} \right ) \gg 1 \right ] 
- * \f$.
- */
-static inline __force_inline bool i2c_check_msg(i2c_features_t msg, i2c_features_t adapter)
-{
-	return (((msg >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (adapter & I2C_MASTER_SUPPORT)) ^ 
-			((msg & adapter) >> I2C_SLAVE_SUPPORT_SHIFT));
 }
 
 static void i2c_init_transfer(struct i2c_adapter *adapter)

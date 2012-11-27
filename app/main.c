@@ -100,7 +100,7 @@ void setup()
 		read(fd, buff, 3);
 		usartdev_close(fd);
 		buff[3] = '\0';
-		if(!strcmp(buff, "run")) {
+		if(!strcmp(buff, "RUN")) {
 			break;
 		}
 		BermudaThreadSleep(500);
@@ -123,8 +123,8 @@ void loop()
 unsigned long loop()
 #endif
 {
-	float tmp = 0;
-	int temperature = 0;
+	double tmp = 0;
+	double temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
 	struct epl_list_node *car, *n_car;
 	
@@ -135,7 +135,7 @@ unsigned long loop()
 	read_back_sram = BermudaSpiRamReadByte(0x50);
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
-	printf_P(PSTR("T=%u M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
+	printf_P(PSTR("T=%f M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
 				read_back_sram);
 	
 	if(epl_entries(i2c_epl) > 4) {
@@ -143,6 +143,7 @@ unsigned long loop()
 			if(epl_entries(i2c_epl) > 4) {
 				for_each_epl_node_safe(i2c_epl, car, n_car) {
 					epl_delete_node(i2c_epl, car);
+					free(car);
 				}
 			}
 		}

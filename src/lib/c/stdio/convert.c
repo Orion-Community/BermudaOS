@@ -63,3 +63,41 @@ PUBLIC int convert_to_num(uint32_t num, uint8_t base, bool sign,
 	fputs(cp, stream);
 	return 0;
 }
+
+PUBLIC void print_flt(double num, FILE *output)
+{
+	size_t int_part;
+	double remainder;
+	uint8_t digits = FLT_DIGITS;
+	int printable;
+	
+	if(num < 0.0) {
+		fputc('-', output);
+	}
+	
+	/*
+	 * Round the number
+	 */
+	double rounding = 0.5;
+	uint8_t i;
+	for(i = 0; i < FLT_DIGITS; i++) {
+		rounding /= 10.0;
+	}
+	
+	num += rounding;
+	int_part = (size_t)num;
+	remainder = num - (double)int_part;
+	
+	/*
+	 * print the first part
+	 */
+	convert_to_num(int_part, 10, FALSE, FALSE, output);
+	fputc('.', output);
+	
+	while(digits-- > 0) {
+		remainder *= 10.0;
+		printable = (int)remainder;
+		convert_to_num(printable, 10, FALSE, FALSE, output);
+		remainder -= printable;
+	}
+}

@@ -21,7 +21,10 @@
 
 #define BUFF 16
 
+#define FLT_DIGITS 2
+
 extern int convert_to_num(uint32_t num, uint8_t base, bool sign, 
 							  bool caps, FILE *stream);
+extern void print_flt(double num, FILE *output);
 
 #endif /* __STDIO_PRIV_H */

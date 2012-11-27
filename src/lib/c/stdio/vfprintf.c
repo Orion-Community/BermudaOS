@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
 
-#include <bermuda.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
 
@@ -54,6 +54,10 @@ PUBLIC int vfprintf(FILE *stream, const char *fmt, va_list ap)
 					
 				case 'x':
 					convert_to_num(va_arg(ap, unsigned int), 16, false, false, stream);
+					break;
+					
+				case 'f':
+					print_flt(va_arg(ap, double), stream);
 					break;
 					
 				case 'p':

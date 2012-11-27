@@ -162,6 +162,12 @@ if test "x$atmega" = "xyes"; then
 AC_DEFINE([ATMEGA], [1], [Defines weather we are using an atmega based CPU])
 fi
 
+if test "x$i2c_array" = "x"; then
+AC_DEFINE([I2C_MSG_LIST], [1], [Defines that I2C messages are stored in a linked list.])
+else
+AC_DEFINE([I2C_MSG_ARRAY], [1], [Defines that I2C messages are stored in a static array.])
+fi
+
 # BermudaNet definitions
 AC_ARG_VAR(RX_QU_LENGTH, [Maximum length of receive queues])
 AC_ARG_VAR(TX_QU_LENGTH, [Maximum length of transmit queues])

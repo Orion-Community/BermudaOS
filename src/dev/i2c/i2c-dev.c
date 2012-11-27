@@ -87,6 +87,7 @@
 
 #include <dev/dev.h>
 #include <dev/i2c/i2c.h>
+#include <dev/i2c/i2c-core.h>
 #include <dev/i2c/reg.h>
 
 #include <sys/thread.h>

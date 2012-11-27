@@ -34,6 +34,7 @@
 #include <stdio.h>
 
 #include <dev/i2c/i2c.h>
+#include <dev/i2c/i2c-core.h>
 #include <dev/i2c/reg.h>
 
 #include <lib/list/list.h>
@@ -175,6 +176,7 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 	return client->adapter->slave_respond(stream);
 }
 
+#ifdef I2C_MSG_LIST
 /**
  * \brief Edit the queues of the given I2C client.
  * \param client Client to edit the queues of.
@@ -201,7 +203,7 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * data is appended at the end of the queue. See list_last_entry for more information
  * about the editting of queues.
  */
-static int __link i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags)
+static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags)
 {
 	struct i2c_shared_info *sh_info;
 	struct epl_list *clist, *alist;
@@ -344,6 +346,7 @@ static int __link i2c_edit_queue(struct i2c_client *client, const void *data, si
 	
 	return rc;
 }
+#endif
 
 static void i2c_init_transfer(struct i2c_adapter *adapter)
 {
@@ -355,10 +358,20 @@ static void i2c_init_transfer(struct i2c_adapter *adapter)
  * \param adapter The peripheral adapter.
  * \return The allocated client. If NULL is returned either an error occurred or the system ran out
  *         of memory.
+ * \todo Finish this function.
  */
 PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter)
 {
-	return NULL;
+	struct i2c_client *client = malloc(sizeof(*client));
+	struct i2c_shared_info *shinfo = malloc(sizeof(*shinfo));
+	
+	if(client && shinfo) {
+		client->sh_info = shinfo;
+		client->adapter = adapter;
+		return client;
+	} else {
+		return NULL;
+	}
 }
 
 

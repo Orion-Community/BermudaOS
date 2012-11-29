@@ -195,8 +195,8 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * When a flush signal is given the queue will be moved to the appropriate I2C adapter. 
  * When this is done, all messages will be checked against 
  *  \f$ f(x)= \left [ \left ( z_{m} \gg 1 \right ) \land \left ( y_{m} \land 1 \right ) \right ] 
- * \oplus \left [ \left ( z_{m} \land y_{m} \right ) \gg 1 \right ] \f$. \n
- * Where \f$ z_{m} \f$ are the masked message features and \f$ y_{m} \f$ are the masked client
+ * \oplus \left [ \left ( z_{m} \land \left ( y_{m}  \land 2 \right ) \right ) \gg 1 \right ] \f$.\n
+ * Where \f$ z_{m} \f$ are the masked message features and \f$ y_{m} \f$ are the masked adapter
  * features. If this function is <i>1</i>, the adapter supports the message, if <i>0</i> the
  * adapter is unable to send the message (and the message willl therefore be discarded).
  * 
@@ -303,10 +303,12 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						msg = (struct i2c_message*) node->data;
 						msg->features = features;
 						features &= I2C_MSG_MASTER_MSG_FLAG;
-						
-						if(((features >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (b_features & 
-							I2C_MASTER_SUPPORT)) ^ ((features & b_features & I2C_SLAVE_SUPPORT) >> 
-							I2C_SLAVE_SUPPORT_SHIFT)) {
+#define I2C_MSG_CHECK(__msg, __bus) ( \
+					  ((__msg >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
+					  ((__msg & (__bus & I2C_SLAVE_SUPPORT)) >> I2C_SLAVE_SUPPORT_SHIFT)          \
+					  )
+						if(I2C_MSG_CHECK(features, b_features)) {
+#undef I2C_MSG_CHECK
 							rc = epl_add_node(alist, node, EPL_APPEND);
 							if(rc) {
 								i2c_set_error(client);

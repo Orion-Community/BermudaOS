@@ -19,6 +19,11 @@
 #ifndef __I2C_CORE_H
 #define __I2C_CORE_H
 
+/**
+ * \addtogroup i2c-core
+ * @{
+ */
+
 /*
  * i2c message features
  */
@@ -49,6 +54,7 @@
 #define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG | \
                               I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG | \
                               I2C_MSG_SENT_REP_START_FLAG)
+//@}
 
 __DECL
 /**

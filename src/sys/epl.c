@@ -153,6 +153,12 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
 	return rc;
 }
 
+/**
+ * \brief Delete a given node from the given list.
+ * \param list List to delete from.
+ * \param node Node to delete.
+ * \return Weather the deletion was successful (0 on success).
+ */
 PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 {
 	struct epl_list_node *head = list->nodes, *carriage, *prev;
@@ -182,6 +188,13 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 	return rc;
 }
 
+/**
+ * \brief Delete a node from the list at a given index.
+ * \param list List to delete from.
+ * \param num Index to delete.
+ * \return Weather the deletion was successful (0 on success).
+ * \see epl_delete_node epl_node_at
+ */
 PUBLIC int epl_delete_node_at(struct epl_list *list, size_t num)
 {
 	struct epl_list_node *node = epl_node_at(list, num);
@@ -191,6 +204,12 @@ PUBLIC int epl_delete_node_at(struct epl_list *list, size_t num)
 	return -1;
 }
 
+/**
+ * \brief Locate the node at a given index.
+ * \param list List with the nodes.
+ * \param index Node index to find.
+ * \return The node at \p index.
+ */
 PUBLIC struct epl_list_node *epl_node_at(struct epl_list *list, size_t index)
 {
 	struct epl_list_node *carriage = list->nodes;

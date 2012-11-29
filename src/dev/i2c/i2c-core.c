@@ -183,21 +183,26 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \param data Data to append to the queue.
  * \param size Length of <i>data</i>.
  * \param flags <i>flags</i> gives information about the data passed to <i><b>i2c_edit_queue</b></i>.
- * \note The given I2C client must have allocated its bus adapter.
+ * \note The given I2C client must have allocated (i.e. locked) its bus adapter.
  * \see list_last_entry I2C_MSG_CALL_BACK_FLAG I2C_MSG_SENT_STOP_FLAG I2C_MSG_SENT_REP_START_FLAG
- * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action i2c_check_msg
- * \note To check wether a message is flussable or not it will be test against i2c_check_msg.
+ * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
+ * \note Messages are not guarranteed to be transmitted, they will be checked if they are compatible
+ *       with the adapter.
  *
- * Append the given <i>data</i> to the client queue. When a flush signal is given
- * the queue will be moved to the appropriate I2C adapter. When this is done, all messages will
- * be checked against \f$ f(x)= \left [ \left ( z_{m} \gg 1 \right ) \land \left ( y_{m} \land 1 
- * \right ) \right ] \oplus \left [ \left ( z_{m} \land y_{m} \right ) \gg 1 \right ] \f$. \n
+ * Append the given \p data to the client queue. 
+ * 
+ * \section flush I2C_FLUSH_QUEUE_ENTRIES
+ * When a flush signal is given the queue will be moved to the appropriate I2C adapter. 
+ * When this is done, all messages will be checked against 
+ *  \f$ f(x)= \left [ \left ( z_{m} \gg 1 \right ) \land \left ( y_{m} \land 1 \right ) \right ] 
+ * \oplus \left [ \left ( z_{m} \land y_{m} \right ) \gg 1 \right ] \f$. \n
  * Where \f$ z_{m} \f$ are the masked message features and \f$ y_{m} \f$ are the masked client
  * features. If this function is <i>1</i>, the adapter supports the message, if <i>0</i> the
- * adapter is unable to send the message.
+ * adapter is unable to send the message (and the message willl therefore be discarded).
  * 
- * If the client has not allocated (i.e. locked) its bus adapter, current I2C transfers may get 
- * corrupted.
+ * \section conc Concurrency
+ * It is very important that the application has locked the \p client. If the client (and thus
+ * its adapter) are not locked, the function will always return an error (\p -1.).
  *
  * The complexity of this function when appending data is \f$ O(n) \f$, since the new
  * data is appended at the end of the queue. See list_last_entry for more information
@@ -242,9 +247,9 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						if(flags) {
 							features = (flags & I2C_MSG_SENT_STOP_FLAG) ? I2C_MSG_SENT_STOP_FLAG :
 										I2C_MSG_SENT_REP_START_FLAG;
+							/* Mask out invalid bits */
 							features |= flags & (I2C_MSG_FEATURES_MASK ^ (I2C_MSG_SENT_STOP_FLAG | 
-										I2C_MSG_SENT_REP_START_FLAG)); /* Do not OR stop 
-																		and rep start */
+										I2C_MSG_SENT_REP_START_FLAG));
 						} else {
 							features = 0;
 						}
@@ -300,7 +305,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						features &= I2C_MSG_MASTER_MSG_FLAG;
 						
 						if(((features >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (b_features & 
-							I2C_MASTER_SUPPORT)) ^ ((features & b_features) >> 
+							I2C_MASTER_SUPPORT)) ^ ((features & b_features & I2C_SLAVE_SUPPORT) >> 
 							I2C_SLAVE_SUPPORT_SHIFT)) {
 							rc = epl_add_node(alist, node, EPL_APPEND);
 							if(rc) {
@@ -356,11 +361,13 @@ static void i2c_init_transfer(struct i2c_adapter *adapter)
 /**
  * \brief Allocate an I2C client.
  * \param adapter The peripheral adapter.
+ * \param sla The slave address of this adapter.
+ * \param hz The frequency this adapter operates on.
  * \return The allocated client. If NULL is returned either an error occurred or the system ran out
  *         of memory.
  * \todo Finish this function.
  */
-PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter)
+PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t sla, uint32_t hz)
 {
 	struct i2c_client *client = malloc(sizeof(*client));
 	struct i2c_shared_info *shinfo = malloc(sizeof(*shinfo));
@@ -368,6 +375,10 @@ PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter)
 	if(client && shinfo) {
 		client->sh_info = shinfo;
 		client->adapter = adapter;
+		client->sla = sla;
+		client->freq = hz;
+		
+		shinfo->list = epl_alloc();
 		return client;
 	} else {
 		return NULL;

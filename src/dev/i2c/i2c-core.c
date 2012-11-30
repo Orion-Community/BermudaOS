@@ -188,6 +188,7 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
  * \note Messages are not guarranteed to be transmitted, they will be checked if they are compatible
  *       with the adapter.
+ * \todo Debug this function.
  *
  * Append the given \p data to the client queue. 
  * 
@@ -305,7 +306,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						features &= I2C_MSG_MASTER_MSG_FLAG;
 #define I2C_MSG_CHECK(__msg, __bus) ( \
 					  ((__msg >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
-					  ((__msg & (__bus & I2C_SLAVE_SUPPORT)) >> I2C_SLAVE_SUPPORT_SHIFT)          \
+					  ((~__msg & (__bus & I2C_SLAVE_SUPPORT)) >> I2C_SLAVE_SUPPORT_SHIFT)         \
 					  )
 						if(I2C_MSG_CHECK(features, b_features)) {
 #undef I2C_MSG_CHECK

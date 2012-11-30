@@ -100,7 +100,7 @@ void setup()
 		read(fd, buff, 3);
 		usartdev_close(fd);
 		buff[3] = '\0';
-		if(!strcmp(buff, "RUN")) {
+		if(!strcmp(buff, "run")) {
 			break;
 		}
 		BermudaThreadSleep(500);

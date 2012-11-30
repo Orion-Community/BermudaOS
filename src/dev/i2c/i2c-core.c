@@ -336,11 +336,13 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 				epl_deref(adpt->msgs, &alist);
 				
 				node = epl_node_at(alist, size);
-				epl_delete_node(alist, node);
-				free((void*)node->data);
-				free(node);
+				if(node) {
+					epl_delete_node(alist, node);
+					free((void*)node->data);
+					free(node);
+					rc = 0;
+				}
 				epl_unlock(adpt->msgs);
-				rc = 0;
 			}
 			break;
 			
@@ -361,13 +363,29 @@ static void i2c_init_transfer(struct i2c_adapter *adapter)
 }
 
 /**
+ * \brief Clean all messages in the adapter queue of the given client.
+ * \param client Client which adapter's messages should be deleted.
+ */
+PUBLIC void i2c_cleanup_adapter_msgs(struct i2c_client *client)
+{
+	int rc = 0;
+	i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, TRUE);
+	
+	do {
+		rc = i2c_edit_queue(client, NULL, 0, 0);
+		if(rc == 0) {
+			i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, FALSE);
+		}
+	} while(rc == 0);
+}
+
+/**
  * \brief Allocate an I2C client.
  * \param adapter The peripheral adapter.
  * \param sla The slave address of this adapter.
  * \param hz The frequency this adapter operates on.
  * \return The allocated client. If NULL is returned either an error occurred or the system ran out
  *         of memory.
- * \todo Finish this function.
  */
 PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t sla, uint32_t hz)
 {

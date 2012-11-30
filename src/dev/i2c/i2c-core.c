@@ -304,10 +304,11 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						msg = (struct i2c_message*) node->data;
 						msg->features = features;
 						features &= I2C_MSG_MASTER_MSG_FLAG;
-#define I2C_MSG_CHECK(__msg, __bus) ( \
-					  ((__msg >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
-					  ((~__msg & (__bus & I2C_SLAVE_SUPPORT)) >> I2C_SLAVE_SUPPORT_SHIFT)         \
-					  )
+#define I2C_MSG_CHECK(__msg, __bus) \
+( \
+(((~__msg & I2C_MSG_SLAVE_MSG_FLAG) >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
+((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT))  \
+)
 						if(I2C_MSG_CHECK(features, b_features)) {
 #undef I2C_MSG_CHECK
 							rc = epl_add_node(alist, node, EPL_APPEND);

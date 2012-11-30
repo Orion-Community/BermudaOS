@@ -28,7 +28,7 @@
  * i2c message features
  */
 #define I2C_MSG_CALL_BACK_FLAG B1 //!< Defines that the application should be called after transmission.
-#define I2C_MSG_MASTER_MSG_FLAG B10 //!< Defines that this message is sent from master perspective.
+#define I2C_MSG_SLAVE_MSG_FLAG B10 //!< Defines that this message is sent from slave perspective.
 #define I2C_MSG_TRANSMIT_MSG_FLAG B100 //!< Defines the message holds a transmit buffer, not a receive buffer.
 #define I2C_MSG_SENT_STOP_FLAG B1000 //!< Defines that a stop bit should be sent after transmission.
 
@@ -41,7 +41,7 @@
 #define I2C_MSG_SENT_REP_START_FLAG B10000
 
 #define I2C_MSG_CALL_BACK_FLAG_SHIFT 0 //!< Shift value of I2C_MSG_CALL_BACK_FLAG
-#define I2C_MSG_MASTER_MSG_FLAG_SHIFT 1 //!< Shift value of I2C_MSG_MASTER_MSG_FLAG
+#define I2C_MSG_SLAVE_MSG_FLAG_SHIFT 1 //!< Shift value of I2C_MSG_SLAVE_MSG_FLAG
 #define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
 #define I2C_MSG_SENT_STOP_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
 #define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
@@ -51,7 +51,7 @@
  * 
  * Mask which masks all bits in the i2c_message::features field.
  */
-#define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG | \
+#define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_SLAVE_MSG_FLAG | \
                               I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG | \
                               I2C_MSG_SENT_REP_START_FLAG)
 //@}

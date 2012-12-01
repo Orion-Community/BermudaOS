@@ -195,10 +195,17 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \section flush I2C_FLUSH_QUEUE_ENTRIES
  * When a flush signal is given the queue will be moved to the appropriate I2C adapter. 
  * When this is done, all messages will be checked against 
- *  \f$ f(x)= \left [ \left ( z_{m} \gg 1 \right ) \land \left ( y_{m} \land 1 \right ) \right ] 
- * \oplus \left [ \left ( z_{m} \land \left ( y_{m}  \land 2 \right ) \right ) \gg 1 \right ] \f$.\n
- * Where \f$ z_{m} \f$ are the masked message features and \f$ y_{m} \f$ are the masked adapter
- * features. If this function is <i>1</i>, the adapter supports the message, if <i>0</i> the
+ *  \f$ f(x) = (((\neg y_{m} \land m_{f}) \gg m_{s}) \land (y_{b} \land s_{m})) \oplus ((y_{m} \gg 
+ * m_{s}) \land ((y_{b} \land s_{s}) \gg m_{s})) \f$ \n
+ * Where \n
+ * * \f$ y_{m} \f$ defines the message; \n
+ * * \f$ m_{f} = 2 \f$ defines the message mask; \n
+ * * \f$ m_{s} = 1 \f$ defines the message shift; \n
+ * * \f$ y_{b} \f$ defines the bus; \n
+ * * \f$ s_{x} \f$ defines the bus mask (if x = m it is the master mask and if x = s it is the slave
+ * mask); \n
+ * 
+ * If this function is <i>1</i>, the adapter supports the message, if <i>0</i> the
  * adapter is unable to send the message (and the message willl therefore be discarded).
  * 
  * \section conc Concurrency
@@ -306,7 +313,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						features &= I2C_MSG_MASTER_MSG_FLAG;
 #define I2C_MSG_CHECK(__msg, __bus) \
 ( \
-(((~__msg & I2C_MSG_SLAVE_MSG_FLAG) >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
+(((neg(__msg) & I2C_MSG_MASTER_MSG_FLAG) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
 ((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT))  \
 )
 						if(I2C_MSG_CHECK(features, b_features)) {

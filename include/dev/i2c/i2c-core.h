@@ -19,6 +19,8 @@
 #ifndef __I2C_CORE_H
 #define __I2C_CORE_H
 
+#include <lib/binary.h>
+
 /**
  * \addtogroup i2c-core
  * @{
@@ -27,10 +29,42 @@
 /*
  * i2c message features
  */
-#define I2C_MSG_CALL_BACK_FLAG B1 //!< Defines that the application should be called after transmission.
-#define I2C_MSG_SLAVE_MSG_FLAG B10 //!< Defines that this message is sent from slave perspective.
-#define I2C_MSG_TRANSMIT_MSG_FLAG B100 //!< Defines the message holds a transmit buffer, not a receive buffer.
-#define I2C_MSG_SENT_STOP_FLAG B1000 //!< Defines that a stop bit should be sent after transmission.
+
+#define I2C_MSG_CALL_BACK_FLAG_SHIFT 0 //!< Shift value of I2C_MSG_CALL_BACK_FLAG
+#define I2C_MSG_SLAVE_MSG_FLAG_SHIFT 1 //!< Shift value of I2C_MSG_SLAVE_MSG_FLAG
+/**
+ * \brief Master message flag.
+ * \see I2C_MSG_SLAVE_MSG_FLAG_SHIFT I2C_MSG_MASTER_MSG_FLAG
+ */
+#define I2C_MSG_MASTER_MSG_FLAG_SHIFT I2C_MSG_SLAVE_MSG_FLAG_SHIFT
+#define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
+#define I2C_MSG_SENT_STOP_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
+#define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
+
+/**
+ * \brief Defines that the application should be called after transmission.
+ */
+#define I2C_MSG_CALL_BACK_FLAG BIT(I2C_MSG_CALL_BACK_FLAG_SHIFT)
+
+/**
+ * \brief Defines that this message is sent from slave perspective.
+ */
+#define I2C_MSG_SLAVE_MSG_FLAG BIT(I2C_MSG_SLAVE_MSG_FLAG_SHIFT)
+/**
+ * \brief Master message flag.
+ * \see I2C_MSG_MASTER_MSG_FLAG_SHIFT
+ */
+#define I2C_MSG_MASTER_MSG_FLAG BIT(I2C_MSG_MASTER_MSG_FLAG_SHIFT)
+
+/**
+ * \brief Defines the message holds a transmit buffer, not a receive buffer.
+ */
+#define I2C_MSG_TRANSMIT_MSG_FLAG BIT(I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT)
+
+/**
+ * \brief Defines that a stop bit should be sent after transmission.
+ */
+#define I2C_MSG_SENT_STOP_FLAG BIT(I2C_MSG_SENT_STOP_FLAG_SHIFT)
 
 /**
  * \brief Defines that a repeated start should be sent after transmission.
@@ -38,22 +72,16 @@
  * 
  * Either this bit has to be set or I2C_MSG_SENT_STOP_FLAG has to be set.
  */
-#define I2C_MSG_SENT_REP_START_FLAG B10000
-
-#define I2C_MSG_CALL_BACK_FLAG_SHIFT 0 //!< Shift value of I2C_MSG_CALL_BACK_FLAG
-#define I2C_MSG_SLAVE_MSG_FLAG_SHIFT 1 //!< Shift value of I2C_MSG_SLAVE_MSG_FLAG
-#define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
-#define I2C_MSG_SENT_STOP_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
-#define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
+#define I2C_MSG_SENT_REP_START_FLAG BIT(I2C_MSG_SENT_REP_START_FLAG_SHIFT)
 
 /**
  * \brief I2C message features mask.
  * 
  * Mask which masks all bits in the i2c_message::features field.
  */
-#define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_SLAVE_MSG_FLAG | \
-                              I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG | \
-                              I2C_MSG_SENT_REP_START_FLAG)
+#define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG |   \
+                              I2C_MSG_SLAVE_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG |  \
+                              I2C_MSG_SENT_STOP_FLAG | I2C_MSG_SENT_REP_START_FLAG)
 //@}
 
 __DECL

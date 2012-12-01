@@ -20,8 +20,9 @@
 #ifndef Binary_h
 #define Binary_h
 
-#include <bermuda.h>
+#include <stdlib.h>
 
+#define neg(__x) (~__x)
 #define BIT(x) (1<<x)
 #define _BV(x) BIT(x)
 

@@ -33,10 +33,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <dev/dev.h>
 #include <dev/i2c/i2c.h>
-#include <dev/i2c/i2c-core.h>
 #include <dev/i2c/reg.h>
+#include <dev/i2c/i2c-core.h>
 
+#include <lib/binary.h>
 #include <lib/list/list.h>
 #include <lib/list/rcu.h>
 

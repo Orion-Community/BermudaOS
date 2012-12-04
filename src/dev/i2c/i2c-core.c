@@ -46,7 +46,7 @@
  * Static functions.
  */
 static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
-static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags);
+static int i2c_queue_processor(struct i2c_client *client, const void *data, size_t size, uint8_t flags);
 static inline bool i2c_client_has_action(i2c_features_t features);
 static void i2c_init_transfer(struct i2c_adapter *adapter);
 
@@ -184,7 +184,7 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \param client Client to edit the queues of.
  * \param data Data to append to the queue.
  * \param size Length of <i>data</i>.
- * \param flags <i>flags</i> gives information about the data passed to <i><b>i2c_edit_queue</b></i>.
+ * \param flags <i>flags</i> gives information about the data passed to <i><b>i2c_queue_processor</b></i>.
  * \note The given I2C client must have allocated (i.e. locked) its bus adapter.
  * \see list_last_entry I2C_MSG_CALL_BACK_FLAG I2C_MSG_SENT_STOP_FLAG I2C_MSG_SENT_REP_START_FLAG
  * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
@@ -218,7 +218,11 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * data is appended at the end of the queue. See list_last_entry for more information
  * about the editting of queues.
  */
-static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t size, uint8_t flags)
+static int __link i2c_queue_processor(client, data, size, flags)
+struct i2c_client *client;
+const void *data;
+size_t size;
+uint8_t flags;
 {
 	struct i2c_shared_info *sh_info;
 	struct epl_list *clist, *alist;
@@ -312,7 +316,7 @@ static int i2c_edit_queue(struct i2c_client *client, const void *data, size_t si
 						}
 						msg = (struct i2c_message*) node->data;
 						msg->features = features;
-						features &= I2C_MSG_MASTER_MSG_FLAG;
+						features &= I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_SLAVE_MSG_FLAG;
 #define I2C_MSG_CHECK(__msg, __bus) \
 ( \
 (((neg(__msg) & I2C_MSG_MASTER_MSG_FLAG) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
@@ -383,7 +387,7 @@ PUBLIC void i2c_cleanup_adapter_msgs(struct i2c_client *client)
 	i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, TRUE);
 	
 	do {
-		rc = i2c_edit_queue(client, NULL, 0, 0);
+		rc = i2c_queue_processor(client, NULL, 0, 0);
 		if(rc == 0) {
 			i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, FALSE);
 		}

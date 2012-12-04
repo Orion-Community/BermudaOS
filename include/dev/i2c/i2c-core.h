@@ -68,7 +68,7 @@
 
 /**
  * \brief Defines that a repeated start should be sent after transmission.
- * \warning This bit does NOT exist in the flags argument to i2c_edit_queue.
+ * \warning This bit does NOT exist in the flags argument to i2c_queue_processor.
  * 
  * Either this bit has to be set or I2C_MSG_SENT_STOP_FLAG has to be set.
  */

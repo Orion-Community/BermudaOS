@@ -34,7 +34,7 @@
 #define I2C_MSG_SLAVE_MSG_FLAG_SHIFT 1 //!< Shift value of I2C_MSG_SLAVE_MSG_FLAG
 /**
  * \brief Master message flag.
- * \see I2C_MSG_SLAVE_MSG_FLAG_SHIFT I2C_MSG_MASTER_MSG_FLAG
+ * \see I2C_MSG_SLAVE_MSG_FLAG_SHIFT I2C_MSG_MASTER_MSG_MASK
  */
 #define I2C_MSG_MASTER_MSG_FLAG_SHIFT I2C_MSG_SLAVE_MSG_FLAG_SHIFT
 #define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
@@ -52,9 +52,8 @@
 #define I2C_MSG_SLAVE_MSG_FLAG BIT(I2C_MSG_SLAVE_MSG_FLAG_SHIFT)
 /**
  * \brief Master message flag.
- * \see I2C_MSG_MASTER_MSG_FLAG_SHIFT
  */
-#define I2C_MSG_MASTER_MSG_FLAG BIT(I2C_MSG_MASTER_MSG_FLAG_SHIFT)
+#define I2C_MSG_MASTER_MSG_FLAG 0
 
 /**
  * \brief Defines the message holds a transmit buffer, not a receive buffer.
@@ -75,13 +74,20 @@
 #define I2C_MSG_SENT_REP_START_FLAG BIT(I2C_MSG_SENT_REP_START_FLAG_SHIFT)
 
 /**
+ * \brief Master message mask.
+ */
+#define I2C_MSG_MASTER_MSG_MASK BIT(I2C_MSG_MASTER_MSG_FLAG_SHIFT)
+
+/**
  * \brief I2C message features mask.
  * 
  * Mask which masks all bits in the i2c_message::features field.
  */
-#define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_FLAG |   \
+#define I2C_MSG_FEATURES_MASK (I2C_MSG_CALL_BACK_FLAG | I2C_MSG_MASTER_MSG_MASK |   \
                               I2C_MSG_SLAVE_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG |  \
                               I2C_MSG_SENT_STOP_FLAG | I2C_MSG_SENT_REP_START_FLAG)
+                              
+
 //@}
 
 __DECL
@@ -97,6 +103,10 @@ extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
 extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
 extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
 extern void i2c_cleanup_adapter_msgs(struct i2c_client *client);
+
+#ifdef I2C_DBG
+extern int i2cdbg_test_queue_processor(struct i2c_client *client);
+#endif
 
 /**
  * \brief Get the shared info of the given I2C client.
@@ -125,7 +135,7 @@ static inline i2c_features_t i2c_client_features(struct i2c_client *client)
  */
 static inline i2c_features_t i2c_adapter_features(struct i2c_adapter *adapter)
 {
-	return adapter->flags;
+	return adapter->features;
 }
 
 /**

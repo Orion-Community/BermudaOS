@@ -83,6 +83,12 @@ AC_ARG_ENABLE([adc],
 	[adc=yes]
 )
 
+AC_ARG_ENABLE([i2c-dbg],
+	AS_HELP_STRING([--enable-i2c-dbg], [Enable I2C debugging.]),
+	[i2cdbg=yes],
+	[]
+)
+
 # -------------------------------------------------------
 # CPU conditionals
 # -------------------------------------------------------
@@ -166,6 +172,10 @@ if test "x$i2c_array" = "x"; then
 AC_DEFINE([I2C_MSG_LIST], [1], [Defines that I2C messages are stored in a linked list.])
 else
 AC_DEFINE([I2C_MSG_ARRAY], [1], [Defines that I2C messages are stored in a static array.])
+fi
+
+if test "x$i2cdbg" = "xyes"; then
+AC_DEFINE([I2C_DBG], [1], [Enables I2C debugging.])
 fi
 
 # BermudaNet definitions

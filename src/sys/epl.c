@@ -158,6 +158,7 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
  * \param list List to delete from.
  * \param node Node to delete.
  * \return Weather the deletion was successful (0 on success).
+ * \todo Removing fails when \verbatim node != list \endverbatim
  */
 PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 {

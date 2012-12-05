@@ -46,7 +46,8 @@
  * Static functions.
  */
 static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
-static int i2c_queue_processor(struct i2c_client *client, const void *data, size_t size, uint8_t flags);
+static int i2c_queue_processor(struct i2c_client *client, const void *data, size_t size, 
+							   uint8_t flags);
 static inline bool i2c_client_has_action(i2c_features_t features);
 static void i2c_init_transfer(struct i2c_adapter *adapter);
 
@@ -134,6 +135,7 @@ PUBLIC int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool f
 	if((features & I2C_ACTION_PENDING) == 0 || force) {
 		action <<= I2C_QUEUE_ACTION_SHIFT;
 		features |= action;
+		i2c_shinfo(client)->features = features;
 		return 0;
 	} else {
 		return -1;
@@ -187,7 +189,7 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \param flags <i>flags</i> gives information about the data passed to <i><b>i2c_queue_processor</b></i>.
  * \note The given I2C client must have allocated (i.e. locked) its bus adapter.
  * \see list_last_entry I2C_MSG_CALL_BACK_FLAG I2C_MSG_SENT_STOP_FLAG I2C_MSG_SENT_REP_START_FLAG
- * \see I2C_MSG_MASTER_MSG_FLAG I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
+ * \see I2C_MSG_MASTER_MSG_MASK I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
  * \note Messages are not guarranteed to be transmitted, they will be checked if they are compatible
  *       with the adapter.
  * \todo Debug this function.
@@ -224,6 +226,7 @@ const void *data;
 size_t size;
 uint8_t flags;
 {
+	auto i2c_features_t i2c_check_msg(i2c_features_t msg, i2c_features_t bus);
 	struct i2c_shared_info *sh_info;
 	struct epl_list *clist, *alist;
 	struct epl_list_node *node, *n_node;
@@ -238,6 +241,7 @@ uint8_t flags;
 	} else {
 		action = i2c_eval_action(client);
 	}
+
 	sh_info = i2c_shinfo(client);
 	features = i2c_client_features(client);
 	adpt = client->adapter;
@@ -316,14 +320,9 @@ uint8_t flags;
 						}
 						msg = (struct i2c_message*) node->data;
 						msg->features = features;
-						features &= I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_SLAVE_MSG_FLAG;
-#define I2C_MSG_CHECK(__msg, __bus) \
-( \
-(((neg(__msg) & I2C_MSG_MASTER_MSG_FLAG) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
-((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT))  \
-)
-						if(I2C_MSG_CHECK(features, b_features)) {
-#undef I2C_MSG_CHECK
+						features &= I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_FLAG;
+
+						if(i2c_check_msg(features, b_features)) {
 							rc = epl_add_node(alist, node, EPL_APPEND);
 							if(rc) {
 								i2c_set_error(client);
@@ -366,9 +365,21 @@ uint8_t flags;
 	}
 	
 	features = i2c_client_features(client); /* features could be compromised */
-	features &= ~I2C_ACTION_PENDING;
+	features &= ~(I2C_ACTION_PENDING | I2C_QUEUE_ACTION_MASK);
+	i2c_shinfo(client)->features = features;
 	
 	return rc;
+	
+	auto __link __maxoptimize i2c_features_t i2c_check_msg(i2c_features_t msg, i2c_features_t bus)
+	{
+#define I2C_MSG_CHECK(__msg, __bus) \
+( \
+(((neg(__msg) & I2C_MSG_MASTER_MSG_MASK) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
+((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT))  \
+)
+		return I2C_MSG_CHECK(msg, bus);
+#undef I2C_MSG_CHECK
+	}
 }
 #endif
 
@@ -407,18 +418,69 @@ PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t
 	struct i2c_client *client = malloc(sizeof(*client));
 	struct i2c_shared_info *shinfo = malloc(sizeof(*shinfo));
 	
-	if(client && shinfo) {
+	if(client != NULL && shinfo != NULL) {
 		client->sh_info = shinfo;
 		client->adapter = adapter;
 		client->sla = sla;
 		client->freq = hz;
 		
 		shinfo->list = epl_alloc();
+		shinfo->features = 0;
 		return client;
 	} else {
 		return NULL;
 	}
 }
+
+/*
+ * Debugging functions
+ */
+#ifdef I2C_DBG
+/**
+ * \brief Test data to transfer.
+ * 
+ * This data is used in I2C tests. It contains 2 'random' bytes.
+ */
+static uint8_t test_data0[] = {0xAA, 0xCF};
+/**
+ * \brief Test data to transfer.
+ * 
+ * One random byte of test data.
+ */
+static uint8_t test_data1 = 0xAB;
+
+/**
+ * \brief Length of test_data0.
+ */
+#define TEST_DATA0_LEN 2
+
+/**
+ * \brief Length of test_data1.
+ */
+#define TEST_DATA1_LEN 1
+
+#define TEST_DATA0_FLAGS I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG
+#define TEST_DATA1_FLAGS I2C_MSG_SLAVE_MSG_FLAG
+
+/**
+ * \brief Test the functionality of i2c_queue_processor.
+ * \param client The (test) client to use for the tests.
+ * \note Altough this is a debugging function, \p client should be fully initialized.
+ */
+PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
+{
+	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
+	i2c_queue_processor(client, &test_data0[0], TEST_DATA0_LEN, TEST_DATA0_FLAGS);
+	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
+	i2c_queue_processor(client, &test_data1, TEST_DATA1_LEN, TEST_DATA1_FLAGS);
+	
+	if(i2c_shinfo(client)->list->list_entries >= 10) {
+		i2c_set_action(client, I2C_FLUSH_QUEUE_ENTRIES, TRUE);
+		i2c_queue_processor(client, SIGNALED, 0, 0);
+	}
+	return 0;
+}
+#endif
 
 
 /**

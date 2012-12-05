@@ -87,7 +87,7 @@ static volatile void *bus_c0_slave_queue = SIGNALED;
 /**
  * \brief Array of all available I2C busses
  */
-static struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
+struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
 
 /**
  * \brief I2C bus 0 message array.
@@ -133,6 +133,8 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 	adapter->data = (void*)&i2c_c0;
 	adapter->slave_respond = &atmega_i2c_slave_respond;
 	adapter->cleanup_list = cleanup_list;
+	adapter->features = I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT;
+	adapter->msgs = epl_alloc();
 
 	vfs_add(&i2c_c0_io);
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);

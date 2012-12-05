@@ -58,7 +58,8 @@ typedef uint8_t i2c_action_t;
 #define I2C_CALL_BACK_FLAG B1
 #define I2C_CLIENT_HAS_LOCK_FLAG B10 //!< Defines that the client has locked the adapter.
 
-#define I2C_QUEUE_ACTION_MASK B11100 //!< Masks the bits 2-3 in i2c_shared_info::features.
+#define I2C_QUEUE_ACTION_MASK (I2C_QUEUE_ACTION_NEW | I2C_QUEUE_ACTION_INSERT | \
+							  I2C_QUEUE_ACTION_FLUSH)
 #define I2C_QUEUE_ACTION_SHIFT 2  //!< Shift to reach the queue action bits.
 #define I2C_QUEUE_ACTION_NEW B100  //!< Flag to create a new queue entry.
 #define I2C_QUEUE_ACTION_INSERT B1000 //!< Flag to insert a queue entry at the start
@@ -145,6 +146,7 @@ struct i2c_adapter {
 	struct device *dev; //!< Adapter device.
 	
 	uint8_t flags; //!< Bus flags.
+	i2c_features_t features;
 	bool busy; //!< Defines wether the interface is busy or not.
 	uint8_t error;
 	

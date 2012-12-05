@@ -35,11 +35,6 @@
 #define SCL 5
 #define SDA 4
 
-/**
- * \brief The maximum I2C busses an ATmega MCU can have.
- */
-#define ATMEGA_BUSSES 1
-
 /* I2C device I/O control features */
 /**
  * \brief Sent the start condition.

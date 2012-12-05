@@ -26,6 +26,13 @@
 #include <stdlib.h>
 
 /**
+ * \brief The maximum I2C busses an ATmega MCU can have.
+ */
+#define ATMEGA_BUSSES 1
+
+extern struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
+
+/**
  * \brief Slave address.
  */
 #define ATMEGA_I2C_C0_SLA 0x56
@@ -36,6 +43,8 @@
  * \see atmega_i2c_init_client
  */
 #define ATMEGA_I2C_C0 0
+
+#define ATMEGA_I2C_C0_ADAPTER (atmega_i2c_busses[ATMEGA_I2C_C0])
 
 __DECL
 extern void atmega_i2c_init_client(struct i2c_client *client, uint8_t ifac);

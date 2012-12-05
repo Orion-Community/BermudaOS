@@ -33,6 +33,7 @@
 #include <dev/adc.h>
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
+#include <dev/i2c/i2c-core.h>
 #include <dev/usart/usart.h>
 #include <dev/i2c/busses/atmega.h>
 #include <dev/usart/busses/atmega_usart.h>
@@ -49,26 +50,18 @@
 
 static VTIMER *timer;
 struct i2c_client eeprom_client;
-static char epl_stack[128];
-THREAD epl_thread;
+static char i2c_stack[128];
+THREAD i2c_thread;
 
-static struct epl_list *i2c_epl = NULL;
+static struct i2c_client *test_client = NULL;
 
 #ifdef __THREADS__
 
-THREAD(epl_test, arg)
+THREAD(i2c_dbg, arg)
 {
-	i2c_epl = epl_alloc();
-	struct epl_list_node *node;
-	int i = 0;
 	while(1) {
-		if(epl_lock(i2c_epl) == 0) {
-			node = malloc(sizeof(*node));
-			node->data = (void*)i;
-			i++;
-			epl_add_node(i2c_epl, node, EPL_IN_FRONT);
-			epl_unlock(i2c_epl);
-		}
+		printf_P(PSTR("Entries: %p\n"), test_client->adapter->msgs->list_entries);
+		i2cdbg_test_queue_processor(test_client);
 		BermudaThreadSleep(2000);
 	}
 }
@@ -106,8 +99,9 @@ void setup()
 		BermudaThreadSleep(500);
 	}
 	
-	BermudaThreadCreate(&epl_thread, "EPL", &epl_test, NULL, 128,
-						&epl_stack[0], BERMUDA_DEFAULT_PRIO);
+	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x48, 100000UL);
+	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 128,
+					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);
@@ -115,6 +109,7 @@ void setup()
 	BermudaSpiRamInit(SPI0, 10);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
 	Bermuda24c02WriteByte(100, 0xAC);
+
 }
 
 #ifdef __THREADS__
@@ -126,7 +121,6 @@ unsigned long loop()
 	double tmp = 0;
 	double temperature = 0;
 	unsigned char read_back_eeprom = 0, read_back_sram = 0;
-	struct epl_list_node *car, *n_car;
 	
 	tmp = ADC0->read(ADC0, A0, 500);
 	temperature = tmp / 1024 * 5000;
@@ -138,18 +132,6 @@ unsigned long loop()
 	printf_P(PSTR("T=%f M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
 				read_back_sram);
 	
-	if(epl_entries(i2c_epl) > 4) {
-		if(epl_lock(i2c_epl) == 0) {
-			if(epl_entries(i2c_epl) > 4) {
-				for_each_epl_node_safe(i2c_epl, car, n_car) {
-					epl_delete_node(i2c_epl, car);
-					free(car);
-				}
-			}
-		}
-		epl_unlock(i2c_epl);
-		printf_P(PSTR("Deleting nodes: %u\n"), epl_entries(i2c_epl));
-	}
 	
 #ifdef __THREADS__
 	BermudaThreadSleep(5000);

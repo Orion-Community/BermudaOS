@@ -33,6 +33,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
@@ -158,7 +159,7 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
  * \param list List to delete from.
  * \param node Node to delete.
  * \return Weather the deletion was successful (0 on success).
- * \todo Removing fails when \verbatim node != list \endverbatim
+ * \todo Removing fails when node != head.
  */
 PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 {
@@ -168,8 +169,9 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 	if(head) {
 		if(head == node) {
 			head = node->next;
-			list->list_entries--;
 			list->nodes = head;
+			node->next = NULL;
+			list->list_entries--;
 			rc = 0;
 		} else {
 			prev = head;

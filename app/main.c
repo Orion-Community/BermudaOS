@@ -50,7 +50,7 @@
 
 static VTIMER *timer;
 struct i2c_client eeprom_client;
-static char i2c_stack[128];
+static char i2c_stack[150];
 THREAD i2c_thread;
 
 static struct i2c_client *test_client = NULL;
@@ -60,7 +60,7 @@ static struct i2c_client *test_client = NULL;
 THREAD(i2c_dbg, arg)
 {
 	while(1) {
-		printf_P(PSTR("Entries: %p\n"), test_client->adapter->msgs->list_entries);
+		printf_P(PSTR("Entries: %p\n"), i2c_shinfo(test_client)->list->list_entries);
 		i2cdbg_test_queue_processor(test_client);
 		BermudaThreadSleep(2000);
 	}
@@ -100,7 +100,7 @@ void setup()
 	}
 	
 	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x48, 100000UL);
-	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 128,
+	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 150,
 					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);

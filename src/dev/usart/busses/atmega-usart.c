@@ -233,9 +233,9 @@ static int BermudaUsartWriteByte(int c, FILE *stream)
 		BermudaUsartWriteByte('\r', stream);
 	}
 
-	(*(hw->udr)) = c;
-	while(( (*(hw->ucsra)) & BIT(TXCn) ) == 0);
+	while(( (*(hw->ucsra)) & BIT(UDRE0) ) == 0);
 	(*(hw->ucsra)) |= BIT(TXCn);
+	(*(hw->udr)) = c;
 
 	return c;
 }

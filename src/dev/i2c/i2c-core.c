@@ -193,6 +193,7 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \note Messages are not guarranteed to be transmitted, they will be checked if they are compatible
  *       with the adapter.
  * \todo Debug this function.
+ * \todo Fix EPL's if they are broken.
  *
  * Append the given \p data to the client queue. 
  * 
@@ -211,6 +212,16 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * 
  * If this function is <i>1</i>, the adapter supports the message, if <i>0</i> the
  * adapter is unable to send the message (and the message willl therefore be discarded).
+ * 
+ * \section act Actions
+ * The following actions can be passed to \p i2c_queue_processor:
+ * \verbatim
+   I2C_NEW_QUEUE_ENTRY		Create a new message and add it to the client.
+   I2C_INSERT_QUEUE_ENTRY	Insert a message in front of the EPL of the client's adapter.
+   I2C_FLUSH_QUEUE_ENTRIES	Flush all queue entries in the client's list to the adapter's list.
+   I2C_DELETE_QUEUE_ENTRY	Delete the first entry of the adapter queue. Passed by setting data to
+  							NULL.
+   \endverbatim
  * 
  * \section conc Concurrency
  * It is very important that the application has locked the \p client. If the client (and thus
@@ -311,7 +322,7 @@ uint8_t flags;
 				
 				if(epl_lock(adpt->msgs) == 0) {
 					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
-																		I2C_SLAVE_SUPPORT);
+                                                               I2C_SLAVE_SUPPORT);
 					for_each_epl_node_safe(clist, node, n_node) {
 						features = i2c_msg_features((void*)node->data);
 						if((features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
@@ -323,14 +334,20 @@ uint8_t flags;
 						features &= I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_FLAG;
 
 						if(i2c_check_msg(features, b_features)) {
+							epl_delete_node(clist, node);
 							rc = epl_add_node(alist, node, EPL_APPEND);
 							if(rc) {
+								logmsg_P(I2C_CORE_LOG, PSTR("Failed to add message (0x%p) to the "
+															"adapter!\n"), msg);
 								i2c_set_error(client);
+								free(msg);
+								free(node);
 								rc = -1;
 								break;
 							}
-							epl_delete_node(clist, node);
 						} else {
+							logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter."
+														"\n"), msg);
 							i2c_set_error(client);
 							epl_delete_node(clist, node);
 							free(msg);
@@ -338,7 +355,6 @@ uint8_t flags;
 						}
 					}
 					epl_unlock(adpt->msgs);
-					
 				}
 				epl_unlock(sh_info->list);
 				i2c_init_transfer(adpt);
@@ -474,7 +490,7 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data1, TEST_DATA1_LEN, TEST_DATA1_FLAGS);
 	
-	if(i2c_shinfo(client)->list->list_entries >= 10) {
+	if(i2c_shinfo(client)->list->list_entries >= 4) {
 		i2c_set_action(client, I2C_FLUSH_QUEUE_ENTRIES, TRUE);
 		i2c_queue_processor(client, SIGNALED, 0, 0);
 	}

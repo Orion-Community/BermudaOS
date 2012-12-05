@@ -23,7 +23,7 @@
 
 #include "stdio_priv.h"
 
-PUBLIC int vfprintf_P(FILE *stream, const char *fmt, va_list ap)
+PUBLIC int vfprintf_P(FILE *stream, const prog_char *fmt, va_list ap)
 {
 	size_t strl = strlen_P(fmt)+1;
 	int rc = -1;

@@ -192,7 +192,6 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \see I2C_MSG_MASTER_MSG_MASK I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
  * \note Messages are not guarranteed to be transmitted, they will be checked if they are compatible
  *       with the adapter.
- * \todo Debug this function.
  * \todo Fix EPL's if they are broken.
  *
  * Append the given \p data to the client queue. 
@@ -298,19 +297,28 @@ uint8_t flags;
 		 * after a call back to the application to insert a new I2C message.
 		 */
 		case I2C_INSERT_QUEUE_ENTRY:
-			if(epl_lock(sh_info->list) == 0) {
-				epl_deref(sh_info->list, &clist);
+			if(epl_lock(adpt->msgs) == 0) {
+				epl_deref(adpt->msgs, &alist);
 				
 				msg = (struct i2c_message*)data;
+				b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT);
+				features = i2c_msg_features(msg);
 				if(msg->length == size) {
 					node = malloc(sizeof(*node));
 					if(node) {
 						node->next = NULL;
 						node->data = (void*)msg;
-						rc = epl_add_node(clist, node, EPL_IN_FRONT);
+						if(i2c_check_msg(features, b_features)) {
+							rc = epl_add_node(alist, node, EPL_APPEND);
+						} else {
+							logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter."
+														"\n"), msg);
+							free(msg);
+							free(node);
+						}
 					}
 				}
-				epl_unlock(sh_info->list);
+				epl_unlock(adpt->msgs);
 			}
 			break;
 		
@@ -410,15 +418,15 @@ static void i2c_init_transfer(struct i2c_adapter *adapter)
  */
 PUBLIC void i2c_cleanup_adapter_msgs(struct i2c_client *client)
 {
-	int rc = 0;
-	i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, TRUE);
+	volatile size_t *length = &(client->adapter->msgs->list_entries);
 	
 	do {
-		rc = i2c_queue_processor(client, NULL, 0, 0);
-		if(rc == 0) {
-			i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, FALSE);
+		if(i2c_queue_processor(client, NULL, 0, 0) < 0) {
+			break;
+		} else {
+			continue;
 		}
-	} while(rc == 0);
+	} while(*length > 0);
 }
 
 /**
@@ -475,7 +483,14 @@ static uint8_t test_data1 = 0xAB;
  */
 #define TEST_DATA1_LEN 1
 
+/**
+ * \brief Message features for <i>test_data0</i>.
+ */
 #define TEST_DATA0_FLAGS I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG
+
+/**
+ * \brief Message features for <i>test_data1</i>.
+ */
 #define TEST_DATA1_FLAGS I2C_MSG_SLAVE_MSG_FLAG
 
 /**
@@ -485,14 +500,31 @@ static uint8_t test_data1 = 0xAB;
  */
 PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 {
+	struct i2c_message *msg;
+	
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data0[0], TEST_DATA0_LEN, TEST_DATA0_FLAGS);
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data1, TEST_DATA1_LEN, TEST_DATA1_FLAGS);
 	
-	if(i2c_shinfo(client)->list->list_entries >= 4) {
+	if(i2c_shinfo(client)->list->list_entries >= 10) {
 		i2c_set_action(client, I2C_FLUSH_QUEUE_ENTRIES, TRUE);
 		i2c_queue_processor(client, SIGNALED, 0, 0);
+	}
+	
+	if(client->adapter->msgs->list_entries == 20) {
+		msg = malloc(sizeof(*msg));
+		if(msg) {
+			msg->length = TEST_DATA0_LEN;
+			msg->buff = &test_data0[0];
+			i2c_msg_set_features(msg, TEST_DATA0_FLAGS);
+			i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
+			i2c_queue_processor(client, msg, msg->length, 0);
+		}
+	}
+	
+	if(client->adapter->msgs->list_entries >= 21) {
+		i2c_cleanup_adapter_msgs(client);
 	}
 	return 0;
 }

@@ -17,7 +17,7 @@
  */
 
 /**
- * \file src/dev/i2c/i2c-dev.c I2C device driver.
+ * \file src/dev/i2c/i2c-dev_old.c I2C device driver.
  */
 
 /**

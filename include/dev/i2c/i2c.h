@@ -75,9 +75,13 @@ typedef uint8_t i2c_action_t;
 /*
  * I2C adapter features
  */
-#define I2C_MASTER_SUPPORT B1
-#define I2C_SLAVE_SUPPORT  B10
 #define I2C_SLAVE_SUPPORT_SHIFT 1
+
+typedef enum i2c_bus_features
+{
+	I2C_MASTER_SUPPORT = B1,
+	I2C_SLAVE_SUPPORT  = B10,
+} i2c_bus_features_t;
 
 
 /**

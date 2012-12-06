@@ -103,6 +103,7 @@ extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
 extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
 extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
 extern void i2c_cleanup_adapter_msgs(struct i2c_client *client);
+extern void i2c_cleanup_client_msgs(struct i2c_client *client);
 
 #ifdef I2C_DBG
 extern int i2cdbg_test_queue_processor(struct i2c_client *client);

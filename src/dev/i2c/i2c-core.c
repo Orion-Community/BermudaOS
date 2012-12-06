@@ -53,7 +53,7 @@ static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
 static int i2c_queue_processor(struct i2c_client *client, const void *data, size_t size, 
 							   uint8_t flags);
 static inline bool i2c_client_has_action(i2c_features_t features);
-static void i2c_init_transfer(struct i2c_adapter *adapter);
+static int i2c_init_transfer(struct i2c_adapter *adapter);
 
 /**
  * \brief Prepare the driver for an I2C transfer.
@@ -357,7 +357,7 @@ uint8_t flags;
 								i2c_set_error(client);
 								free(msg);
 								free(node);
-								rc = -1;
+								rc = -DEV_INTERNAL;
 								break;
 							}
 						} else {
@@ -367,13 +367,15 @@ uint8_t flags;
 							epl_delete_node(clist, node);
 							free(msg);
 							free(node);
-							rc = -1;
+							rc = -DEV_INTERNAL;
 						}
 					}
 					epl_unlock(adpt->msgs);
 				}
 				epl_unlock(sh_info->list);
-				i2c_init_transfer(adpt);
+				if(!rc) {
+					rc = i2c_init_transfer(adpt);
+				}
 			}
 			break;
 			
@@ -415,9 +417,14 @@ uint8_t flags;
 }
 #endif
 
-static void i2c_init_transfer(struct i2c_adapter *adapter)
+/**
+ * \brief Initializes the transfer to the adapter.
+ * \param adapter Adapter containing new messages.
+ * \note This function also tries to get the locks needed to complete the transfer.
+ */
+static int i2c_init_transfer(struct i2c_adapter *adapter)
 {
-	
+	return -1;
 }
 
 /**
@@ -435,6 +442,28 @@ PUBLIC void i2c_cleanup_adapter_msgs(struct i2c_client *client)
 			continue;
 		}
 	} while(*length > 0);
+}
+
+/**
+ * \brief Delete all messages in the client message list.
+ * \param client Client to cleanup.
+ */
+PUBLIC void i2c_cleanup_client_msgs(struct i2c_client *client)
+{
+	struct i2c_shared_info *shinfo = i2c_shinfo(client);
+	struct epl_list_node *node, *n_node;
+	struct epl_list *clist;
+	
+	if(epl_lock(shinfo->list) == 0) {
+		epl_deref(shinfo->list, &clist);
+		for_each_epl_node_safe(clist, node, n_node) {
+			epl_delete_node(clist, node);
+			free((void*)node->data);
+			free(node);
+		}
+		
+		epl_unlock(shinfo->list);
+	}
 }
 
 /**
@@ -501,6 +530,10 @@ static uint8_t test_data1 = 0xAB;
  */
 #define TEST_DATA1_FLAGS I2C_MSG_SLAVE_MSG_FLAG
 
+/**
+ * \brief Defines wether the list is made circular yet or not.
+ * \note Reset to \p FALSE every complete run.
+ */
 static bool done = FALSE;
 
 /**

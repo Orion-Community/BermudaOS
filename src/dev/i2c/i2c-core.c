@@ -192,7 +192,6 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
  * \see I2C_MSG_MASTER_MSG_MASK I2C_MSG_TRANSMIT_MSG_FLAG i2c_set_action
  * \note Messages are not guarranteed to be transmitted, they will be checked if they are compatible
  *       with the adapter.
- * \todo Fix EPL's if they are broken.
  *
  * Append the given \p data to the client queue. 
  * 
@@ -309,7 +308,7 @@ uint8_t flags;
 						node->next = NULL;
 						node->data = (void*)msg;
 						if(i2c_check_msg(features, b_features)) {
-							rc = epl_add_node(alist, node, EPL_APPEND);
+							rc = epl_add_node(alist, node, EPL_IN_FRONT);
 						} else {
 							logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter."
 														"\n"), msg);
@@ -345,8 +344,12 @@ uint8_t flags;
 							epl_delete_node(clist, node);
 							rc = epl_add_node(alist, node, EPL_APPEND);
 							if(rc) {
-								logmsg_P(I2C_CORE_LOG, PSTR("Failed to add message (0x%p) to the "
-															"adapter!\n"), msg);
+								if(epl_fix(alist) == 0) {
+									rc = epl_add_node(alist, node, EPL_APPEND);
+									continue;
+								}
+								logmsg_P(I2C_CORE_LOG, PSTR("Adaper list (0x%p) is bogus while "
+															"trying to add a msg\n"), adpt->msgs);
 								i2c_set_error(client);
 								free(msg);
 								free(node);
@@ -360,6 +363,7 @@ uint8_t flags;
 							epl_delete_node(clist, node);
 							free(msg);
 							free(node);
+							rc = -1;
 						}
 					}
 					epl_unlock(adpt->msgs);
@@ -493,6 +497,8 @@ static uint8_t test_data1 = 0xAB;
  */
 #define TEST_DATA1_FLAGS I2C_MSG_SLAVE_MSG_FLAG
 
+static bool done = FALSE;
+
 /**
  * \brief Test the functionality of i2c_queue_processor.
  * \param client The (test) client to use for the tests.
@@ -501,11 +507,19 @@ static uint8_t test_data1 = 0xAB;
 PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 {
 	struct i2c_message *msg;
+	struct epl_list_node *node;
+	
 	
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data0[0], TEST_DATA0_LEN, TEST_DATA0_FLAGS);
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data1, TEST_DATA1_LEN, TEST_DATA1_FLAGS);
+	
+	if(client->adapter->msgs->list_entries == 10 && !done) {
+		node = epl_node_at(client->adapter->msgs, 9);
+		node->next = node;
+		done = TRUE;
+	}
 	
 	if(i2c_shinfo(client)->list->list_entries >= 10) {
 		i2c_set_action(client, I2C_FLUSH_QUEUE_ENTRIES, TRUE);
@@ -525,6 +539,7 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	
 	if(client->adapter->msgs->list_entries >= 21) {
 		i2c_cleanup_adapter_msgs(client);
+		done = FALSE;
 	}
 	return 0;
 }

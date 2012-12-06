@@ -1,6 +1,6 @@
 /*
- *  BermudaOS - I2C device driver
- *  Copyright (C) 2012   Michel Megens
+ *  BermudaOS - I2C core driver
+ *  Copyright (C) 2012   Michel Megens <dev@michelmegens.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,13 +34,17 @@
 #include <stdio.h>
 
 #include <dev/dev.h>
+#include <dev/error.h>
+
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
 #include <dev/i2c/i2c-core.h>
 
 #include <lib/binary.h>
 #include <lib/list/list.h>
-#include <lib/list/rcu.h>
+
+#include <sys/thread.h>
+#include <sys/epl.h>
 
 /*
  * Static functions.
@@ -65,7 +69,7 @@ PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
 
 /**
  * \brief Clean up master buffers.
- * \param Peripheral I/O file.
+ * \param stream I/O file.
  */
 PUBLIC void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adapter)
 {
@@ -79,7 +83,7 @@ PUBLIC void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adapter)
 
 /**
  * \brief Clean up slave buffers.
- * \param Peripheral I/O file.
+ * \param stream I/O file.
  */
 PUBLIC void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adapter)
 {
@@ -509,23 +513,34 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	struct i2c_message *msg;
 	struct epl_list_node *node;
 	
-	
+	/*
+	 * add two entries
+	 */
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data0[0], TEST_DATA0_LEN, TEST_DATA0_FLAGS);
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data1, TEST_DATA1_LEN, TEST_DATA1_FLAGS);
 	
+	/*
+	 * make the list circular
+	 */
 	if(client->adapter->msgs->list_entries == 10 && !done) {
 		node = epl_node_at(client->adapter->msgs, 9);
 		node->next = node;
 		done = TRUE;
 	}
 	
+	/*
+	 * Flush the list
+	 */
 	if(i2c_shinfo(client)->list->list_entries >= 10) {
 		i2c_set_action(client, I2C_FLUSH_QUEUE_ENTRIES, TRUE);
 		i2c_queue_processor(client, SIGNALED, 0, 0);
 	}
 	
+	/*
+	 * insert an entry
+	 */
 	if(client->adapter->msgs->list_entries == 20) {
 		msg = malloc(sizeof(*msg));
 		if(msg) {
@@ -537,6 +552,9 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 		}
 	}
 	
+	/*
+	 * delete all entries
+	 */
 	if(client->adapter->msgs->list_entries >= 21) {
 		i2c_cleanup_adapter_msgs(client);
 		done = FALSE;

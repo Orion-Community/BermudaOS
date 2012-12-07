@@ -118,6 +118,12 @@ struct i2c_shared_info
 	int (*shared_callback)(struct i2c_client *client, struct i2c_message *msg);
 	
 	i2c_features_t features; //!< Feature option flags.
+	
+	/**
+	 * \brief Core layer mutex.
+	 * This mutex must be locked before the core layer may edit the queue's of the client.
+	 */
+	volatile void *mutex;
 };
 
 //@}

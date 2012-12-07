@@ -141,7 +141,7 @@ extern int read(int fd, void *buff, size_t size);
 extern void fdmode(int fd, unsigned char mode);
 extern int flush(int fd);
 
-extern int open(char *fname, unsigned char mode);
+extern int open(char *fname, uint16_t mode);
 extern FILE *fdopen(int fd);
 extern int close(int fd);
 

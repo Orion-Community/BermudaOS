@@ -46,6 +46,10 @@
 #include <sys/thread.h>
 #include <sys/epl.h>
 
+#ifndef __THREADS__
+#error I2C needs threads to function properly
+#endif
+
 /*
  * Static functions.
  */
@@ -182,6 +186,17 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 	fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG);
 	
 	return client->adapter->slave_respond(stream);
+}
+
+/**
+ * \brief Flush the I2C client and start the transfer.
+ * \param client Client to flush.
+ * 
+ * All messages which client has are flushed to its adapter and a transfer is initialized.
+ */
+PUBLIC int i2c_flush_client(struct i2c_client *client)
+{
+	return i2c_queue_processor(client, SIGNALED, 0, 0);
 }
 
 #ifdef I2C_MSG_LIST
@@ -487,6 +502,7 @@ PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t
 		
 		shinfo->list = epl_alloc();
 		shinfo->features = 0;
+		shinfo->mutex = SIGNALED;
 		return client;
 	} else {
 		return NULL;

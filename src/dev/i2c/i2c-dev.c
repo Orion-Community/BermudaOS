@@ -94,7 +94,116 @@
 #include <sys/epl.h>
 #include <sys/events/event.h>
 
+#if 0
 PUBLIC int i2cdev_open(char *data, uint8_t flags)
 {
 	return -1;
 }
+
+/**
+ * \brief Request an I2C I/O file.
+ * \param client I2C driver client.
+ * \param flags File flags.
+ * \return The file descriptor associated with this client.
+ */
+PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
+{
+	FILE *socket;
+	i2c_features_t features;
+	struct i2c_shared_info *shinfo = i2c_shinfo(client);
+	int rc = -1;
+	
+	if(client == NULL) {
+		return -1;
+	}
+	
+	if(BermudaEventWait(event(&(shinfo->mutex)), I2C_TMO) != 0) {
+		goto out;
+	}
+	
+	socket = BermudaHeapAlloc(sizeof(*socket));
+	if(!socket) {
+		rc = -1;
+		goto out;
+	}
+	
+	rc = iob_add(socket);
+	if(rc < 0) {
+		BermudaHeapFree(socket);
+		BermudaEventSignal(event(&(shinfo->mutex)));
+		goto out;
+	}
+	
+	features = i2c_client_features(client);
+	features |= I2C_CLIENT_HAS_LOCK_FLAG;
+	i2c_client_set_features(client, features);
+	
+	socket->data = client;
+	socket->name = "I2C";
+	socket->write = &i2cdev_write;
+	socket->read = &i2cdev_read;
+	socket->flush = &i2cdev_flush;
+	socket->close = &i2cdev_close;
+	socket->flags = flags;
+	
+	out:
+	return rc;
+}
+
+/**
+ * \brief Flush the I/O file.
+ * \param stream File to flush.
+ * 
+ * This will start the actual transfer.
+ */
+PUBLIC int i2cdev_flush(FILE *stream)
+{
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adap = client->adapter;
+	int rc;
+	
+	if(adap->dev->alloc(adap->dev, I2C_TMO) != 0) {
+		return -1;
+	}
+	
+	adap->dev->io->data = stream->data;
+	adap->dev->io->flags &= 0xFF;
+	adap->dev->io->flags |= stream->flags & 0xFF00;
+	
+	rc = i2c_flush_client(client);
+	
+	adap->dev->release(adap->dev);
+	i2c_do_clean_msgs(adap);
+	return rc;
+}
+
+/**
+ * \brief Close the I2C socket.
+ * \param stream File to close.
+ */
+PUBLIC int i2cdev_close(FILE *stream)
+{
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adap = client->adapter;
+	struct i2c_shared_info *shinfo = i2c_shinfo(client);
+	i2c_features_t features;
+	int rc = -1;
+	
+	i2c_do_clean_msgs(adap);
+	if(stream != NULL) {
+		if(stream->buff != NULL) {
+			BermudaHeapFree((void*)stream->buff);
+		}
+		BermudaHeapFree(stream);
+		rc = 0;
+	}
+	
+	BermudaEventSignal(event(&(shinfo->mutex)));
+	
+	features = i2c_client_features(client);
+	features &= ~I2C_CLIENT_HAS_LOCK_FLAG;
+	i2c_client_set_features(client, features);
+	
+	return rc;
+}
+#endif

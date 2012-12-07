@@ -101,9 +101,11 @@ extern void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adap, uint8_t msg)
 extern void i2c_do_clean_msgs(struct i2c_adapter *adap);
 extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
 extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
+
 extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
 extern void i2c_cleanup_adapter_msgs(struct i2c_client *client);
 extern void i2c_cleanup_client_msgs(struct i2c_client *client);
+extern int i2c_flush_client(struct i2c_client *client);
 
 #ifdef I2C_DBG
 extern int i2cdbg_test_queue_processor(struct i2c_client *client);
@@ -171,6 +173,17 @@ static inline void i2c_msg_set_features(struct i2c_message *msg, i2c_features_t 
 static inline i2c_features_t i2c_msg_features(struct i2c_message *msg)
 {
 	return msg->features;
+}
+
+/**
+ * \brief Set the features of a given client.
+ * \param client Client whose features are being set.
+ * \param features Features to set.
+ * \see i2c_shinfo
+ */
+static inline void i2c_client_set_features(struct i2c_client *client, i2c_features_t features)
+{
+	i2c_shinfo(client)->features = features;
 }
 
 /**

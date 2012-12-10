@@ -35,10 +35,9 @@
 
 #include <dev/dev.h>
 #include <dev/error.h>
-
-#include <dev/i2c/i2c.h>
-#include <dev/i2c/reg.h>
-#include <dev/i2c/i2c-core.h>
+#include <dev/i2c.h>
+#include <dev/i2c-reg.h>
+#include <dev/i2c-core.h>
 
 #include <lib/binary.h>
 #include <lib/list/list.h>

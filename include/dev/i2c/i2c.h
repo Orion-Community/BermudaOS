@@ -158,8 +158,14 @@ struct i2c_adapter {
 	uint8_t flags; //!< Bus flags.
 	i2c_features_t features;
 	bool busy; //!< Defines wether the interface is busy or not.
-	uint8_t error;
+	uint8_t error; //! I2C error code.
 	
+	struct i2c_msg_vector
+	{
+		size_t length,
+		       limit;
+		struct i2c_message **msgs;
+	} msg_vector;
 	struct epl_list *msgs;
 
 #ifdef __THREADS__

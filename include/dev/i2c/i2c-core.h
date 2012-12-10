@@ -102,6 +102,9 @@ extern void i2c_do_clean_msgs(struct i2c_adapter *adap);
 extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
 extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
 
+/*
+ * I2C-CORE functions
+ */
 extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
 extern void i2c_cleanup_adapter_msgs(struct i2c_client *client);
 extern void i2c_cleanup_client_msgs(struct i2c_client *client);
@@ -196,6 +199,15 @@ static inline void i2c_set_transmission_layout(struct i2c_client *client, char *
 	struct i2c_shared_info *shinfo = i2c_shinfo(client);
 	shinfo->transmission_layout = layout;
 }
+
+/*
+ * I2C-MSG functions
+ */
+extern int i2c_create_msg_vector(struct i2c_adapter *adapter);
+extern int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg);
+extern struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_t index);
+extern void i2c_msg_vector_delete_at(struct i2c_adapter *adapter, size_t size);
+extern int i2c_msg_vector_delete_msg(struct i2c_adapter *adapter, struct i2c_message *msg);
 //@}
 __DECL_END
 

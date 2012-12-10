@@ -109,7 +109,6 @@ void setup()
 	BermudaSpiRamInit(SPI0, 10);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
 	Bermuda24c02WriteByte(100, 0xAC);
-
 }
 
 #ifdef __THREADS__

@@ -206,8 +206,9 @@ static inline void i2c_set_transmission_layout(struct i2c_client *client, char *
 extern int i2c_create_msg_vector(struct i2c_adapter *adapter);
 extern int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg);
 extern struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_t index);
-extern void i2c_msg_vector_delete_at(struct i2c_adapter *adapter, size_t size);
-extern int i2c_msg_vector_delete_msg(struct i2c_adapter *adapter, struct i2c_message *msg);
+extern struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter, size_t size);
+extern struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter, 
+													 struct i2c_message *msg);
 //@}
 __DECL_END
 

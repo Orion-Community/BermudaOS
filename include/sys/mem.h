@@ -167,6 +167,20 @@ void BermudaHeapPrint();
 size_t BermudaHeapAvailable();
 
 /**
+ * \brief Reallocate a piece of memory.
+ * \param ptr Current pointer.
+ * \param length Requested size.
+ * \return Pointer to the new memory region. Realloc may move the content of \p ptr to a new location.
+ * \retval NULL If realloc failed.
+ * \retval 0x0-RAMEND New address of ptr.
+ * 
+ * Realloc will resize the pointer \p ptr to size \p length. If \p ptr is <i>NULL</i>, 
+ * malloc will be called and its return value is returned. If \p length is 0, the memory pointed to 
+ * by \p ptr is free'd and <i>NULL</i> is returned.
+ */
+extern void *realloc(void *ptr, size_t length);
+
+/**
  * \brief Alias for BermudaHeapAlloc.
  * \param size Amount of memory to allocate.
  */

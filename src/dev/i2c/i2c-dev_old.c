@@ -260,6 +260,8 @@ PUBLIC int i2cdev_flush(FILE *stream)
 	struct i2c_client *client = stream->data;
 	struct i2c_adapter *adap = client->adapter;
 	int rc = adap->dev->io->fd;
+	struct i2c_shared_info *info = i2c_shinfo(client);
+	info->socket = stream;
 	
 	adap->dev->io->data = stream->data;
 	adap->dev->io->flags &= 0xFF;

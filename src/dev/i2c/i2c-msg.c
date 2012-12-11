@@ -19,6 +19,12 @@
 /**
  * \file src/dev/i2c/i2c-msg.c I2C-MSG manager
  * \brief Manage I2C adapter messages.
+ * 
+ * I2C messages which are attatched to an adapter are managed using a vector. This file is a simple
+ * implementation of a vector (i.e. dynamic array). The reason an adapter uses a vector is that
+ * \verbatim vector_get(int index) \endverbatim is verry fast. This function is used allot by several
+ * bus implementations.
+ * 
  * \addtogroup i2c-core
  * @{
  */
@@ -33,8 +39,22 @@
 #include <sys/thread.h>
 #include <sys/events/event.h>
 
+/**
+ * \def DEFAULT_MSG_LIMIT
+ * \brief Default amount of available entries in i2c_adapter::msg_vector.
+ */
 #define DEFAULT_MSG_LIMIT 10
+
+/**
+ * \def ENTRY_SIZE
+ * \brief Size of one entry in i2c_adapter::msg_vector.
+ */
 #define ENTRY_SIZE (sizeof(void*))
+
+/*
+ * static funcs
+ */
+static void i2c_msg_vector_shift_left(struct i2c_adapter *adapter, size_t index, size_t num);
 
 /**
  * \brief Allocate a new vector for adapter messages.
@@ -74,6 +94,8 @@ PUBLIC struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter,
 	if(index < adapter->msg_vector.length) {
 		tmp = adapter->msg_vector.msgs[index];
 		adapter->msg_vector.msgs[index] = NULL;
+		i2c_msg_vector_shift_left(adapter, index+1, 1);
+		adapter->msg_vector.length -= 1;
 		return tmp;
 	} else {
 		return NULL;
@@ -107,7 +129,7 @@ PUBLIC struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_
  */
 PUBLIC int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg)
 {
-	void *buff = adapter->msg_vector.msgs;
+	void *buff = (void*)adapter->msg_vector.msgs;
 	
 	if(adapter->msg_vector.length == adapter->msg_vector.limit) {
 		buff = realloc(buff, (adapter->msg_vector.limit + DEFAULT_MSG_LIMIT)*ENTRY_SIZE);
@@ -139,11 +161,46 @@ PUBLIC struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter
 	for(i = 0; i < adapter->msg_vector.length; i++) {
 		if(adapter->msg_vector.msgs[i] == msg) {
 			adapter->msg_vector.msgs[i] = NULL;
+			i2c_msg_vector_shift_left(adapter, i+1, 1);
+			adapter->msg_vector.length -= 1;
 			return msg;
 		}
 	}
 	
 	return NULL;
+}
+
+/**
+ * \brief Erease the entire vector.
+ * \param adapter Vector to erease.
+ * \see i2c_create_msg_vector
+ * 
+ * The vector will actually be reset to its initial state, an empty vector with a limit of
+ * 10 elements.
+ */
+PUBLIC int i2c_msg_vector_erease(struct i2c_adapter *adapter)
+{
+	free((void*)adapter->msg_vector.msgs);
+	return i2c_create_msg_vector(adapter);
+}
+
+/**
+ * \brief Shift array indexes to the left.
+ * \param adapter Adapter which is holding the vector.
+ * \param index Index to start shifting.
+ * \param num Amount of shifts.
+ * \note To start at the first element set \p index to 0 (i.e. \p index is zero-counting).
+ * 
+ * All values starting from \p index will be shifted \p num times to the left.
+ */
+static void i2c_msg_vector_shift_left(struct i2c_adapter *adapter, size_t index, size_t num)
+{
+	size_t i = index;
+	if(index < adapter->msg_vector.length) {
+		for(; i < adapter->msg_vector.length; i++) {
+			adapter->msg_vector.msgs[i-num] = adapter->msg_vector.msgs[i];
+		}
+	}
 }
 
 //@}

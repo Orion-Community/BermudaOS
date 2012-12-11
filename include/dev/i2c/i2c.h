@@ -164,7 +164,7 @@ struct i2c_adapter {
 	{
 		size_t length,
 		       limit;
-		struct i2c_message **msgs;
+		struct i2c_message *volatile*msgs;
 	} msg_vector;
 	struct epl_list *msgs;
 

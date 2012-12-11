@@ -58,6 +58,11 @@ static int i2c_queue_processor(struct i2c_client *client, const void *data, size
 static inline bool i2c_client_has_action(i2c_features_t features);
 static int i2c_init_transfer(struct i2c_adapter *adapter);
 
+/* concurrency functions */
+static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info);
+static int i2c_release_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info);
+
+
 /**
  * \brief Prepare the driver for an I2C transfer.
  * \param stream Device file.
@@ -185,6 +190,47 @@ PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
 	fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG);
 	
 	return client->adapter->slave_respond(stream);
+}
+
+/**
+ * \brief Lock the adapter.
+ * \param adapter Adapter to lock.
+ * \param info Shared info from the client which is commanding the flush.
+ * \return Error code.
+ * \retval 0 on success.
+ * \retval -1 on error.
+ * \see i2c_release_adapter
+ */
+static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info)
+{
+	FILE *stream = info->socket;
+	
+	if((stream->flags & I2C_MASTER) != 0) {
+		return adapter->dev->alloc(adapter->dev, I2C_TMO);
+	} else {
+		return 0;
+	}
+}
+
+/**
+ * \brief Unlock the adapter.
+ * \param adapter Adapter to unlock.
+ * \param info Shared info from the client.
+ * \return Error code.
+ * \retval 0 on success.
+ * \retval -1 on error.
+ * \see i2c_lock_adapter
+ */
+static int i2c_release_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info)
+{
+	struct device *dev = adapter->dev;
+	FILE *stream = info->socket;
+	
+	if((stream->flags & I2C_MASTER) != 0) {
+		return dev->release(dev);
+	} else {
+		return 0;
+	}
 }
 
 /**
@@ -343,9 +389,8 @@ uint8_t flags;
 			if(epl_lock(sh_info->list) == 0) {
 
 				epl_deref(sh_info->list, &clist);
-				epl_deref(adpt->msgs, &alist);
 				
-				if(epl_lock(adpt->msgs) == 0) {
+				if(i2c_lock_adapter(adpt, sh_info) == 0) {
 					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
                                                                I2C_SLAVE_SUPPORT);
 					for_each_epl_node_safe(clist, node, n_node) {
@@ -384,11 +429,11 @@ uint8_t flags;
 							rc = -DEV_INTERNAL;
 						}
 					}
-					epl_unlock(adpt->msgs);
-				}
-				epl_unlock(sh_info->list);
-				if(!rc) {
-					rc = i2c_init_transfer(adpt);
+					epl_unlock(sh_info->list);
+					if(!rc) {
+						rc = i2c_init_transfer(adpt);
+					}
+					i2c_release_adapter(adpt, sh_info);
 				}
 			}
 			break;

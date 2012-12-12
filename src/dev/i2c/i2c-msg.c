@@ -33,6 +33,7 @@
 #include <stdio.h>
 
 #include <dev/dev.h>
+#include <dev/error.h>
 #include <dev/i2c.h>
 #include <dev/i2c-core.h>
 
@@ -54,7 +55,8 @@
 /*
  * static funcs
  */
-static void i2c_msg_vector_shift_left(struct i2c_adapter *adapter, size_t index, size_t num);
+static void i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index);
+static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, size_t num);
 
 /**
  * \brief Allocate a new vector for adapter messages.
@@ -65,7 +67,7 @@ static void i2c_msg_vector_shift_left(struct i2c_adapter *adapter, size_t index,
  */
 PUBLIC int i2c_create_msg_vector(struct i2c_adapter *adapter)
 {
-	int rc = -1;
+	int rc = -DEV_NULL;
 	
 	adapter->msg_vector.msgs = malloc(sizeof(*(adapter->msg_vector.msgs))*DEFAULT_MSG_LIMIT);
 	
@@ -94,7 +96,7 @@ PUBLIC struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter,
 	if(index < adapter->msg_vector.length) {
 		tmp = adapter->msg_vector.msgs[index];
 		adapter->msg_vector.msgs[index] = NULL;
-		i2c_msg_vector_shift_left(adapter, index+1, 1);
+		i2c_vector_shift_left(&adapter->msg_vector, index);
 		adapter->msg_vector.length -= 1;
 		return tmp;
 	} else {
@@ -131,12 +133,16 @@ PUBLIC int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *m
 {
 	void *buff = (void*)adapter->msg_vector.msgs;
 	
+	if(!buff) {
+		return -DEV_NOINIT;
+	}
+	
 	if(adapter->msg_vector.length == adapter->msg_vector.limit) {
 		buff = realloc(buff, (adapter->msg_vector.limit + DEFAULT_MSG_LIMIT)*ENTRY_SIZE);
 		if(buff) {
 			adapter->msg_vector.msgs = buff;
 		} else {
-			return -1;
+			return -DEV_NULL;
 		}
 	}
 	
@@ -161,7 +167,7 @@ PUBLIC struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter
 	for(i = 0; i < adapter->msg_vector.length; i++) {
 		if(adapter->msg_vector.msgs[i] == msg) {
 			adapter->msg_vector.msgs[i] = NULL;
-			i2c_msg_vector_shift_left(adapter, i+1, 1);
+			i2c_vector_shift_left(&adapter->msg_vector, i);
 			adapter->msg_vector.length -= 1;
 			return msg;
 		}
@@ -185,22 +191,113 @@ PUBLIC int i2c_msg_vector_erease(struct i2c_adapter *adapter)
 }
 
 /**
- * \brief Shift array indexes to the left.
- * \param adapter Adapter which is holding the vector.
- * \param index Index to start shifting.
- * \param num Amount of shifts.
- * \note To start at the first element set \p index to 0 (i.e. \p index is zero-counting).
- * 
- * All values starting from \p index will be shifted \p num times to the left.
+ * \brief An error has occurred, try to fix.
+ * \param adapter The I2C adapter.
+ * \param error The error code.
+ * \return The new error code.
+ * \retval 0 when fixed.
+ * \see dev_error
  */
-static void i2c_msg_vector_shift_left(struct i2c_adapter *adapter, size_t index, size_t num)
+PUBLIC int i2c_vector_error(struct i2c_adapter *adapter, int error)
 {
-	size_t i = index;
-	if(index < adapter->msg_vector.length) {
-		for(; i < adapter->msg_vector.length; i++) {
-			adapter->msg_vector.msgs[i-num] = adapter->msg_vector.msgs[i];
+	if(error == -DEV_NULL) {
+		return error;
+	} else {
+		error *= -1;
+		switch(error) {
+			case DEV_NOINIT:
+				return i2c_create_msg_vector(adapter);
+				break;
+				
+			default:
+				return -DEV_ERROR;
 		}
 	}
+}
+
+/**
+ * \brief Insert one entry in the i2c_adapter.
+ * \param adapter I2C adapter to insert into.
+ * \param msg Message to insert.
+ * \param index Index to insert at.
+ * \return An error code.
+ * \retval -DEV_OK on success.
+ * \retval !-DEV_OK on error.
+ * 
+ * This function will insert \p msg in \p adapter at location \p index.
+ */
+PUBLIC int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message *msg, size_t index)
+{
+	int rc;
+	if((rc = i2c_vector_shift_right(&adapter->msg_vector, index, 1)) == -DEV_OK) {
+		adapter->msg_vector.msgs[index] = msg;
+		return -DEV_OK;
+	} else {
+		return rc;
+	}
+}
+
+/**
+ * \brief Shift all elements to the right.
+ * \param vector The vector to shift.
+ * \param index Index to start shifting at.
+ * \param num Amount of shifts.
+ * \return Error code.
+ * \retval 0 on success.
+ * \retval !0 on error.
+ * \todo Add expansion.
+ */
+static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, size_t num)
+{
+	size_t last;
+	if((vector->length + num) > vector->limit) {
+		/* TODO: expand */
+		return -DEV_NULL;
+	}
+	
+	last = vector->length - 1;
+	for(; last >= index; last--) {
+		vector->msgs[last+num] = vector->msgs[last];
+	}
+	return -DEV_OK;
+}
+
+/**
+ * \brief Shift array indexes to the left.
+ * \param vector The vector to shift.
+ * \param index Index to start shifting.
+ * \note To start at the first element set \p index to 0 (i.e. \p index is zero-counting).
+ * 
+ * All values starting from \p index will be shifted 1 space to the left. So consider the following
+ * array:
+ * \verbatim
+*+++++++++++*++++++++++++*+++++++++++*++++++++++++*+++++++++++*
+|     5      |     4     |      7     |     3     |     9     |
+*+++++++++++*++++++++++++*+++++++++++*++++++++++++*+++++++++++*
+\endverbatim
+ * If i2c_vector_shift_left is called with:
+ * \code{.c}
+i2c_vector_shift_left(vector, 2);
+\endcode
+ * then the array will look like:
+\verbatim
+*+++++++++++*++++++++++++*+++++++++++*++++++++++++*
+|     5      |     7     |      3     |     9     |
+*+++++++++++*++++++++++++*+++++++++++*++++++++++++*
+\endverbatim
+ */
+static void i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index)
+{
+	if(index == 0) {
+		vector->msgs[0] = vector->msgs[1];
+		index++;
+	}
+	if(index < vector->length) {
+		for(; index < vector->length; index++) {
+			vector->msgs[index-1] = vector->msgs[index];
+		}
+	}
+	vector->length -= 1;
 }
 
 //@}

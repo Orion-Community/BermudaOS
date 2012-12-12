@@ -115,6 +115,7 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	
 	adapter->flags = 0;
 	adapter->busy = false;
+	i2c_create_msg_vector(adapter);
 	return rc;
 }
 
@@ -325,6 +326,7 @@ PUBLIC int i2cdev_close(FILE *stream)
 {
 	struct i2c_client *client = stream->data;
 	struct i2c_adapter *adap = client->adapter;
+	struct i2c_shared_info *info = i2c_shinfo(client);
 	int rc = -1;
 	
 	i2c_do_clean_msgs(adap);
@@ -333,6 +335,7 @@ PUBLIC int i2cdev_close(FILE *stream)
 			BermudaHeapFree((void*)stream->buff);
 		}
 		BermudaHeapFree(stream);
+		info->socket = NULL;
 		rc = 0;
 	}
 	

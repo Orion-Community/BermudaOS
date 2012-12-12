@@ -152,6 +152,11 @@ struct i2c_client {
 	void (*callback)(struct i2c_message *msg);
 } __attribute__((packed));
 
+/**
+ * \brief Message vector structure.
+ */
+struct i2c_msg_vector;
+
 struct i2c_adapter {
 	struct device *dev; //!< Adapter device.
 	
@@ -162,9 +167,9 @@ struct i2c_adapter {
 	
 	struct i2c_msg_vector
 	{
-		size_t length,
-		       limit;
-		struct i2c_message *volatile*msgs;
+		size_t length, //!< Length of the vector.
+		       limit;  //!< Maximum value \p length may reach.
+		struct i2c_message *volatile*msgs; //!< The vector.
 	} msg_vector;
 	struct epl_list *msgs;
 

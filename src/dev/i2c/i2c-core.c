@@ -301,7 +301,7 @@ uint8_t flags;
 {
 	auto i2c_features_t i2c_check_msg(i2c_features_t msg, i2c_features_t bus);
 	struct i2c_shared_info *sh_info;
-	struct epl_list *clist, *alist;
+	struct epl_list *clist;
 	struct epl_list_node *node, *n_node;
 	struct i2c_message *msg;
 	struct i2c_adapter *adpt;
@@ -360,39 +360,33 @@ uint8_t flags;
 		 * after a call back to the application to insert a new I2C message.
 		 */
 		case I2C_INSERT_QUEUE_ENTRY:
-			if(epl_lock(adpt->msgs) == 0) {
-				epl_deref(adpt->msgs, &alist);
-				
 				msg = (struct i2c_message*)data;
-				b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT);
-				features = i2c_msg_features(msg);
-				if(msg->length == size) {
-					node = malloc(sizeof(*node));
-					if(node) {
-						node->next = NULL;
-						node->data = (void*)msg;
-						if(i2c_check_msg(features, b_features)) {
-							rc = epl_add_node(alist, node, EPL_IN_FRONT);
-						} else {
-							logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter."
-														"\n"), msg);
-							free(msg);
-							free(node);
+				if(msg) {
+					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
+																I2C_SLAVE_SUPPORT);
+					features = i2c_msg_features(msg);
+					if(msg->length == size && i2c_check_msg(features, b_features)) {
+						rc = i2c_msg_vector_add(adpt, msg);
+						if(rc) {
+							if(i2c_vector_error(adpt, rc) == 0) {
+								rc = i2c_msg_vector_add(adpt, msg);
+							}
 						}
+					} else {
+						logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter."
+													"\n"), msg);
+						free(msg);
 					}
 				}
-				epl_unlock(adpt->msgs);
-			}
-			break;
-		
+				break;
+
 		case I2C_FLUSH_QUEUE_ENTRIES:
 			if(epl_lock(sh_info->list) == 0) {
-
 				epl_deref(sh_info->list, &clist);
 				
 				if(i2c_lock_adapter(adpt, sh_info) == 0) {
 					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
-                                                               I2C_SLAVE_SUPPORT);
+																I2C_SLAVE_SUPPORT);
 					for_each_epl_node_safe(clist, node, n_node) {
 						features = i2c_msg_features((void*)node->data);
 						if((features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
@@ -405,17 +399,17 @@ uint8_t flags;
 
 						if(i2c_check_msg(features, b_features)) {
 							epl_delete_node(clist, node);
-							rc = epl_add_node(alist, node, EPL_APPEND);
+							free(node);
+							rc = i2c_msg_vector_add(adpt, msg);
 							if(rc) {
-								if(epl_fix(alist) == 0) {
-									rc = epl_add_node(alist, node, EPL_APPEND);
+								if(i2c_vector_error(adpt, rc) == 0) {
+									rc = i2c_msg_vector_add(adpt, msg);
 									continue;
 								}
-								logmsg_P(I2C_CORE_LOG, PSTR("Adaper list (0x%p) is bogus while "
-															"trying to add a msg\n"), adpt->msgs);
+								logmsg_P(I2C_CORE_LOG, PSTR("Error occurred while trying to add a "
+															"msg (0x%p) to the adapter"), msg);
 								i2c_set_error(client);
 								free(msg);
-								free(node);
 								rc = -DEV_INTERNAL;
 								break;
 							}
@@ -439,17 +433,10 @@ uint8_t flags;
 			break;
 			
 		case I2C_DELETE_QUEUE_ENTRY:
-			if(epl_lock(adpt->msgs) == 0) {
-				epl_deref(adpt->msgs, &alist);
-				
-				node = epl_node_at(alist, size);
-				if(node) {
-					epl_delete_node(alist, node);
-					free((void*)node->data);
-					free(node);
-					rc = 0;
+			if(size >= 0) {
+				if(i2c_msg_vector_delete_at(adpt, size)) {
+					rc = DEV_OK;
 				}
-				epl_unlock(adpt->msgs);
 			}
 			break;
 			
@@ -484,23 +471,6 @@ uint8_t flags;
 static int i2c_init_transfer(struct i2c_adapter *adapter)
 {
 	return -1;
-}
-
-/**
- * \brief Clean all messages in the adapter queue of the given client.
- * \param client Client which adapter's messages should be deleted.
- */
-PUBLIC void i2c_cleanup_adapter_msgs(struct i2c_client *client)
-{
-	volatile size_t *length = &(client->adapter->msgs->list_entries);
-	
-	do {
-		if(i2c_queue_processor(client, NULL, 0, 0) < 0) {
-			break;
-		} else {
-			continue;
-		}
-	} while(*length > 0);
 }
 
 /**
@@ -603,8 +573,7 @@ static bool done = FALSE;
  */
 PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 {
-	struct i2c_message *msg;
-	struct epl_list_node *node;
+// 	struct i2c_message *msg;
 	
 	/*
 	 * add two entries
@@ -613,15 +582,6 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	i2c_queue_processor(client, &test_data0[0], TEST_DATA0_LEN, TEST_DATA0_FLAGS);
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data1, TEST_DATA1_LEN, TEST_DATA1_FLAGS);
-	
-	/*
-	 * make the list circular
-	 */
-	if(client->adapter->msgs->list_entries == 10 && !done) {
-		node = epl_node_at(client->adapter->msgs, 9);
-		node->next = node;
-		done = TRUE;
-	}
 	
 	/*
 	 * Flush the list
@@ -634,22 +594,22 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	/*
 	 * insert an entry
 	 */
-	if(client->adapter->msgs->list_entries == 20) {
-		msg = malloc(sizeof(*msg));
-		if(msg) {
-			msg->length = TEST_DATA0_LEN;
-			msg->buff = &test_data0[0];
-			i2c_msg_set_features(msg, TEST_DATA0_FLAGS);
-			i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
-			i2c_queue_processor(client, msg, msg->length, 0);
-		}
-	}
+// 	if(client->adapter->msgs->list_entries == 20) {
+// 		msg = malloc(sizeof(*msg));
+// 		if(msg) {
+// 			msg->length = TEST_DATA0_LEN;
+// 			msg->buff = &test_data0[0];
+// 			i2c_msg_set_features(msg, TEST_DATA0_FLAGS);
+// 			i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
+// 			i2c_queue_processor(client, msg, msg->length, 0);
+// 		}
+// 	}
 	
 	/*
 	 * delete all entries
 	 */
 	if(client->adapter->msgs->list_entries >= 21) {
-		i2c_cleanup_adapter_msgs(client);
+		i2c_cleanup_adapter_msgs(client->adapter);
 		done = FALSE;
 	}
 	return 0;

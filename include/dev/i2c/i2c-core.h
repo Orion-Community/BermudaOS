@@ -106,13 +106,28 @@ extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
  * I2C-CORE functions
  */
 extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
-extern void i2c_cleanup_adapter_msgs(struct i2c_client *client);
 extern void i2c_cleanup_client_msgs(struct i2c_client *client);
 extern int i2c_flush_client(struct i2c_client *client);
+
+/*
+ * I2C-MSG functions
+ */
+extern int i2c_create_msg_vector(struct i2c_adapter *adapter);
+extern int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg);
+extern struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_t index);
+extern struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter, size_t size);
+extern struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter, 
+													 struct i2c_message *msg);
+extern int i2c_vector_error(struct i2c_adapter *adapter, int error);
+extern int i2c_msg_vector_erase(struct i2c_adapter *adapter);
 
 #ifdef I2C_DBG
 extern int i2cdbg_test_queue_processor(struct i2c_client *client);
 #endif
+
+/*
+ * inline functions
+ */
 
 /**
  * \brief Get the shared info of the given I2C client.
@@ -200,15 +215,16 @@ static inline void i2c_set_transmission_layout(struct i2c_client *client, char *
 	shinfo->transmission_layout = layout;
 }
 
-/*
- * I2C-MSG functions
+/**
+ * \brief Remove all messages from the adapter.
+ * \param adapter I2C adapter to remove all messages from.
+ * \warning The adapter must be locked before it is safe to use this function.
  */
-extern int i2c_create_msg_vector(struct i2c_adapter *adapter);
-extern int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg);
-extern struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_t index);
-extern struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter, size_t size);
-extern struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter, 
-													 struct i2c_message *msg);
+static inline int i2c_cleanup_adapter_msgs(struct i2c_adapter *adapter)
+{
+	return i2c_msg_vector_erase(adapter);
+}
+
 //@}
 __DECL_END
 

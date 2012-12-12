@@ -38,6 +38,7 @@
 #include <dev/i2c.h>
 #include <dev/i2c-reg.h>
 #include <dev/i2c-core.h>
+#include <dev/i2c-msg.h>
 
 #include <lib/binary.h>
 #include <lib/list/list.h>
@@ -407,7 +408,7 @@ uint8_t flags;
 									continue;
 								}
 								logmsg_P(I2C_CORE_LOG, PSTR("Error occurred while trying to add a "
-															"msg (0x%p) to the adapter"), msg);
+															"msg (0x%p) to the adapter\n"), msg);
 								i2c_set_error(client);
 								free(msg);
 								rc = -DEV_INTERNAL;
@@ -565,6 +566,7 @@ static uint8_t test_data1 = 0xAB;
  * \note Reset to \p FALSE every complete run.
  */
 static bool done = FALSE;
+void *tmp = NULL;
 
 /**
  * \brief Test the functionality of i2c_queue_processor.
@@ -573,7 +575,7 @@ static bool done = FALSE;
  */
 PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 {
-// 	struct i2c_message *msg;
+	struct i2c_message *msg;
 	
 	/*
 	 * add two entries
@@ -582,6 +584,12 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	i2c_queue_processor(client, &test_data0[0], TEST_DATA0_LEN, TEST_DATA0_FLAGS);
 	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, TRUE);
 	i2c_queue_processor(client, &test_data1, TEST_DATA1_LEN, TEST_DATA1_FLAGS);
+	
+	if(i2c_vector_length(client->adapter) == 10 && !done) {
+		tmp = (void*)client->adapter->msg_vector.msgs;
+		client->adapter->msg_vector.msgs = NULL;
+		done = TRUE;
+	}
 	
 	/*
 	 * Flush the list
@@ -594,21 +602,26 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	/*
 	 * insert an entry
 	 */
-// 	if(client->adapter->msgs->list_entries == 20) {
-// 		msg = malloc(sizeof(*msg));
-// 		if(msg) {
-// 			msg->length = TEST_DATA0_LEN;
-// 			msg->buff = &test_data0[0];
-// 			i2c_msg_set_features(msg, TEST_DATA0_FLAGS);
-// 			i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
-// 			i2c_queue_processor(client, msg, msg->length, 0);
-// 		}
-// 	}
+	if(i2c_vector_length(client->adapter) == 20) {
+		msg = malloc(sizeof(*msg));
+		if(msg) {
+			msg->length = TEST_DATA0_LEN;
+			msg->buff = &test_data0[0];
+			i2c_msg_set_features(msg, TEST_DATA0_FLAGS);
+			i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
+			i2c_queue_processor(client, msg, msg->length, 0);
+		}
+	}
 	
 	/*
 	 * delete all entries
 	 */
-	if(client->adapter->msgs->list_entries >= 21) {
+	if(i2c_vector_length(client->adapter) >= 20) {
+		i2c_cleanup_adapter_msgs(client->adapter);
+		free((void*)client->adapter->msg_vector.msgs);
+		
+		client->adapter->msg_vector.length = 10;
+		client->adapter->msg_vector.msgs = tmp;
 		i2c_cleanup_adapter_msgs(client->adapter);
 		done = FALSE;
 	}

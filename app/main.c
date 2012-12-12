@@ -59,8 +59,10 @@ static struct i2c_client *test_client = NULL;
 
 THREAD(i2c_dbg, arg)
 {
+	i2c_shinfo(test_client)->socket = stdout;
+	i2c_shinfo(test_client)->socket->flags |= I2C_MASTER;
 	while(1) {
-		printf_P(PSTR("Entries: %u\n"), test_client->adapter->msgs->list_entries);
+		printf_P(PSTR("Entries: %u\n"), test_client->adapter->msg_vector.length);
 		i2cdbg_test_queue_processor(test_client);
 		BermudaThreadSleep(2000);
 	}

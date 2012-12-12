@@ -36,6 +36,7 @@
 #include <dev/error.h>
 #include <dev/i2c.h>
 #include <dev/i2c-core.h>
+#include <dev/i2c-msg.h>
 
 #include <sys/thread.h>
 #include <sys/events/event.h>
@@ -74,7 +75,7 @@ PUBLIC int i2c_create_msg_vector(struct i2c_adapter *adapter)
 	if(adapter->msg_vector.msgs) {
 		adapter->msg_vector.limit = DEFAULT_MSG_LIMIT;
 		adapter->msg_vector.length = 0;
-		rc = 0;
+		rc = -DEV_OK;
 	}
 	return rc;
 }
@@ -92,6 +93,10 @@ PUBLIC int i2c_create_msg_vector(struct i2c_adapter *adapter)
 PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, size_t index)
 {
 	struct i2c_message *tmp;
+	
+	if(!adapter->msg_vector.msgs) {
+		return NULL;
+	}
 	
 	if(index < adapter->msg_vector.length) {
 		tmp = adapter->msg_vector.msgs[index];
@@ -114,6 +119,9 @@ PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, siz
  */
 PUBLIC struct i2c_message *i2c_vector_get(struct i2c_adapter *adapter, size_t index)
 {
+	if(!adapter->msg_vector.msgs) {
+		return NULL;
+	}
 	if(index < adapter->msg_vector.length) {
 		return adapter->msg_vector.msgs[index];
 	} else {
@@ -141,6 +149,7 @@ PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg)
 		buff = realloc(buff, (adapter->msg_vector.limit + DEFAULT_MSG_LIMIT)*ENTRY_SIZE);
 		if(buff) {
 			adapter->msg_vector.msgs = buff;
+			adapter->msg_vector.limit += DEFAULT_MSG_LIMIT;
 		} else {
 			return -DEV_NULL;
 		}
@@ -163,6 +172,10 @@ PUBLIC struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter,
 													 struct i2c_message *msg)
 {
 	size_t i;
+	
+	if(!adapter->msg_vector.msgs) {
+		return NULL;
+	}
 	
 	for(i = 0; i < adapter->msg_vector.length; i++) {
 		if(adapter->msg_vector.msgs[i] == msg) {
@@ -196,6 +209,7 @@ PUBLIC int i2c_vector_erase(struct i2c_adapter *adapter)
  * \param error The error code.
  * \return The new error code.
  * \retval 0 when fixed.
+ * \retval error if no fix was made.
  * \see dev_error
  */
 PUBLIC int i2c_vector_error(struct i2c_adapter *adapter, int error)
@@ -206,12 +220,14 @@ PUBLIC int i2c_vector_error(struct i2c_adapter *adapter, int error)
 		error *= -1;
 		switch(error) {
 			case DEV_NOINIT:
-				return i2c_create_msg_vector(adapter);
+				error = i2c_create_msg_vector(adapter);
 				break;
 				
 			default:
-				return -DEV_ERROR;
+				error = -DEV_ERROR;
+				break;
 		}
+		return error;
 	}
 }
 
@@ -256,16 +272,26 @@ PUBLIC int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message 
 static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, size_t num)
 {
 	size_t last;
-	if((vector->length + num) > vector->limit) {
-		/* TODO: expand */
-		return -DEV_NULL;
+	if((vector->length + num) >= vector->limit) {
+		vector->msgs = realloc((void*)vector->msgs, (vector->limit+num)*ENTRY_SIZE);
+		if(!vector->msgs) {
+			return -DEV_NULL;
+		} else {
+			vector->limit += num;
+		}
 	}
-	
+
 	last = vector->length - 1;
 	for(; last >= index; last--) {
 		vector->msgs[last+num] = vector->msgs[last];
+		if(last == 0) {
+			/*
+			 * This check is necessary due to the unsignedness of last.
+			 */
+			break;
+		}
 	}
-	vector->length += 1;
+	vector->length += num;
 	return -DEV_OK;
 }
 

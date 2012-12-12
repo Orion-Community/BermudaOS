@@ -113,13 +113,14 @@ extern int i2c_flush_client(struct i2c_client *client);
  * I2C-MSG functions
  */
 extern int i2c_create_msg_vector(struct i2c_adapter *adapter);
-extern int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg);
-extern struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_t index);
-extern struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter, size_t size);
-extern struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter, 
+extern int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg);
+extern struct i2c_message *i2c_vector_get(struct i2c_adapter *adapter, size_t index);
+extern struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, size_t size);
+extern struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter, 
 													 struct i2c_message *msg);
 extern int i2c_vector_error(struct i2c_adapter *adapter, int error);
-extern int i2c_msg_vector_erase(struct i2c_adapter *adapter);
+extern int i2c_vector_erase(struct i2c_adapter *adapter);
+extern int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message *msg, size_t index);
 
 #ifdef I2C_DBG
 extern int i2cdbg_test_queue_processor(struct i2c_client *client);
@@ -222,7 +223,7 @@ static inline void i2c_set_transmission_layout(struct i2c_client *client, char *
  */
 static inline int i2c_cleanup_adapter_msgs(struct i2c_adapter *adapter)
 {
-	return i2c_msg_vector_erase(adapter);
+	return i2c_vector_erase(adapter);
 }
 
 //@}

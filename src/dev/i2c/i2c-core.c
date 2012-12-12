@@ -366,10 +366,10 @@ uint8_t flags;
 																I2C_SLAVE_SUPPORT);
 					features = i2c_msg_features(msg);
 					if(msg->length == size && i2c_check_msg(features, b_features)) {
-						rc = i2c_msg_vector_add(adpt, msg);
+						rc = i2c_vector_insert_at(adpt, msg, 0);
 						if(rc) {
 							if(i2c_vector_error(adpt, rc) == 0) {
-								rc = i2c_msg_vector_add(adpt, msg);
+								rc = i2c_vector_insert_at(adpt, msg, 0);
 							}
 						}
 					} else {
@@ -400,10 +400,10 @@ uint8_t flags;
 						if(i2c_check_msg(features, b_features)) {
 							epl_delete_node(clist, node);
 							free(node);
-							rc = i2c_msg_vector_add(adpt, msg);
+							rc = i2c_vector_add(adpt, msg);
 							if(rc) {
 								if(i2c_vector_error(adpt, rc) == 0) {
-									rc = i2c_msg_vector_add(adpt, msg);
+									rc = i2c_vector_add(adpt, msg);
 									continue;
 								}
 								logmsg_P(I2C_CORE_LOG, PSTR("Error occurred while trying to add a "
@@ -434,7 +434,7 @@ uint8_t flags;
 			
 		case I2C_DELETE_QUEUE_ENTRY:
 			if(size >= 0) {
-				if(i2c_msg_vector_delete_at(adpt, size)) {
+				if(i2c_vector_delete_at(adpt, size)) {
 					rc = DEV_OK;
 				}
 			}

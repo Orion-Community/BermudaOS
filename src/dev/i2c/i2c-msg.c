@@ -89,7 +89,7 @@ PUBLIC int i2c_create_msg_vector(struct i2c_adapter *adapter)
  * 
  * Delete the entry at \p index from \p adapter.
  */
-PUBLIC struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter, size_t index)
+PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, size_t index)
 {
 	struct i2c_message *tmp;
 	
@@ -112,7 +112,7 @@ PUBLIC struct i2c_message *i2c_msg_vector_delete_at(struct i2c_adapter *adapter,
  * \retval NULL when an error has occurred.
  * \retval i2c_message when no error has occurred.
  */
-PUBLIC struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_t index)
+PUBLIC struct i2c_message *i2c_vector_get(struct i2c_adapter *adapter, size_t index)
 {
 	if(index < adapter->msg_vector.length) {
 		return adapter->msg_vector.msgs[index];
@@ -129,7 +129,7 @@ PUBLIC struct i2c_message *i2c_msg_vector_get(struct i2c_adapter *adapter, size_
  * \retval 0 when no error has occurred.
  * \retval -1 when an error has occurred.
  */
-PUBLIC int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg)
+PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg)
 {
 	void *buff = (void*)adapter->msg_vector.msgs;
 	
@@ -159,7 +159,7 @@ PUBLIC int i2c_msg_vector_add(struct i2c_adapter *adapter, struct i2c_message *m
  * \retval msg if the message is found.
  * \retval NULL if the message is not found.
  */
-PUBLIC struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter, 
+PUBLIC struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter, 
 													 struct i2c_message *msg)
 {
 	size_t i;
@@ -184,7 +184,7 @@ PUBLIC struct i2c_message *i2c_msg_vector_delete_msg(struct i2c_adapter *adapter
  * The vector will actually be reset to its initial state, an empty vector with a limit of
  * 10 elements.
  */
-PUBLIC int i2c_msg_vector_erease(struct i2c_adapter *adapter)
+PUBLIC int i2c_vector_erase(struct i2c_adapter *adapter)
 {
 	free((void*)adapter->msg_vector.msgs);
 	return i2c_create_msg_vector(adapter);
@@ -229,6 +229,11 @@ PUBLIC int i2c_vector_error(struct i2c_adapter *adapter, int error)
 PUBLIC int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message *msg, size_t index)
 {
 	int rc;
+	
+	if(!adapter->msg_vector.msgs) {
+		return -DEV_NOINIT;
+	}
+	
 	if((rc = i2c_vector_shift_right(&adapter->msg_vector, index, 1)) == -DEV_OK) {
 		adapter->msg_vector.msgs[index] = msg;
 		return -DEV_OK;

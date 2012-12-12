@@ -30,6 +30,7 @@ typedef enum dev_error
 	DEV_NULL, //!< Null pointer detected.
 	DEV_NOINIT, //!< Not initialized pointer detected.
 	DEV_ALREADY_INITIALIZED, //!< The device is already initialized.
+	DEV_OUTOFBOUNDS,
 	DEV_BROKEN, //!< Hardware is probably broken and there is no way that this devices is ever going to work.
 	DEV_INTERNAL, //!< Internal device error. This is the moment to sent an e-mail to the developer.
 } dev_error_t;

@@ -95,7 +95,7 @@ PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, siz
 	struct i2c_message *tmp;
 	
 	if(!adapter->msg_vector.msgs) {
-		return NULL;
+		return PTR_ERROR(-DEV_NOINIT);
 	}
 	
 	if(index < adapter->msg_vector.length) {
@@ -120,7 +120,7 @@ PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, siz
 PUBLIC struct i2c_message *i2c_vector_get(struct i2c_adapter *adapter, size_t index)
 {
 	if(!adapter->msg_vector.msgs) {
-		return NULL;
+		return PTR_ERROR(-DEV_NOINIT);
 	}
 	if(index < adapter->msg_vector.length) {
 		return adapter->msg_vector.msgs[index];
@@ -176,7 +176,7 @@ PUBLIC struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter,
 	size_t i;
 	
 	if(!adapter->msg_vector.msgs) {
-		return NULL;
+		return PTR_ERROR(-DEV_NOINIT);
 	}
 	
 	for(i = 0; i < adapter->msg_vector.length; i++) {

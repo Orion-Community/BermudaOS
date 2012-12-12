@@ -181,9 +181,6 @@ extern int i2cdev_listen(int fd, void *buff, size_t size);
 extern void i2cdev_error(int fd);
 extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t sla, uint32_t hz);
 
-/* init routines */
-extern int i2c_init_adapter(struct i2c_adapter *adap, char *name);
-
 //@}
 __DECL_END
 

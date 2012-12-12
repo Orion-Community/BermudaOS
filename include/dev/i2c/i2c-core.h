@@ -97,6 +97,7 @@ extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
 extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
 extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
 extern void i2c_cleanup_adapter_msgs(struct i2c_client *client);
+extern int i2c_init_adapter(struct i2c_adapter *adapter, char *fname);
 
 /**
  * \brief Get the shared info of the given I2C client.

@@ -118,6 +118,31 @@ PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t m
 }
 
 /**
+ * \brief Initializes the given adapter.
+ * \param adapter Adapter to initialize.
+ * \param fname Name of the device.
+ * \note Called by the bus driver.
+ */
+PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
+{
+	int rc = -1;
+	adapter->dev = BermudaHeapAlloc(sizeof(*(adapter->dev)));
+	
+	if(adapter->dev == NULL) {
+		return rc;
+	} else {
+		rc = 0;
+	}
+	
+	adapter->dev->name = fname;
+	BermudaDeviceRegister(adapter->dev, adapter);
+	
+	adapter->flags = 0;
+	adapter->busy = false;
+	return rc;
+}
+
+/**
  * \brief Sets a new action for the given I2C client.
  * \param client Client to set the action for.
  * \param action Action to set.

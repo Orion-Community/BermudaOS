@@ -94,31 +94,6 @@
 #include <sys/events/event.h>
 
 /**
- * \brief Initializes the given adapter.
- * \param adapter Adapter to initialize.
- * \param fname Name of the device.
- * \note Called by the bus driver.
- */
-PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
-{
-	int rc = -1;
-	adapter->dev = BermudaHeapAlloc(sizeof(*(adapter->dev)));
-	
-	if(adapter->dev == NULL) {
-		return rc;
-	} else {
-		rc = 0;
-	}
-	
-	adapter->dev->name = fname;
-	BermudaDeviceRegister(adapter->dev, adapter);
-	
-	adapter->flags = 0;
-	adapter->busy = false;
-	return rc;
-}
-
-/**
  * \brief Handle an I2C file I/O error.
  * \param flags Set to I2C_MASTER when it occured in a master driver.
  * 

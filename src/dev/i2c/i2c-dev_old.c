@@ -94,32 +94,6 @@ close(fd);
 #include <sys/events/event.h>
 
 /**
- * \brief Initializes the given adapter.
- * \param adapter Adapter to initialize.
- * \param fname Name of the device.
- * \note Called by the bus driver.
- */
-PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
-{
-	int rc = -1;
-	adapter->dev = BermudaHeapAlloc(sizeof(*(adapter->dev)));
-	
-	if(adapter->dev == NULL) {
-		return rc;
-	} else {
-		rc = 0;
-	}
-	
-	adapter->dev->name = fname;
-	BermudaDeviceRegister(adapter->dev, adapter);
-	
-	adapter->flags = 0;
-	adapter->busy = false;
-	i2c_create_msg_vector(adapter);
-	return rc;
-}
-
-/**
  * \brief Handle an I2C file I/O error.
  * \param flags Set to I2C_MASTER when it occured in a master driver.
  * 
@@ -139,116 +113,67 @@ PUBLIC void i2cdev_error(int fd)
 }
 
 /**
- * \brief Initializes the buffer for an I2C master transmit.
- * \param file I/O file.
- * \param buff The I2C message.
- * \param size Length of <i>buff</i>.
- * \return This function returns 0 on success (i.e. buffers have been allocated successfully) and -1
- *         otherwise.
- */
-PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
-{
-	struct i2c_client *client = file->data;
-	struct i2c_message msg;
-	int rc = -1;
-	
-	if(client != NULL) {
-		msg.buff = (void*)buff;
-		msg.length = size;
-		msg.addr = client->sla;
-		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_TRANSMIT_MSG);
-	}
-
-	return rc;
-}
-
-/**
- * \brief Set the master receive buffer.
- * \param file The I/O file.
- * \param buff Read buffer.
- * \param size Size of <i>buff</i>.
- */
-PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
-{
-	struct i2c_client *client = file->data;
-	struct i2c_message msg;
-	int rc = -1;
-	
-	if(client != NULL) {
-		if(!buff) {
-			return i2c_setup_msg(client->adapter->dev->io, NULL, I2C_MASTER_RECEIVE_MSG);
-		}
-		msg.buff = (void*)buff;
-		msg.length = size;
-		msg.addr = client->sla;
-		rc = i2c_setup_msg(client->adapter->dev->io, &msg, I2C_MASTER_RECEIVE_MSG);
-	}
-
-	return rc;
-}
-
-/**
  * \brief Request an I2C I/O file.
  * \param client I2C driver client.
  * \param flags File flags.
  */
-PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
-{
-	struct i2c_adapter *adap;
-	struct device *dev;
-	FILE *socket;
-	int rc = -1;
-	
-	if(client == NULL) {
-		return -1;
-	}
-	
-	adap = client->adapter;
-	dev = adap->dev;
-
-#ifdef __THREADS__
-	if((flags & I2C_MASTER) != 0) {
-		if((rc = dev->alloc(dev, I2C_TMO)) == -1) {
-			rc = -1;
-			goto out;
-		}
-	}
-#else
-	if((flags & I2C_MASTER) != 0) {
-		BermudaMutexEnter(&(adap->mutex));
-	}
-#endif
-	
-	socket = BermudaHeapAlloc(sizeof(*socket));
-	if(!socket) {
-		rc = -1;
-		goto out;
-	}
-	
-	rc = iob_add(socket);
-	if(rc < 0) {
-		BermudaHeapFree(socket);
-		if((flags & I2C_MASTER) != 0) {
-#ifdef __THREADS__
-			dev->release(dev);
-#else
-			BermudaMutexRelease(&(adap->mutex));
-#endif
-		}
-		goto out;
-	}
-	
-	socket->data = client;
-	socket->name = "I2C";
-	socket->write = &i2cdev_write;
-	socket->read = &i2cdev_read;
-	socket->flush = &i2cdev_flush;
-	socket->close = &i2cdev_close;
-	socket->flags = flags;
-	
-	out:
-	return rc;
-}
+// PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
+// {
+// 	struct i2c_adapter *adap;
+// 	struct device *dev;
+// 	FILE *socket;
+// 	int rc = -1;
+// 	
+// 	if(client == NULL) {
+// 		return -1;
+// 	}
+// 	
+// 	adap = client->adapter;
+// 	dev = adap->dev;
+// 
+// #ifdef __THREADS__
+// 	if((flags & I2C_MASTER) != 0) {
+// 		if((rc = dev->alloc(dev, I2C_TMO)) == -1) {
+// 			rc = -1;
+// 			goto out;
+// 		}
+// 	}
+// #else
+// 	if((flags & I2C_MASTER) != 0) {
+// 		BermudaMutexEnter(&(adap->mutex));
+// 	}
+// #endif
+// 	
+// 	socket = BermudaHeapAlloc(sizeof(*socket));
+// 	if(!socket) {
+// 		rc = -1;
+// 		goto out;
+// 	}
+// 	
+// 	rc = iob_add(socket);
+// 	if(rc < 0) {
+// 		BermudaHeapFree(socket);
+// 		if((flags & I2C_MASTER) != 0) {
+// #ifdef __THREADS__
+// 			dev->release(dev);
+// #else
+// 			BermudaMutexRelease(&(adap->mutex));
+// #endif
+// 		}
+// 		goto out;
+// 	}
+// 	
+// 	socket->data = client;
+// 	socket->name = "I2C";
+// 	socket->write = &i2cdev_write;
+// 	socket->read = &i2cdev_read;
+// 	socket->flush = &i2cdev_flush;
+// 	socket->close = &i2cdev_close;
+// 	socket->flags = flags;
+// 	
+// 	out:
+// 	return rc;
+// }
 
 /**
  * \brief Flush the I/O file.
@@ -322,34 +247,34 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
  * \brief Close the I2C socket.
  * \param stream File to close.
  */
-PUBLIC int i2cdev_close(FILE *stream)
-{
-	struct i2c_client *client = stream->data;
-	struct i2c_adapter *adap = client->adapter;
-	struct i2c_shared_info *info = i2c_shinfo(client);
-	int rc = -1;
-	
-	i2c_do_clean_msgs(adap);
-	if(stream != NULL) {
-		if(stream->buff != NULL) {
-			BermudaHeapFree((void*)stream->buff);
-		}
-		BermudaHeapFree(stream);
-		info->socket = NULL;
-		rc = 0;
-	}
-	
-#ifdef __THREADS__
-	if(stream->flags & I2C_MASTER) {
-		adap->dev->release(adap->dev);
-	}
-#else
-	if(stream->flags & I2C_MASTER) {
-		BermudaMutexRelease(&(adap->mutex));
-	}
-#endif
-	return rc;
-}
+// PUBLIC int i2cdev_close(FILE *stream)
+// {
+// 	struct i2c_client *client = stream->data;
+// 	struct i2c_adapter *adap = client->adapter;
+// 	struct i2c_shared_info *info = i2c_shinfo(client);
+// 	int rc = -1;
+// 	
+// 	i2c_do_clean_msgs(adap);
+// 	if(stream != NULL) {
+// 		if(stream->buff != NULL) {
+// 			BermudaHeapFree((void*)stream->buff);
+// 		}
+// 		BermudaHeapFree(stream);
+// 		info->socket = NULL;
+// 		rc = 0;
+// 	}
+// 	
+// #ifdef __THREADS__
+// 	if(stream->flags & I2C_MASTER) {
+// 		adap->dev->release(adap->dev);
+// 	}
+// #else
+// 	if(stream->flags & I2C_MASTER) {
+// 		BermudaMutexRelease(&(adap->mutex));
+// 	}
+// #endif
+// 	return rc;
+// }
 
 /**
  * @}

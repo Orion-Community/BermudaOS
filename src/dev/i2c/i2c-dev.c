@@ -92,7 +92,6 @@ close(fd);
 #include <sys/epl.h>
 #include <sys/events/event.h>
 
-#if 0
 /**
  * \brief Request an I2C I/O file.
  * \param client I2C driver client.
@@ -130,6 +129,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	features = i2c_client_features(client);
 	features |= I2C_CLIENT_HAS_LOCK_FLAG;
 	i2c_client_set_features(client, features);
+	shinfo->socket = socket;
 	
 	socket->data = client;
 	socket->name = "I2C";
@@ -142,6 +142,100 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	out:
 	return rc;
 }
+
+/**
+ * \brief Close the I2C socket.
+ * \param stream File to close.
+ */
+PUBLIC int i2cdev_close(FILE *stream)
+{
+	struct i2c_client *client = stream->data;
+	struct i2c_adapter *adap = client->adapter;
+	struct i2c_shared_info *shinfo = i2c_shinfo(client);
+	i2c_features_t features;
+	int rc = -1;
+	
+	i2c_do_clean_msgs(adap);
+	if(stream != NULL) {
+		if(stream->buff != NULL) {
+			BermudaHeapFree((void*)stream->buff);
+		}
+		BermudaHeapFree(stream);
+		rc = 0;
+	}
+	
+	features = i2c_client_features(client);
+	features &= ~I2C_CLIENT_HAS_LOCK_FLAG;
+	i2c_client_set_features(client, features);
+	shinfo->socket = NULL;
+
+	BermudaEventSignal(event(&(shinfo->mutex)));
+
+	return rc;
+}
+
+/**
+ * \brief Initializes the buffer for an I2C master transmit.
+ * \param file I/O file.
+ * \param buff The I2C message.
+ * \param size Length of <i>buff</i>.
+ * \return This function returns 0 on success (i.e. buffers have been allocated successfully) and -1
+ *         otherwise.
+ */
+PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
+{
+	struct i2c_client *client = file->data;
+	i2c_features_t features;
+	char *layout = i2c_transmission_layout(client);
+	
+	if(client) {
+		features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_REP_START_FLAG;
+		if(*(++layout) == '\0') {
+			features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
+		}
+		
+		i2c_set_transmission_layout(client, layout);
+	} else {
+		return -1;
+	}
+	
+	if(i2c_write_client(client, buff, size, features) == 0) {
+		return size;
+	} else {
+		return -1;
+	}
+}
+
+/**
+ * \brief Set the master receive buffer.
+ * \param file The I/O file.
+ * \param buff Read buffer.
+ * \param size Size of \p buff.
+ */
+PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
+{
+	struct i2c_client *client = file->data;
+	i2c_features_t features;
+	char *layout = i2c_transmission_layout(client);
+	
+	if(client) {
+		features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_SENT_REP_START_FLAG;
+		if(*(++layout) == '\0') {
+			features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
+		}
+		i2c_set_transmission_layout(client, layout);
+	} else {
+		return -1;
+	}
+
+	if(i2c_write_client(client, buff, size, features) == 0) {
+		return size;
+	} else {
+		return -1;
+	}
+}
+
+#if 0
 
 /**
  * \brief Flush the I/O file.
@@ -167,36 +261,6 @@ PUBLIC int i2cdev_flush(FILE *stream)
 	
 	adap->dev->release(adap->dev);
 	i2c_do_clean_msgs(adap);
-	return rc;
-}
-
-/**
- * \brief Close the I2C socket.
- * \param stream File to close.
- */
-PUBLIC int i2cdev_close(FILE *stream)
-{
-	struct i2c_client *client = stream->data;
-	struct i2c_adapter *adap = client->adapter;
-	struct i2c_shared_info *shinfo = i2c_shinfo(client);
-	i2c_features_t features;
-	int rc = -1;
-	
-	i2c_do_clean_msgs(adap);
-	if(stream != NULL) {
-		if(stream->buff != NULL) {
-			BermudaHeapFree((void*)stream->buff);
-		}
-		BermudaHeapFree(stream);
-		rc = 0;
-	}
-	
-	BermudaEventSignal(event(&(shinfo->mutex)));
-	
-	features = i2c_client_features(client);
-	features &= ~I2C_CLIENT_HAS_LOCK_FLAG;
-	i2c_client_set_features(client, features);
-	
 	return rc;
 }
 #endif

@@ -6,7 +6,7 @@ CSRCS			= main.c
 CPPSRCS			= 
 LIBDIR			= ../build/lib
 LIBEXEC			= ../build/libexec
-LIBS			= -lavr -ldev -lsys -lavr -l24c02 -lspiram -lcbermuda -lvfs
+LIBS			= -lavr -ldev -lsys -lavr -l24c02 -lspiram -lcbermuda -lvfs -ldev
 BUILDSYS		= linux
 TOP_SRCDIR		= ../build
 

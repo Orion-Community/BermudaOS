@@ -203,6 +203,8 @@ extern int i2cdev_socket(struct i2c_client *client, uint16_t flags);
 extern int i2cdev_listen(int fd, void *buff, size_t size);
 extern void i2cdev_error(int fd);
 extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t sla, uint32_t hz);
+extern void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapter, 
+							uint16_t sla, uint32_t hz);
 
 //@}
 __DECL_END

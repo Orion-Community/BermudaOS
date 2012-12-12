@@ -101,16 +101,16 @@ void setup()
 		BermudaThreadSleep(500);
 	}
 	
+	i2c_init_client(&eeprom_client, ATMEGA_I2C_C0_ADAPTER, BASE_SLA_24C02, SCL_FRQ_24C02);
 	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x48, 100000UL);
 	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 200,
 					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
-	atmega_i2c_init_client(&eeprom_client, ATMEGA_I2C_C0);
 	Bermuda24c02Init(&eeprom_client);
 	BermudaSpiRamInit(SPI0, 10);
-	BermudaSpiRamWriteByte(0x50, 0xF8);
-	Bermuda24c02WriteByte(100, 0xAC);
+// 	BermudaSpiRamWriteByte(0x50, 0xF8);
+// 	Bermuda24c02WriteByte(100, 0xAC);
 }
 
 #ifdef __THREADS__
@@ -128,7 +128,7 @@ unsigned long loop()
 	temperature /= 10;
 	
 	read_back_sram = BermudaSpiRamReadByte(0x50);
-	read_back_eeprom = Bermuda24c02ReadByte(100);
+// 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
 	printf_P(PSTR("T=%f M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
 				read_back_sram);

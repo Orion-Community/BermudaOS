@@ -74,7 +74,7 @@ PUBLIC int epl_lock(struct epl_list *list)
  */
 PUBLIC int epl_unlock(struct epl_list *list)
 {
-	return BermudaEventSignal((volatile THREAD**)&list->mutex);
+	return BermudaEventSignalRaw((THREAD*volatile*)&list->mutex);
 }
 
 /**

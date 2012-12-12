@@ -55,9 +55,10 @@
  */
 static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
 static int i2c_queue_processor(struct i2c_client *client, const void *data, size_t size, 
-							   uint8_t flags);
+							   i2c_features_t flags);
 static inline bool i2c_client_has_action(i2c_features_t features);
 static int i2c_init_transfer(struct i2c_adapter *adapter);
+static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz);
 
 /* concurrency functions */
 static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info);
@@ -172,7 +173,8 @@ PUBLIC int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool f
 	
 	if((features & I2C_ACTION_PENDING) == 0 || force) {
 		action <<= I2C_QUEUE_ACTION_SHIFT;
-		features |= action;
+		features &= ~I2C_QUEUE_ACTION_MASK;
+		features |= (action | I2C_ACTION_PENDING);
 		i2c_shinfo(client)->features = features;
 		return 0;
 	} else {
@@ -184,6 +186,9 @@ PUBLIC int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool f
  * \brief Checks if the client has an action pending.
  * \param features Features of the given client.
  * \see I2C_ACTION_PENDING i2c_set_action
+ * \return Wether there is an action set or not.
+ * \retval 1 An action is pending.
+ * \retval 0 No action is pending.
  */
 static inline bool i2c_client_has_action(i2c_features_t features)
 {
@@ -260,13 +265,31 @@ static int i2c_release_adapter(struct i2c_adapter *adapter, struct i2c_shared_in
 }
 
 /**
+ * \brief Write a new buffer to the client.
+ * \param client I2C client to write to.
+ * \param data Buffer to write.
+ * \param size Size of \p buffer.
+ * \param flags Flags describing \p buffer.
+ * \see i2c_queue_processor i2c_set_action
+ */
+PUBLIC int i2c_write_client(struct i2c_client *client, const void *data, size_t size, 
+							i2c_features_t flags)
+{
+	i2c_set_action(client, I2C_NEW_QUEUE_ENTRY, FALSE);
+	return i2c_queue_processor(client, data, size, flags);
+}
+
+/**
  * \brief Flush the I2C client and start the transfer.
  * \param client Client to flush.
+ * \see i2c_queue_processor i2c_set_action
+ * \note This function will initiate the transfer (and acquire the needed locks).
  * 
- * All messages which client has are flushed to its adapter and a transfer is initialized.
+ * All messages which \p client has are flushed to its adapter and a transfer is initialized.
  */
 PUBLIC int i2c_flush_client(struct i2c_client *client)
 {
+	i2c_set_action(client, I2C_FLUSH_QUEUE_ENTRIES, FALSE);
 	return i2c_queue_processor(client, SIGNALED, 0, 0);
 }
 
@@ -323,7 +346,7 @@ static int __link i2c_queue_processor(client, data, size, flags)
 struct i2c_client *client;
 const void *data;
 size_t size;
-uint8_t flags;
+i2c_features_t flags;
 {
 	auto i2c_features_t i2c_check_msg(i2c_features_t msg, i2c_features_t bus);
 	struct i2c_shared_info *sh_info;
@@ -345,7 +368,7 @@ uint8_t flags;
 	features = i2c_client_features(client);
 	adpt = client->adapter;
 	
-	if((features & I2C_CLIENT_HAS_LOCK_FLAG) == 0 && i2c_client_has_action(features)) {
+	if((features & I2C_CLIENT_HAS_LOCK_FLAG) == 0 && !i2c_client_has_action(features)) {
 		return rc;
 	}
 	
@@ -460,7 +483,8 @@ uint8_t flags;
 			
 		case I2C_DELETE_QUEUE_ENTRY:
 			if(size >= 0) {
-				if(i2c_vector_delete_at(adpt, size)) {
+				if((msg = i2c_vector_delete_at(adpt, size))) {
+					free(msg);
 					rc = DEV_OK;
 				}
 			}
@@ -535,18 +559,50 @@ PUBLIC struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t
 	struct i2c_shared_info *shinfo = malloc(sizeof(*shinfo));
 	
 	if(client != NULL && shinfo != NULL) {
-		client->sh_info = shinfo;
 		client->adapter = adapter;
-		client->sla = sla;
-		client->freq = hz;
-		
-		shinfo->list = epl_alloc();
-		shinfo->features = 0;
-		shinfo->mutex = SIGNALED;
+		client->sh_info = shinfo;
+		__i2c_init_client(client, sla, hz);
 		return client;
 	} else {
 		return NULL;
 	}
+}
+
+/**
+ * \brief Initializes a client.
+ * \param client I2C client to initialize.
+ * \param adapter I2C adapter backend for the client.
+ * \param sla Slave address of this client.
+ * \param hz Frequency it operates on.
+ */
+PUBLIC void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapter,
+							uint16_t sla, uint32_t hz)
+{
+	struct i2c_shared_info *shinfo = malloc(sizeof(*shinfo));
+	
+	if(!client && !shinfo) {
+		client->adapter = adapter;
+		client->sh_info = shinfo;
+		__i2c_init_client(client, sla, hz);
+	}
+}
+
+/**
+ * \brief Initializes a client.
+ * \param client I2C client to initialize.
+ * \param sla Slave address of this client.
+ * \param hz Frequency it operates on.
+ */
+static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz)
+{
+	struct i2c_shared_info *shinfo = i2c_shinfo(client);
+	
+	client->sla = sla;
+	client->freq = hz;
+	
+	shinfo->list = epl_alloc();
+	shinfo->features = 0;
+	shinfo->mutex = SIGNALED;
 }
 
 /*

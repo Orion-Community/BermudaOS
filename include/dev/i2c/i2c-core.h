@@ -55,6 +55,7 @@
 #define I2C_MSG_SLAVE_MSG_FLAG BIT(I2C_MSG_SLAVE_MSG_FLAG_SHIFT)
 /**
  * \brief Master message flag.
+ * \see I2C_MSG_SLAVE_MSG_FLAG
  */
 #define I2C_MSG_MASTER_MSG_FLAG 0
 
@@ -78,6 +79,8 @@
 
 /**
  * \brief Master message mask.
+ * \see I2C_MSG_MASTER_MSG_FLAG
+ * When this bit is set to one the message is a <b>slave</b> message.
  */
 #define I2C_MSG_MASTER_MSG_MASK BIT(I2C_MSG_MASTER_MSG_FLAG_SHIFT)
 
@@ -112,6 +115,8 @@ extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool f
 extern int i2c_init_adapter(struct i2c_adapter *adapter, char *fname);
 extern void i2c_cleanup_client_msgs(struct i2c_client *client);
 extern int i2c_flush_client(struct i2c_client *client);
+extern int i2c_write_client(struct i2c_client *client, const void *data, size_t size, 
+							i2c_features_t flags);
 
 #ifdef I2C_DBG
 extern int i2cdbg_test_queue_processor(struct i2c_client *client);
@@ -205,6 +210,11 @@ static inline void i2c_set_transmission_layout(struct i2c_client *client, char *
 {
 	struct i2c_shared_info *shinfo = i2c_shinfo(client);
 	shinfo->transmission_layout = layout;
+}
+
+static inline char *i2c_transmission_layout(struct i2c_client *client)
+{
+	return i2c_shinfo(client)->transmission_layout;
 }
 
 /**

@@ -26,6 +26,7 @@
 #include <dev/dev.h>
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
+#include <dev/i2c/i2c-core.h>
 
 #include <lib/24c02.h>
 
@@ -42,8 +43,6 @@ static struct i2c_client *client;
 PUBLIC void Bermuda24c02Init(struct i2c_client *iicc)
 {
 	client = iicc;
-	client->sla = BASE_SLA_24C02;
-	client->freq = SCL_FRQ_24C02;
 }
 
 PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)

@@ -19,7 +19,5 @@
 #ifndef __OUT_HEADER_
 #define __OUT_HEADER_
 
-extern int BermudaPrintf(const char *fmt, ...);
-extern int printf_P(const char *fmt, ...);
 
 #endif /* __OUT_HEADER_ */

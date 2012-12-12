@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - printf
+ *  BermudaOS - StdIO - fprintf_P
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file src/lib/c/stdio/printf_p.c Text output module.
-
-#ifdef __AVR__
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <arch/avr/pgm.h>
 
-PUBLIC int printf_P(const prog_char * fmt, ...)
+#include "stdio_priv.h"
+
+/**
+ * \brief Print output to the given stream.
+ * \param stream Stream to print to.
+ * \param fmt Format.
+ * \note \p fmt Must be in code space.
+ */
+PUBLIC int fprintf_P(FILE *stream, const prog_char *fmt, ...)
 {
 	int i;
 
 	va_list va;
 	va_start(va, fmt);
-	i = vfprintf_P(stdout, fmt, va);
+	i = vfprintf_P(stream, fmt, va);
 	va_end(va);
 
 	return i;
 }
-#endif

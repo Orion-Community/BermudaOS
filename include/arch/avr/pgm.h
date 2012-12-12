@@ -209,7 +209,7 @@
 
 #define pgm_read_word(address_short)    pgm_read_word_near(address_short)
 
-typedef char prog_char __attribute__((__progmem__));
+typedef char __attribute__((__progmem__)) prog_char;
 
 __DECL
 extern const char *strchr_P(const char *, int val);
@@ -222,7 +222,7 @@ static inline size_t strlen_P(const char *s)
 	return (size_t)(c - s);
 }
 
-static inline void memcpy_P(char *dest, const char *src, size_t size)
+static inline void memcpy_P(char *dest, const prog_char *src, size_t size)
 {
 	size_t idx = 0;
 	for(; idx < size; idx++) {

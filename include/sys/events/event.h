@@ -54,13 +54,7 @@
  */
 #define SIGNALED ((void*)-1)
 
-/**
- * \typedef EVENT
- * \brief Event type.
- * 
- * Events are nothing more than a list of threads, typed as void pointers.
- */
-typedef void* EVENT;
+#define event(__x) ((volatile THREAD**)__x)
 
 #ifdef __cplusplus
 extern "C" {

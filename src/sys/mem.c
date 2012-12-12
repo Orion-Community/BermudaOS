@@ -20,6 +20,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
 #include <lib/binary.h>
 
 #include <sys/mem.h>
@@ -78,6 +80,31 @@ PUBLIC __attribute__ ((malloc)) void *BermudaHeapAlloc(size_t size)
 
 	BermudaMutexRelease(&mem_lock);
 	return ret;
+}
+
+PUBLIC void *realloc(void *ptr, size_t length)
+{
+	volatile HEAPNODE *node;
+	if(length == 0) {
+		free(ptr);
+		return NULL;
+	}
+	if(ptr == NULL) {
+		return malloc(length);
+	}
+	
+	BermudaMutexEnter(&mem_lock);
+	node = ptr - sizeof(*node);
+	void *new_block = malloc(length);
+	if(new_block) {
+		memcpy(new_block, ptr, (length > node->size) ? node->size : length);
+		free(ptr);
+		return new_block;
+	} else {
+		return NULL;
+	}
+	
+	return (void*)((void*)node + sizeof(*node));
 }
 
 /**

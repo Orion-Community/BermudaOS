@@ -91,6 +91,11 @@
 #define WEAK    __attribute__((weak))
 
 /**
+ * \brief GCC will try to optimize the function where this attribute is passed to.
+ */
+#define __maxoptimize __attribute__((optimize("O3")))
+
+/**
  * \def PUBLIC
  * \brief Declare a function public.
  * 

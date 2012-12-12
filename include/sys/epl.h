@@ -92,6 +92,7 @@ extern int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
 extern int epl_delete_node(struct epl_list *list, struct epl_list_node *node);
 extern struct epl_list_node *epl_node_at(struct epl_list *list, size_t index);
 extern int epl_delete_node_at(struct epl_list *list, size_t num);
+extern int epl_fix(struct epl_list *list);
 
 #ifdef __DOXYGEN__
 #else

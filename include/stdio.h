@@ -119,6 +119,11 @@
 		.buff = NULL,	\
 	}
 
+/*
+ * Log message defs
+ */
+#define I2C_CORE_LOG stdout, "I2C_CORE"
+
 extern FILE *__iob[];
 
 __DECL
@@ -136,7 +141,7 @@ extern int read(int fd, void *buff, size_t size);
 extern void fdmode(int fd, unsigned char mode);
 extern int flush(int fd);
 
-extern int open(char *fname, unsigned char mode);
+extern int open(char *fname, uint16_t mode);
 extern FILE *fdopen(int fd);
 extern int close(int fd);
 
@@ -146,10 +151,13 @@ extern int close(int fd);
  * \note printf is implmented by the architecture, due to queueing and concurrency.
  */
 extern int printf(const char *fmt, ...);
+extern int fprintf(FILE *stream, const char *fmt, ...);
 #ifdef __AVR__
 extern int printf_P(const char *fmt, ...);
 extern int vfprintf_P(FILE *stream, const char *fmt, va_list ap);
 extern int write_P(int fd, const void *data, size_t size);
+extern int fprintf_P(FILE *stream, const char *fmt, ...);
+extern int logmsg_P(FILE *stream, const char *origin, const char *fmt, ...);
 #endif
 extern int vfprintf(FILE *stream, const char *fmt, va_list ap);
 

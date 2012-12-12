@@ -3,6 +3,7 @@ AVRLIB=/usr/lib/avr/include
 LOCAL_INC=@top_srcdir@/include
 STDDEFS=-DEXTRAM=$(EXTRAM) -DBAUD=9600 -DTIMERS=5 -D __SPIRAM__
 CCFLAGS=
+AM_LIBTOOLFLAGS=--silent
 
 # -------------------------------------------------------
 # Architectural defines

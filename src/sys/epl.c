@@ -33,6 +33,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <sys/thread.h>
 #include <sys/sched.h>
@@ -134,8 +135,10 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
 				if(car->next == NULL) {
 					car->next = node;
 					node->next = NULL;
+					rc = 0;
 					break;
 				}
+				rc = -1;
 			}
 			break;
 			
@@ -158,6 +161,7 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
  * \param list List to delete from.
  * \param node Node to delete.
  * \return Weather the deletion was successful (0 on success).
+ * \todo Removing fails when node != head.
  */
 PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 {
@@ -167,8 +171,9 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 	if(head) {
 		if(head == node) {
 			head = node->next;
-			list->list_entries--;
 			list->nodes = head;
+			node->next = NULL;
+			list->list_entries--;
 			rc = 0;
 		} else {
 			prev = head;
@@ -185,6 +190,34 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
 		}
 	} 
 	
+	return rc;
+}
+
+/**
+ * \brief Try to fix circular lists.
+ * \param list EPL to fix.
+ * \return 0 if the list is fixed, -1 if \p list is not circular.
+ * \warning Any nodes which could have been behind the circular node are lost!
+ * 
+ * This function will search the node which is circular and point the \p next pointer of that node
+ * to NULL. This way, the list is usable again by iterators.
+ */
+PUBLIC int epl_fix(struct epl_list *list)
+{
+	struct epl_list_node *head = list->nodes, *car;
+	int rc = -1;
+	size_t size = 0;
+	
+	for(car = head; car != NULL; car = car->next) {
+		if(car->next == car) {
+			car->next = NULL;
+			rc = 0;
+			break;
+		}
+		size++;
+	}
+	
+	list->list_entries = size+1; /* not 0 counting */
 	return rc;
 }
 

@@ -26,7 +26,7 @@
  * \param mode File mode to use.
  * \return The file descriptor.
  */
-PUBLIC int open(char *fname, unsigned char mode)
+PUBLIC int open(char *fname, uint16_t mode)
 {
 	int i = 0;
 	FILE *c = vfs_head;

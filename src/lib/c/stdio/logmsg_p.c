@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - printf
+ *  BermudaOS - StdIO - logmsg_P
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//! \file src/lib/c/stdio/printf_p.c Text output module.
-
-#ifdef __AVR__
-
 #include <stdlib.h>
 #include <stdio.h>
+
 #include <arch/avr/pgm.h>
 
-PUBLIC int printf_P(const prog_char * fmt, ...)
+PUBLIC int logmsg_P(FILE *stream, const char *origin, const char *fmt, ...)
 {
-	int i;
-
+	int rc;
 	va_list va;
+	
+	fprintf_P(stream, PSTR("%s: "), origin);
+	
 	va_start(va, fmt);
-	i = vfprintf_P(stdout, fmt, va);
+	rc = vfprintf_P(stream, fmt, va);
 	va_end(va);
-
-	return i;
+	
+	return rc;
 }
-#endif

@@ -213,6 +213,17 @@ PUBLIC int i2c_vector_erase(struct i2c_adapter *adapter)
  * \retval 0 when fixed.
  * \retval error if no fix was made.
  * \see dev_error
+ * 
+ * Errors this function can fix:
+\verbatim
+		+********************+*********************************************************************+
+		| Error              | Solution                                                            |
+		+********************+*********************************************************************+
+		| DEV_NOINIT         | Create a new vector by calling i2c_create_msg_vector.               |
+		+********************+*********************************************************************+
+		| DEV_OUTOFBOUNDS    | Fix the boundries of the vector by exapanding i2c_msg_vector::limit.|
+		+********************+*********************************************************************+
+\endverbatim
  */
 PUBLIC int i2c_vector_error(struct i2c_adapter *adapter, int error)
 {

@@ -245,6 +245,7 @@ PUBLIC int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message 
  * \return Error code.
  * \retval 0 on success.
  * \retval !0 on error.
+ * \note i2c_msg_vector::length is increased by one when successful.
  * \todo Add expansion.
  */
 static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, size_t num)
@@ -259,6 +260,7 @@ static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, s
 	for(; last >= index; last--) {
 		vector->msgs[last+num] = vector->msgs[last];
 	}
+	vector->length += 1;
 	return -DEV_OK;
 }
 
@@ -267,7 +269,7 @@ static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, s
  * \param vector The vector to shift.
  * \param index Index to start shifting.
  * \note To start at the first element set \p index to 0 (i.e. \p index is zero-counting).
- * 
+ * \note i2c_msg_vector::length is decreased by one.
  * All values starting from \p index will be shifted 1 space to the left. So consider the following
  * array:
  * \verbatim

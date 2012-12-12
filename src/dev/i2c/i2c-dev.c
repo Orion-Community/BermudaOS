@@ -32,49 +32,47 @@
  * When you want to do a master transfer, sent a repeated start and receive data from the slave
  * your I/O block will look like the following.
  * 
- * \code{i2cmaster.c}
- * struct i2c_client client;
- * atmega_i2c_init_client(&client, ATMEGA_I2C_C0);
- * client.sla = 0x54;      // slave address
- * client.freq = 100000UL; // frequency in hertz
- * int rc, fd;
- * 
- * fd = i2cdev_socket(&client, _FDEV_SETUP_RW | I2C_MASTER);
- * if(fd < 0) {
- *     error();
- *     return;
- * }
- * 
- * rc = write(fd, txbuff, txbuff_length);
- * rc += read(fd, rxbuff, rxbuff_length);
- * 
- * if(rc == 0) {
- *     rc = flush(fd);
- * } else {
- *     i2cdev_error(fd);
- * }
- * 
- * close(fd);
- * \endcode
+\code{.c}
+struct i2c_client client;
+atmega_i2c_init_client(&client, ATMEGA_I2C_C0);
+client.sla = 0x54;      // slave address
+client.freq = 100000UL; // frequency in hertz
+int rc, fd;
+
+fd = i2cdev_socket(&client, _FDEV_SETUP_RW | I2C_MASTER);
+if(fd < 0) {
+    error();
+}
+
+rc = write(fd, txbuff, txbuff_length);
+rc += read(fd, rxbuff, rxbuff_length);
+
+if(rc == 0) {
+    rc = flush(fd);
+} else {
+    i2cdev_error(fd);
+}
+  
+close(fd);
+\endcode
  * 
  * If you want to do a transmit or receive only you should set the correct buffer to <i>NULL</i>. The
  * transmit buffer will be set using <i>write</i> the receive buffer is set using <i>read</i>.
  * 
  * <b>Slave recieve/transmit</b>
- * \code{i2cslave.c}
- * struct i2c_client slave_client;
- * 
- * atmega_i2c_init_client(&slave_client, ATMEGA_I2C_C0);
- * slave_client.callback = &slave_responder;
- * 
- * fd = i2cdev_socket(&slave_client, _FDEV_SETUP_RW | I2C_SLAVE);
- * if(fd < 0) {
- *    error();
- *    return;
- * }
- * i2cdev_listen(fd, &rx, 1);
- * close(fd);
- * \endcode
+\code{.c}
+struct i2c_client slave_client;
+
+atmega_i2c_init_client(&slave_client, ATMEGA_I2C_C0);
+slave_client.callback = &slave_responder;
+ 
+fd = i2cdev_socket(&slave_client, _FDEV_SETUP_RW | I2C_SLAVE);
+if(fd < 0) {
+    goto _usart;
+}
+i2cdev_listen(fd, &rx, 1);
+close(fd);
+\endcode
  * 
  * The slave will first wait for a master receive request. When it is finished, it will check for a
  * user callback function. That function can set the transmit buffer. Set the buffer to <i>NULL</i>

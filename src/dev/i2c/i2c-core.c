@@ -57,7 +57,7 @@ static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
 static int i2c_queue_processor(struct i2c_client *client, const void *data, size_t size, 
 							   i2c_features_t flags);
 static inline bool i2c_client_has_action(i2c_features_t features);
-static int i2c_init_transfer(struct i2c_adapter *adapter);
+static int i2c_init_transfer(struct i2c_client *client);
 static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz);
 static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client);
 
@@ -492,7 +492,7 @@ i2c_features_t flags;
 					}
 					epl_unlock(sh_info->list);
 					if(!rc) {
-						rc = i2c_init_transfer(adpt);
+						rc = i2c_init_transfer(client);
 					}
 					i2c_release_adapter(adpt, sh_info);
 				}
@@ -536,9 +536,12 @@ i2c_features_t flags;
  * \param adapter Adapter containing new messages.
  * \note This function also tries to get the locks needed to complete the transfer.
  */
-static int i2c_init_transfer(struct i2c_adapter *adapter)
+static int i2c_init_transfer(struct i2c_client *client)
 {
-	return -1;
+	struct i2c_adapter *adapter = client->adapter;
+	printf("Entries: %u\n", adapter->msg_vector.length);
+	i2c_cleanup_adapter_msgs(client);
+	return 0;
 }
 
 /**

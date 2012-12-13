@@ -84,9 +84,9 @@ close(fd);
 #include <stdio.h>
 
 #include <dev/dev.h>
-#include <dev/i2c/i2c.h>
-#include <dev/i2c/reg.h>
-#include <dev/i2c/i2c-core.h>
+#include <dev/i2c.h>
+#include <dev/i2c-reg.h>
+#include <dev/i2c-core.h>
 
 #include <sys/thread.h>
 #include <sys/epl.h>
@@ -140,37 +140,6 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	socket->flags = flags;
 	
 	out:
-	return rc;
-}
-
-/**
- * \brief Close the I2C socket.
- * \param stream File to close.
- */
-PUBLIC int i2cdev_close(FILE *stream)
-{
-	struct i2c_client *client = stream->data;
-	struct i2c_adapter *adap = client->adapter;
-	struct i2c_shared_info *shinfo = i2c_shinfo(client);
-	i2c_features_t features;
-	int rc = -1;
-	
-	i2c_do_clean_msgs(adap);
-	if(stream != NULL) {
-		if(stream->buff != NULL) {
-			BermudaHeapFree((void*)stream->buff);
-		}
-		BermudaHeapFree(stream);
-		rc = 0;
-	}
-	
-	features = i2c_client_features(client);
-	features &= ~I2C_CLIENT_HAS_LOCK_FLAG;
-	i2c_client_set_features(client, features);
-	shinfo->socket = NULL;
-
-	BermudaEventSignal(event(&(shinfo->mutex)));
-
 	return rc;
 }
 
@@ -235,32 +204,88 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 	}
 }
 
-#if 0
-
 /**
  * \brief Flush the I/O file.
  * \param stream File to flush.
+ * \note A transfer will only be intiated if the client has messages assigned.
  * 
  * This will start the actual transfer.
  */
 PUBLIC int i2cdev_flush(FILE *stream)
 {
 	struct i2c_client *client = stream->data;
-	struct i2c_adapter *adap = client->adapter;
-	int rc;
+	struct i2c_shared_info *info = i2c_shinfo(client);
 	
-	if(adap->dev->alloc(adap->dev, I2C_TMO) != 0) {
+	if(epl_entries(info->list)) {
+		return i2c_flush_client(client);
+	} else {
 		return -1;
 	}
+}
+
+/**
+ * \brief Close the I2C socket.
+ * \param stream File to close.
+ */
+PUBLIC int i2cdev_close(FILE *stream)
+{
+	struct i2c_client *client = stream->data;
+	struct i2c_shared_info *info = i2c_shinfo(client);
+	i2c_features_t features;
 	
-	adap->dev->io->data = stream->data;
-	adap->dev->io->flags &= 0xFF;
-	adap->dev->io->flags |= stream->flags & 0xFF00;
+	if(epl_entries(info->list)) {
+		i2c_cleanup_client_msgs(client);
+	}
 	
-	rc = i2c_flush_client(client);
+	free(stream);
+	features = i2c_client_features(client);
+	features &= ~I2C_CLIENT_HAS_LOCK_FLAG;
+	i2c_client_set_features(client, features);
+	info->socket = NULL;
 	
-	adap->dev->release(adap->dev);
-	i2c_do_clean_msgs(adap);
+	BermudaEventSignal(event(&info->mutex));
+	return 0;
+}
+
+/**
+ * \brief Setup the I2C slave interface and wait for incoming master requests.
+ * \param fd File descriptor of the client.
+ * \param buff Slave read buffer.
+ * \param size Length of buffer.
+ * 
+ * Waits for a slave transfer. \p Buff will be setup as a slave receive buffer. If transmission
+ * needs to be done afterwards, client::callback has to be set.
+ */
+PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
+{
+	FILE *stream = fdopen(fd);
+	struct i2c_client *client;
+	struct i2c_shared_info *info;
+	i2c_features_t features;
+	int rc;
+	
+	if(stream == NULL) {
+		rc = -1;
+		goto out;
+	}
+	
+	client = stream->data;
+	info = i2c_shinfo(client);
+	
+	features = I2C_MSG_SLAVE_MSG_FLAG;
+	if(info->shared_callback != NULL) {
+		features |= I2C_MSG_CALL_BACK_FLAG;
+	}
+	i2c_write_client(client, buff, size, features);
+	rc = i2cdev_flush(stream);
+	
+	if(!rc) {
+		if(info->shared_callback) {
+			/* TODO: call application */
+		}
+	}
+	
+	i2c_do_clean_msgs(client->adapter);
+	out:
 	return rc;
 }
-#endif

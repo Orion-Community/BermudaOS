@@ -30,6 +30,19 @@
 size_t __it; \
 for(__it = 0; __it < (__vec)->length; (__it)++)
 
+/**
+ * \brief Iterate through an I2C vector reversed.
+ * \param __vec The vector (pointer) to iterate through.
+ * \param __it The symbol name of the iterator.
+ * 
+ * Iterate through the list using the symbel name given by \p __it. It starts at 
+ * i2c_msg_vector::length - 1 (the last entry) and decreses by one every iteration until 0 has been
+ * reached.
+ */
+#define i2c_vector_foreach_reverse(__vec, __it) \
+size_t __it; \
+for(__it = (__vec)->length - 1; __it >= 0; (__it)--)
+
 /*
  * I2C-MSG functions
  */

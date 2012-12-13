@@ -217,19 +217,6 @@ static inline char *i2c_transmission_layout(struct i2c_client *client)
 	return i2c_shinfo(client)->transmission_layout;
 }
 
-/**
- * \brief Remove all messages from the adapter.
- * \param adapter I2C adapter to remove all messages from.
- * \warning The adapter must be locked before it is safe to use this function.
- */
-static inline int i2c_cleanup_adapter_msgs(struct i2c_adapter *adapter)
-{
-	i2c_vector_foreach(&adapter->msg_vector, i) {
-		free(adapter->msg_vector.msgs[i]);
-	}
-	return i2c_vector_erase(adapter);
-}
-
 //@}
 __DECL_END
 

@@ -101,7 +101,7 @@ PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, siz
 	if(index < adapter->msg_vector.length) {
 		tmp = adapter->msg_vector.msgs[index];
 		adapter->msg_vector.msgs[index] = NULL;
-		i2c_vector_shift_left(&adapter->msg_vector, index);
+		i2c_vector_shift_left(&adapter->msg_vector, index+1);
 		adapter->msg_vector.length -= 1;
 		return tmp;
 	} else {
@@ -182,7 +182,7 @@ PUBLIC struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter,
 	for(i = 0; i < adapter->msg_vector.length; i++) {
 		if(adapter->msg_vector.msgs[i] == msg) {
 			adapter->msg_vector.msgs[i] = NULL;
-			i2c_vector_shift_left(&adapter->msg_vector, i);
+			i2c_vector_shift_left(&adapter->msg_vector, i+1);
 			adapter->msg_vector.length -= 1;
 			return msg;
 		}
@@ -346,16 +346,20 @@ i2c_vector_shift_left(vector, 2);
  */
 static void i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index)
 {
-	if(index == 0) {
-		vector->msgs[0] = vector->msgs[1];
-		index++;
-	}
-	if(index < vector->length) {
-		for(; index < vector->length; index++) {
-			vector->msgs[index-1] = vector->msgs[index];
+	if(index >= vector->length) {
+		return;
+	} else {
+		if(index == 0) {
+			vector->msgs[0] = vector->msgs[1];
+			index++;
 		}
+		if(index < vector->length) {
+			for(; index < vector->length; index++) {
+				vector->msgs[index-1] = vector->msgs[index];
+			}
+		}
+		vector->length -= 1;
 	}
-	vector->length -= 1;
 }
 
 //@}

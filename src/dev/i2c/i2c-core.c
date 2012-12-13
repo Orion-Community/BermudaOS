@@ -59,6 +59,7 @@ static int i2c_queue_processor(struct i2c_client *client, const void *data, size
 static inline bool i2c_client_has_action(i2c_features_t features);
 static int i2c_init_transfer(struct i2c_adapter *adapter);
 static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz);
+static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client);
 
 /* concurrency functions */
 static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info);
@@ -293,6 +294,23 @@ PUBLIC int i2c_flush_client(struct i2c_client *client)
 	return i2c_queue_processor(client, SIGNALED, 0, 0);
 }
 
+/**
+ * \brief Remove all messages from the adapter.
+ * \param client I2C client which adapters messages have to be deleted.
+ * \warning The adapter must be locked before it is safe to use this function.
+ */
+static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client)
+{
+	i2c_vector_foreach_reverse(&client->adapter->msg_vector, i) {
+		i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, TRUE);
+		i2c_queue_processor(client, NULL, i, 0);
+		if(i == 0) {
+			break;
+		}
+	}
+	return i2c_vector_erase(client->adapter);
+}
+
 #ifdef I2C_MSG_LIST
 /**
  * \brief Edit the queues of the given I2C client.
@@ -483,7 +501,7 @@ i2c_features_t flags;
 			
 		case I2C_DELETE_QUEUE_ENTRY:
 			if(size >= 0) {
-				if((msg = i2c_vector_delete_at(adpt, size))) {
+				if((msg = i2c_vector_delete_at(adpt, size)) != NULL) {
 					free(msg);
 					rc = DEV_OK;
 				}
@@ -698,12 +716,12 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 	 * delete all entries
 	 */
 	if(i2c_vector_length(client->adapter) >= 20) {
-		i2c_cleanup_adapter_msgs(client->adapter);
+		i2c_cleanup_adapter_msgs(client);
 		free((void*)client->adapter->msg_vector.msgs);
 		
 		client->adapter->msg_vector.length = 10;
 		client->adapter->msg_vector.msgs = tmp;
-		i2c_cleanup_adapter_msgs(client->adapter);
+		i2c_cleanup_adapter_msgs(client);
 		done = FALSE;
 	}
 	return 0;

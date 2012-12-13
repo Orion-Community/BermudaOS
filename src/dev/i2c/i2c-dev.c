@@ -289,3 +289,21 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 	out:
 	return rc;
 }
+
+/**
+ * \brief Handle an I2C file I/O error.
+ * \param fd File descriptor of the current transfer.
+ * 
+ * It will free the correspondending buffers. If I2C_MASTER is given all master buffers will be
+ * free'd if I2C_SLAVE is passed, all slave buffers will be free'd.
+ */
+PUBLIC void i2cdev_error(int fd)
+{
+	FILE *stream = fdopen(fd);
+	struct i2c_client *client = stream->data;
+	
+	if(epl_entries(info->list)) {
+		i2c_cleanup_client_msgs(client);
+	}
+}
+

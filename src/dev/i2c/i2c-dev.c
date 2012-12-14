@@ -301,6 +301,7 @@ PUBLIC void i2cdev_error(int fd)
 {
 	FILE *stream = fdopen(fd);
 	struct i2c_client *client = stream->data;
+	struct i2c_shared_info *info = i2c_shinfo(client);
 	
 	if(epl_entries(info->list)) {
 		i2c_cleanup_client_msgs(client);

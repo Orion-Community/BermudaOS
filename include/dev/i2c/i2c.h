@@ -169,9 +169,8 @@ struct i2c_adapter {
 	{
 		size_t length, //!< Length of the vector.
 		       limit;  //!< Maximum value \p length may reach.
-		struct i2c_message *volatile*msgs; //!< The vector.
+		struct i2c_message *volatile*msgs; //!< The data array.
 	} msg_vector;
-	struct epl_list *msgs;
 
 #ifdef __THREADS__
 	/* mutex is provided by the device */
@@ -191,9 +190,29 @@ struct i2c_adapter {
 	 * \param stream I/O file.
 	 */
 	int (*slave_respond)(FILE *stream);
-} __attribute__((packed));
+	
+	/**
+	 * \brief Hook implemented by the bus driver.
+	 * \param adapter The bus adapter.
+	 * \return The last message which is sent.
+	 * \retval NULL on error.
+	 * 
+	 * A hook which <b>must</b> be implemented by the adapter to initialise a transfer.
+	 */
+	struct i2c_message *(*start_transfer)(struct i2c_adapter *adapter);
+	
+	/**
+	 * \brief Resume transmission after a call back.
+	 * \param adapter Adapter to resume.
+	 * \note The message which has been set by the call back must be inserted IN THE FRONT of the
+	 *       message vector.
+	 * \return The error code.
+	 * \retval 0 on success.
+	 * \retval -1 on failure.
+	 */
+	int (*resume)(struct i2c_adapter *adapter);
+};
 
-__DECL
 /* file I/O */
 extern int i2cdev_write(FILE *file, const void *buff, size_t size);
 extern int i2cdev_read(FILE *file, void *buff, size_t size);

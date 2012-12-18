@@ -46,6 +46,8 @@
 #include <sys/thread.h>
 #include <sys/epl.h>
 
+#include "i2c-core-priv.h"
+
 #ifndef __THREADS__
 #error I2C needs threads to function properly
 #endif
@@ -519,15 +521,9 @@ i2c_features_t flags;
 	return rc;
 	
 	auto __maxoptimize bool i2c_check_msg(register i2c_features_t msg, 
-														   register i2c_features_t bus)
+										  register i2c_features_t bus)
 	{
-#define I2C_MSG_CHECK(__msg, __bus) \
-( \
-(((neg(__msg) & I2C_MSG_MASTER_MSG_MASK) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
-((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT))  \
-)
 		return (I2C_MSG_CHECK(msg, bus) != 0);
-#undef I2C_MSG_CHECK
 	}
 }
 #endif

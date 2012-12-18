@@ -366,7 +366,7 @@ const void *data;
 size_t size;
 i2c_features_t flags;
 {
-	auto i2c_features_t i2c_check_msg(i2c_features_t msg, i2c_features_t bus);
+	auto bool i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus);
 	struct i2c_shared_info *sh_info;
 	struct epl_list *clist;
 	struct epl_list_node *node, *n_node;
@@ -432,11 +432,11 @@ i2c_features_t flags;
 					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
 																I2C_SLAVE_SUPPORT);
 					features = i2c_msg_features(msg);
-					if(msg->length == size && i2c_check_msg(features, b_features)) {
-						rc = i2c_vector_insert_at(adpt, msg, 0);
+					if(i2c_check_msg(features, b_features)) {
+						rc = i2c_vector_insert_at(adpt, msg, size);
 						if(rc) {
 							if(i2c_vector_error(adpt, rc) == 0) {
-								rc = i2c_vector_insert_at(adpt, msg, 0);
+								rc = i2c_vector_insert_at(adpt, msg, size);
 							}
 						}
 					} else {
@@ -518,14 +518,15 @@ i2c_features_t flags;
 	
 	return rc;
 	
-	auto __link __maxoptimize i2c_features_t i2c_check_msg(i2c_features_t msg, i2c_features_t bus)
+	auto __maxoptimize bool i2c_check_msg(register i2c_features_t msg, 
+														   register i2c_features_t bus)
 	{
 #define I2C_MSG_CHECK(__msg, __bus) \
 ( \
 (((neg(__msg) & I2C_MSG_MASTER_MSG_MASK) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & (__bus & I2C_MASTER_SUPPORT)) ^ \
 ((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT))  \
 )
-		return I2C_MSG_CHECK(msg, bus);
+		return (I2C_MSG_CHECK(msg, bus) != 0);
 #undef I2C_MSG_CHECK
 	}
 }
@@ -539,6 +540,23 @@ i2c_features_t flags;
 static int i2c_init_transfer(struct i2c_client *client)
 {
 	struct i2c_adapter *adapter = client->adapter;
+	struct i2c_message *msg, *newmsg;
+	size_t index;
+	int rc = -1;
+	
+	if((msg = adapter->start_transfer(adapter)) != NULL) {
+		index = i2c_vector_locate(adapter, msg);
+		rc = 0;
+		if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
+			newmsg = malloc(sizeof(*newmsg));
+			newmsg->addr = msg->addr;
+			if(!i2c_shinfo(client)->shared_callback(client, newmsg)) {
+				i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
+				i2c_queue_processor(client, newmsg, index, 0);
+			}
+			rc = adapter->resume(adapter);
+		}
+	}
 	printf("Entries: %u\n", adapter->msg_vector.length);
 	i2c_cleanup_adapter_msgs(client);
 	return 0;
@@ -711,7 +729,7 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 			msg->buff = &test_data0[0];
 			i2c_msg_set_features(msg, TEST_DATA0_FLAGS);
 			i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
-			i2c_queue_processor(client, msg, msg->length, 0);
+			i2c_queue_processor(client, msg, 15, 0);
 		}
 	}
 	

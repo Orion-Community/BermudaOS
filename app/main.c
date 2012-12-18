@@ -69,7 +69,6 @@ THREAD(i2c_dbg, arg)
 			flush(fd);
 			close(fd);
 		}
-		printf("fd: %i\n", fd);
 		BermudaThreadSleep(2000);
 	}
 }

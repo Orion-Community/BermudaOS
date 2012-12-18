@@ -130,6 +130,29 @@ PUBLIC struct i2c_message *i2c_vector_get(struct i2c_adapter *adapter, size_t in
 }
 
 /**
+ * \brief Locate a message in an I2C vector.
+ * \param adapter I2C adapter to locate the message in.
+ * \param id Message to locate.
+ * \return The message index. If the message is not found the return value will be 
+ *         i2c_msg_vector::length + 1.
+ */
+PUBLIC size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message *id)
+{
+	struct i2c_msg_vector *vector = &adapter->msg_vector;
+	size_t ret;
+	
+	for(ret = 0; ret < vector->length; ret++) {
+		if(vector->msgs[ret] == id) {
+			return ret;
+		} else {
+			continue;
+		}
+	}
+	
+	return vector->length + 1; /* return an impossible value */
+}
+
+/**
  * \brief Add a new message to the adapter.
  * \param adapter The I2C adapter to add the message to.
  * \param msg I2C message to add.

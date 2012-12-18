@@ -41,6 +41,9 @@
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
 static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
+static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adap);
+static int i2c_resume_transfer(struct i2c_adapter *adapter);
+
 /**
  * \brief File I/O structure for bus 0 on port C.
  */
@@ -111,6 +114,8 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 #endif
 	adapter->data = (void*)&i2c_c0;
 	adapter->features = I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT;
+	adapter->start_transfer = &i2c_init_transfer;
+	adapter->resume = &i2c_resume_transfer;
 
 	vfs_add(&i2c_c0_io);
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);
@@ -275,4 +280,14 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 			break;
 	}
 	return;
+}
+
+static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter)
+{
+	return NULL;
+}
+
+static int i2c_resume_transfer(struct i2c_adapter *adapter)
+{
+	return -1;
 }

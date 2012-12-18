@@ -43,6 +43,7 @@ for(__it = 0; __it < (__vec)->length; (__it)++)
 size_t __it; \
 for(__it = (__vec)->length - 1; __it >= 0; (__it)--)
 
+__DECL
 /*
  * I2C-MSG functions
  */
@@ -55,6 +56,7 @@ extern struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter,
 extern int i2c_vector_error(struct i2c_adapter *adapter, int error);
 extern int i2c_vector_erase(struct i2c_adapter *adapter);
 extern int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message *msg, size_t index);
+extern size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message *id);
 
 /**
  * \brief Retrieve the length of the vector on an I2C adapter.
@@ -65,5 +67,6 @@ static inline size_t i2c_vector_length(struct i2c_adapter *adapter)
 {
 	return adapter->msg_vector.length;
 }
+__DECL_END
 
 #endif /* __I2C_MSG_H */

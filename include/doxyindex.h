@@ -46,4 +46,17 @@
  * are source tarballs available. Please use the latest release tag for the most
  * stable version. A git-clone can be performed from <a href="#">
  * git://git.michelmegens.net/BermudaOS.git</a>.
+ * 
+ * \section build Building
+ * Building BermudaOS from source is done using the GNU autotools collection in combination with
+ * the GNU CC for your target. Sources must first be configured using the configure script. This
+ * script ships with a help option:
+ * \verbatim ./configure --help \endverbatim
+ * If you do not want to clobber the sources with configure output you can build in a seperate build
+ * directory (execute in BermudaOS root dir):
+\verbatim
+mkdir build
+cd build
+../configure ...
+\endverbatim
  */

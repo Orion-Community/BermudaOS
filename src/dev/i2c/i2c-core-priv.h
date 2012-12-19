@@ -65,7 +65,7 @@
  */
 #define I2C_MSG_CHECK(__msg, __bus) \
 ( \
-	I2C_MSG_MASTER_CHECK(__msg, __bus) ^ I2C_MSG_SLAVE_CHECK(__msg, __bus) \
+	xor(I2C_MSG_MASTER_CHECK(__msg, __bus), I2C_MSG_SLAVE_CHECK(__msg, __bus)) \
 )
 
 #endif /* __I2C_CORE_PRIV_H */

@@ -26,6 +26,18 @@
 #define BIT(x) (1<<x)
 #define _BV(x) BIT(x)
 
+/**
+ * \def xor
+ * \brief Calculate the XOR of two numbers.
+ * \param __x The first number.
+ * \param __y The second number.
+ * \return \f$ x \oplus y \f$
+ */
+#define xor(__x, __y) \
+(\
+	__x ^ __y \
+)
+
 __DECL
 /**
  * \fn BermudaIsPowerOfTwo(unsigned int x)

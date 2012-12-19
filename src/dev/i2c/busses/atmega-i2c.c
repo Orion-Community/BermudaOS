@@ -334,3 +334,14 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter)
 {
 	return -1;
 }
+
+SIGNAL(TWI_STC_vect)
+{
+	uint8_t status = TWSR & I2C_NOINFO;
+	struct i2c_adapter *adapter = ATMEGA_I2C_C0_ADAPTER;
+	
+	switch(status) {
+		default:
+			break;
+	}
+}

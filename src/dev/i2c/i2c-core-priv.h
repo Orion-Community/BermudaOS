@@ -28,17 +28,7 @@
 #define __I2C_CORE_PRIV_H
 
 /**
- * \brief Check a message against its bus to see if it can be sent.
- * \param __msg I2C message features.
- * \param __bus I2C bus features.
- */
-#define I2C_MSG_CHECK(__msg, __bus) \
-( \
-	I2C_MSG_MASTER_CHECK(__msg, __bus) ^ I2C_MSG_SLAVE_CHECK(__msg, __bus) \
-)
-
-/**
- * \brief Check the message against the bus.
+ * \brief Check a message against the bus.
  * \param __msg I2C message features.
  * \param __bus I2C bus features.
  * \retval 1 if the message is a master message ánd the bus supports master messages.
@@ -54,7 +44,7 @@
 )
 
 /**
- * \brief Check the message against the bus.
+ * \brief Check a message against the bus.
  * \param __msg I2C message features.
  * \param __bus I2C bus features.
  * \retval 1 if the message is a slave message ánd the bus supports slave messages.
@@ -66,6 +56,16 @@
 #define I2C_MSG_SLAVE_CHECK(__msg, __bus) \
 ( \
 ((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT)) \
+)
+
+/**
+ * \brief Check a message against its bus to see if it can be sent.
+ * \param __msg I2C message features.
+ * \param __bus I2C bus features.
+ */
+#define I2C_MSG_CHECK(__msg, __bus) \
+( \
+	I2C_MSG_MASTER_CHECK(__msg, __bus) ^ I2C_MSG_SLAVE_CHECK(__msg, __bus) \
 )
 
 #endif /* __I2C_CORE_PRIV_H */

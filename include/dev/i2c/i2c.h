@@ -194,12 +194,13 @@ struct i2c_adapter {
 	/**
 	 * \brief Hook implemented by the bus driver.
 	 * \param adapter The bus adapter.
+	 * \param freq The frequency to operate on.
 	 * \return The last message which is sent.
 	 * \retval NULL on error.
 	 * 
 	 * A hook which <b>must</b> be implemented by the adapter to initialise a transfer.
 	 */
-	struct i2c_message *(*start_transfer)(struct i2c_adapter *adapter);
+	struct i2c_message *(*start_transfer)(struct i2c_adapter *adapter, uint32_t freq);
 	
 	/**
 	 * \brief Resume transmission after a call back.

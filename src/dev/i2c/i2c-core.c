@@ -520,11 +520,26 @@ i2c_features_t flags;
 	
 	return rc;
 	
-	auto __maxoptimize bool i2c_check_msg(register i2c_features_t msg, 
+	auto bool __maxoptimize i2c_check_msg(register i2c_features_t msg, 
 										  register i2c_features_t bus)
 	{
 		return (I2C_MSG_CHECK(msg, bus) != 0);
 	}
+}
+#endif
+
+#ifdef __DOXYGEN__
+/**
+ * \brief Check weather a message is valid or not.
+ * \param msg I2C message features.
+ * \param bus I2C bus features.
+ * \retval TRUE if the message is valid.
+ * \retval FALSE in any other case.
+ * \note This is a doxygen dummy.
+ */
+static bool __maxoptimize i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus)
+{
+	return -1;
 }
 #endif
 
@@ -540,7 +555,7 @@ static int i2c_init_transfer(struct i2c_client *client)
 	size_t index;
 	int rc = -1;
 	
-	if((msg = adapter->start_transfer(adapter)) != NULL) {
+	if((msg = adapter->start_transfer(adapter, client->freq)) != NULL) {
 		index = i2c_vector_locate(adapter, msg);
 		rc = 0;
 		if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
@@ -555,7 +570,7 @@ static int i2c_init_transfer(struct i2c_client *client)
 	}
 	printf("Entries: %u\n", adapter->msg_vector.length);
 	i2c_cleanup_adapter_msgs(client);
-	return 0;
+	return rc;
 }
 
 /**

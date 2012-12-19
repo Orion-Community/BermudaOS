@@ -22,9 +22,10 @@
 #include <stdio.h>
 
 #include <dev/dev.h>
-#include <dev/i2c/i2c.h>
-#include <dev/i2c/reg.h>
-#include <dev/i2c/i2c-core.h>
+#include <dev/i2c.h>
+#include <dev/i2c-reg.h>
+#include <dev/i2c-core.h>
+#include <dev/i2c-msg.h>
 #include <dev/i2c/busses/atmega.h>
 
 #include <sys/thread.h>
@@ -41,8 +42,11 @@
 static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
 static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
-static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adap);
+
+static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adap, uint32_t freq);
 static int i2c_resume_transfer(struct i2c_adapter *adapter);
+static int i2c_master_transfer(struct i2c_adapter *adapter);
+static int i2c_slave_transfer(struct i2c_adapter *adapter);
 
 /**
  * \brief File I/O structure for bus 0 on port C.
@@ -82,6 +86,13 @@ static volatile void *bus_c0_slave_queue = SIGNALED;
  * \brief Array of all available I2C busses
  */
 struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
+
+/**
+ * \brief Index of the current message.
+ * 
+ * current_index holds the index of the message that is currently being processed.
+ */
+static volatile size_t current_index = 0;
 
 /**
  * \brief Intialize an I2C bus.
@@ -282,9 +293,41 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 	return;
 }
 
-static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter)
+static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq)
 {
+	struct i2c_message *first;
+	current_index = 0;
+	int rc;
+	
+	first = i2c_vector_get(adapter, current_index);
+	if(first) {
+		if(neg(i2c_msg_features(first)) & I2C_MSG_MASTER_MSG_MASK) {
+			uint8_t pres = atmega_i2c_calc_prescaler(freq);
+			uint8_t twbr = atmega_i2c_calc_twbr(freq, pres);
+			TWBR = twbr;
+			TWSR = pres & B11;
+			rc = i2c_master_transfer(adapter);
+		} else {
+			/* slave msg */
+			rc = i2c_slave_transfer(adapter);
+		}
+		
+		if(rc >= 0) {
+			/* no error */
+			return i2c_vector_get(adapter, current_index);
+		}
+	}
 	return NULL;
+}
+
+static int i2c_master_transfer(struct i2c_adapter *adapter)
+{
+	return -1;
+}
+
+static int i2c_slave_transfer(struct i2c_adapter *adapter)
+{
+	return -1;
 }
 
 static int i2c_resume_transfer(struct i2c_adapter *adapter)

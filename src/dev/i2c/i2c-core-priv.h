@@ -16,23 +16,58 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file src/dev/i2c/i2c-core-priv.h I2C private header.
+ * \brief Private header for the I2C Core.
+ * 
+ * \addtogroup i2c-core
+ * @{
+ */
+
 #ifndef __I2C_CORE_PRIV_H
 #define __I2C_CORE_PRIV_H
 
+/**
+ * \brief Check a message against its bus to see if it can be sent.
+ * \param __msg I2C message features.
+ * \param __bus I2C bus features.
+ */
 #define I2C_MSG_CHECK(__msg, __bus) \
 ( \
 	I2C_MSG_MASTER_CHECK(__msg, __bus) ^ I2C_MSG_SLAVE_CHECK(__msg, __bus) \
 )
 
+/**
+ * \brief Check the message against the bus.
+ * \param __msg I2C message features.
+ * \param __bus I2C bus features.
+ * \retval 1 if the message is a master message ánd the bus supports master messages.
+ * \retval 0 in any other case.
+ * 
+ * Checks \p __msg against \p __bus to see if it is a master message, and if so, if the bus supports
+ * master transfers.
+ */
 #define I2C_MSG_MASTER_CHECK(__msg, __bus) \
 ( \
 (((neg(__msg) & I2C_MSG_MASTER_MSG_MASK) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & \
 (__bus & I2C_MASTER_SUPPORT)) \
 )
 
+/**
+ * \brief Check the message against the bus.
+ * \param __msg I2C message features.
+ * \param __bus I2C bus features.
+ * \retval 1 if the message is a slave message ánd the bus supports slave messages.
+ * \retval 0 in any other case.
+ * 
+ * Checks \p __msg against \p __bus to see if it is a slave message, and if so, if the bus supports
+ * slave transfers.
+ */
 #define I2C_MSG_SLAVE_CHECK(__msg, __bus) \
 ( \
 ((__msg >> I2C_MSG_SLAVE_MSG_FLAG_SHIFT) & ((__bus & I2C_SLAVE_SUPPORT) >> I2C_SLAVE_SUPPORT_SHIFT)) \
 )
 
 #endif /* __I2C_CORE_PRIV_H */
+
+//@}

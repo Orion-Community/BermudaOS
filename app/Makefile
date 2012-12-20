@@ -4,8 +4,8 @@ ARDUINO_LIBS		=
 
 CSRCS			= main.c
 CPPSRCS			= 
-LIBDIR			= ../build/lib
-LIBEXEC			= ../build/libexec
+LIBDIR			= ../build/install/lib
+LIBEXEC			= ../build/install/libexec
 LIBS			= -lavr -ldev -lsys -lavr -l24c02 -lspiram -lcbermuda -lvfs -ldev
 BUILDSYS		= linux
 TOP_SRCDIR		= ../build
@@ -17,7 +17,7 @@ include ../make/Makefile.defs
 
 all: $(TARGET) $(OBJS)
 	$(CC) -mmcu=$(MCU) -nostdlib -nostdinc -Wl,--gc-sections -Os -o temp.elf \
-	$(LIBEXEC)/boot.o $(OBJS) -L$(LIBDIR) $(LIBS) -lgcc
+	$(LIBEXEC)/boot.elf $(OBJS) -L$(LIBDIR) $(LIBS) -lgcc
 	$(OBJCOPY) -R .eeprom -O ihex temp.elf $(TARGET)
 #	-rm -fv temp.elf
 

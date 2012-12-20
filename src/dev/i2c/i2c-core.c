@@ -240,7 +240,7 @@ static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info 
 	FILE *stream = info->socket;
 	
 	if((stream->flags & I2C_MASTER) != 0) {
-		return adapter->dev->alloc(adapter->dev, I2C_TMO);
+		return adapter->dev->alloc(adapter->dev, EVENT_WAIT_INFINITE);
 	} else {
 		return 0;
 	}
@@ -552,10 +552,12 @@ static int i2c_init_transfer(struct i2c_client *client)
 {
 	struct i2c_adapter *adapter = client->adapter;
 	struct i2c_message *msg, *newmsg;
+	FILE *stream = i2c_shinfo(client)->socket;
 	size_t index;
 	int rc = -1;
+	bool master = (stream->flags & I2C_MASTER) ? TRUE : FALSE;
 	
-	if((msg = adapter->start_transfer(adapter, client->freq)) != NULL) {
+	if((msg = adapter->start_transfer(adapter, client->freq, master)) != NULL) {
 		index = i2c_vector_locate(adapter, msg);
 		rc = 0;
 		if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {

@@ -77,6 +77,8 @@ close(fd);
  * The slave will first wait for a master receive request. When it is finished, it will check for a
  * user callback function. That function can set the transmit buffer. Set the buffer to <i>NULL</i>
  * to not transmit any data as a slave.
+ * \note Behaviour for clients acting as a master ánd slave at the same time is undefined. Altough
+ *       it is possible to do master and slave transactions 'simutaniously' using seperate clients.
  * @{
  */
 

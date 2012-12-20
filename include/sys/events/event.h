@@ -75,6 +75,7 @@ __DECL_END
 
 #define event_wait(q, tmo) BermudaEventWait(q, tmo)
 #define event_signal(q) BermudaEventSignal(q)
+#define event_signal_from_isr(q) BermudaEventSignalFromISR(q)
 
 // @}
 #endif

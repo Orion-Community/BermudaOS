@@ -43,7 +43,7 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
 static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
 
-static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adap, uint32_t freq);
+static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adap, uint32_t freq, bool master);
 static int i2c_resume_transfer(struct i2c_adapter *adapter);
 static int i2c_master_transfer(struct i2c_adapter *adapter);
 static int i2c_slave_transfer(struct i2c_adapter *adapter);
@@ -102,6 +102,8 @@ static volatile uint8_t *slave_buff = NULL;
  * \brief Length of the current slave buffer.
  */
 static volatile size_t slave_buff_length = 0;
+
+static volatile size_t buff_index = 0;
 
 /**
  * \brief Intialize an I2C bus.
@@ -276,6 +278,7 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 			atmega_i2c_reg_write(priv->twcr, &reg);
 			break;
 			
+		case I2C_RELEASE | I2C_ACK:
 		case I2C_ACK:
 			reg |= BIT(TWINT) | BIT(TWEA) | BIT(TWEN) | BIT(TWIE);
 			atmega_i2c_reg_write(priv->twcr, &reg);
@@ -302,29 +305,32 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
 	return;
 }
 
-static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq)
+/**
+ * \brief Initiate an I2C transfer.
+ * \param adapter Bus adapter.
+ * \param freq Operating frequency.
+ * \param master 
+ * \note \p freq will only be used if a master transfer is being initiated.
+ */
+static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool master)
 {
-	struct i2c_message *first;
 	current_index = 0;
 	int rc;
 	
-	first = i2c_vector_get(adapter, current_index);
-	if(first) {
-		if(neg(i2c_msg_features(first)) & I2C_MSG_MASTER_MSG_MASK) {
-			uint8_t pres = atmega_i2c_calc_prescaler(freq);
-			uint8_t twbr = atmega_i2c_calc_twbr(freq, pres);
-			TWBR = twbr;
-			TWSR = pres & B11;
-			rc = i2c_master_transfer(adapter);
-		} else {
-			/* slave msg */
-			rc = i2c_slave_transfer(adapter);
-		}
-		
-		if(rc >= 0) {
-			/* no error */
-			return i2c_vector_get(adapter, current_index);
-		}
+	if(master) {
+		uint8_t pres = atmega_i2c_calc_prescaler(freq);
+		uint8_t twbr = atmega_i2c_calc_twbr(freq, pres);
+		TWBR = twbr;
+		TWSR = pres & B11;
+		rc = i2c_master_transfer(adapter);
+	} else {
+		/* slave msg */
+		rc = i2c_slave_transfer(adapter);
+	}
+	
+	if(rc >= 0) {
+		/* no error */
+		return i2c_vector_get(adapter, current_index);
 	}
 	return NULL;
 }
@@ -347,6 +353,8 @@ static int i2c_slave_transfer(struct i2c_adapter *adapter)
 	int rc = -1;
 	
 	if(msg) {
+		slave_buff = msg->buff;
+		slave_buff_length = msg->length;
 		adapter->dev->ctrl(adapter->dev, I2C_ACK, NULL);
 		rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO);
 	}
@@ -356,7 +364,22 @@ static int i2c_slave_transfer(struct i2c_adapter *adapter)
 
 static int i2c_resume_transfer(struct i2c_adapter *adapter)
 {
-	return -1;
+	struct i2c_message *msg;
+	int rc = -1;
+	
+	if((msg = i2c_vector_get(adapter, current_index)) != NULL) {
+		if((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0) {
+			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
+			rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO);
+		} else {
+			/* slave msg */
+			slave_buff = msg->buff;
+			slave_buff_length = msg->length;
+			adapter->dev->ctrl(adapter->dev, I2C_ACK, NULL);
+			rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO);
+		}
+	}
+	return rc;
 }
 
 #ifndef __DOXYGEN__
@@ -364,8 +387,21 @@ SIGNAL(TWI_STC_vect)
 {
 	uint8_t status = TWSR & I2C_NOINFO;
 	struct i2c_adapter *adapter = ATMEGA_I2C_C0_ADAPTER;
+	struct i2c_message *msg = i2c_vector_get(adapter, current_index);
 	
 	switch(status) {
+		/*
+		 * initiate the master transfer.
+		 */
+		case I2C_MASTER_START:
+		case I2C_MASTER_REP_START:
+			if(msg) {
+				TWDR = msg->addr;
+				TWCR = BIT(TWEN) | BIT(TWIE) | BIT(TWEA) | BIT(TWINT);
+				break;
+			}
+			event_signal_from_isr(event(adapter->master_queue));
+			break;
 		default:
 			break;
 	}

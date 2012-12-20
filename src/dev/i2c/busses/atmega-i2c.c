@@ -95,6 +95,15 @@ struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
 static volatile size_t current_index = 0;
 
 /**
+ * \brief Current slave buffer.
+ */
+static volatile uint8_t *slave_buff = NULL;
+/**
+ * \brief Length of the current slave buffer.
+ */
+static volatile size_t slave_buff_length = 0;
+
+/**
  * \brief Intialize an I2C bus.
  * \param sla Slave address of this bus.
  * \param adapter Bus adapter.
@@ -322,12 +331,27 @@ static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter, uint32
 
 static int i2c_master_transfer(struct i2c_adapter *adapter)
 {
-	return -1;
+	struct i2c_message *msg = i2c_vector_get(adapter, current_index);
+	int rc = -1;
+	
+	if(msg) {
+		adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
+		rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO);
+	}
+	return rc;
 }
 
 static int i2c_slave_transfer(struct i2c_adapter *adapter)
 {
-	return -1;
+	struct i2c_message *msg = i2c_vector_get(adapter, current_index);
+	int rc = -1;
+	
+	if(msg) {
+		adapter->dev->ctrl(adapter->dev, I2C_ACK, NULL);
+		rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO);
+	}
+	
+	return rc;
 }
 
 static int i2c_resume_transfer(struct i2c_adapter *adapter)
@@ -335,6 +359,7 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter)
 	return -1;
 }
 
+#ifndef __DOXYGEN__
 SIGNAL(TWI_STC_vect)
 {
 	uint8_t status = TWSR & I2C_NOINFO;
@@ -345,3 +370,4 @@ SIGNAL(TWI_STC_vect)
 			break;
 	}
 }
+#endif

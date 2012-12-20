@@ -231,5 +231,24 @@ AC_CONFIG_FILES([Makefile
                  src/net/core/Makefile
                  src/sys/Makefile
                  src/sys/events/Makefile
-                 src/fs/Makefile])
+                 src/fs/Makefile
+                 include/Makefile
+                 include/arch/Makefile
+                 include/arch/avr/Makefile
+                 include/arch/avr/arduino/Makefile
+                 include/arch/avr/328/Makefile
+                 include/arch/avr/328/dev/Makefile
+                 include/dev/Makefile
+                 include/dev/i2c/Makefile
+                 include/dev/pwm/Makefile
+                 include/dev/usart/Makefile
+                 include/netinet/Makefile
+                 include/lib/Makefile
+                 include/lib/list/Makefile
+                 include/net/Makefile
+                 include/net/core/Makefile
+                 include/sensors/Makefile
+                 include/sys/Makefile
+                 include/sys/events/Makefile
+                 include/fs/Makefile])
 AC_OUTPUT

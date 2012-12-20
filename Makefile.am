@@ -13,4 +13,4 @@ configmake.h:
 
 CLEANFILES=configmake.h
 
-SUBDIRS=src
+SUBDIRS=src include

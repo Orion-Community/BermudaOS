@@ -528,21 +528,6 @@ i2c_features_t flags;
 }
 #endif
 
-#ifdef __DOXYGEN__
-/**
- * \brief Check weather a message is valid or not.
- * \param msg I2C message features.
- * \param bus I2C bus features.
- * \retval TRUE if the message is valid.
- * \retval FALSE in any other case.
- * \note This is a doxygen dummy.
- */
-static bool __maxoptimize i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus)
-{
-	return -1;
-}
-#endif
-
 /**
  * \brief Initializes the transfer to the adapter.
  * \param adapter Adapter containing new messages.
@@ -573,6 +558,11 @@ static int i2c_init_transfer(struct i2c_client *client)
 	printf("Entries: %u\n", adapter->msg_vector.length);
 	i2c_cleanup_adapter_msgs(client);
 	return rc;
+	
+#ifdef __DOXYGEN__
+	i2c_start_transfer(adapter, freq, master);
+	i2c_resume(adapter);
+#endif
 }
 
 /**
@@ -762,6 +752,49 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
 }
 #endif
 
+/*
+ * Doxygen dummy functions.
+ */
+#ifdef __DOXYGEN__
+/**
+ * \brief Check weather a message is valid or not.
+ * \param msg I2C message features.
+ * \param bus I2C bus features.
+ * \retval TRUE if the message is valid.
+ * \retval FALSE in any other case.
+ * \note This is a doxygen dummy.
+ */
+static bool __maxoptimize i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus)
+{
+	return -1;
+}
+
+/**
+ * \brief Doxygen dummy function.
+ * \param adapter I2C adapter.
+ * \param freq Frequency.
+ * \param master Master indicator.
+ * \see i2c_adapter::start_transfer
+ */
+static int i2c_start_transfer(struct i2c_adapter *adapter, uint32_t freq, bool master)
+{
+	BermudaEventWaitNext(queue_head);
+	
+	return -1;
+}
+
+/**
+ * \brief Doxygen dummy function.
+ * \param adapter I2C adapter.
+ * \see i2c_adapter::resume
+ */
+static int i2c_resume(struct i2c_adapter *adapter)
+{
+	BermudaEventWaitNext(queue_head);
+	
+	return -1;
+}
+#endif
 
 /**
  * @}

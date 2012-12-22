@@ -59,7 +59,8 @@ static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
 static int i2c_queue_processor(struct i2c_client *client, const void *data, size_t size, 
 							   i2c_features_t flags);
 static inline bool i2c_client_has_action(i2c_features_t features);
-static int i2c_init_transfer(struct i2c_client *client);
+static int i2c_start_xfer(struct i2c_client *client);
+static int __i2c_start_xfer(struct i2c_client *client);
 static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz);
 static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client);
 
@@ -450,7 +451,7 @@ i2c_features_t flags;
 				break;
 
 		case I2C_FLUSH_QUEUE_ENTRIES:
-			rc = i2c_init_transfer(client);
+			rc = i2c_start_xfer(client);
 			break;
 			
 		case I2C_DELETE_QUEUE_ENTRY:
@@ -481,12 +482,29 @@ i2c_features_t flags;
 #endif
 
 /**
+ * \brief Initialize an I2C transmission.
+ * \param client Client whom requests the transmission.
+ * \note This function checks wether the adapter sane, __i2c_start_xfer starts the actual transfer.
+ * \see __i2c_start_xfer
+ */
+static int i2c_start_xfer(struct i2c_client *client)
+{
+	if(client) {
+		if(client->adapter && epl_entries(i2c_shinfo(client)->list) != 0) {
+			return __i2c_start_xfer(client);
+		}
+	}
+	return -1;
+}
+
+/**
  * \brief Initialize the transfer of a chain of messages.
  * \param client Client which has initialized the transfer.
  * 
  * A transfer will be initiated using the adapter the client is configured to use. Please note, that
  * is not guarranteed that all messages which are added to the client are sent. They have to meet
  * some requirements set by the adapter.
+ * \todo Add checks after call back.
  * 
  * \section i2c_msg_check i2c_check_msg(msg_features, bus_features)
  * 
@@ -500,7 +518,7 @@ i2c_features_t flags;
  * 
  * \see I2C_MSG_CHECK
  */
-static int i2c_init_transfer(struct i2c_client *client)
+static int __link __i2c_start_xfer(struct i2c_client *client)
 {
 	auto bool i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus);
 	struct i2c_adapter *adapter;
@@ -562,38 +580,41 @@ static int i2c_init_transfer(struct i2c_client *client)
 				}
 			}
 			epl_unlock(sh_info->list);
-			if(!rc) {
-				rc = i2c_init_transfer(client);
+	
+			index = adapter->start_transfer(adapter, client->freq, master);
+			if(!adapter->error) {
+				rc = 0;
+				
+				do {
+					msg = i2c_vector_get(adapter, index);
+					if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
+						newmsg = malloc(sizeof(*newmsg));
+						if(!newmsg) {
+							rc = -1;
+							break;
+						}
+						newmsg->addr = msg->addr;
+						if(!i2c_shinfo(client)->shared_callback(client, newmsg)) {
+							i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
+							i2c_queue_processor(client, newmsg, index, 0);
+						}
+					}
+					
+					length = i2c_vector_length(adapter);
+					if(index < length) {
+						index = adapter->resume(adapter);
+						if(adapter->error) {
+							rc = -1;
+							break;
+						}
+					}
+				} while(index < length);
 			}
+			i2c_cleanup_adapter_msgs(client);
 			i2c_release_adapter(adapter, sh_info);
 		}
 	}
-	
-	index = adapter->start_transfer(adapter, client->freq, master);
-	if(!adapter->error) {
-		rc = 0;
-		
-		do {
-			msg = i2c_vector_get(adapter, index);
-			if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
-				newmsg = malloc(sizeof(*newmsg));
-				newmsg->addr = msg->addr;
-				if(!i2c_shinfo(client)->shared_callback(client, newmsg)) {
-					i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
-					i2c_queue_processor(client, newmsg, index, 0);
-				}
-			}
-			
-			length = i2c_vector_length(adapter);
-			if(index < length) {
-				index = adapter->resume(adapter);
-				if(adapter->error) {
-					rc = -1;
-					break;
-				}
-			}
-		} while(index < length);
-	}
+
 	return rc;
 	
 	auto bool __maxoptimize i2c_check_msg(register i2c_features_t msg, 

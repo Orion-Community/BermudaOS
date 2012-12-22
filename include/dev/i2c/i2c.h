@@ -200,7 +200,7 @@ struct i2c_adapter {
 	 * 
 	 * A hook which <b>must</b> be implemented by the adapter to initialise a transfer.
 	 */
-	struct i2c_message *(*start_transfer)(struct i2c_adapter *adapter, uint32_t freq, bool master);
+	size_t (*start_transfer)(struct i2c_adapter *adapter, uint32_t freq, bool master);
 	
 	/**
 	 * \brief Resume transmission after a call back.
@@ -211,7 +211,7 @@ struct i2c_adapter {
 	 * \retval 0 on success.
 	 * \retval -1 on failure.
 	 */
-	int (*resume)(struct i2c_adapter *adapter);
+	size_t (*resume)(struct i2c_adapter *adapter);
 };
 
 /* file I/O */

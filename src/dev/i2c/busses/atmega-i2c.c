@@ -43,8 +43,8 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data);
 static unsigned char atmega_i2c_calc_twbr(uint32_t freq, unsigned char pres);
 static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
 
-static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adap, uint32_t freq, bool master);
-static int i2c_resume_transfer(struct i2c_adapter *adapter);
+static size_t i2c_init_transfer(struct i2c_adapter *adap, uint32_t freq, bool master);
+static size_t i2c_resume_transfer(struct i2c_adapter *adapter);
 static int i2c_master_transfer(struct i2c_adapter *adapter);
 static int i2c_slave_transfer(struct i2c_adapter *adapter);
 
@@ -312,7 +312,7 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
  * \param master 
  * \note \p freq will only be used if a master transfer is being initiated.
  */
-static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool master)
+static size_t i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool master)
 {
 	current_index = 0;
 	int rc;
@@ -330,9 +330,11 @@ static struct i2c_message *i2c_init_transfer(struct i2c_adapter *adapter, uint32
 	
 	if(rc >= 0) {
 		/* no error */
-		return i2c_vector_get(adapter, current_index);
+		return current_index;
 	}
-	return NULL;
+	
+	adapter->error = TRUE;
+	return i2c_vector_length(adapter);
 }
 
 static int i2c_master_transfer(struct i2c_adapter *adapter)
@@ -356,30 +358,35 @@ static int i2c_slave_transfer(struct i2c_adapter *adapter)
 		slave_buff = msg->buff;
 		slave_buff_length = msg->length;
 		adapter->dev->ctrl(adapter->dev, I2C_ACK, NULL);
-		rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO);
+		if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) < 0) {
+			adapter->error = TRUE;
+		}
 	}
 	
 	return rc;
 }
 
-static int i2c_resume_transfer(struct i2c_adapter *adapter)
+static size_t i2c_resume_transfer(struct i2c_adapter *adapter)
 {
 	struct i2c_message *msg;
-	int rc = -1;
 	
 	if((msg = i2c_vector_get(adapter, current_index)) != NULL) {
 		if((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0) {
 			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
-			rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO);
+			if(BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO) < 0) {
+				adapter->error = TRUE;
+			}
 		} else {
 			/* slave msg */
 			slave_buff = msg->buff;
 			slave_buff_length = msg->length;
 			adapter->dev->ctrl(adapter->dev, I2C_ACK, NULL);
-			rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO);
+			if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) < 0) {
+				adapter->error = TRUE;
+			}
 		}
 	}
-	return rc;
+	return current_index;
 }
 
 #ifndef __DOXYGEN__

@@ -371,7 +371,7 @@ i2c_features_t flags;
 	auto bool i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus);
 	struct i2c_shared_info *sh_info;
 	struct epl_list *clist;
-	struct epl_list_node *node, *n_node;
+	struct epl_list_node *node;
 	struct i2c_message *msg;
 	struct i2c_adapter *adpt;
 	i2c_features_t features, b_features; /* client and bus features */
@@ -450,55 +450,7 @@ i2c_features_t flags;
 				break;
 
 		case I2C_FLUSH_QUEUE_ENTRIES:
-			if(epl_lock(sh_info->list) == 0) {
-				epl_deref(sh_info->list, &clist);
-				
-				if(i2c_lock_adapter(adpt, sh_info) == 0) {
-					b_features = i2c_adapter_features(adpt) & (I2C_MASTER_SUPPORT | 
-																I2C_SLAVE_SUPPORT);
-					for_each_epl_node_safe(clist, node, n_node) {
-						features = i2c_msg_features((void*)node->data);
-						if((features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
-							sh_info->shared_callback == NULL) {
-							features &= (features & ~I2C_MSG_CALL_BACK_FLAG);
-						}
-						msg = (struct i2c_message*) node->data;
-						msg->features = features;
-						features &= I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_FLAG;
-
-						if(i2c_check_msg(features, b_features)) {
-							epl_delete_node(clist, node);
-							free(node);
-							rc = i2c_vector_add(adpt, msg);
-							if(rc) {
-								if(i2c_vector_error(adpt, rc) == 0) {
-									rc = i2c_vector_add(adpt, msg);
-									continue;
-								}
-								logmsg_P(I2C_CORE_LOG, PSTR("Error occurred while trying to add a "
-															"msg (0x%p) to the adapter\n"), msg);
-								i2c_set_error(client);
-								free(msg);
-								rc = -DEV_INTERNAL;
-								break;
-							}
-						} else {
-							logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter."
-														"\n"), msg);
-							i2c_set_error(client);
-							epl_delete_node(clist, node);
-							free(msg);
-							free(node);
-							rc = -DEV_INTERNAL;
-						}
-					}
-					epl_unlock(sh_info->list);
-					if(!rc) {
-						rc = i2c_init_transfer(client);
-					}
-					i2c_release_adapter(adpt, sh_info);
-				}
-			}
+			rc = i2c_init_transfer(client);
 			break;
 			
 		case I2C_DELETE_QUEUE_ENTRY:
@@ -529,40 +481,126 @@ i2c_features_t flags;
 #endif
 
 /**
- * \brief Initializes the transfer to the adapter.
- * \param adapter Adapter containing new messages.
- * \note This function also tries to get the locks needed to complete the transfer.
+ * \brief Initialize the transfer of a chain of messages.
+ * \param client Client which has initialized the transfer.
+ * 
+ * A transfer will be initiated using the adapter the client is configured to use. Please note, that
+ * is not guarranteed that all messages which are added to the client are sent. They have to meet
+ * some requirements set by the adapter.
+ * 
+ * \section i2c_msg_check i2c_check_msg(msg_features, bus_features)
+ * 
+ * This function contains a nested function \p i2c_check_msg, which checks the validity of the 
+ * message. This will be done using the macro I2C_MSG_CHECK. The mathematical formula of this 
+ * macro is 
+ * \f$ f(x) = (((\neg y_{m} \land m_{f}) \gg m_{s}) \land (y_{b} \land s_{m})) \oplus ((y_{m} \gg 
+ * m_{s}) \land ((y_{b} \land s_{s}) \gg m_{s})) \f$. \n
+ * When the output of is one the message will be added to the vector on the adapter, if not (i.e.
+ * the output is zero), the message will be disposed.
+ * 
+ * \see I2C_MSG_CHECK
  */
 static int i2c_init_transfer(struct i2c_client *client)
 {
-	struct i2c_adapter *adapter = client->adapter;
+	auto bool i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus);
+	struct i2c_adapter *adapter;
 	struct i2c_message *msg, *newmsg;
-	FILE *stream = i2c_shinfo(client)->socket;
-	size_t index;
+	struct epl_list *clist = NULL;
+	struct epl_list_node *node, *n_node;
+	struct i2c_shared_info *sh_info;
+	i2c_features_t msg_features, bus_features;
+	FILE *stream;
+	size_t index, length;
 	int rc = -1;
-	bool master = (stream->flags & I2C_MASTER) ? TRUE : FALSE;
+	bool master;
 	
-	if((msg = adapter->start_transfer(adapter, client->freq, master)) != NULL) {
-		index = i2c_vector_locate(adapter, msg);
-		rc = 0;
-		if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
-			newmsg = malloc(sizeof(*newmsg));
-			newmsg->addr = msg->addr;
-			if(!i2c_shinfo(client)->shared_callback(client, newmsg)) {
-				i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
-				i2c_queue_processor(client, newmsg, index, 0);
+	sh_info = i2c_shinfo(client);
+	adapter = client->adapter;
+	stream = i2c_shinfo(client)->socket;
+	master = (stream->flags & I2C_MASTER) ? TRUE : FALSE;
+	
+	if(epl_lock(sh_info->list) == 0) {
+		epl_deref(sh_info->list, &clist);
+		
+		if(i2c_lock_adapter(adapter, sh_info) == 0) {
+			bus_features = i2c_adapter_features(adapter) & (I2C_MASTER_SUPPORT | 
+															I2C_SLAVE_SUPPORT);
+			for_each_epl_node_safe(clist, node, n_node) {
+				msg_features = i2c_msg_features((void*)node->data);
+				if((msg_features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
+					sh_info->shared_callback == NULL) {
+					msg_features &= (msg_features & ~I2C_MSG_CALL_BACK_FLAG);
+				}
+				msg = (struct i2c_message*) node->data;
+				msg->features = msg_features;
+				msg_features &= I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_FLAG;
+				/* check the validity of the message */
+				if(i2c_check_msg(msg_features, bus_features)) {
+					epl_delete_node(clist, node);
+					free(node);
+					rc = i2c_vector_add(adapter, msg);
+					if(rc) {
+						if(i2c_vector_error(adapter, rc) == 0) {
+							rc = i2c_vector_add(adapter, msg);
+							continue;
+						}
+						logmsg_P(I2C_CORE_LOG, PSTR("Error occurred while trying to add a "
+													"msg (0x%p) to the adapter\n"), msg);
+						i2c_set_error(client);
+						free(msg);
+						rc = -DEV_INTERNAL;
+						break;
+					}
+				} else {
+					logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter.\n"), 
+							 msg);
+					i2c_set_error(client);
+					epl_delete_node(clist, node);
+					free(msg);
+					free(node);
+					rc = -DEV_INTERNAL;
+				}
 			}
-			rc = adapter->resume(adapter);
+			epl_unlock(sh_info->list);
+			if(!rc) {
+				rc = i2c_init_transfer(client);
+			}
+			i2c_release_adapter(adapter, sh_info);
 		}
 	}
-	printf("Entries: %u\n", adapter->msg_vector.length);
-	i2c_cleanup_adapter_msgs(client);
+	
+	index = adapter->start_transfer(adapter, client->freq, master);
+	if(!adapter->error) {
+		rc = 0;
+		
+		do {
+			msg = i2c_vector_get(adapter, index);
+			if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
+				newmsg = malloc(sizeof(*newmsg));
+				newmsg->addr = msg->addr;
+				if(!i2c_shinfo(client)->shared_callback(client, newmsg)) {
+					i2c_set_action(client, I2C_INSERT_QUEUE_ENTRY, TRUE);
+					i2c_queue_processor(client, newmsg, index, 0);
+				}
+			}
+			
+			length = i2c_vector_length(adapter);
+			if(index < length) {
+				index = adapter->resume(adapter);
+				if(adapter->error) {
+					rc = -1;
+					break;
+				}
+			}
+		} while(index < length);
+	}
 	return rc;
 	
-#ifdef __DOXYGEN__
-	i2c_start_transfer(adapter, freq, master);
-	i2c_resume(adapter);
-#endif
+	auto bool __maxoptimize i2c_check_msg(register i2c_features_t msg, 
+										  register i2c_features_t bus)
+	{
+		return (I2C_MSG_CHECK(msg, bus) != 0);
+	}
 }
 
 /**

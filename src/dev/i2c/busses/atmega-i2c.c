@@ -314,10 +314,10 @@ static void atmega_i2c_ioctl(struct device *dev, int cfg, void *data)
  */
 static size_t i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool master)
 {
-	current_index = 0;
 	int rc;
 	
 	if(master) {
+		current_index = 0;
 		uint8_t pres = atmega_i2c_calc_prescaler(freq);
 		uint8_t twbr = atmega_i2c_calc_twbr(freq, pres);
 		TWBR = twbr;
@@ -407,7 +407,6 @@ SIGNAL(TWI_STC_vect)
 				TWCR = BIT(TWEN) | BIT(TWIE) | BIT(TWEA) | BIT(TWINT);
 				break;
 			}
-			event_signal_from_isr(event(adapter->master_queue));
 			break;
 		default:
 			break;

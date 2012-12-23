@@ -529,7 +529,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 	i2c_features_t msg_features, bus_features;
 	FILE *stream;
 	size_t index, length;
-	int rc = -1;
+	int rc = -DEV_INTERNAL;
 	bool master;
 	
 	sh_info = i2c_shinfo(client);
@@ -581,9 +581,9 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 			epl_unlock(sh_info->list);
 			
 			if(rc < 0) {
-				goto out-err;
+				goto err;
 			}
-	
+			
 			index = adapter->start_transfer(adapter, client->freq, master);
 			if(!adapter->error) {
 				bus_features = i2c_adapter_features(adapter);
@@ -626,7 +626,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 	}
 
 	return rc;
-	out-err:
+	err:
 	i2c_cleanup_adapter_msgs(client);
 	i2c_release_adapter(adapter, sh_info);
 	return rc;

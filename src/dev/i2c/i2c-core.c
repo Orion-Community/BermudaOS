@@ -552,7 +552,6 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 				msg = (struct i2c_message*) node->data;
 				msg->features = msg_features;
 				msg_features &= I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_FLAG;
-				/* check the validity of the message */
 				if(i2c_check_msg(msg_features, bus_features)) {
 					epl_delete_node(clist, node);
 					free(node);

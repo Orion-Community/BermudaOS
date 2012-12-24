@@ -544,33 +544,30 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 			bus_features = i2c_adapter_features(adapter) & (I2C_MASTER_SUPPORT | 
 															I2C_SLAVE_SUPPORT);
 			for_each_epl_node_safe(clist, node, n_node) {
-				msg_features = i2c_msg_features((void*)node->data);
-				if((msg_features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
-					sh_info->shared_callback == NULL) {
-					msg_features = (msg_features & ~I2C_MSG_CALL_BACK_FLAG);
-				}
-				msg = (struct i2c_message*) node->data;
-				msg->features = msg_features;
-				msg_features &= I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_FLAG;
+				msg = (struct i2c_message*)node->data;
+				msg_features = i2c_msg_features(msg);
 				if(i2c_check_msg(msg_features, bus_features)) {
+					if((msg_features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
+						sh_info->shared_callback == NULL) {
+						msg_features = (msg_features & ~I2C_MSG_CALL_BACK_FLAG);
+					}
+					msg->features = msg_features;
 					epl_delete_node(clist, node);
-					free(node);
 					rc = i2c_vector_add(adapter, msg);
+					free(node);
 					if(rc) {
 						if(i2c_vector_error(adapter, rc) == 0) {
 							rc = i2c_vector_add(adapter, msg);
 							continue;
 						}
-						logmsg_P(I2C_CORE_LOG, PSTR("Error occurred while trying to add a "
-													"msg (0x%p) to the adapter\n"), msg);
 						i2c_set_error(client);
 						free(msg);
 						rc = -DEV_INTERNAL;
 						break;
 					}
 				} else {
-					logmsg_P(I2C_CORE_LOG, PSTR("Message (0x%p) not compliant with adapter.\n"), 
-							 msg);
+					logmsg_P(I2C_CORE_LOG, PSTR("Msg (0x%p) not compliant with adapter (0x%p).\n"), 
+							 msg, adapter);
 					i2c_set_error(client);
 					epl_delete_node(clist, node);
 					free(msg);

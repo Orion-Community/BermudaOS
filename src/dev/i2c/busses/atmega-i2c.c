@@ -402,11 +402,11 @@ SIGNAL(TWI_STC_vect)
 		 */
 		case I2C_MASTER_START:
 		case I2C_MASTER_REP_START:
-			if(msg) {
-				TWDR = msg->addr;
-				TWCR = BIT(TWEN) | BIT(TWIE) | BIT(TWEA) | BIT(TWINT);
-				break;
-			}
+			TWDR = msg->addr;
+			TWCR = BIT(TWEN) | BIT(TWIE) | BIT(TWEA) | BIT(TWINT);
+			break;
+			
+		case I2C_MT_SLA_ACK:
 			break;
 		default:
 			break;

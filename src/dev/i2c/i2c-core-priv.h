@@ -27,6 +27,8 @@
 #ifndef __I2C_CORE_PRIV_H
 #define __I2C_CORE_PRIV_H
 
+#include <lib/binary.h>
+
 /**
  * \brief Check a message against the bus.
  * \param __msg I2C message features.

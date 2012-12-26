@@ -94,6 +94,13 @@
                               I2C_MSG_SENT_STOP_FLAG | I2C_MSG_SENT_REP_START_FLAG)
                               
 
+/**
+ * \brief Read message bit.
+ * \see I2C_MSG_TRANSMIT_MSG_FLAG
+ * 
+ * When this bit is set, the message holds a receive buffer.
+ */
+#define I2C_MSG_READ BIT(0)
 //@}
 
 __DECL

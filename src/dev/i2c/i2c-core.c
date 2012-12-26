@@ -551,6 +551,9 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 						sh_info->shared_callback == NULL) {
 						msg_features = (msg_features & ~I2C_MSG_CALL_BACK_FLAG);
 					}
+					if((msg_features & I2C_MSG_TRANSMIT_MSG_FLAG) == 0) {
+						msg->addr |= I2C_MSG_READ;
+					}
 					msg->features = msg_features;
 					epl_delete_node(clist, node);
 					rc = i2c_vector_add(adapter, msg);

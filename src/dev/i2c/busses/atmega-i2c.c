@@ -47,6 +47,7 @@ static size_t i2c_init_transfer(struct i2c_adapter *adap, uint32_t freq, bool ma
 static size_t i2c_resume_transfer(struct i2c_adapter *adapter);
 static int i2c_master_transfer(struct i2c_adapter *adapter);
 static int i2c_slave_transfer(struct i2c_adapter *adapter);
+static void atmega_i2c_update(long diff);
 
 /**
  * \brief File I/O structure for bus 0 on port C.
@@ -136,8 +137,9 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 #endif
 	adapter->data = (void*)&i2c_c0;
 	adapter->features = I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT;
-	adapter->start_transfer = &i2c_init_transfer;
+	adapter->xfer = &i2c_init_transfer;
 	adapter->resume = &i2c_resume_transfer;
+	adapter->update = &atmega_i2c_update;
 
 	vfs_add(&i2c_c0_io);
 	open(i2c_c0_io.name, _FDEV_SETUP_RW);
@@ -380,13 +382,36 @@ static size_t i2c_resume_transfer(struct i2c_adapter *adapter)
 			/* slave msg */
 			slave_buff = msg->buff;
 			slave_buff_length = msg->length;
-			adapter->dev->ctrl(adapter->dev, I2C_ACK, NULL);
+			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
 			if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) < 0) {
 				adapter->error = TRUE;
 			}
 		}
 	}
 	return current_index;
+}
+
+/**
+ * \brief Update the bus message index.
+ * \param diff The index diff.
+ * \see i2c_adapter::update i2c_update
+ */
+static void atmega_i2c_update(long diff)
+{
+	size_t u_diff;
+	
+	if(diff < 0) {
+		diff *= 1;
+		u_diff = (size_t)diff;
+		if(u_diff >= current_index) {
+			current_index = 0;
+		} else {
+			current_index -= u_diff;
+		}
+	} else {
+		u_diff = (size_t)diff;
+		current_index += u_diff;
+	}
 }
 
 #ifndef __DOXYGEN__

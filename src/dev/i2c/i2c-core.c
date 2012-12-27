@@ -61,82 +61,13 @@ static int i2c_queue_processor(struct i2c_client *client, const void *data, size
 static inline bool i2c_client_has_action(i2c_features_t features);
 static int i2c_start_xfer(struct i2c_client *client);
 static int __i2c_start_xfer(struct i2c_client *client);
+static void i2c_update(struct i2c_client *client);
 static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz);
 static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client);
 
 /* concurrency functions */
 static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info);
 static int i2c_release_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info);
-
-
-/**
- * \brief Prepare the driver for an I2C transfer.
- * \param stream Device file.
- * \param msg Message to add to the buffer.
- * \return 0 will be returned on success, -1 otherwise.
- */
-PUBLIC int i2c_setup_msg(FILE *stream, struct i2c_message *msg,
-									 uint8_t flags)
-{
-	return fwrite(stream, msg, flags);
-}
-
-/**
- * \brief Clean up master buffers.
- * \param stream I/O file.
- */
-PUBLIC void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adapter)
-{
-	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
-	
-	adapter->cleanup_list[I2C_MASTER_TRANSMIT_MSG] = (void*)msgs[I2C_MASTER_TRANSMIT_MSG];
-	adapter->cleanup_list[I2C_MASTER_RECEIVE_MSG]  = (void*)msgs[I2C_MASTER_RECEIVE_MSG];
-	msgs[I2C_MASTER_TRANSMIT_MSG] = NULL;
-	msgs[I2C_MASTER_RECEIVE_MSG]  = NULL;
-}
-
-/**
- * \brief Clean up slave buffers.
- * \param stream I/O file.
- */
-PUBLIC void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adapter)
-{
-	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
-	
-	adapter->cleanup_list[I2C_SLAVE_RECEIVE_MSG] = (void*)msgs[I2C_SLAVE_RECEIVE_MSG];
-	adapter->cleanup_list[I2C_SLAVE_TRANSMIT_MSG] = (void*)msgs[I2C_SLAVE_TRANSMIT_MSG];
-	msgs[I2C_SLAVE_RECEIVE_MSG] = NULL;
-	msgs[I2C_SLAVE_TRANSMIT_MSG]  = NULL;
-}
-
-/**
- * \brief Clean up all marked I2C messages.
- * 
- * All allocated memory will be free'd.
- */
-PUBLIC void i2c_do_clean_msgs(struct i2c_adapter *adapter)
-{
-	uint8_t i = 0;
-	
-	for(; i < I2C_MSG_NUM; i++) {
-		if(adapter->cleanup_list[i] != NULL) {
-			BermudaHeapFree(adapter->cleanup_list[i]);
-			adapter->cleanup_list[i] = NULL;
-		}
-	}
-}
-
-/**
- * \brief Mark a message to be cleaned up.
- * \param stream I/O file. The message array should be in the buffer of this I/O file.
- * \param msg Index of the message to clean up.
- */
-PUBLIC void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adapter, uint8_t msg)
-{
-	volatile struct i2c_message **msgs = (volatile struct i2c_message**)stream->buff;
-	adapter->cleanup_list[msg] = (void*)msgs[msg];
-	msgs[msg] = NULL;
-}
 
 /**
  * \brief Initializes the given adapter.
@@ -158,7 +89,8 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	adapter->dev->name = fname;
 	BermudaDeviceRegister(adapter->dev, adapter);
 	
-	adapter->flags = 0;
+	adapter->error = 0;
+	adapter->features = 0;
 	adapter->busy = false;
 	return rc;
 }
@@ -210,21 +142,6 @@ static inline i2c_action_t i2c_eval_action(struct i2c_client *client)
 	i2c_features_t features = i2c_client_features(client);
 	
 	return (i2c_action_t)((features & I2C_QUEUE_ACTION_MASK) >> I2C_QUEUE_ACTION_SHIFT);
-}
-
-/**
- * \brief Arrange the call back to the client.
- * \param client Client to call.
- * \param stream Bus I/O file.
- */
-PUBLIC int i2c_call_client(struct i2c_client *client, FILE *stream)
-{
-	struct i2c_message msg;
-	
-	client->callback(&msg);
-	fwrite(stream, &msg, I2C_SLAVE_TRANSMIT_MSG);
-	
-	return client->adapter->slave_respond(stream);
 }
 
 /**
@@ -304,9 +221,15 @@ PUBLIC int i2c_flush_client(struct i2c_client *client)
  */
 static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client)
 {
+	struct i2c_adapter *adapter = client->adapter;
+	struct i2c_message *msg;
+	
 	i2c_vector_foreach_reverse(&client->adapter->msg_vector, i) {
-		i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, TRUE);
-		i2c_queue_processor(client, NULL, i, 0);
+		msg = i2c_vector_get(adapter, i);
+		if((i2c_msg_features(msg) & I2C_MSG_DONE_FLAG) != 0) {
+			i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, TRUE);
+			i2c_queue_processor(client, NULL, i, 0);
+		}
 		if(i == 0) {
 			break;
 		}
@@ -547,6 +470,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 				msg = (struct i2c_message*)node->data;
 				msg_features = i2c_msg_features(msg);
 				if(i2c_check_msg(msg_features, bus_features)) {
+					epl_delete_node(clist, node);
 					if((msg_features & I2C_MSG_CALL_BACK_FLAG) != 0 && 
 						sh_info->shared_callback == NULL) {
 						msg_features = (msg_features & ~I2C_MSG_CALL_BACK_FLAG);
@@ -555,7 +479,6 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 						msg->addr |= I2C_MSG_READ;
 					}
 					msg->features = msg_features;
-					epl_delete_node(clist, node);
 					rc = i2c_vector_add(adapter, msg);
 					free(node);
 					if(rc) {
@@ -584,7 +507,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 				goto err;
 			}
 			
-			index = adapter->start_transfer(adapter, client->freq, master);
+			index = adapter->xfer(adapter, client->freq, master);
 			if(!adapter->error) {
 				bus_features = i2c_adapter_features(adapter);
 				rc = 0;
@@ -620,7 +543,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 					}
 				} while(index < length);
 			}
-			i2c_cleanup_adapter_msgs(client);
+			i2c_update(client);
 			i2c_release_adapter(adapter, sh_info);
 		}
 	}
@@ -636,6 +559,28 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 	{
 		return (I2C_MSG_CHECK(msg, bus) != 0);
 	}
+}
+
+/**
+ * \brief Update the I2C adapter after a transfer.
+ * \param client I2C client, whose adapter needs an update.
+ * \see i2c_adapter::update __i2c_start_xfer
+ * 
+ * The I2C vector will be updated and all redudant messages will be deleted. The update function
+ * of the bus will also be called.
+ */
+static void i2c_update(struct i2c_client *client)
+{
+	struct i2c_adapter *adapter = client->adapter;
+	size_t diff = i2c_vector_length(adapter);
+	int32_t s_diff;
+	
+	i2c_cleanup_adapter_msgs(client);
+	diff -= i2c_vector_length(adapter);
+	s_diff = (int32_t)diff;
+	s_diff *= -1;
+	
+	adapter->update(s_diff);
 }
 
 /**
@@ -839,32 +784,6 @@ PUBLIC int i2cdbg_test_queue_processor(struct i2c_client *client)
  */
 static bool __maxoptimize i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus)
 {
-	return -1;
-}
-
-/**
- * \brief Doxygen dummy function.
- * \param adapter I2C adapter.
- * \param freq Frequency.
- * \param master Master indicator.
- * \see i2c_adapter::start_transfer
- */
-static int i2c_start_transfer(struct i2c_adapter *adapter, uint32_t freq, bool master)
-{
-	BermudaEventWaitNext(queue_head);
-	
-	return -1;
-}
-
-/**
- * \brief Doxygen dummy function.
- * \param adapter I2C adapter.
- * \see i2c_adapter::resume
- */
-static int i2c_resume(struct i2c_adapter *adapter)
-{
-	BermudaEventWaitNext(queue_head);
-	
 	return -1;
 }
 #endif

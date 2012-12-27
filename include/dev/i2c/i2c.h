@@ -160,8 +160,7 @@ struct i2c_msg_vector;
 struct i2c_adapter {
 	struct device *dev; //!< Adapter device.
 	
-	uint8_t flags; //!< Bus flags.
-	i2c_features_t features;
+	i2c_features_t features; //!< Adapter features.
 	bool busy; //!< Defines wether the interface is busy or not.
 	uint8_t error; //! I2C error code.
 	
@@ -176,42 +175,35 @@ struct i2c_adapter {
 	/* mutex is provided by the device */
 	volatile void **master_queue; //!< Master waiting queue.
 	volatile void **slave_queue; //!< Slave waiting queue.
-#else
-	mutex_t mutex; //!< Bus mutex.
-	mutex_t master_queue; //!< Master mutex.
-	mutex_t slave_queue;  //!< Slave mutex.
 #endif
 	
-	struct i2c_message **cleanup_list;
 	void *data; //!< Private data pointer.
 	
 	/**
-	 * \brief Function pointer to respond after a slave receive.
-	 * \param stream I/O file.
-	 */
-	int (*slave_respond)(FILE *stream);
-	
-	/**
-	 * \brief Hook implemented by the bus driver.
+	 * \brief Transfer hook implemented by the bus driver.
 	 * \param adapter The bus adapter.
 	 * \param freq The frequency to operate on.
-	 * \return The last message which is sent.
-	 * \retval NULL on error.
+	 * \return The current message index.
 	 * 
 	 * A hook which <b>must</b> be implemented by the adapter to initialise a transfer.
 	 */
-	size_t (*start_transfer)(struct i2c_adapter *adapter, uint32_t freq, bool master);
+	size_t (*xfer)(struct i2c_adapter *adapter, uint32_t freq, bool master);
 	
 	/**
 	 * \brief Resume transmission after a call back.
 	 * \param adapter Adapter to resume.
 	 * \note The message which has been set by the call back must be inserted IN THE FRONT of the
 	 *       message vector.
-	 * \return The error code.
-	 * \retval 0 on success.
-	 * \retval -1 on failure.
+	 * \return The current message index.
 	 */
 	size_t (*resume)(struct i2c_adapter *adapter);
+	
+	/**
+	 * \brief Update the driver message index.
+	 * \param diff The index diff.
+	 * \note The driver is required to implement this function pointer.
+	 */
+	void (*update)(long diff);
 };
 
 /* file I/O */

@@ -43,6 +43,7 @@
 #define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
 #define I2C_MSG_SENT_STOP_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
 #define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
+#define I2C_MSG_DONE_FLAG_SHIFT 5 //!< Shift value of I2C_MSG_DONE_FLAG.
 
 /**
  * \brief Defines that the application should be called after transmission.
@@ -76,6 +77,11 @@
  * Either this bit has to be set or I2C_MSG_SENT_STOP_FLAG has to be set.
  */
 #define I2C_MSG_SENT_REP_START_FLAG BIT(I2C_MSG_SENT_REP_START_FLAG_SHIFT)
+
+/**
+ * \brief When set the message is handled by the adapter and it can be deleted safely.
+ */
+#define I2C_MSG_DONE_FLAG BIT(I2C_MSG_DONE_FLAG_SHIFT)
 
 /**
  * \brief Master message mask.

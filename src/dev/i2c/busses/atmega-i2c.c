@@ -49,6 +49,10 @@ static int i2c_master_transfer(struct i2c_adapter *adapter);
 static int i2c_slave_transfer(struct i2c_adapter *adapter);
 static void atmega_i2c_update(long diff);
 
+#ifdef I2C_DBG
+static void atmega_i2c_dbg(struct i2c_adapter *adapter);
+#endif
+
 /**
  * \brief File I/O structure for bus 0 on port C.
  */
@@ -346,7 +350,12 @@ static int i2c_master_transfer(struct i2c_adapter *adapter)
 	
 	if(msg) {
 		adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
+#ifndef I2C_DBG
 		rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO);
+#else
+		atmega_i2c_dbg(adapter);
+		rc = 0;
+#endif
 	}
 	return rc;
 }
@@ -401,8 +410,9 @@ static void atmega_i2c_update(long diff)
 	size_t u_diff;
 	
 	if(diff < 0) {
-		diff *= 1;
+		diff *= -1;
 		u_diff = (size_t)diff;
+		printf("diff: %u\n", u_diff);
 		if(u_diff >= current_index) {
 			current_index = 0;
 		} else {
@@ -413,6 +423,22 @@ static void atmega_i2c_update(long diff)
 		current_index += u_diff;
 	}
 }
+
+#ifdef I2C_DBG
+static void atmega_i2c_dbg(struct i2c_adapter *adapter)
+{
+	struct i2c_message *msg;
+	i2c_features_t features;
+	
+	i2c_vector_foreach(&adapter->msg_vector, i) {
+		msg = i2c_vector_get(adapter, i);
+		features = i2c_msg_features(msg);
+		features |= I2C_MSG_DONE_FLAG;
+		msg->features = features;
+		current_index++;
+	}
+}
+#endif
 
 #ifndef __DOXYGEN__
 SIGNAL(TWI_STC_vect)

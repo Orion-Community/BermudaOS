@@ -287,7 +287,6 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 		}
 	}
 	
-	i2c_do_clean_msgs(client->adapter);
 	out:
 	return rc;
 }

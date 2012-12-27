@@ -510,14 +510,14 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 			index = adapter->xfer(adapter, client->freq, master);
 			if(!adapter->error) {
 				bus_features = i2c_adapter_features(adapter);
-				rc = 0;
+				rc = -DEV_OK;
 				
 				do {
 					msg = i2c_vector_get(adapter, index);
 					if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
 						newmsg = malloc(sizeof(*newmsg));
 						if(!newmsg) {
-							rc = -1;
+							rc = -DEV_NULL;
 							break;
 						}
 						newmsg->addr = msg->addr;
@@ -537,7 +537,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 					if(index < length) {
 						index = adapter->resume(adapter);
 						if(adapter->error) {
-							rc = -1;
+							rc = -DEV_INTERNAL;
 							break;
 						}
 					}

@@ -95,9 +95,11 @@ struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
 /**
  * \brief Index of the current message.
  * 
- * current_index holds the index of the message that is currently being processed.
+ * msg_index holds the index of the message that is currently being processed.
  */
-static volatile size_t current_index = 0;
+static volatile size_t msg_index = 0;
+
+static volatile size_t buffer_index = 0;
 
 /**
  * \brief Current slave buffer.
@@ -323,7 +325,7 @@ static size_t i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool
 	int rc;
 	
 	if(master) {
-		current_index = 0;
+		msg_index = 0;
 		uint8_t pres = atmega_i2c_calc_prescaler(freq);
 		uint8_t twbr = atmega_i2c_calc_twbr(freq, pres);
 		TWBR = twbr;
@@ -336,7 +338,7 @@ static size_t i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool
 	
 	if(rc >= 0) {
 		/* no error */
-		return current_index;
+		return msg_index;
 	}
 	
 	adapter->error = TRUE;
@@ -345,7 +347,7 @@ static size_t i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool
 
 static int i2c_master_transfer(struct i2c_adapter *adapter)
 {
-	struct i2c_message *msg = i2c_vector_get(adapter, current_index);
+	struct i2c_message *msg = i2c_vector_get(adapter, msg_index);
 	int rc = -1;
 	
 	if(msg) {
@@ -362,7 +364,7 @@ static int i2c_master_transfer(struct i2c_adapter *adapter)
 
 static int i2c_slave_transfer(struct i2c_adapter *adapter)
 {
-	struct i2c_message *msg = i2c_vector_get(adapter, current_index);
+	struct i2c_message *msg = i2c_vector_get(adapter, msg_index);
 	int rc = -1;
 	
 	if(msg) {
@@ -381,7 +383,7 @@ static size_t i2c_resume_transfer(struct i2c_adapter *adapter)
 {
 	struct i2c_message *msg;
 	
-	if((msg = i2c_vector_get(adapter, current_index)) != NULL) {
+	if((msg = i2c_vector_get(adapter, msg_index)) != NULL) {
 		if((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0) {
 			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
 			if(BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO) < 0) {
@@ -397,7 +399,7 @@ static size_t i2c_resume_transfer(struct i2c_adapter *adapter)
 			}
 		}
 	}
-	return current_index;
+	return msg_index;
 }
 
 /**
@@ -413,14 +415,14 @@ static void atmega_i2c_update(long diff)
 		diff *= -1;
 		u_diff = (size_t)diff;
 		printf("diff: %u\n", u_diff);
-		if(u_diff >= current_index) {
-			current_index = 0;
+		if(u_diff >= msg_index) {
+			msg_index = 0;
 		} else {
-			current_index -= u_diff;
+			msg_index -= u_diff;
 		}
 	} else {
 		u_diff = (size_t)diff;
-		current_index += u_diff;
+		msg_index += u_diff;
 	}
 }
 
@@ -435,7 +437,7 @@ static void atmega_i2c_dbg(struct i2c_adapter *adapter)
 		features = i2c_msg_features(msg);
 		features |= I2C_MSG_DONE_FLAG;
 		msg->features = features;
-		current_index++;
+		msg_index++;
 	}
 }
 #endif
@@ -445,7 +447,8 @@ SIGNAL(TWI_STC_vect)
 {
 	uint8_t status = TWSR & I2C_NOINFO;
 	struct i2c_adapter *adapter = ATMEGA_I2C_C0_ADAPTER;
-	struct i2c_message *msg = i2c_vector_get(adapter, current_index);
+	struct i2c_message *msg = i2c_vector_get(adapter, msg_index);
+	struct device *dev = adapter->dev;
 	
 	switch(status) {
 		/*
@@ -453,11 +456,36 @@ SIGNAL(TWI_STC_vect)
 		 */
 		case I2C_MASTER_START:
 		case I2C_MASTER_REP_START:
+			buffer_index = 0;
+			adapter->busy = TRUE;
 			TWDR = msg->addr;
 			TWCR = BIT(TWEN) | BIT(TWIE) | BIT(TWEA) | BIT(TWINT);
 			break;
 			
 		case I2C_MT_SLA_ACK:
+		case I2C_MT_DATA_ACK:
+			if(buffer_index < msg->length) {
+				TWDR = msg->buff[buffer_index];
+				buffer_index++;
+				dev->ctrl(dev, I2C_ACK, NULL);
+				break;
+			} else {
+				/* done with this buffer */
+				msg->features |= I2C_MSG_DONE_FLAG;
+				if(i2c_vector_length(adapter) < (msg_index+1)) {
+					msg_index++;
+					msg = i2c_vector_get(adapter, msg_index);
+					if(i2c_msg_is_master(msg)) {
+						dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+						break;
+					} else {
+						dev->ctrl(dev, I2C_STOP | I2C_LISTEN, NULL);
+					}
+				}
+				/* Wake up the application */
+				event_signal_from_isr(event(adapter->master_queue));
+				adapter->busy = FALSE;
+			}
 			break;
 		default:
 			break;

@@ -20,6 +20,7 @@
 #define __I2C_MSG_H
 
 #include <dev/i2c.h>
+#include <dev/i2c-core.h>
 
 /**
  * \brief Iterate through an I2C vector.
@@ -66,6 +67,11 @@ extern size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message 
 static inline size_t i2c_vector_length(struct i2c_adapter *adapter)
 {
 	return adapter->msg_vector.length;
+}
+
+static inline bool i2c_msg_is_master(struct i2c_message *msg)
+{
+	return ((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0);
 }
 __DECL_END
 

@@ -22,7 +22,6 @@
 #include <lib/binary.h>
 
 #include <dev/i2c.h>
-#include <dev/i2c-msg.h>
 
 /**
  * \addtogroup i2c-core

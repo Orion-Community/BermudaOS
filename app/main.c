@@ -49,8 +49,8 @@
 #include <net/core/dev.h>
 
 static VTIMER *timer;
-struct i2c_client eeprom_client;
-static char i2c_stack[200];
+struct i2c_client *eeprom_client;
+static char i2c_stack[250];
 THREAD i2c_thread;
 
 static struct i2c_client *test_client = NULL;
@@ -59,16 +59,8 @@ static struct i2c_client *test_client = NULL;
 
 THREAD(i2c_dbg, arg)
 {
-	uint8_t tx = 0, rx = 0;
-	int fd;
 	while(1) {
-		fd = i2cdev_socket(test_client, _FDEV_SETUP_RW | I2C_MASTER);
-		if(fd > 0) {
-			write(fd, &tx, 1);
-			read(fd, &rx, 1);
-			flush(fd);
-			close(fd);
-		}
+		printf("E: 0x%X\n", Bermuda24c02ReadByte(100));
 		BermudaThreadSleep(2000);
 	}
 }
@@ -106,16 +98,17 @@ void setup()
 		BermudaThreadSleep(500);
 	}
 	
-	i2c_init_client(&eeprom_client, ATMEGA_I2C_C0_ADAPTER, BASE_SLA_24C02, SCL_FRQ_24C02);
+	eeprom_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, BASE_SLA_24C02, SCL_FRQ_24C02);
+	Bermuda24c02Init(eeprom_client);
 	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x48, 100000UL);
-	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 200,
+	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 250,
 					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
-	Bermuda24c02Init(&eeprom_client);
+	
 	BermudaSpiRamInit(SPI0, 10);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
-// 	Bermuda24c02WriteByte(100, 0xAC);
+	Bermuda24c02WriteByte(100, 0xAC);
 }
 
 #ifdef __THREADS__

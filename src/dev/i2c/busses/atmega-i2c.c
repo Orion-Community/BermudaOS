@@ -349,11 +349,11 @@ static int i2c_master_transfer(struct i2c_adapter *adapter)
 {
 	struct i2c_message *msg = i2c_vector_get(adapter, msg_index);
 	int rc = -1;
-	
 	if(msg) {
 		adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
 #ifndef I2C_DBG
 		rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO);
+		printf("rc: %i\n", rc);
 #else
 		atmega_i2c_dbg(adapter);
 		rc = 0;
@@ -414,7 +414,6 @@ static void atmega_i2c_update(long diff)
 	if(diff < 0) {
 		diff *= -1;
 		u_diff = (size_t)diff;
-		printf("diff: %u\n", u_diff);
 		if(u_diff >= msg_index) {
 			msg_index = 0;
 		} else {
@@ -472,7 +471,7 @@ SIGNAL(TWI_STC_vect)
 			} else {
 				/* done with this buffer */
 				msg->features |= I2C_MSG_DONE_FLAG;
-				if(i2c_vector_length(adapter) < (msg_index+1)) {
+				if((msg_index+1) < i2c_vector_length(adapter)) {
 					msg_index++;
 					msg = i2c_vector_get(adapter, msg_index);
 					if(i2c_msg_is_master(msg)) {
@@ -481,12 +480,80 @@ SIGNAL(TWI_STC_vect)
 					} else {
 						dev->ctrl(dev, I2C_STOP | I2C_LISTEN, NULL);
 					}
+				} else {
+					dev->ctrl(dev, I2C_STOP | I2C_NACK, NULL);
 				}
 				/* Wake up the application */
 				event_signal_from_isr(event(adapter->master_queue));
 				adapter->busy = FALSE;
 			}
 			break;
+			
+		case I2C_MT_SLA_NACK:
+		case I2C_MT_DATA_NACK:
+		case I2C_MR_SLA_NACK:
+			msg->features |= I2C_MSG_DONE_FLAG;
+			adapter->busy = FALSE;
+			if((msg_index+1) < i2c_vector_length(adapter)) {
+				msg_index++;
+				msg = i2c_vector_get(adapter, msg_index);
+				if(i2c_msg_is_master(msg)) {
+					dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+					break;
+				} else {
+					dev->ctrl(dev, I2C_STOP | I2C_LISTEN, NULL);
+				}
+			} else {
+				dev->ctrl(dev, I2C_STOP | I2C_NACK, NULL);
+			}
+			event_signal_from_isr(event(adapter->master_queue));
+			break;
+
+		case I2C_MASTER_ARB_LOST:
+			adapter->busy = FALSE;
+			dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+			break;
+			
+		/*
+		 * Master receiver.
+		 */
+		case I2C_MR_DATA_ACK:
+			if(buffer_index < msg->length) {
+				msg->buff[buffer_index] = TWDR;
+				buffer_index++;
+			} else {
+				dev->ctrl(dev, I2C_NACK, NULL);
+				break;
+			}
+		case I2C_MR_SLA_ACK:
+			if((buffer_index+1) < msg->length) {
+				dev->ctrl(dev, I2C_ACK, NULL);
+			} else {
+				dev->ctrl(dev, I2C_NACK, NULL);
+			}
+			break;
+			
+		case I2C_MR_DATA_NACK:
+			if(buffer_index < msg->length) {
+				msg->buff[buffer_index] = TWDR;
+			}
+			msg->features |= I2C_MSG_DONE_FLAG;
+			if((msg_index+1) < i2c_vector_length(adapter)) {
+				msg_index++;
+				msg = i2c_vector_get(adapter, msg_index);
+				if(i2c_msg_is_master(msg)) {
+					dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+					break;
+				} else {
+					dev->ctrl(dev, I2C_STOP | I2C_LISTEN, NULL);
+				}
+			} else {
+				dev->ctrl(dev, I2C_STOP | I2C_NACK, NULL);
+			}
+			adapter->busy = FALSE;
+			event_signal_from_isr(event(adapter->master_queue));
+			break;
+		
 		default:
 			break;
 	}

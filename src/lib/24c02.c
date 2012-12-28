@@ -80,12 +80,7 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 	
 	rc = write(fd, &tx, 1);
 	rc += read(fd, &rx, 1);
-	if(rc == 0) {
-		flush(fd);
-	} else {
-		i2cdev_error(fd);
-	}
-	
+	flush(fd);
 	close(fd);
 
 	return rx;

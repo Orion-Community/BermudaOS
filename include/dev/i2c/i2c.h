@@ -26,9 +26,10 @@
 #define I2C_H_
 
 #include <stdlib.h>
+
 #include <lib/binary.h>
-#include <sys/epl.h>
 #include <dev/dev.h>
+#include <sys/epl.h>
 
 struct i2c_adapter; // forward declaration
 struct i2c_client;
@@ -187,7 +188,7 @@ struct i2c_adapter {
 	 * 
 	 * A hook which <b>must</b> be implemented by the adapter to initialise a transfer.
 	 */
-	size_t (*xfer)(struct i2c_adapter *adapter, uint32_t freq, bool master);
+	int (*xfer)(struct i2c_adapter *adapter, uint32_t freq, bool master, size_t *index);
 	
 	/**
 	 * \brief Resume transmission after a call back.
@@ -196,7 +197,7 @@ struct i2c_adapter {
 	 *       message vector.
 	 * \return The current message index.
 	 */
-	size_t (*resume)(struct i2c_adapter *adapter);
+	int (*resume)(struct i2c_adapter *adapter, size_t *index);
 	
 	/**
 	 * \brief Update the driver message index.
@@ -205,6 +206,8 @@ struct i2c_adapter {
 	 */
 	void (*update)(long diff);
 };
+
+#include <dev/i2c-core.h>
 
 /* file I/O */
 extern int i2cdev_write(FILE *file, const void *buff, size_t size);
@@ -217,6 +220,12 @@ extern void i2cdev_error(int fd);
 extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t sla, uint32_t hz);
 extern void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapter, 
 							uint16_t sla, uint32_t hz);
+
+static inline void i2c_set_callback(struct i2c_client *client, int (*cb)(struct i2c_client *,
+																		 struct i2c_message *))
+{
+	i2c_shinfo(client)->shared_callback = cb;
+}
 
 //@}
 __DECL_END

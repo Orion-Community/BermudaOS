@@ -164,6 +164,9 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 		if(*(++layout) == '\0') {
 			features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
 		}
+		if((file->flags & I2CDEV_CALL_BACK) != 0) {
+			features |= I2C_MSG_CALL_BACK_FLAG;
+		}
 		
 		i2c_set_transmission_layout(client, layout);
 	} else {
@@ -193,6 +196,9 @@ PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 		features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_SENT_REP_START_FLAG;
 		if(*(++layout) == '\0') {
 			features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
+		}
+		if((file->flags & I2CDEV_CALL_BACK) != 0) {
+			features |= I2C_MSG_CALL_BACK_FLAG;
 		}
 		i2c_set_transmission_layout(client, layout);
 	} else {
@@ -280,12 +286,6 @@ PUBLIC int i2cdev_listen(int fd, void *buff, size_t size)
 	}
 	i2c_write_client(client, buff, size, features);
 	rc = i2cdev_flush(stream);
-	
-	if(!rc) {
-		if(info->shared_callback) {
-			/* TODO: call application */
-		}
-	}
 	
 	out:
 	return rc;

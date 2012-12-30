@@ -54,14 +54,9 @@ PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 	if(fd < 0) {
 		return rc;
 	}
-	
-	rc = write(fd, tx, 2);
-	rc += read(fd, NULL, 0);
-	if(rc == 0) {
-		rc = flush(fd);
-	} else {
-		i2cdev_error(fd);
-	}
+	i2c_set_transmission_layout(client, "w");
+	write(fd, tx, 2);
+	rc = flush(fd);
 	close(fd);
 
 	return rc;
@@ -71,15 +66,16 @@ PUBLIC unsigned char Bermuda24c02ReadByte(unsigned char addr)
 {
 	unsigned char tx = addr;
 	unsigned char rx = 0;
-	int fd, rc;
+	int fd;
 	
 	fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
 	if(fd < 0) {
 		return 0xFF;
 	}
 	
-	rc = write(fd, &tx, 1);
-	rc += read(fd, &rx, 1);
+	i2c_set_transmission_layout(client, "wr");
+	write(fd, &tx, 1);
+	read(fd, &rx, 1);
 	flush(fd);
 	close(fd);
 

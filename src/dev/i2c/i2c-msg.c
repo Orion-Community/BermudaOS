@@ -56,7 +56,7 @@
 /*
  * static funcs
  */
-static void i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index);
+static int i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index);
 static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, size_t num);
 
 /**
@@ -101,8 +101,10 @@ PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, siz
 	if(index < adapter->msg_vector.length) {
 		tmp = adapter->msg_vector.msgs[index];
 		adapter->msg_vector.msgs[index] = NULL;
-		i2c_vector_shift_left(&adapter->msg_vector, index+1);
-		adapter->msg_vector.length -= 1;
+		if(i2c_vector_shift_left(&adapter->msg_vector, index+1)) {
+			adapter->msg_vector.length -= 1;
+		}
+		
 		return tmp;
 	} else {
 		return NULL;
@@ -156,11 +158,12 @@ PUBLIC size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message 
  * \brief Add a new message to the adapter.
  * \param adapter The I2C adapter to add the message to.
  * \param msg I2C message to add.
+ * \param master Indicates whether \p msg is a master message or not.
  * \return Error code.
  * \retval 0 when no error has occurred.
  * \retval -1 when an error has occurred.
  */
-PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg)
+PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg, bool master)
 {
 	void *buff = (void*)adapter->msg_vector.msgs;
 	
@@ -179,9 +182,34 @@ PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg)
 			return -DEV_NULL;
 		}
 	}
-	
-	adapter->msg_vector.msgs[adapter->msg_vector.length] = msg;
-	adapter->msg_vector.length += 1;
+
+	if(i2c_vector_length(adapter) == 0) {
+		adapter->msg_vector.msgs[0] = msg;
+		adapter->msg_vector.length += 1;
+		return 0;
+	}
+
+	if(master) {
+		size_t i = 0;
+		struct i2c_message *tmp;
+		for(; i < adapter->msg_vector.length; i++) {
+			tmp = adapter->msg_vector.msgs[i];
+			if((i+1) == i2c_vector_length(adapter)) {
+				adapter->msg_vector.msgs[i+1] = msg;
+				adapter->msg_vector.length += 1;
+				break;
+			} else if(i2c_msg_is_master(tmp)) {
+				i2c_vector_shift_right(&adapter->msg_vector, i, 1);
+				adapter->msg_vector.msgs[i] = msg;
+				break;
+			} else {
+				continue;
+			}
+		}
+	} else {
+		adapter->msg_vector.msgs[adapter->msg_vector.length] = msg;
+		adapter->msg_vector.length += 1;
+	}
 	return 0;
 }
 
@@ -205,8 +233,9 @@ PUBLIC struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter,
 	for(i = 0; i < adapter->msg_vector.length; i++) {
 		if(adapter->msg_vector.msgs[i] == msg) {
 			adapter->msg_vector.msgs[i] = NULL;
-			i2c_vector_shift_left(&adapter->msg_vector, i+1);
-			adapter->msg_vector.length -= 1;
+			if(i2c_vector_shift_left(&adapter->msg_vector, i+1)) {
+				adapter->msg_vector.length -= 1;
+			}
 			return msg;
 		}
 	}
@@ -367,10 +396,10 @@ i2c_vector_shift_left(vector, 2);
 *+++++++++++*++++++++++++*+++++++++++*++++++++++++*
 \endverbatim
  */
-static void i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index)
+static int i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index)
 {
 	if(index >= vector->length) {
-		return;
+		return 1;
 	} else {
 		if(index == 0) {
 			vector->msgs[0] = vector->msgs[1];
@@ -382,6 +411,7 @@ static void i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index)
 			}
 		}
 		vector->length -= 1;
+		return 0;
 	}
 }
 

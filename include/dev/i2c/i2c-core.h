@@ -82,12 +82,49 @@
  */
 #define I2C_MSG_DONE_FLAG BIT(I2C_MSG_DONE_FLAG_SHIFT)
 
+/*
+ * Message feature masks
+ */
+
+/**
+ * \brief Defines that the application should be called after transmission.
+ */
+#define I2C_MSG_CALL_BACK_MASK BIT(I2C_MSG_CALL_BACK_FLAG_SHIFT)
+
+/**
+ * \brief Defines that this message is sent from slave perspective.
+ */
+#define I2C_MSG_SLAVE_MSG_MASK BIT(I2C_MSG_SLAVE_MSG_FLAG_SHIFT)
+
 /**
  * \brief Master message mask.
  * \see I2C_MSG_MASTER_MSG_FLAG
  * When this bit is set to one the message is a <b>slave</b> message.
  */
 #define I2C_MSG_MASTER_MSG_MASK BIT(I2C_MSG_MASTER_MSG_FLAG_SHIFT)
+
+/**
+ * \brief Defines the message holds a transmit buffer, not a receive buffer.
+ */
+#define I2C_MSG_TRANSMIT_MSG_MASK BIT(I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT)
+
+/**
+ * \brief Defines that a stop bit should be sent after transmission.
+ */
+#define I2C_MSG_SENT_STOP_MASK BIT(I2C_MSG_SENT_STOP_FLAG_SHIFT)
+
+/**
+ * \brief Defines that a repeated start should be sent after transmission.
+ * \warning This bit does NOT exist in the flags argument to i2c_queue_processor.
+ * 
+ * Either this bit has to be set or I2C_MSG_SENT_STOP_FLAG has to be set.
+ */
+#define I2C_MSG_SENT_REP_START_MASK BIT(I2C_MSG_SENT_REP_START_FLAG_SHIFT)
+
+/**
+ * \brief When set the message is handled by the adapter and it can be deleted safely.
+ */
+#define I2C_MSG_DONE_MASK BIT(I2C_MSG_DONE_FLAG_SHIFT)
 
 /**
  * \brief I2C message features mask.

@@ -55,20 +55,37 @@ THREAD i2c_thread;
 
 static struct i2c_client *test_client = NULL;
 
-#ifdef __THREADS__
+static uint8_t test_tx[2] = { 0xFC, 0xAA };
 
+#ifdef __THREADS__
 THREAD(i2c_dbg, arg)
 {
+	int fd;
 	while(1) {
-		printf("E: 0x%X\n", Bermuda24c02ReadByte(100));
+		fd = i2cdev_socket(test_client, _FDEV_SETUP_RW | I2C_MASTER | I2CDEV_CALL_BACK);
+		i2c_set_transmission_layout(test_client, "ww");
+		
+		if(fd >= 0) {
+			write(fd, &test_tx[0], 1);
+			flush(fd);
+			close(fd);
+		}
 		BermudaThreadSleep(2000);
 	}
 }
 
+static int eeprom_callback(struct i2c_client *client, struct i2c_message *msg)
+{
+	msg->buff = &test_tx[1];
+	msg->length = 1;
+	msg->addr = 0x54;
+	msg->features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG;
+// 	printf("HI\n");
+	return 0;
+}
 #endif
 
 static unsigned char led = 1;
-
 PUBLIC void TestTimer(VTIMER *timer, void *arg)
 {
 	BermudaDigitalPinWrite(5, led);
@@ -100,7 +117,8 @@ void setup()
 	
 	eeprom_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, BASE_SLA_24C02, SCL_FRQ_24C02);
 	Bermuda24c02Init(eeprom_client);
-	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x48, 100000UL);
+	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x54, 100000UL);
+	i2c_set_callback(test_client, &eeprom_callback);
 	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 250,
 					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
 #endif
@@ -126,7 +144,7 @@ unsigned long loop()
 	temperature /= 10;
 	
 	read_back_sram = BermudaSpiRamReadByte(0x50);
-// 	read_back_eeprom = Bermuda24c02ReadByte(100);
+	read_back_eeprom = Bermuda24c02ReadByte(100);
 
 	printf_P(PSTR("T=%f M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
 				read_back_sram);

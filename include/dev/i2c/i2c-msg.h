@@ -49,7 +49,7 @@ __DECL
  * I2C-MSG functions
  */
 extern int i2c_create_msg_vector(struct i2c_adapter *adapter);
-extern int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg);
+extern int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg, bool master);
 extern struct i2c_message *i2c_vector_get(struct i2c_adapter *adapter, size_t index);
 extern struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, size_t size);
 extern struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter, 

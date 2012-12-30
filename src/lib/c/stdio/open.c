@@ -23,10 +23,10 @@
 /**
  * \brief Open a file.
  * \param fname Name of the file to open.
- * \param mode File mode to use.
+ * \param fmode File mode to use.
  * \return The file descriptor.
  */
-PUBLIC int open(char *fname, uint16_t mode)
+PUBLIC int open(char *fname, uint16_t fmode)
 {
 	int i = 0;
 	FILE *c = vfs_head;
@@ -37,10 +37,10 @@ PUBLIC int open(char *fname, uint16_t mode)
 				if(__iob[i] == NULL) {
 					__iob[i] = c;
 					c->fd = i;
-					fdmode(i, mode);
+					mode(i, fmode);
 					return i; /* file is opened */
 				} else if(!strcmp(__iob[i]->name, fname)) {
-					fdmode(i, mode);
+					mode(i, fmode);
 					return i; /* file is already open */
 				}
 			}

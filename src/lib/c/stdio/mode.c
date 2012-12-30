@@ -24,7 +24,14 @@
  * \param fd File descriptor of the file to change.
  * \param mode New file mode.
  */
-PUBLIC void fdmode(int fd, unsigned char mode)
+PUBLIC int mode(int fd, uint16_t mode)
 {
-	__iob[fd]->flags = mode;
+	FILE *stream = __iob[fd];
+	
+	if(stream) {
+		stream->flags = mode;
+		return 0;
+	} else {
+		return -1;
+	}
 }

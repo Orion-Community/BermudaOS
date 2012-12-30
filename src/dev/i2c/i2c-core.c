@@ -224,17 +224,18 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client)
 	struct i2c_adapter *adapter = client->adapter;
 	struct i2c_message *msg;
 	
-	i2c_vector_foreach_reverse(&client->adapter->msg_vector, i) {
+	size_t i = i2c_vector_length(adapter);
+	for(i -= 1; i >= 0; i--) {
 		msg = i2c_vector_get(adapter, i);
-		if((i2c_msg_features(msg) & I2C_MSG_DONE_FLAG) != 0) {
-			i2c_set_action(client, I2C_DELETE_QUEUE_ENTRY, TRUE);
-			i2c_queue_processor(client, NULL, i, 0);
+		if((i2c_msg_features(msg) & I2C_MSG_DONE_MASK) != 0) {
+			i2c_vector_delete_at(adapter, i);
+			free(msg);
 		}
 		if(i == 0) {
 			break;
 		}
 	}
-	return i2c_vector_erase(client->adapter);
+	return 0;
 }
 
 #ifdef I2C_MSG_LIST
@@ -302,11 +303,7 @@ i2c_features_t flags;
 	i2c_action_t action;
 	int rc = -1;
 	
-	if(data == NULL) {
-		action = I2C_DELETE_QUEUE_ENTRY;
-	} else {
-		action = i2c_eval_action(client);
-	}
+	action = i2c_eval_action(client);
 
 	sh_info = i2c_shinfo(client);
 	features = i2c_client_features(client);
@@ -466,6 +463,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 		if(i2c_lock_adapter(adapter, sh_info) == 0) {
 			bus_features = i2c_adapter_features(adapter) & (I2C_MASTER_SUPPORT | 
 															I2C_SLAVE_SUPPORT);
+			index = i2c_vector_length(adapter);
 			for_each_epl_node_safe(clist, node, n_node) {
 				msg = (struct i2c_message*)node->data;
 				msg_features = i2c_msg_features(msg);
@@ -479,11 +477,11 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 						msg->addr |= I2C_MSG_READ;
 					}
 					msg->features = msg_features;
-					rc = i2c_vector_add(adapter, msg);
+					rc = i2c_vector_add(adapter, msg, master);
 					free(node);
 					if(rc) {
 						if(i2c_vector_error(adapter, rc) == 0) {
-							rc = i2c_vector_add(adapter, msg);
+							rc = i2c_vector_add(adapter, msg, master);
 							continue;
 						}
 						i2c_set_error(client);
@@ -507,13 +505,13 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 				goto err;
 			}
 			
-			index = adapter->xfer(adapter, client->freq, master);
+			index = (index != 0) ? index-1 : index;
+			rc = adapter->xfer(adapter, client->freq, master, &index);
 			if(!adapter->error) {
 				bus_features = i2c_adapter_features(adapter);
-				rc = -DEV_OK;
 				
 				do {
-					msg = i2c_vector_get(adapter, index);
+					msg = i2c_vector_get(adapter, index-1);
 					if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
 						newmsg = malloc(sizeof(*newmsg));
 						if(!newmsg) {
@@ -534,14 +532,14 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 					}
 					
 					length = i2c_vector_length(adapter);
-					if(index < length) {
-						index = adapter->resume(adapter);
+					if(index < length && rc == 0) {
+						rc = adapter->resume(adapter, &index);
 						if(adapter->error) {
 							rc = -DEV_INTERNAL;
 							break;
 						}
 					}
-				} while(index < length);
+				} while(index < length && rc == 0);
 			}
 			i2c_update(client);
 			i2c_release_adapter(adapter, sh_info);

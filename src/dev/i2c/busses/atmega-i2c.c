@@ -46,9 +46,10 @@ static unsigned char atmega_i2c_calc_prescaler(uint32_t frq);
 static int i2c_init_transfer(struct i2c_adapter *adap, uint32_t freq, bool master, size_t *index);
 static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index);
 static int i2c_master_transfer(struct i2c_adapter *adapter);
-static int i2c_slave_transfer(struct i2c_adapter *adapter, size_t index);
+static int atmega_i2c_slave_listen(struct i2c_adapter *adapter);
 static void atmega_i2c_update(long diff);
 static int atmega_i2c_master_buff_end(struct i2c_message *msg, struct i2c_adapter *adapter);
+static int atmega_i2c_slave_buff_end(struct i2c_adapter *adapter, struct i2c_message *msg);
 
 #ifdef I2C_DBG
 static void atmega_i2c_dbg(struct i2c_adapter *adapter);
@@ -105,18 +106,19 @@ static volatile size_t msg_index = 0;
 static volatile size_t buffer_index = 0;
 
 /**
- * \brief Current slave buffer.
+ * \brief Index of the first slave message.
+ * \note This value has to be checked!
  */
-static volatile uint8_t *slave_buff = NULL;
-/**
- * \brief Length of the current slave buffer.
- */
-static volatile size_t slave_buff_length = 0;
+static volatile size_t first_slave_msg = 0;
 
 /**
  * \brief Indicates whether the arbitration has been lost or not.
  */
 static volatile bool arb_lost = FALSE;
+/**
+ * \brief Temporary message index when bus arbitration occurs.
+ */
+static volatile size_t temp_msg_index = 0;
 
 /**
  * \brief Intialize an I2C bus.
@@ -339,7 +341,7 @@ static int i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool ma
 		rc = i2c_master_transfer(adapter);
 	} else {
 		/* slave msg */
-		rc = i2c_slave_transfer(adapter, *index);
+		rc = atmega_i2c_slave_listen(adapter);
 	}
 	
 	if(rc >= 0) {
@@ -357,33 +359,43 @@ static int i2c_master_transfer(struct i2c_adapter *adapter)
 {
 	struct i2c_message *msg = i2c_vector_get(adapter, msg_index);
 	int rc = -1;
+	
 	if(msg) {
 		adapter->error = FALSE;
 		adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
-#ifndef I2C_DBG
 		rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO);
-#else
-		atmega_i2c_dbg(adapter);
-		rc = 0;
-#endif
 	}
+	
 	return rc;
 }
 
-static int i2c_slave_transfer(struct i2c_adapter *adapter, size_t index)
+static int atmega_i2c_slave_listen(struct i2c_adapter *adapter)
 {
-	struct i2c_message *msg = i2c_vector_get(adapter, index);
-	int rc = -1;
+	struct i2c_message *msg;
+	size_t index = 0;
+	int rc;
 	
-	if(msg) {
-		slave_buff = msg->buff;
-		slave_buff_length = msg->length;
-		adapter->dev->ctrl(adapter->dev, I2C_ACK, NULL);
-		if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) < 0) {
-			adapter->error = TRUE;
+	if(i2c_first_slave_msg(adapter, &index)) {
+		first_slave_msg = index;
+	} else {
+		return -1;
+	}
+	
+	adapter->error = FALSE;
+	if(!adapter->busy) {
+		if((TWSR & I2C_NOINFO) == I2C_NOINFO) {
+			msg = i2c_vector_get(adapter, 0);
+			if(i2c_msg_is_master(msg)) {
+				msg_index = 0;
+				adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
+			} else {
+				msg_index = 0;
+				adapter->dev->ctrl(adapter->dev, I2C_LISTEN | I2C_ACK, NULL);
+			}
 		}
 	}
 	
+	rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO);
 	return rc;
 }
 
@@ -406,8 +418,6 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 			}
 		} else {
 			/* slave msg */
-			slave_buff = msg->buff;
-			slave_buff_length = msg->length;
 			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
 			if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) < 0) {
 				adapter->error = TRUE;
@@ -479,6 +489,40 @@ static int atmega_i2c_master_buff_end(struct i2c_message *msg, struct i2c_adapte
 	}
 	
 	return rc;
+}
+
+static int atmega_i2c_slave_buff_end(struct i2c_adapter *adapter, struct i2c_message *msg)
+{
+	struct device *dev = adapter->dev;
+	i2c_features_t features = i2c_msg_features(msg);
+	
+	features |= I2C_MSG_DONE_FLAG;
+	msg->features = features;
+	
+	msg_index++;
+	if(*(adapter->slave_queue) == NULL || adapter->error) {
+		msg = i2c_vector_get(adapter, 0);
+		if(i2c_msg_is_master(msg)) {
+			dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+		} else {
+			dev->ctrl(dev, I2C_IDLE, NULL);
+		}
+		return 0;
+	} else {
+		if((features & I2C_MSG_CALL_BACK_MASK) != 0) {
+			dev->ctrl(dev, I2C_BLOCK, NULL);
+			event_signal_from_isr(event(adapter->slave_queue));
+			return 1;
+		} else if(i2c_msg_is_master(i2c_vector_get(adapter, 0))) {
+			dev->ctrl(dev, I2C_ACK | I2C_START, NULL);
+			event_signal_from_isr(event(adapter->slave_queue));
+			return 1;
+		} else {
+			dev->ctrl(dev, I2C_ACK, NULL);
+			event_signal_from_isr(event(adapter->slave_queue));
+			return 1;
+		}
+	}
 }
 
 #ifdef I2C_DBG
@@ -573,6 +617,50 @@ SIGNAL(TWI_STC_vect)
 			atmega_i2c_master_buff_end(msg, adapter);
 			break;
 		
+		case I2C_SR_GC_ARB_LOST:
+		case I2C_SR_SLAW_ARB_LOST:
+			arb_lost = TRUE;
+			temp_msg_index = msg_index;
+		case I2C_SR_SLAW_ACK:
+		case I2C_SR_GC_ACK:
+			adapter->busy = TRUE;
+			buffer_index = 0;
+			msg = i2c_vector_get(adapter, first_slave_msg);
+			if(msg) {
+				if(!i2c_msg_is_master(msg)) {
+					dev->ctrl(dev, I2C_LISTEN | I2C_ACK, NULL);
+					msg_index = first_slave_msg;
+					break;
+				}
+			}
+			dev->ctrl(dev, I2C_NACK, NULL);
+			break;
+			
+		case I2C_SR_SLAW_DATA_ACK:
+		case I2C_SR_GC_DATA_ACK:
+			if(buffer_index < msg->length) {
+				msg->buff[buffer_index] = TWDR;
+				buffer_index++;
+				dev->ctrl(dev, I2C_ACK, NULL);
+			} else {
+				dev->ctrl(dev, I2C_ACK, NULL);
+			}
+			break;
+			
+		case I2C_SR_SLAW_DATA_NACK:
+		case I2C_SR_GC_DATA_NACK:
+			if(i2c_msg_is_master(i2c_vector_get(adapter, 0))) {
+				dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+			} else {
+				dev->ctrl(dev, I2C_ACK, NULL);
+			}
+			break;
+			
+		case I2C_SR_STOP:
+			atmega_i2c_slave_buff_end(adapter, msg);
+			break;
+		
+			
 		default:
 			break;
 	}

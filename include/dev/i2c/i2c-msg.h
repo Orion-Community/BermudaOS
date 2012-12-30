@@ -73,6 +73,19 @@ static inline bool i2c_msg_is_master(struct i2c_message *msg)
 {
 	return ((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0);
 }
+
+static inline bool i2c_first_slave_msg(struct i2c_adapter *adapter, size_t *index)
+{
+	struct i2c_message *msg;
+	i2c_vector_foreach(&adapter->msg_vector, i) {
+		msg = i2c_vector_get(adapter, i);
+		if(!i2c_msg_is_master(msg) && (i2c_msg_features(msg) & I2C_MSG_DONE_FLAG) == 0) {
+			*index = i;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
 __DECL_END
 
 #endif /* __I2C_MSG_H */

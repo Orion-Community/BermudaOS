@@ -204,7 +204,7 @@ struct i2c_adapter {
 	 * \param diff The index diff.
 	 * \note The driver is required to implement this function pointer.
 	 */
-	void (*update)(long diff);
+	void (*update)(struct i2c_adapter *adapter, long diff);
 };
 
 #include <dev/i2c-core.h>

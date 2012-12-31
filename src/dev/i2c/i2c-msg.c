@@ -192,18 +192,17 @@ PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg, 
 	if(master) {
 		size_t i = 0;
 		struct i2c_message *tmp;
-		for(; i < adapter->msg_vector.length; i++) {
-			tmp = adapter->msg_vector.msgs[i];
-			if((i+1) == i2c_vector_length(adapter)) {
-				adapter->msg_vector.msgs[i+1] = msg;
+		for(; i <= adapter->msg_vector.length; i++) {
+			if(i == i2c_vector_length(adapter)) {
+				adapter->msg_vector.msgs[i] = msg;
 				adapter->msg_vector.length += 1;
 				break;
-			} else if(i2c_msg_is_master(tmp)) {
+			}
+			tmp = adapter->msg_vector.msgs[i];
+			if(!i2c_msg_is_master(tmp)) {
 				i2c_vector_shift_right(&adapter->msg_vector, i, 1);
 				adapter->msg_vector.msgs[i] = msg;
 				break;
-			} else {
-				continue;
 			}
 		}
 	} else {

@@ -224,8 +224,8 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client)
 	struct i2c_adapter *adapter = client->adapter;
 	struct i2c_message *msg;
 	
-	size_t i = i2c_vector_length(adapter);
-	for(i -= 1; i >= 0; i--) {
+	size_t i = i2c_vector_length(adapter) -1;
+	for(; i >= 0; i--) {
 		msg = i2c_vector_get(adapter, i);
 		if((i2c_msg_features(msg) & I2C_MSG_DONE_MASK) != 0) {
 			i2c_vector_delete_at(adapter, i);
@@ -417,6 +417,19 @@ static int i2c_start_xfer(struct i2c_client *client)
 	return -1;
 }
 
+#if 0
+static void i2c_print_vector(struct i2c_adapter *adapter)
+{
+	struct i2c_message *msg;
+	printf("--\n");
+	i2c_vector_foreach(&adapter->msg_vector, i) {
+		msg = i2c_vector_get(adapter, i);
+		printf("Msg: %p Master: %X Tx: %X\n", msg, neg(msg->features) & I2C_MSG_MASTER_MSG_MASK,
+			   msg->features & I2C_MSG_TRANSMIT_MSG_MASK);
+	}
+}
+#endif
+
 /**
  * \brief Initialize the transfer of a chain of messages.
  * \param client Client which has initialized the transfer.
@@ -509,7 +522,6 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 			rc = adapter->xfer(adapter, client->freq, master, &index);
 			if(!adapter->error) {
 				bus_features = i2c_adapter_features(adapter);
-				
 				do {
 					msg = i2c_vector_get(adapter, index-1);
 					if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
@@ -523,6 +535,7 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 							msg_features = i2c_msg_features(newmsg);
 							if(i2c_check_msg(msg_features, bus_features)) {
 								i2c_vector_insert_at(adapter, newmsg, index);
+								rc = 0;
 							} else {
 								free(newmsg);
 							}
@@ -534,10 +547,6 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 					length = i2c_vector_length(adapter);
 					if(index < length && rc == 0) {
 						rc = adapter->resume(adapter, &index);
-						if(adapter->error) {
-							rc = -DEV_INTERNAL;
-							break;
-						}
 					}
 				} while(index < length && rc == 0);
 			}
@@ -548,7 +557,6 @@ static int __link __i2c_start_xfer(struct i2c_client *client)
 
 	return rc;
 	err:
-	i2c_cleanup_adapter_msgs(client);
 	i2c_release_adapter(adapter, sh_info);
 	return rc;
 	
@@ -578,7 +586,7 @@ static void i2c_update(struct i2c_client *client)
 	s_diff = (int32_t)diff;
 	s_diff *= -1;
 	
-	adapter->update(s_diff);
+	adapter->update(adapter, s_diff);
 }
 
 /**

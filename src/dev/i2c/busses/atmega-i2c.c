@@ -415,8 +415,7 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 		}
 	}
 	
-	if(BermudaEventWaitNext(event(adapter->slave_queue), 0) == -1) {
-		adapter->error = TRUE;
+	if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) == -1) {
 		rc = -1;
 	}
 	
@@ -663,7 +662,7 @@ SIGNAL(TWI_STC_vect)
 
 		case I2C_MASTER_ARB_LOST:
 			adapter->busy = FALSE;
-			TWCR = BIT(TWINT) | BIT(TWEN) | BIT(TWIE) | (twcr & BIT(TWEA));
+			TWCR = BIT(TWINT) | BIT(TWEN) | BIT(TWIE) | (twcr & BIT(TWEA)) | BIT(TWSTA);
 			break;
 			
 		/*
@@ -697,6 +696,8 @@ SIGNAL(TWI_STC_vect)
 		case I2C_SR_SLAW_ARB_LOST:
 		case I2C_SR_SLAW_ACK:
 		case I2C_SR_GC_ACK:
+			buffer_index = 0;
+			adapter->busy = TRUE;
 			if(i2c_sr_index == -1) {
 				dev->ctrl(dev, I2C_NACK, NULL);
 				break;
@@ -704,8 +705,6 @@ SIGNAL(TWI_STC_vect)
 			msg = i2c_vector_get(adapter, i2c_sr_index);
 			if(msg) {
 				if(msg->length) {
-					adapter->busy = TRUE;
-					buffer_index = 0;
 					dev->ctrl(dev, I2C_ACK, NULL);
 					break;
 				} else {
@@ -754,6 +753,9 @@ SIGNAL(TWI_STC_vect)
 					dev->ctrl(dev, I2C_START | I2C_NACK, NULL);
 				} else {
 					dev->ctrl(dev, I2C_NACK, NULL);
+				}
+				if(i2c_sr_index != -1) {
+					i2c_vector_get(adapter, i2c_sr_index)->features |= I2C_MSG_DONE_FLAG;
 				}
 				
 				adapter->busy = FALSE;

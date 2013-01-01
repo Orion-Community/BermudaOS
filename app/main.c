@@ -142,7 +142,6 @@ void setup()
 		}
 		BermudaThreadSleep(500);
 	}
-	printf_P(PSTR("Initializing..\n"));
 	
 	eeprom_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, BASE_SLA_24C02, SCL_FRQ_24C02);
 	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x54, 100000UL);
@@ -150,9 +149,9 @@ void setup()
 	Bermuda24c02Init(eeprom_client);
 	i2c_set_callback(test_client2, &master_callback);
 	i2c_set_callback(test_client, &slave_callback);
-	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 175,
+	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 150,
 					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(&i2c_slave_thread, "I2C_SLAVE", &i2c_slave_dbg, NULL, 175,
+	BermudaThreadCreate(&i2c_slave_thread, "I2C_SLAVE", &i2c_slave_dbg, NULL, 150,
 					&i2c_slave_stack[0], BERMUDA_DEFAULT_PRIO);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);

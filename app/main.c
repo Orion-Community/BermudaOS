@@ -34,6 +34,7 @@
 #include <dev/i2c/i2c.h>
 #include <dev/i2c/reg.h>
 #include <dev/i2c/i2c-core.h>
+#include <dev/i2c/i2c-msg.h>
 #include <dev/usart/usart.h>
 #include <dev/i2c/busses/atmega.h>
 #include <dev/usart/busses/atmega_usart.h>
@@ -50,8 +51,8 @@
 
 static VTIMER *timer;
 struct i2c_client *eeprom_client;
-static char i2c_stack[175];
-static char i2c_slave_stack[175];
+static unsigned char i2c_stack[175];
+static unsigned char i2c_slave_stack[175];
 THREAD i2c_thread;
 THREAD i2c_slave_thread;
 
@@ -63,16 +64,18 @@ static uint8_t test_tx[2] = { 0xFC, 0xAA };
 THREAD(i2c_dbg, arg)
 {
 	int fd;
+	uint8_t tx[2] = {0x0, 0x0};
 	while(1) {
 		
-		fd = i2cdev_socket(test_client2, _FDEV_SETUP_RW | I2C_MASTER | I2CDEV_CALL_BACK);
-		i2c_set_transmission_layout(test_client, "ww");
+		fd = i2cdev_socket(test_client2, _FDEV_SETUP_RW | I2C_MASTER);
+		i2c_set_transmission_layout(test_client, "w");
 		
 		if(fd >= 0) {
-			write(fd, &test_tx[1], 1);
+			write(fd, &tx[0], 2);
 			flush(fd);
 			close(fd);
 		}
+		tx[1]++;
 		BermudaThreadSleep(1000);
 	}
 }
@@ -89,17 +92,8 @@ THREAD(i2c_slave_dbg, arg)
 			close(slave);
 		}
 		printf("rx: %X\n", rx);
-		BermudaThreadSleep(1000);
+		BermudaThreadSleep(500);
 	}
-}
-
-static int master_callback(struct i2c_client *client, struct i2c_message *msg)
-{
-	msg->buff = &test_tx[0];
-	msg->length = 1;
-	msg->addr = 0x54;
-	msg->features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG;
-	return 0;
 }
 
 static int slave_callback(struct i2c_client *client, struct i2c_message *msg)
@@ -146,17 +140,16 @@ void setup()
 	eeprom_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, BASE_SLA_24C02, SCL_FRQ_24C02);
 	test_client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x54, 100000UL);
 	test_client2 = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x54, 100000UL);
-	Bermuda24c02Init(eeprom_client);
-	i2c_set_callback(test_client2, &master_callback);
+	
 	i2c_set_callback(test_client, &slave_callback);
-	BermudaThreadCreate(&i2c_thread, "I2C", &i2c_dbg, NULL, 150,
+	BermudaThreadCreate(&i2c_thread, "I2CTH", &i2c_dbg, NULL, 175,
 					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(&i2c_slave_thread, "I2C_SLAVE", &i2c_slave_dbg, NULL, 150,
-					&i2c_slave_stack[0], BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(&i2c_slave_thread, "I2C_SLAVE", &i2c_slave_dbg, NULL, 175,
+					&i2c_slave_stack[0], BERMUDA_DEFAULT_PRIO-1);
 #endif
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
-	
 	BermudaSpiRamInit(SPI0, 10);
+	Bermuda24c02Init(eeprom_client);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
 	Bermuda24c02WriteByte(100, 0xAC);
 }
@@ -178,8 +171,8 @@ unsigned long loop()
 	read_back_sram = BermudaSpiRamReadByte(0x50);
 	read_back_eeprom = Bermuda24c02ReadByte(100);
 
-	printf_P(PSTR("T=%f M=%X E=%X S=%X\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
-				read_back_sram);
+	printf_P(PSTR("T=%f M=%X E=%X S=%X L=%u\n"), temperature, BermudaHeapAvailable(), read_back_eeprom,
+				read_back_sram, i2c_vector_length(ATMEGA_I2C_C0_ADAPTER));
 	
 	
 #ifdef __THREADS__

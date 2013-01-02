@@ -19,12 +19,12 @@ endif
 # -------------------------------------------------------
 if ENABLE_ATMEGA328P
 MCU=atmega328p
-STDDEFS+= -DMEM=0x7FF
+STDDEFS+= -DMEM=0x800
 endif
 
 if ENABLE_ATMEGA328
 MCU=atmega328
-STDDEFS+= -DMEM=0x7FF
+STDDEFS+= -DMEM=0x800
 endif
 
 # -------------------------------------------------------

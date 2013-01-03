@@ -400,6 +400,8 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 	
 	if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) == -1) {
 		rc = -1;
+		i2c_sr_index = -1;
+		i2c_st_index = -1;
 	}
 	
 	*index = last_msg_index+1;
@@ -439,6 +441,8 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
 			if((rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO)) < 0) {
 				rc = -1;
+				i2c_sr_index = -1;
+				i2c_st_index = -1;
 			}
 			*index = last_msg_index+1;
 		}

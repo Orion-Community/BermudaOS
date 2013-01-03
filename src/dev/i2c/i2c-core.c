@@ -441,17 +441,11 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 							break;
 						}
 						newmsg->addr = msg->addr;
-						if(!sh_info->shared_callback(client, newmsg)) {
-							msg_features = i2c_msg_features(newmsg);
-							if(i2c_check_msg(msg_features, bus_features)) {
-								i2c_vector_insert_at(adapter, newmsg, index);
-								rc = 0;
-							} else {
-								free(newmsg);
-							}
-						} else {
-							free(newmsg);
+						if(sh_info->shared_callback(client, newmsg) != 0) {
+							newmsg->buff = NULL;
+							newmsg->length = 0;
 						}
+						i2c_vector_insert_at(adapter, newmsg, index);
 					}
 					
 					length = i2c_vector_length(adapter);

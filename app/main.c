@@ -102,7 +102,6 @@ static int master_callback(struct i2c_client *client, struct i2c_message *msg)
 	msg->length = 1;
 	msg->addr = 0x54;
 	msg->features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG;
-// 	printf("hi");
 	BermudaSpiRamWriteByte(0x50, ++(test_tx[0]));
 	return 0;
 }
@@ -113,7 +112,6 @@ static int slave_callback(struct i2c_client *client, struct i2c_message *msg)
 	msg->length = 1;
 	msg->addr = 0x54;
 	msg->features = I2C_MSG_SLAVE_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG;
-// 	printf("hi");
 	test_tx[1]++;;
 	return 0;
 }
@@ -124,11 +122,6 @@ PUBLIC void TestTimer(VTIMER *timer, void *arg)
 {
 	BermudaDigitalPinWrite(5, led);
 	led ^= 1;
-}
-
-void setup()
-{
-
 }
 
 static char buff[4];
@@ -160,16 +153,17 @@ void app()
 	
 	i2c_set_callback(test_client, &slave_callback);
 	i2c_set_callback(test_client2, &master_callback);
+	BermudaThreadCreate(&i2c_thread, "I2CTH", &i2c_dbg, NULL, 150,
+					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
+	BermudaThreadCreate(&i2c_slave_thread, "I2C_SLAVE", &i2c_slave_dbg, NULL, 150,
+					&i2c_slave_stack[0], BERMUDA_DEFAULT_PRIO);
 #endif
 
 	timer = BermudaTimerCreate(500, &TestTimer, NULL, BERMUDA_PERIODIC);
 	BermudaSpiRamInit(SPI0, 10);
 	Bermuda24c02Init(eeprom_client);
 	BermudaSpiRamWriteByte(0x50, 0xF8);
-	BermudaThreadCreate(&i2c_thread, "I2CTH", &i2c_dbg, NULL, 150,
-					&i2c_stack[0], BERMUDA_DEFAULT_PRIO);
-	BermudaThreadCreate(&i2c_slave_thread, "I2C_SLAVE", &i2c_slave_dbg, NULL, 150,
-					&i2c_slave_stack[0], BERMUDA_DEFAULT_PRIO);
+	Bermuda24c02WriteByte(100, 0xAC);
 	
 	unsigned char tx_eep = 0, rx_eep = 0;
 	while(1) {

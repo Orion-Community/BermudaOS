@@ -22,11 +22,20 @@
  * @{
  * \addtogroup i2c-core I2C Core
  * \brief I2C core module.
- * \todo Rewrite the I2C core module.
  * 
  * The I2C core module is a device/peripheral agnostic layer. It is responsible for editting
  * all queue data, creating and deleting new messages, handling of call backs, initializing data
  * transfers at the device/peripheral driver, etc..
+ * 
+ * \section busf Bus interface
+ * The core module provides an interface for device drivers through some function calls in the
+ * i2c_adapter structure (i2c_adapter::xfer i2c_adapter::resume and i2c_adapter::update). These
+ * functions control the core layer using their return values and the index set. The core layer
+ * will stop processing when either the return value is non zero or when the index has reached its
+ * maximum length. As long as both conditions are met, i2c_adapter::resume will be called.
+ * 
+ * Call-back messages should NEVER be masked with I2C_MSG_DONE_FLAG too soon, since they may be
+ * deleted by some other thread. The core layer will mask these messages.
  * @{
  */
 
@@ -60,7 +69,7 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg);
 static inline bool i2c_client_has_action(i2c_features_t features);
 
 static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz);
-static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client);
+static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client, bool master);
 
 /* transmission funcs */
 static int i2c_start_xfer(struct i2c_client *client);
@@ -226,9 +235,10 @@ PUBLIC int i2c_flush_client(struct i2c_client *client)
 /**
  * \brief Remove all messages from the adapter.
  * \param client I2C client which adapters messages have to be deleted.
+ * \param master If set to true, not only slave messages will be deleted, but master messages too.
  * \warning The adapter must be locked before it is safe to use this function.
  */
-static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client)
+static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client, bool master)
 {
 	struct i2c_adapter *adapter = client->adapter;
 	struct i2c_message *msg;
@@ -236,9 +246,11 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client)
 	size_t i = i2c_vector_length(adapter) -1;
 	for(; i >= 0; i--) {
 		msg = i2c_vector_get(adapter, i);
-		if((i2c_msg_features(msg) & I2C_MSG_DONE_MASK) != 0) {
-			i2c_vector_delete_at(adapter, i);
-			free(msg);
+		if(!i2c_msg_is_master(msg) || master) {
+			if((i2c_msg_features(msg) & I2C_MSG_DONE_MASK) != 0) {
+				i2c_vector_delete_at(adapter, i);
+				free(msg);
+			}
 		}
 		if(i == 0) {
 			break;
@@ -257,6 +269,7 @@ static inline void i2c_slave_tmo(struct i2c_client *client)
 			msg = i2c_vector_get(client->adapter, index);
 			msg->features |= I2C_MSG_DONE_FLAG;
 		}
+		i2c_cleanup_adapter_msgs(client, FALSE);
 	}
 }
 
@@ -479,7 +492,7 @@ static void i2c_update(struct i2c_client *client)
 	size_t diff = i2c_vector_length(adapter);
 	int32_t s_diff;
 	
-	i2c_cleanup_adapter_msgs(client);
+	i2c_cleanup_adapter_msgs(client, TRUE);
 	diff -= i2c_vector_length(adapter);
 	s_diff = (int32_t)diff;
 	s_diff *= -1;

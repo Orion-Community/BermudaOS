@@ -423,11 +423,14 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 				rc = -1;
 			}
 			*index = master_msg_index;
-			if((i2c_msg_features(i2c_vector_get(adapter, master_msg_index-1)) & 
-				I2C_MSG_CALL_BACK_MASK) != 0)
-			{
-				msg->features |= I2C_MSG_DONE_FLAG;
-				rc = 0;
+			msg = i2c_vector_get(adapter, master_msg_index-1);
+			if(msg) {
+				if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
+					msg->features |= I2C_MSG_DONE_FLAG;
+					rc = 0;
+				} else {
+					rc = 1;
+				}
 			} else {
 				rc = 1;
 			}

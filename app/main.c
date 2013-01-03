@@ -97,12 +97,13 @@ THREAD(i2c_slave_dbg, arg)
 
 static int master_callback(struct i2c_client *client, struct i2c_message *msg)
 {
+	test_tx[0] = BermudaSpiRamReadByte(0x50);
 	msg->buff = &test_tx[0];
 	msg->length = 1;
 	msg->addr = 0x54;
 	msg->features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_STOP_FLAG;
 // 	printf("hi");
-	test_tx[0]++;
+	BermudaSpiRamWriteByte(0x50, ++(test_tx[0]));
 	return 0;
 }
 

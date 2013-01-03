@@ -247,30 +247,17 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client)
 	return 0;
 }
 
-static inline void i2c_tmo(struct i2c_client *client)
+static inline void i2c_slave_tmo(struct i2c_client *client)
 {
-	struct i2c_message *msg;
-	struct i2c_adapter *adapter = client->adapter;
 	size_t index = 0;
-	bool cleanup = FALSE;
+	struct i2c_message *msg;
 	
-	cleanup = (i2c_shinfo(client)->socket->flags & I2C_MASTER) ? 
-				i2c_first_master_msg(adapter, &index) : i2c_first_slave_msg(adapter, &index);
-				
-	if(cleanup) {
-		for(; index < i2c_vector_length(adapter); index++) {
-			msg = i2c_vector_get(adapter, index);
-			
-			if((i2c_shinfo(client)->socket->flags & I2C_MASTER) != 0 && !i2c_msg_is_master(msg)) {
-				break;
-			}
-			
-			if(msg) {
-				msg->features |= I2C_MSG_DONE_FLAG;
-			}
+	if(i2c_first_slave_msg(client->adapter, &index)) {
+		for(; index < i2c_vector_length(client->adapter); index++) {
+			msg = i2c_vector_get(client->adapter, index);
+			msg->features |= I2C_MSG_DONE_FLAG;
 		}
 	}
-	i2c_cleanup_adapter_msgs(client);
 }
 
 /**
@@ -284,14 +271,16 @@ static int i2c_start_xfer(struct i2c_client *client)
 	
 	if(client) {
 		if(client->adapter && epl_entries(i2c_shinfo(client)->list) != 0) {
-			i2c_tmo(client);
+			if((i2c_shinfo(client)->socket->flags & I2C_SLAVE) != 0) {
+				i2c_slave_tmo(client);
+			}
 			return __i2c_start_xfer(client);
 		}
 	}
 	return -1;
 }
 
-#if 1
+#if 0
 static void i2c_print_vector(struct i2c_adapter *adapter)
 {
 	struct i2c_message *msg;
@@ -425,10 +414,6 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 				goto err;
 			}
 			
-			if(i2c_vector_length(adapter) == 11) {
-				i2c_print_vector(adapter);
-				while(1);
-			}
 			index = (index != 0) ? index-1 : index;
 			rc = adapter->xfer(adapter, client->freq, master, &index);
 			if(!rc) {
@@ -436,6 +421,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 				do {
 					msg = i2c_vector_get(adapter, index-1);
 					if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
+						msg->features |= I2C_MSG_DONE_FLAG;
 						newmsg = malloc(sizeof(*newmsg));
 						if(!newmsg) {
 							rc = -DEV_NULL;

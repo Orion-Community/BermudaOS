@@ -48,12 +48,7 @@
 #define LED      PINB5
 
 extern unsigned int __heap_start;
-#ifdef __THREADS__
-extern void loop();
-#else
-extern unsigned long loop();
-#endif
-extern void setup();
+extern void app();
 
 #ifdef __TWI__
 struct i2c_adapter i2c_adapter;
@@ -62,10 +57,7 @@ struct i2c_adapter i2c_adapter;
 #ifdef __THREADS__
 THREAD(MainThread, data)
 {
-	setup();
-	while(1) {
-		loop();
-	}
+	app();
 }
 #endif
 

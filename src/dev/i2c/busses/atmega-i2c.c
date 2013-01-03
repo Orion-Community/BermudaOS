@@ -532,6 +532,14 @@ static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter, size_t index)
 			dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
 			event_signal_from_isr(event(adapter->slave_queue));
 			adapter->busy = FALSE;
+		} else if(i2c_first_slave_msg(adapter, &index)) {
+			msg = i2c_vector_get(adapter, index);
+			if((i2c_msg_features(msg) & I2C_MSG_TRANSMIT_MSG_MASK) != 0) {
+				i2c_st_index = index;
+			} else {
+				i2c_sr_index = index;
+			}
+			dev->ctrl(dev, I2C_LISTEN, NULL);
 		} else {
 			event_signal_from_isr(event(adapter->slave_queue));
 			dev->ctrl(dev, I2C_NACK, NULL);

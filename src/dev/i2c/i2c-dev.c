@@ -146,7 +146,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 }
 
 /**
- * \brief Initializes the buffer for an I2C master transmit.
+ * \brief Initializes the buffer for an I2C master/slave transmit.
  * \param file I/O file.
  * \param buff The I2C message.
  * \param size Length of <i>buff</i>.
@@ -156,21 +156,28 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 {
 	struct i2c_client *client = file->data;
+	struct i2c_shared_info *info = i2c_shinfo(client);
 	i2c_features_t features;
-	char *layout = i2c_transmission_layout(client);
+	char *layout;
 	
 	if(client) {
-		features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | I2C_MSG_SENT_REP_START_FLAG;
-		if(*(++layout) == '\0') {
-			features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
+		if((info->socket->flags & I2C_MASTER) != 0) {
+			layout = i2c_transmission_layout(client);
+			features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG | 
+						I2C_MSG_SENT_REP_START_FLAG;
+			if(*(++layout) == '\0') {
+				features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
+			}
+			i2c_set_transmission_layout(client, layout);
+		} else {
+			features = I2C_MSG_SLAVE_MSG_FLAG | I2C_MSG_TRANSMIT_MSG_FLAG;
 		}
-		if((file->flags & I2CDEV_CALL_BACK) != 0) {
-			features |= I2C_MSG_CALL_BACK_FLAG;
-		}
-		
-		i2c_set_transmission_layout(client, layout);
 	} else {
 		return -1;
+	}
+	
+	if((file->flags & I2CDEV_CALL_BACK) != 0) {
+		features |= I2C_MSG_CALL_BACK_FLAG;
 	}
 	
 	if(i2c_write_client(client, buff, size, features) == 0) {
@@ -181,7 +188,7 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 }
 
 /**
- * \brief Set the master receive buffer.
+ * \brief Set the master/slave receive buffer.
  * \param file The I/O file.
  * \param buff Read buffer.
  * \param size Size of \p buff.
@@ -189,20 +196,27 @@ PUBLIC int i2cdev_write(FILE *file, const void *buff, size_t size)
 PUBLIC int i2cdev_read(FILE *file, void *buff, size_t size)
 {
 	struct i2c_client *client = file->data;
+	struct i2c_shared_info *info = i2c_shinfo(client);
 	i2c_features_t features;
-	char *layout = i2c_transmission_layout(client);
+	char *layout;
 	
 	if(client) {
-		features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_SENT_REP_START_FLAG;
-		if(*(++layout) == '\0') {
-			features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
+		if((info->socket->flags & I2C_MASTER) != 0) {
+			layout = i2c_transmission_layout(client);
+			features = I2C_MSG_MASTER_MSG_FLAG | I2C_MSG_SENT_REP_START_FLAG;
+			if(*(++layout) == '\0') {
+				features = (features & ~I2C_MSG_SENT_REP_START_FLAG) | I2C_MSG_SENT_STOP_FLAG;
+			}
+			i2c_set_transmission_layout(client, layout);
+		} else {
+			features = I2C_MSG_SLAVE_MSG_FLAG;
 		}
-		if((file->flags & I2CDEV_CALL_BACK) != 0) {
-			features |= I2C_MSG_CALL_BACK_FLAG;
-		}
-		i2c_set_transmission_layout(client, layout);
 	} else {
 		return -1;
+	}
+	
+	if((file->flags & I2CDEV_CALL_BACK) != 0) {
+		features |= I2C_MSG_CALL_BACK_FLAG;
 	}
 
 	if(i2c_write_client(client, buff, size, features) == 0) {

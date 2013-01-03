@@ -33,26 +33,22 @@
  * your I/O block will look like the following.
  * 
 \code{.c}
-struct i2c_client client;
-atmega_i2c_init_client(&client, ATMEGA_I2C_C0);
-client.sla = 0x54;      // slave address
-client.freq = 100000UL; // frequency in hertz
-int rc, fd;
+struct i2c_client *client;
+client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x54, 100000UL);
+i2c_set_callback(client, &master_callback); // call-back will set a second message
+int fd;
 
-fd = i2cdev_socket(&client, _FDEV_SETUP_RW | I2C_MASTER);
+fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_MASTER);
 if(fd < 0) {
     error();
+    return;
 }
-
-rc = write(fd, txbuff, txbuff_length);
-rc += read(fd, rxbuff, rxbuff_length);
-
-if(rc == 0) {
-    rc = flush(fd);
-} else {
-    i2cdev_error(fd);
-}
-  
+i2c_set_transmission_layout(client, "wr"); // write read
+write(fd, txbuff, txbuff_length);
+read(fd, rxbuff, rxbuff_length);
+mode(fd, _FDEV_SETUP_RW | I2C_MASTER | I2CDEV_CALL_BACK);
+write(fd, txbuff2, txbuff2_length); // this msg will have a callback
+flush(fd);
 close(fd);
 \endcode
  * 
@@ -61,17 +57,21 @@ close(fd);
  * 
  * <b>Slave recieve/transmit</b>
 \code{.c}
-struct i2c_client slave_client;
+struct i2c_client *client;
 
-atmega_i2c_init_client(&slave_client, ATMEGA_I2C_C0);
-slave_client.callback = &slave_responder;
- 
-fd = i2cdev_socket(&slave_client, _FDEV_SETUP_RW | I2C_SLAVE);
-if(fd < 0) {
-    goto _usart;
+client = i2c_alloc_client(ATMEGA_I2C_C0_ADAPTER, 0x54, 100000UL);
+i2c_set_callback(client, &slave_callback); // call-back will set a second message
+
+for(;;) {
+	fd = i2cdev_socket(client, _FDEV_SETUP_RW | I2C_SLAVE | I2CDEV_CALL_BACK); // modes can be changed using mode(fd)
+	if(fd < 0) {
+		error();
+		continue;
+	}
+	read(fd, &rx, rxlen);
+	flush(fd);
+	close(fd);
 }
-i2cdev_listen(fd, &rx, 1);
-close(fd);
 \endcode
  * 
  * The slave will first wait for a master receive request. When it is finished, it will check for a

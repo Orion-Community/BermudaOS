@@ -70,33 +70,15 @@
 /* file flags */
 #define I2C_MASTER 0x100 //!< I2C master flag
 #define I2C_SLAVE  0x200 //!< I2C slave flag
+/**
+ * \brief Call back flag.
+ * 
+ * All messages added when I2CDEV_CALL_BACK is set will receive a call back. The flag can be removed
+ * using the mode(int fd) function.
+ * \see mode
+ */
 #define I2CDEV_CALL_BACK 0x400
-#define I2CDEV_CALL_BACK_SHIFT 10
-
-/* adapter flags */
-#define I2C_MASTER_ENABLE 		BIT(0) //!< Master enable bit in the flags member of i2c_client.
-
-/**
- * \brief Transmitter enable flag.
- * \note I2C_RECEIVER <b>or</b> I2C_TRANSMITTER must be active, but not both.
- */
-#define I2C_TRANSMITTER 		BIT(1)
-
-/**
- * \brief Receiver enable flag.
- * \note I2C_RECEIVER <b>or</b> I2C_TRANSMITTER must be active, but not both.
- */
-#define I2C_RECEIVER			BIT(2)
-#define I2C_ERROR				BIT(3) //!< Error flag. Indicates an error occured.
-
-/**
- * \brief Call-back flag. Set when the i2c device driver can safely call back the application.
- */
-#define I2C_CALL_BACK			BIT(4)
-
-#define I2C_SLAVE_MASK			(~BIT(0)) //!< Slave enable mask.
-#define I2C_SLAVE_ENABLE		0 //!< Slave enable.
-
+#define I2CDEV_CALL_BACK_SHIFT 10 //!< I2CDEV_CALL_BACK shift.
 #endif
 /**
  * @}

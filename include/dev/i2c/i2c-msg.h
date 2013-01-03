@@ -69,11 +69,22 @@ static inline size_t i2c_vector_length(struct i2c_adapter *adapter)
 	return adapter->msg_vector.length;
 }
 
+/**
+ * \brief Check whether a message is a master message or not.
+ * \param msg i2c_message to check.
+ * \retval TRUE if the message is a master message.
+ * \retval FALSE if the message is a slave message.
+ */
 static inline bool i2c_msg_is_master(struct i2c_message *msg)
 {
 	return ((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0);
 }
 
+/**
+ * \brief Locate the first valid slave message.
+ * \param adapter i2c_adapter holding the messages.
+ * \param index Index is used to store the first index of the message.
+ */
 static inline bool i2c_first_slave_msg(struct i2c_adapter *adapter, size_t *index)
 {
 	struct i2c_message *msg;
@@ -87,6 +98,13 @@ static inline bool i2c_first_slave_msg(struct i2c_adapter *adapter, size_t *inde
 	return FALSE;
 }
 
+/**
+ * \brief Locate the first master message.
+ * \param adapter i2c_adapter holding the messages.
+ * \param index Index to set the index of the first master message.
+ * \retval TRUE If there is a valid master message found.
+ * \retval FALSE If no valid master message is found.
+ */
 static inline bool i2c_first_master_msg(struct i2c_adapter *adapter, size_t *index)
 {
 	struct i2c_message *msg;

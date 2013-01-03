@@ -59,6 +59,10 @@ typedef uint8_t i2c_action_t;
 #define I2C_CALL_BACK_FLAG B1
 #define I2C_CLIENT_HAS_LOCK_FLAG B10 //!< Defines that the client has locked the adapter.
 
+/**
+ * \brief Masks all queue action bits.
+ * \deprecated Not used.
+ */
 #define I2C_QUEUE_ACTION_MASK (I2C_QUEUE_ACTION_NEW | I2C_QUEUE_ACTION_INSERT | \
 							  I2C_QUEUE_ACTION_FLUSH)
 #define I2C_QUEUE_ACTION_SHIFT 2  //!< Shift to reach the queue action bits.
@@ -76,12 +80,20 @@ typedef uint8_t i2c_action_t;
 /*
  * I2C adapter features
  */
-#define I2C_SLAVE_SUPPORT_SHIFT 1
+#define I2C_SLAVE_SUPPORT_SHIFT 1 //!< I2C_SLAVE_SUPPORT shift.
 
+/**
+ * \enum i2c_bus_features
+ * \typedef i2c_bus_features_t
+ * \brief Bus features.
+ * \see I2C_MSG_CHECK
+ * 
+ * Used in i2c_adapter::features.
+ */
 typedef enum i2c_bus_features
 {
-	I2C_MASTER_SUPPORT = B1,
-	I2C_SLAVE_SUPPORT  = B10,
+	I2C_MASTER_SUPPORT = B1, //!< When set, the adapter supports master transfers.
+	I2C_SLAVE_SUPPORT  = B10, //!< When set, the adapter supports slave transfers.
 } i2c_bus_features_t;
 
 
@@ -141,16 +153,6 @@ struct i2c_client {
 	uint32_t freq; //!< Operating frequency in master mode.
 	
 	struct i2c_shared_info *sh_info; //!< Shared info.
-	
-	/**
-	 * \brief Call back used in slave operation.
-	 * \param msg Message used in the operation.
-	 * 
-	 * This function pointer will be called when a slave receive is done. The
-	 * application can then check the received values and apply the correct
-	 * transmission values.
-	 */
-	void (*callback)(struct i2c_message *msg);
 } __attribute__((packed));
 
 /**
@@ -163,8 +165,16 @@ struct i2c_adapter {
 	
 	i2c_features_t features; //!< Adapter features.
 	bool busy; //!< Defines wether the interface is busy or not.
-	uint8_t error; //! I2C error code.
+	/**
+	 * \brief Adapter error field.
+	 */
+	uint8_t error;
 	
+	/**
+	 * \var msg_vector
+	 * \brief Message vector (dynamic array), to list all messages for transmission.
+	 * The messages are sorted by master/slave (master messages first, then slave messages).
+	 */
 	struct i2c_msg_vector
 	{
 		size_t length, //!< Length of the vector.
@@ -221,6 +231,11 @@ extern struct i2c_client *i2c_alloc_client(struct i2c_adapter *adapter, uint16_t
 extern void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapter, 
 							uint16_t sla, uint32_t hz);
 
+/**
+ * \brief Set a call back function.
+ * \param client i2c_client to set the call back for.
+ * \param cb The call back function.
+ */
 static inline void i2c_set_callback(struct i2c_client *client, int (*cb)(struct i2c_client *,
 																		 struct i2c_message *))
 {

@@ -38,7 +38,7 @@
  * \brief Master message flag.
  * \see I2C_MSG_SLAVE_MSG_FLAG_SHIFT I2C_MSG_MASTER_MSG_MASK
  */
-#define I2C_MSG_MASTER_MSG_FLAG_SHIFT I2C_MSG_SLAVE_MSG_FLAG_SHIFT
+#define I2C_MSG_MASTER_MSG_FLAG_SHIFT I2C_MSG_SLAVE_MSG_FLAG_SHIFT //!< I2C master message shift.
 #define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
 #define I2C_MSG_SENT_STOP_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
 #define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
@@ -150,17 +150,9 @@ __DECL
  * \addtogroup i2c-core
  * @{
  */
-extern int i2c_setup_msg(FILE *stream, struct i2c_message *msg, uint8_t flags);
-extern int i2c_call_client(struct i2c_client *client, FILE *stream);
-extern void i2c_cleanup_msg(FILE *stream, struct i2c_adapter *adap, uint8_t msg);
-extern void i2c_do_clean_msgs(struct i2c_adapter *adap);
-extern void i2c_cleanup_master_msgs(FILE *stream, struct i2c_adapter *adap);
-extern void i2c_cleanup_slave_msgs(FILE *stream, struct i2c_adapter *adap);
-
 /*
  * I2C-CORE functions
  */
-extern int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force);
 extern int i2c_init_adapter(struct i2c_adapter *adapter, char *fname);
 extern void i2c_cleanup_client_msgs(struct i2c_client *client);
 extern int i2c_flush_client(struct i2c_client *client);
@@ -261,6 +253,11 @@ static inline void i2c_set_transmission_layout(struct i2c_client *client, char *
 	shinfo->transmission_layout = layout;
 }
 
+/**
+ * \brief Get the transmission layout.
+ * \param client Client to get the transmission layout from.
+ * \note Transmission layouts are only used in master transfers.
+ */
 static inline char *i2c_transmission_layout(struct i2c_client *client)
 {
 	return i2c_shinfo(client)->transmission_layout;

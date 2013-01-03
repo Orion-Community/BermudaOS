@@ -64,12 +64,9 @@
 /*
  * Static functions.
  */
-static inline i2c_action_t i2c_eval_action(struct i2c_client *client);
-static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg);
-static inline bool i2c_client_has_action(i2c_features_t features);
-
 static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t hz);
 static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client, bool master);
+static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg);
 
 /* transmission funcs */
 static int i2c_start_xfer(struct i2c_client *client);
@@ -104,55 +101,6 @@ PUBLIC int i2c_init_adapter(struct i2c_adapter *adapter, char *fname)
 	adapter->features = 0;
 	adapter->busy = false;
 	return rc;
-}
-
-/**
- * \brief Sets a new action for the given I2C client.
- * \param client Client to set the action for.
- * \param action Action to set.
- * \param force If set to <b><i>TRUE</i></b>, this function will override any pending action.
- * \return 0 on success, -1 if there is an action pending and <i>force</i> is set to 
- *         <b><i>FALSE</i></b>.
- */
-PUBLIC int i2c_set_action(struct i2c_client *client, i2c_action_t action, bool force)
-{
-	i2c_features_t features = i2c_client_features(client);
-	
-	if((features & I2C_ACTION_PENDING) == 0 || force) {
-		action <<= I2C_QUEUE_ACTION_SHIFT;
-		features &= ~I2C_QUEUE_ACTION_MASK;
-		features |= (action | I2C_ACTION_PENDING);
-		i2c_shinfo(client)->features = features;
-		return 0;
-	} else {
-		return -1;
-	}
-}
-
-/**
- * \brief Checks if the client has an action pending.
- * \param features Features of the given client.
- * \see I2C_ACTION_PENDING i2c_set_action
- * \return Wether there is an action set or not.
- * \retval 1 An action is pending.
- * \retval 0 No action is pending.
- */
-static inline bool i2c_client_has_action(i2c_features_t features)
-{
-	return ((features & I2C_ACTION_PENDING) != 0);
-}
-
-/**
- * \brief Check the current action.
- * \param client Client which should be checked for actions.
- * \warning This function does not check for pending actions.
- * \return The current configured action.
- */
-static inline i2c_action_t i2c_eval_action(struct i2c_client *client)
-{
-	i2c_features_t features = i2c_client_features(client);
-	
-	return (i2c_action_t)((features & I2C_QUEUE_ACTION_MASK) >> I2C_QUEUE_ACTION_SHIFT);
 }
 
 /**
@@ -222,7 +170,7 @@ PUBLIC int i2c_write_client(struct i2c_client *client, const void *data, size_t 
 /**
  * \brief Flush the I2C client and start the transfer.
  * \param client Client to flush.
- * \see i2c_queue_processor i2c_set_action
+ * \see i2c_start_xfer __i2c_start_xfer
  * \note This function will initiate the transfer (and acquire the needed locks).
  * 
  * All messages which \p client has are flushed to its adapter and a transfer is initialized.
@@ -259,6 +207,12 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client, bool maste
 	return 0;
 }
 
+/**
+ * \brief Slave message time-out.
+ * \param client Slave client.
+ * 
+ * The slave received a time-out. This function deletes all slave buffers.
+ */
 static inline void i2c_slave_tmo(struct i2c_client *client)
 {
 	size_t index = 0;
@@ -276,8 +230,8 @@ static inline void i2c_slave_tmo(struct i2c_client *client)
 /**
  * \brief Initialize an I2C transmission.
  * \param client Client whom requests the transmission.
- * \note This function checks wether the adapter sane, __i2c_start_xfer starts the actual transfer.
- * \see __i2c_start_xfer
+ * \note This function checks whether the adapter sane, __i2c_start_xfer starts the actual transfer.
+ * \see __i2c_start_xfer i2c_slave_tmo
  */
 static int i2c_start_xfer(struct i2c_client *client)
 {
@@ -307,6 +261,11 @@ static void i2c_print_vector(struct i2c_adapter *adapter)
 #endif
 
 #if defined(I2C_MSG_LIST) || defined(__DOXYGEN__)
+/**
+ * \brief Add a new message to the client.
+ * \param client i2c_client structure to add the i2c_message to.
+ * \param msg i2c_message to add.
+ */
 static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg)
 {
 	struct i2c_shared_info *sh_info = i2c_shinfo(client);
@@ -350,8 +309,8 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg)
  * 
  * \section i2c_msg_check i2c_check_msg(msg_features, bus_features)
  * 
- * This function contains a nested function \p i2c_check_msg, which checks the validity of the 
- * message. This will be done using the macro I2C_MSG_CHECK. The mathematical formula of this 
+ * This function contains a nested function, \p i2c_check_msg, which checks the validity of the 
+ * messages. This will be done using the macro I2C_MSG_CHECK. The mathematical formula of this 
  * macro is 
  * \f$ f(x) = (((\neg y_{m} \land m_{f}) \gg m_{s}) \land (y_{b} \land s_{m})) \oplus ((y_{m} \gg 
  * m_{s}) \land ((y_{b} \land s_{s}) \gg m_{s})) \f$. \n

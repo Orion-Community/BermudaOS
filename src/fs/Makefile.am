@@ -1,5 +1,6 @@
 include ../../Makefile.flags
 
-lib_LTLIBRARIES=libvfs.la
+bermudaosdir=@libdir@/bermudaos
+bermudaos_LTLIBRARIES=libvfs.la
 libvfs_la_SOURCES=vfs.c
 

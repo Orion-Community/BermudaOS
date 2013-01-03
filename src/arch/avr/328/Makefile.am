@@ -2,7 +2,8 @@ include ../../../../Makefile.flags
 OPT_SCRS=
 
 SUBDIRS=dev
-libexec_PROGRAMS=boot.elf
+bermudaosexecdir=@libexecdir@/bermudaos
+bermudaosexec_PROGRAMS=boot.elf
 nodist_boot_elf_SOURCES=boot.c
 dist_boot_elf_SOURCES=start.S
 noinst_LTLIBRARIES = lib328.la

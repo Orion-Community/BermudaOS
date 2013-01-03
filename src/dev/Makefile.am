@@ -22,7 +22,9 @@ endif
 
 
 SUBDIRS=$(MAYBE_IIC) $(MAYBYE_PWM) $(MAYBE_USART)
-lib_LTLIBRARIES=libdev.la
+
+bermudaosdir=@libdir@/bermudaos
+bermudaos_LTLIBRARIES=libdev.la
 libdev_la_SOURCES=devreg.c $(OPT_SCRS)
 libdev_la_LIBADD=$(IIC_LIB) $(PWM_LIB) $(USART_LIB)
 include ../../Makefile.flags

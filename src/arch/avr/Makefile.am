@@ -30,8 +30,8 @@ OPT_SCRS+= pwm.c
 endif
 
 SUBDIRS=$(MAYBE_MCU) $(MAYBE_ARD)
-
-lib_LTLIBRARIES=libavr.la
+bermudaosdir=@libdir@/bermudaos
+bermudaos_LTLIBRARIES=libavr.la
 libavr_la_SOURCES= timer.c io.c byte_order.c $(OPT_SCRS)
 libavr_la_LIBADD=328/lib328.la arduino/libarduino.la
 libavr_la_LIBTOOLFLAGS=--tag=CC --silent

@@ -14,7 +14,6 @@ CXXFLAGS=
 LDFLAGS=
 ASFLAGS=
 CCASFLAGS=
-
 # Optional flags
 
 # CPU flags

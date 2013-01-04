@@ -21,7 +21,7 @@
 #include <bermuda.h>
 
 #include <lib/binary.h>
-#include <dev/pwmdev.h>
+#include <dev/pwm.h>
 
 #include <arch/io.h>
 #include <arch/avr/timer.h>

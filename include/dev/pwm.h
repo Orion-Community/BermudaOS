@@ -1,6 +1,6 @@
 /*
- *  BermudaOS - AVR PWM implementation.
- *  Copyright (C) 2012   Michel Megens
+ *  BermudaOS - PWM header
+ *  Copyright (C) 2012   Michel Megens <dev@michelmegens.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,20 +16,4 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __PWM_AVR_H
-#define __PWM_AVR_H
-
-#include <dev/pwm.h>
-
-#define AVR_PWM_BASE_FRQ 2000UL
-#define AVR_PWM_DEFAULT_PS 32UL
-
-__DECL
-extern void BermudaAvrPwmInit(PWM *pwm, TIMER *timer);
-extern void BermudaAvrPwmChannelInit(PWM *pwm, PWM_CHANNEL_NUM channel, reg8_t bank,
-									 unsigned char pin);
-extern void BermudaAvrPwmSetDuty(PWM *pwm, uint16_t duty, PWM_CHANNEL_NUM channel);
-__DECL_END
-
-#endif /* __PWM_AVR_H */
-
+#include <dev/pwm/pwm.h>

@@ -111,7 +111,7 @@ struct i2c_message
  */
 struct i2c_shared_info
 {
-	struct epl_list *list; //!< EPL list of messages.
+	struct ep_list *list; //!< EPL list of messages.
 	
 	struct i2c_adapter *adapter; //!< The I2C adapter.
 	FILE *socket; //!< I/O socket.

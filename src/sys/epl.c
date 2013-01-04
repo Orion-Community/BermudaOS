@@ -47,7 +47,7 @@
  * \param list List which should be tested.
  * \return If not locked 0, 1 otherwise.
  */
-PUBLIC int epl_test_lock(struct epl_list *list)
+PUBLIC int epl_test_lock(struct ep_list *list)
 {
 	if(list->mutex == SIGNALED) {
 		return 0;
@@ -62,7 +62,7 @@ PUBLIC int epl_test_lock(struct epl_list *list)
  * \return Success of the lock. Zero means the locking was successful, -1 means that an error has
  *         occurred.
  */
-PUBLIC int epl_lock(struct epl_list *list)
+PUBLIC int epl_lock(struct ep_list *list)
 {
 	return BermudaEventWait((volatile THREAD**)&list->mutex, EPL_LOCK_WAIT);
 }
@@ -72,7 +72,7 @@ PUBLIC int epl_lock(struct epl_list *list)
  * \param list EPL to unlock.
  * \return 0 on success, -1 on an error.
  */
-PUBLIC int epl_unlock(struct epl_list *list)
+PUBLIC int epl_unlock(struct ep_list *list)
 {
 	return BermudaEventSignalRaw((THREAD*volatile*)&list->mutex);
 }
@@ -81,9 +81,9 @@ PUBLIC int epl_unlock(struct epl_list *list)
  * \brief Use the heap to allocate a new EPL.
  * \return The address to the newly created EPL. An error has occurred if <i>NULL</i> is returned.
  */
-PUBLIC struct epl_list *epl_alloc()
+PUBLIC struct ep_list *epl_alloc()
 {
-	struct epl_list *list;
+	struct ep_list *list;
 	
 	list = malloc(sizeof(*list));
 	list->mutex = SIGNALED;
@@ -100,7 +100,7 @@ PUBLIC struct epl_list *epl_alloc()
  * 
  * When this function returns <b><i>ref</i></b> will point to the the EPL pointer <i><b>list</b></i>.
  */
-PUBLIC void epl_deref(struct epl_list *list, struct epl_list **ref)
+PUBLIC void epl_deref(struct ep_list *list, struct ep_list **ref)
 {
 	enter_crit();
 	*ref = list;
@@ -114,9 +114,9 @@ PUBLIC void epl_deref(struct epl_list *list, struct epl_list **ref)
  * \param a Defines where the node should be added.
  * \return 0 on success, -1 otherwise.
  */
-PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum epl_list_action a)
+PUBLIC int epl_add_node(struct ep_list *list, struct ep_list_node *node, enum ep_list_action a)
 {
-	struct epl_list_node *head = list->nodes, *car;
+	struct ep_list_node *head = list->nodes, *car;
 	int rc = 0;
 	
 	list->list_entries++;
@@ -163,9 +163,9 @@ PUBLIC int epl_add_node(struct epl_list *list, struct epl_list_node *node, enum 
  * \return Weather the deletion was successful (0 on success).
  * \todo Removing fails when node != head.
  */
-PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
+PUBLIC int epl_delete_node(struct ep_list *list, struct ep_list_node *node)
 {
-	struct epl_list_node *head = list->nodes, *carriage, *prev;
+	struct ep_list_node *head = list->nodes, *carriage, *prev;
 	int rc = -1;
 	
 	if(head) {
@@ -202,9 +202,9 @@ PUBLIC int epl_delete_node(struct epl_list *list, struct epl_list_node *node)
  * This function will search the node which is circular and point the \p next pointer of that node
  * to NULL. This way, the list is usable again by iterators.
  */
-PUBLIC int epl_fix(struct epl_list *list)
+PUBLIC int epl_fix(struct ep_list *list)
 {
-	struct epl_list_node *head = list->nodes, *car;
+	struct ep_list_node *head = list->nodes, *car;
 	int rc = -1;
 	size_t size = 0;
 	
@@ -228,9 +228,9 @@ PUBLIC int epl_fix(struct epl_list *list)
  * \return Weather the deletion was successful (0 on success).
  * \see epl_delete_node epl_node_at
  */
-PUBLIC int epl_delete_node_at(struct epl_list *list, size_t num)
+PUBLIC int epl_delete_node_at(struct ep_list *list, size_t num)
 {
-	struct epl_list_node *node = epl_node_at(list, num);
+	struct ep_list_node *node = epl_node_at(list, num);
 	if(node) {
 		return epl_delete_node(list, node);
 	}
@@ -243,9 +243,9 @@ PUBLIC int epl_delete_node_at(struct epl_list *list, size_t num)
  * \param index Node index to find.
  * \return The node at \p index.
  */
-PUBLIC struct epl_list_node *epl_node_at(struct epl_list *list, size_t index)
+PUBLIC struct ep_list_node *epl_node_at(struct ep_list *list, size_t index)
 {
-	struct epl_list_node *carriage = list->nodes;
+	struct ep_list_node *carriage = list->nodes;
 	int i;
 	
 	if(index == 0) {

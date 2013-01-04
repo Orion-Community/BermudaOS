@@ -269,8 +269,8 @@ static void i2c_print_vector(struct i2c_adapter *adapter)
 static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg)
 {
 	struct i2c_shared_info *sh_info = i2c_shinfo(client);
-	struct epl_list *clist = NULL;
-	struct epl_list_node *node;
+	struct ep_list *clist = NULL;
+	struct ep_list_node *node;
 	i2c_features_t features = 0;
 	int rc = -1;
 	
@@ -324,8 +324,8 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 	auto bool i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus);
 	struct i2c_adapter *adapter;
 	struct i2c_message *msg, *newmsg;
-	struct epl_list *clist = NULL;
-	struct epl_list_node *node, *n_node;
+	struct ep_list *clist = NULL;
+	struct ep_list_node *node, *n_node;
 	struct i2c_shared_info *sh_info;
 	i2c_features_t msg_features, bus_features;
 	FILE *stream;
@@ -460,8 +460,8 @@ static void i2c_update(struct i2c_client *client)
 PUBLIC void i2c_cleanup_client_msgs(struct i2c_client *client)
 {
 	struct i2c_shared_info *shinfo = i2c_shinfo(client);
-	struct epl_list_node *node, *n_node;
-	struct epl_list *clist;
+	struct ep_list_node *node, *n_node;
+	struct ep_list *clist;
 	
 	if(epl_lock(shinfo->list) == 0) {
 		epl_deref(shinfo->list, &clist);

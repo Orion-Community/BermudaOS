@@ -510,7 +510,7 @@ PUBLIC void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapt
 {
 	struct i2c_shared_info *shinfo = malloc(sizeof(*shinfo));
 	
-	if(!client && !shinfo) {
+	if(client && shinfo) {
 		client->adapter = adapter;
 		client->sh_info = shinfo;
 		__i2c_init_client(client, sla, hz);

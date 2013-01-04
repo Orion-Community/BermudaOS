@@ -25,10 +25,6 @@ if THREADS
 OPT_SCRS+= task_switch.S stack.c
 endif
 
-if PWM
-OPT_SCRS+= pwm.c
-endif
-
 SUBDIRS=$(MAYBE_MCU) $(MAYBE_ARD)
 bermudaosdir=@libdir@/bermudaos
 bermudaos_LTLIBRARIES=libavr.la

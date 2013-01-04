@@ -1,4 +1,5 @@
-include_HEADERS=configmake.h config.h
+bermudaosdir=@includedir@/bermudaos
+bermudaos_HEADERS=configmake.h config.h
 all:configmake.h config.h
 ACLOCAL_AMFLAGS=-I m4
 configmake.h:

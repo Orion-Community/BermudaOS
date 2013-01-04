@@ -80,22 +80,19 @@ typedef uint8_t i2c_action_t;
 /*
  * I2C adapter features
  */
+#define I2C_MASTER_SUPPORT_SHIFT 0 //!< I2C_MASTER_SUPPORT shift.
 #define I2C_SLAVE_SUPPORT_SHIFT 1 //!< I2C_SLAVE_SUPPORT shift.
 
 /**
- * \enum i2c_bus_features
- * \typedef i2c_bus_features_t
- * \brief Bus features.
+ * \brief When set, the adapter supports master transfers.
  * \see I2C_MSG_CHECK
- * 
- * Used in i2c_adapter::features.
  */
-typedef enum i2c_bus_features
-{
-	I2C_MASTER_SUPPORT = B1, //!< When set, the adapter supports master transfers.
-	I2C_SLAVE_SUPPORT  = B10, //!< When set, the adapter supports slave transfers.
-} i2c_bus_features_t;
-
+#define I2C_MASTER_SUPPORT BIT(I2C_MASTER_SUPPORT_SHIFT)
+/**
+ * \brief When set, the adapter supports slave transfers.
+ * \see I2C_MSG_CHECK
+ */
+#define I2C_SLAVE_SUPPORT BIT(I2C_SLAVE_SUPPORT_SHIFT)
 
 /**
  * \brief Structure which defines the data to be transfered in the next transaction.

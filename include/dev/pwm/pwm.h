@@ -105,7 +105,15 @@ struct pwm
 {
 	TIMER *timer; //!< Timer backend of this PWM.
 	uint32_t freq; //!< PWM frequency in Hz.
-	PWM_CHANNEL *channels[MAX_CHANNELS]; //! PWM channels
+	struct pwm_channel *channels[MAX_CHANNELS]; //! PWM channels
 } __attribute__((packed));
+
+__DECL
+extern int pwmdev_socket(struct pwm *pwm, uint16_t flags);
+extern int pwmdev_write(FILE *stream, const void *data, size_t len);
+extern int pwmdev_read(FILE *stream, void *data, size_t len);
+extern int pwmdev_flush(FILE *stream);
+extern int pwmdev_close(FILE *stream);
+__DECL_END
 
 #endif /* __PWMDEV_H */

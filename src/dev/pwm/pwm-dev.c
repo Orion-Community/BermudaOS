@@ -21,3 +21,58 @@
 
 #include <dev/dev.h>
 #include <dev/pwm.h>
+
+/**
+ * \brief Open a PWM socket.
+ * \param pwm PWM data structure to bind to.
+ * \param flags Open flags.
+ * \see mode
+ */
+PUBLIC int pwmdev_socket(struct pwm *pwm, uint16_t flags)
+{
+	return -1;
+}
+
+/**
+ * \brief Write to a PWM socket.
+ * \param stream I/O stream.
+ * \param data Data to write.
+ * \param len Length of data.
+ * \see write
+ */
+PUBLIC int pwmdev_write(FILE *stream, const void *data, size_t len)
+{
+	return -1;
+}
+
+/**
+ * \brief Read from a PWM socket.
+ * \param stream I/O stream.
+ * \param data Data stream.
+ * \param len Length of data.
+ * \see read
+ */
+PUBLIC int pwmdev_read(FILE *stream, void *data, size_t len)
+{
+	return -1;
+}
+
+/**
+ * \brief Flush a PWM socket.
+ * \param stream I/O stream.
+ * \see flush
+ */
+PUBLIC int pwmdev_flush(FILE *stream)
+{
+	return -1;
+}
+
+/**
+ * \brief Close a PWM socket.
+ * \param stream I/O stream to close.
+ * \see close
+ */
+PUBLIC int pwmdev_close(FILE *stream)
+{
+	return -1;
+}

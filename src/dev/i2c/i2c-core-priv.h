@@ -64,6 +64,10 @@
  * \brief Check a message against its bus to see if it can be sent.
  * \param __msg I2C message features.
  * \param __bus I2C bus features.
+ * 
+ * Mathemathical representation of I2C_MSG_CHECK:
+ * \f$ f(x) = (((\neg y_{m} \land m_{f}) \gg m_{s}) \land (y_{b} \land s_{m})) \oplus ((y_{m} \gg 
+ * m_{s}) \land ((y_{b} \land s_{s}) \gg m_{s})) \f$.
  */
 #define I2C_MSG_CHECK(__msg, __bus) \
 ( \

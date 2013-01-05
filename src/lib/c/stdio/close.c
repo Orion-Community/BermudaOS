@@ -23,6 +23,10 @@
  * \file src/lib/c/stdio/close.c stdio close functions
  */
 
+/**
+ * \brief StdIO close function.
+ * \param fd File descriptor to close.
+ */
 PUBLIC int close(int fd)
 {
 	int rc = 0;

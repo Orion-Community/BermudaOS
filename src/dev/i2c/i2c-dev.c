@@ -322,4 +322,4 @@ PUBLIC void i2cdev_error(int fd)
 		i2c_cleanup_client_msgs(client);
 	}
 }
-
+//@}

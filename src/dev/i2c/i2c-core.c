@@ -314,6 +314,14 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg)
  * macro is 
  * \f$ f(x) = (((\neg y_{m} \land m_{f}) \gg m_{s}) \land (y_{b} \land s_{m})) \oplus ((y_{m} \gg 
  * m_{s}) \land ((y_{b} \land s_{s}) \gg m_{s})) \f$. \n
+ * Where:
+ * - \f$ y_{m} \f$ defines the message; 
+ * - \f$ m_{f} \f$ defines the message mask;\n
+ * - \f$ m_{s} \f$ defines the message shift;\n 
+ * - \f$ y_{b} \f$ defines the bus;\n
+ * - \f$ s_{x} \f$ defines the bus mask (if x = m it is the master mask and if x = s it is 
+ *   the slave mask);\n
+ * 
  * When the output of is one the message will be added to the vector on the adapter, if not (i.e.
  * the output is zero), the message will be disposed.
  * 

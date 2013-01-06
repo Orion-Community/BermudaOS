@@ -16,7 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <lib/spiram.h>
 #include <lib/binary.h>
@@ -57,6 +58,7 @@ struct i2c_adapter i2c_adapter;
 #ifdef __THREADS__
 THREAD(MainThread, data)
 {
+	printf_P(PSTR("Booting!\n"));
 	app();
 }
 #endif

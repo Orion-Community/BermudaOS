@@ -302,6 +302,9 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg)
 /**
  * \brief Initialize the transfer of a chain of messages.
  * \param client Client which has initialized the transfer.
+ * \return An error code.
+ * \retval DEV_OK Transfer was succesfull.
+ * \retval -DEV_INTERNAL At least one transmission failed.
  * 
  * A transfer will be initiated using the adapter the client is configured to use. Please note, that
  * is not guarranteed that all messages which are added to the client are sent. They have to meet
@@ -426,7 +429,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 		}
 	}
 
-	return rc;
+	return (rc <= -1) ? -DEV_INTERNAL : -DEV_OK;
 	err:
 	i2c_release_adapter(adapter, sh_info);
 	return rc;

@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.68])
+AC_PREREQ([2.67])
 AC_INIT([BermudaOS], [0.0.5], [Web: bugs.michelmegens.net :: Mail: report@bugs.michelmegens.net])
 AM_INIT_AUTOMAKE(BermudaOS, 0.0.5)
 LT_INIT([disable-shared,static])

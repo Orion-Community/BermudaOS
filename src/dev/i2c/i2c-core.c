@@ -204,6 +204,7 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client, bool maste
 			break;
 		}
 	}
+	i2c_vector_reshape(adapter);
 	return 0;
 }
 

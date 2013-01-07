@@ -334,6 +334,22 @@ PUBLIC int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message 
 	}
 }
 
+PUBLIC void i2c_vector_reshape(struct i2c_adapter *adapter)
+{
+	struct i2c_msg_vector *vector = &adapter->msg_vector;
+	size_t lim = vector->limit;
+	
+	if(lim == DEFAULT_MSG_LIMIT) {
+		return;
+	}
+	
+	if((vector->length + DEFAULT_MSG_LIMIT) < vector->length) {
+		vector->msgs = realloc((void*)vector->msgs, (vector->length+DEFAULT_MSG_LIMIT)*ENTRY_SIZE);
+		vector->limit = vector->length+DEFAULT_MSG_LIMIT;
+		return;
+	}
+}
+
 /**
  * \brief Shift all elements to the right.
  * \param vector The vector to shift.

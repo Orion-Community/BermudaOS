@@ -58,6 +58,7 @@ extern int i2c_vector_error(struct i2c_adapter *adapter, int error);
 extern int i2c_vector_erase(struct i2c_adapter *adapter);
 extern int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message *msg, size_t index);
 extern size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message *id);
+extern void i2c_vector_reshape(struct i2c_adapter *adapter);
 
 /**
  * \brief Retrieve the length of the vector on an I2C adapter.

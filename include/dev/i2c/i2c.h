@@ -176,7 +176,7 @@ struct i2c_adapter {
 	{
 		size_t length, //!< Length of the vector.
 		       limit;  //!< Maximum value \p length may reach.
-		struct i2c_message *volatile*msgs; //!< The data array.
+		struct i2c_message *volatile*data; //!< The data array.
 	} msg_vector;
 
 #ifdef __THREADS__

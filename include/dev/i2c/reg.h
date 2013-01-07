@@ -79,6 +79,13 @@
  */
 #define I2CDEV_CALL_BACK 0x400
 #define I2CDEV_CALL_BACK_SHIFT 10 //!< I2CDEV_CALL_BACK shift.
+
+/**
+ * \brief I2C address read bit.
+ * 
+ * If this bit is set to one, it is a master read address.
+ */
+#define I2C_READ_BIT B1
 #endif
 /**
  * @}

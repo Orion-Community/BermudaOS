@@ -50,7 +50,7 @@
 #include <dev/i2c-msg.h>
 
 #include <lib/binary.h>
-#include <lib/list/list.h>
+#include <lib/vector.h>
 
 #include <sys/thread.h>
 #include <sys/epl.h>
@@ -401,8 +401,8 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 			index = (index != 0) ? index-1 : index;
 			rc = adapter->xfer(adapter, client->freq, master, &index);
 			if(!rc) {
-				bus_features = i2c_adapter_features(adapter);
 				do {
+					bus_features = i2c_adapter_features(adapter);
 					msg = i2c_vector_get(adapter, index-1);
 					if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
 						msg->features |= I2C_MSG_DONE_FLAG;
@@ -411,14 +411,45 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 							rc = -DEV_NULL;
 							break;
 						}
-						newmsg->addr = msg->addr;
-						if(sh_info->shared_callback(client, newmsg) != 0) {
-							newmsg->buff = NULL;
-							newmsg->length = 0;
+						rc = sh_info->shared_callback(client, newmsg);
+						msg_features = i2c_msg_features(newmsg);
+						bus_features &= I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT;
+						if(i2c_check_msg(msg_features, bus_features)) {
+							newmsg->addr = msg->addr & ~I2C_READ_BIT;
+							if((msg_features & I2C_MSG_TRANSMIT_MSG_MASK) == 0) {
+								newmsg->addr |= I2C_READ_BIT;
+							}
+							msg_features &= ~I2C_MSG_DONE_MASK;
+							msg_features &= ~(I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_MASK);
+							msg_features |= i2c_msg_features(msg) & 
+											(I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_MASK);
+							if(rc) {
+								newmsg->buff = NULL;
+								newmsg->length = 0;
+							}
+							i2c_msg_set_features(newmsg, msg_features);
+							rc = i2c_vector_insert_at(adapter, newmsg, index);
+							if(rc) {
+								if(i2c_vector_error(adapter, rc) == 0) {
+									rc = i2c_vector_insert_at(adapter, newmsg, index);
+									goto loop_continue;
+								}
+								i2c_set_error(client);
+								free(newmsg);
+								rc = -DEV_INTERNAL;
+								break;
+							}
+						} else {
+							logmsg_P(I2C_CORE_LOG, PSTR("Msg (0x%p) not compliant with adapter "
+														"(0x%p).\n"), newmsg, adapter);
+							i2c_set_error(client);
+							free(newmsg);
+							rc = -DEV_INTERNAL;
+							break;
 						}
-						i2c_vector_insert_at(adapter, newmsg, index);
 					}
 					
+					loop_continue:
 					length = i2c_vector_length(adapter);
 					if(index < length && rc == 0) {
 						rc = adapter->resume(adapter, &index);

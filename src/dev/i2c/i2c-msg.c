@@ -70,9 +70,9 @@ PUBLIC int i2c_create_msg_vector(struct i2c_adapter *adapter)
 {
 	int rc = -DEV_NULL;
 	
-	adapter->msg_vector.msgs = malloc(sizeof(*(adapter->msg_vector.msgs))*DEFAULT_MSG_LIMIT);
+	adapter->msg_vector.data = malloc(sizeof(*(adapter->msg_vector.data))*DEFAULT_MSG_LIMIT);
 	
-	if(adapter->msg_vector.msgs) {
+	if(adapter->msg_vector.data) {
 		adapter->msg_vector.limit = DEFAULT_MSG_LIMIT;
 		adapter->msg_vector.length = 0;
 		rc = -DEV_OK;
@@ -94,13 +94,13 @@ PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, siz
 {
 	struct i2c_message *tmp;
 	
-	if(!adapter->msg_vector.msgs) {
+	if(!adapter->msg_vector.data) {
 		return PTR_ERROR(-DEV_NOINIT);
 	}
 	
 	if(index < adapter->msg_vector.length) {
-		tmp = adapter->msg_vector.msgs[index];
-		adapter->msg_vector.msgs[index] = NULL;
+		tmp = adapter->msg_vector.data[index];
+		adapter->msg_vector.data[index] = NULL;
 		if(i2c_vector_shift_left(&adapter->msg_vector, index+1)) {
 			adapter->msg_vector.length -= 1;
 		}
@@ -121,11 +121,11 @@ PUBLIC struct i2c_message *i2c_vector_delete_at(struct i2c_adapter *adapter, siz
  */
 PUBLIC struct i2c_message *i2c_vector_get(struct i2c_adapter *adapter, size_t index)
 {
-	if(!adapter->msg_vector.msgs) {
+	if(!adapter->msg_vector.data) {
 		return PTR_ERROR(-DEV_NOINIT);
 	}
 	if(index < adapter->msg_vector.length) {
-		return adapter->msg_vector.msgs[index];
+		return adapter->msg_vector.data[index];
 	} else {
 		return NULL;
 	}
@@ -144,7 +144,7 @@ PUBLIC size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message 
 	size_t ret;
 	
 	for(ret = 0; ret < vector->length; ret++) {
-		if(vector->msgs[ret] == id) {
+		if(vector->data[ret] == id) {
 			return ret;
 		} else {
 			continue;
@@ -165,7 +165,7 @@ PUBLIC size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message 
  */
 PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg, bool master)
 {
-	void *buff = (void*)adapter->msg_vector.msgs;
+	void *buff = (void*)adapter->msg_vector.data;
 	
 	if(!buff) {
 		return -DEV_NOINIT;
@@ -176,7 +176,7 @@ PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg, 
 	if(adapter->msg_vector.length == adapter->msg_vector.limit) {
 		buff = realloc(buff, (adapter->msg_vector.limit + DEFAULT_MSG_LIMIT)*ENTRY_SIZE);
 		if(buff) {
-			adapter->msg_vector.msgs = buff;
+			adapter->msg_vector.data = buff;
 			adapter->msg_vector.limit += DEFAULT_MSG_LIMIT;
 		} else {
 			return -DEV_NULL;
@@ -184,7 +184,7 @@ PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg, 
 	}
 
 	if(i2c_vector_length(adapter) == 0) {
-		adapter->msg_vector.msgs[0] = msg;
+		adapter->msg_vector.data[0] = msg;
 		adapter->msg_vector.length += 1;
 		return 0;
 	}
@@ -194,19 +194,19 @@ PUBLIC int i2c_vector_add(struct i2c_adapter *adapter, struct i2c_message *msg, 
 		struct i2c_message *tmp;
 		for(; i <= adapter->msg_vector.length; i++) {
 			if(i == i2c_vector_length(adapter)) {
-				adapter->msg_vector.msgs[i] = msg;
+				adapter->msg_vector.data[i] = msg;
 				adapter->msg_vector.length += 1;
 				break;
 			}
-			tmp = adapter->msg_vector.msgs[i];
+			tmp = adapter->msg_vector.data[i];
 			if(!i2c_msg_is_master(tmp)) {
 				i2c_vector_shift_right(&adapter->msg_vector, i, 1);
-				adapter->msg_vector.msgs[i] = msg;
+				adapter->msg_vector.data[i] = msg;
 				break;
 			}
 		}
 	} else {
-		adapter->msg_vector.msgs[adapter->msg_vector.length] = msg;
+		adapter->msg_vector.data[adapter->msg_vector.length] = msg;
 		adapter->msg_vector.length += 1;
 	}
 	return 0;
@@ -225,13 +225,13 @@ PUBLIC struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter,
 {
 	size_t i;
 	
-	if(!adapter->msg_vector.msgs) {
+	if(!adapter->msg_vector.data) {
 		return PTR_ERROR(-DEV_NOINIT);
 	}
 	
 	for(i = 0; i < adapter->msg_vector.length; i++) {
-		if(adapter->msg_vector.msgs[i] == msg) {
-			adapter->msg_vector.msgs[i] = NULL;
+		if(adapter->msg_vector.data[i] == msg) {
+			adapter->msg_vector.data[i] = NULL;
 			if(i2c_vector_shift_left(&adapter->msg_vector, i+1)) {
 				adapter->msg_vector.length -= 1;
 			}
@@ -252,7 +252,7 @@ PUBLIC struct i2c_message *i2c_vector_delete_msg(struct i2c_adapter *adapter,
  */
 PUBLIC int i2c_vector_erase(struct i2c_adapter *adapter)
 {
-	free((void*)adapter->msg_vector.msgs);
+	free((void*)adapter->msg_vector.data);
 	return i2c_create_msg_vector(adapter);
 }
 
@@ -290,8 +290,8 @@ PUBLIC int i2c_vector_error(struct i2c_adapter *adapter, int error)
 				break;
 				
 			case DEV_OUTOFBOUNDS:
-				vector->msgs = realloc((void*)vector->msgs, (vector->length+1) * ENTRY_SIZE);
-				if(vector->msgs) {
+				vector->data = realloc((void*)vector->data, (vector->length+1) * ENTRY_SIZE);
+				if(vector->data) {
 					vector->limit = vector->length+1;
 					error = -DEV_OK;
 				} else {
@@ -320,15 +320,15 @@ PUBLIC int i2c_vector_error(struct i2c_adapter *adapter, int error)
  */
 PUBLIC int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message *msg, size_t index)
 {
-	int rc;
+	int rc = -DEV_NULL;
 	
-	if(!adapter->msg_vector.msgs) {
+	if(!adapter->msg_vector.data) {
 		return -DEV_NOINIT;
 	}
 	
 	if((rc = i2c_vector_shift_right(&adapter->msg_vector, index, 1)) == -DEV_OK) {
-		adapter->msg_vector.msgs[index] = msg;
-		return -DEV_OK;
+		adapter->msg_vector.data[index] = msg;
+		return rc;
 	} else {
 		return rc;
 	}
@@ -344,7 +344,7 @@ PUBLIC void i2c_vector_reshape(struct i2c_adapter *adapter)
 	}
 	
 	if((vector->length + DEFAULT_MSG_LIMIT) < vector->length) {
-		vector->msgs = realloc((void*)vector->msgs, (vector->length+DEFAULT_MSG_LIMIT)*ENTRY_SIZE);
+		vector->data = realloc((void*)vector->data, (vector->length+DEFAULT_MSG_LIMIT)*ENTRY_SIZE);
 		vector->limit = vector->length+DEFAULT_MSG_LIMIT;
 		return;
 	}
@@ -365,8 +365,8 @@ static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, s
 {
 	size_t last;
 	if((vector->length + num) >= vector->limit) {
-		vector->msgs = realloc((void*)vector->msgs, (vector->limit+num)*ENTRY_SIZE);
-		if(!vector->msgs) {
+		vector->data = realloc((void*)vector->data, (vector->limit+num)*ENTRY_SIZE);
+		if(!vector->data) {
 			return -DEV_NULL;
 		} else {
 			vector->limit += num;
@@ -375,7 +375,7 @@ static int i2c_vector_shift_right(struct i2c_msg_vector *vector, size_t index, s
 
 	last = vector->length - 1;
 	for(; last >= index; last--) {
-		vector->msgs[last+num] = vector->msgs[last];
+		vector->data[last+num] = vector->data[last];
 		if(last == 0) {
 			/*
 			 * This check is necessary due to the unsignedness of last.
@@ -417,12 +417,12 @@ static int i2c_vector_shift_left(struct i2c_msg_vector *vector, size_t index)
 		return 1;
 	} else {
 		if(index == 0) {
-			vector->msgs[0] = vector->msgs[1];
+			vector->data[0] = vector->data[1];
 			index++;
 		}
 		if(index < vector->length) {
 			for(; index < vector->length; index++) {
-				vector->msgs[index-1] = vector->msgs[index];
+				vector->data[index-1] = vector->data[index];
 			}
 		}
 		vector->length -= 1;

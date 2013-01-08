@@ -69,9 +69,8 @@ PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
 		WRDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), byte,
 	};
 
-	while(BermudaSpiSetSelectPinSafe(ram_bus, ram_select) == -1) {
-		BermudaThreadYield();
-	}
+	while(BermudaSpiSetSelectPinSafe(ram_bus, ram_select) == -1);
+	
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
 	return BermudaSPIWrite(ram_bus, (const void*)write_seq, 
 						   BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
@@ -90,9 +89,8 @@ PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
 		RDDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), 0xFF,
 	};
 
-	while(BermudaSpiSetSelectPinSafe(ram_bus, ram_select) == -1) {
-		BermudaThreadYield();
-	}
+	while(BermudaSpiSetSelectPinSafe(ram_bus, ram_select) == -1);
+	
 	BermudaSpiRamSetMode(SPI_RAM_BYTE);
 	BermudaSPIWrite(ram_bus, (const void*)read_seq, 
 					BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN);

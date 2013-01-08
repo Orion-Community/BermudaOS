@@ -52,8 +52,9 @@ flush(fd);
 close(fd);
 \endcode
  * 
- * If you want to do a transmit or receive only you should set the correct buffer to <i>NULL</i>. The
- * transmit buffer will be set using <i>write</i> the receive buffer is set using <i>read</i>.
+ * Setting a buffer (<b>and its length</b>) to zero, will result in addressing only if not specified
+ * by the bus. The transmit buffer will be set using <i>write</i> the receive buffer is set using 
+ * <i>read</i>.
  * 
  * <b>Slave recieve/transmit</b>
 \code{.c}
@@ -74,9 +75,8 @@ for(;;) {
 }
 \endcode
  * 
- * The slave will first wait for a master receive request. When it is finished, it will check for a
- * user callback function. That function can set the transmit buffer. Set the buffer to <i>NULL</i>
- * to not transmit any data as a slave.
+ * If no master request is received, all messages are deleted on the next slave call.
+ * 
  * \note Behaviour for clients acting as a master ánd slave at the same time is undefined. Altough
  *       it is possible to do master and slave transactions 'simutaniously' using seperate clients.
  * @{

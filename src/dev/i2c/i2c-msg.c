@@ -334,6 +334,15 @@ PUBLIC int i2c_vector_insert_at(struct i2c_adapter *adapter, struct i2c_message 
 	}
 }
 
+/**
+ * \brief Resize the message vector.
+ * \param adapter i2c_adapter containing the i2c_msg_vector.
+ * \see i2c_adapter::i2c_msg_vector DEFAULT_MSG_LIMIT
+ * 
+ * If i2c_adapter::i2c_msg_vector::length of the vector is smaller than 
+ * i2c_adapter::i2c_msg_vector::length plus the DEFAULT_MSG_LIMIT, the limit is set to 
+ * i2c_adapter::i2c_msg_vector::length + DEFAULT_MSG_LIMIT.
+ */
 PUBLIC void i2c_vector_reshape(struct i2c_adapter *adapter)
 {
 	struct i2c_msg_vector *vector = &adapter->msg_vector;

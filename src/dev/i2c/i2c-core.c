@@ -411,7 +411,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 							rc = -DEV_NULL;
 							break;
 						}
-						rc = sh_info->shared_callback(client, newmsg);
+						rc = sh_info->shared_callback(client, msg, newmsg);
 						msg_features = i2c_msg_features(newmsg);
 						bus_features &= I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT;
 						if(i2c_check_msg(msg_features, bus_features)) {

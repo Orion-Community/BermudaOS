@@ -119,13 +119,15 @@ struct i2c_shared_info
 	
 	/**
 	 * \brief Call back function which can be called after a buffer has been sent by the driver.
+	 * \param oldmsg Last received message.
 	 * \param msg Message used in the operation.
 	 * \param client I2C client which ordered the transmission.
 	 * 
 	 * This function pointer will be called when a transmission is done. The
 	 * application can then insert another message in the queue if that is nessecary.
 	 */
-	int (*shared_callback)(struct i2c_client *client, struct i2c_message *msg);
+	int (*shared_callback)(struct i2c_client *client, struct i2c_message *oldmsg, 
+						   struct i2c_message *msg);
 	
 	i2c_features_t features; //!< Feature option flags.
 	
@@ -234,7 +236,9 @@ extern void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapt
  * \param cb The call back function.
  */
 static inline void i2c_set_callback(struct i2c_client *client, int (*cb)(struct i2c_client *,
-																		 struct i2c_message *))
+																		 struct i2c_message *,
+																		 struct i2c_message *
+																		))
 {
 	i2c_shinfo(client)->shared_callback = cb;
 }

@@ -72,6 +72,8 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg);
 static int i2c_start_xfer(struct i2c_client *client);
 static inline int __i2c_start_xfer(struct i2c_client *client);
 static void i2c_update(struct i2c_client *client);
+static inline void i2c_master_tmo(struct i2c_client *client);
+static inline void i2c_slave_tmo(struct i2c_client *client);
 
 /* concurrency functions */
 static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info *info);

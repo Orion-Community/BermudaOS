@@ -228,6 +228,13 @@ static inline void i2c_slave_tmo(struct i2c_client *client)
 	}
 }
 
+/**
+ * \brief Master message time-out.
+ * \param client Master client.
+ * 
+ * A new master transmission has been initiated. This function is responsible for deleting
+ * all old master messages.
+ */
 static inline void i2c_master_tmo(struct i2c_client *client)
 {
 	size_t index = 0;

@@ -437,6 +437,11 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 				rc = 1;
 			}
 		} else {
+			if((i2c_msg_features(msg) & I2C_MSG_TRANSMIT_MSG_MASK) != 0) {
+				i2c_st_index = *index;
+			} else {
+				i2c_sr_index = *index;
+			}
 			/* slave msg */
 			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
 			if((rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO)) < 0) {

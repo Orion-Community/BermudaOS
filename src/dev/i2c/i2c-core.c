@@ -228,6 +228,23 @@ static inline void i2c_slave_tmo(struct i2c_client *client)
 	}
 }
 
+static inline void i2c_master_tmo(struct i2c_client *client)
+{
+	size_t index = 0;
+	struct i2c_message *msg;
+	
+	if(i2c_first_master_msg(client->adapter, &index)) {
+		for(; index < i2c_vector_length(client->adapter); index++) {
+			msg = i2c_vector_get(client->adapter, index);
+			if((i2c_msg_features(msg) & I2C_MSG_SLAVE_MSG_MASK) != 0) {
+				break;
+			}
+			msg->features |= I2C_MSG_DONE_FLAG;
+		}
+		i2c_cleanup_adapter_msgs(client, TRUE);
+	}
+}
+
 /**
  * \brief Initialize an I2C transmission.
  * \param client Client whom requests the transmission.
@@ -241,6 +258,8 @@ static int i2c_start_xfer(struct i2c_client *client)
 		if(client->adapter && epl_entries(i2c_shinfo(client)->list) != 0) {
 			if((i2c_shinfo(client)->socket->flags & I2C_SLAVE) != 0) {
 				i2c_slave_tmo(client);
+			} else {
+				i2c_master_tmo(client);
 			}
 			return __i2c_start_xfer(client);
 		}

@@ -108,7 +108,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	int rc = -1;
 	
 	if(client == NULL) {
-		return -1;
+		goto out;
 	}
 	
 	if(BermudaEventWait(event(&(shinfo->mutex)), I2C_TMO) != 0) {

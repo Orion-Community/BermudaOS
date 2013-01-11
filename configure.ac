@@ -44,6 +44,8 @@ AC_ARG_ENABLE([uno],
 AC_ARG_VAR(EXTRAM, [Amount of !EXTENDED! RAM available.])
 AC_ARG_VAR(IDLE_STACK, [Size of the idle stack.])
 AC_ARG_VAR(MAIN_STACK, [Size of the main stack.])
+AC_ARG_VAR(I2C_MASTER_TMO, [Time-out duration of I2C master transfers.])
+AC_ARG_VAR(I2C_SLAVE_TMO, [Time-out duration of I2C slave transfers.])
 
 # code enable flags
 AC_ARG_ENABLE([threads],

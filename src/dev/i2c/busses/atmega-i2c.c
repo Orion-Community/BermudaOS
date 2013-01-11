@@ -337,13 +337,13 @@ static int i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool ma
 	int rc;
 	struct i2c_message *msg;
 	
-	atmega_i2c_update(adapter, 0);
 	adapter->error = FALSE;
 	if(master) {
-		master_msg_index = 0;
 		rc = i2c_master_transfer(adapter, freq);
+		BermudaEnterCritical();
 		*index = master_msg_index;
 		msg = i2c_vector_get(adapter, master_msg_index-1);
+		BermudaExitCritical();
 		if(msg) {
 			if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
 				msg->features |= I2C_MSG_DONE_FLAG;
@@ -366,12 +366,20 @@ static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t freq)
 {
 	int rc = -1;
 	
+// 	while(adapter->busy) {
+// 		BermudaDelay(63);
+// 	}
+	BermudaEnterCritical();
+	atmega_i2c_update(adapter, 0);
+	master_msg_index = 0;
+	uint8_t pres = atmega_i2c_calc_prescaler(freq);
+	uint8_t twbr = atmega_i2c_calc_twbr(freq, pres);
+	TWBR = twbr;
+	TWSR &= ~B11;
+	TWSR |= pres & B11;
+	
 	if(!adapter->busy) {
 		if((TWSR & I2C_NOINFO) == I2C_NOINFO) {
-			uint8_t pres = atmega_i2c_calc_prescaler(freq);
-			uint8_t twbr = atmega_i2c_calc_twbr(freq, pres);
-			TWBR = twbr;
-			TWSR = pres & B11;
 			if(i2c_sr_index != -1 || i2c_st_index != -1) {
 				adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
 			} else {
@@ -380,6 +388,7 @@ static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t freq)
 		}
 		
 	}
+	BermudaExitCritical();
 	rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO);
 	return rc;
 }
@@ -388,6 +397,8 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 {
 	int rc = 0;
 	
+	BermudaEnterCritical();
+	atmega_i2c_update(adapter, 0);
 	if(!adapter->busy) {
 		if((TWSR & I2C_NOINFO) == I2C_NOINFO) {
 			if(i2c_first_master_msg(adapter, index)) {
@@ -398,10 +409,9 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 		}
 	}
 	
-	if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO) == -1) {
+	BermudaExitCritical();
+	if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO+200) == -1) {
 		rc = -1;
-		i2c_sr_index = -1;
-		i2c_st_index = -1;
 	}
 	
 	*index = last_msg_index+1;
@@ -414,43 +424,40 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 	struct i2c_message *msg;
 	int rc = 1;
 	adapter->error = FALSE;
+	
+	BermudaEnterCritical();
 	atmega_i2c_update(adapter, 0);
-	if((msg = i2c_vector_get(adapter, *index)) != NULL) {
-		if((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0) {
-			master_msg_index = *index;
-			rc = 0;
-			adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
-			if(BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO) < 0) {
-				adapter->error = TRUE;
-				rc = -1;
-			}
-			*index = master_msg_index;
-			msg = i2c_vector_get(adapter, master_msg_index-1);
-			if(msg) {
-				if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
-					msg->features |= I2C_MSG_DONE_FLAG;
-					rc = 0;
-				} else {
-					rc = 1;
-				}
+	msg = i2c_vector_get(adapter, *index);
+	if((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0) {
+		master_msg_index = *index;
+		rc = 0;
+		adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
+		BermudaExitCritical();
+		if(BermudaEventWaitNext(event(adapter->master_queue), I2C_TMO) < 0) {
+			adapter->error = TRUE;
+		}
+		BermudaEnterCritical();
+		*index = master_msg_index;
+		msg = i2c_vector_get(adapter, master_msg_index-1);
+		BermudaExitCritical();
+		if(msg) {
+			if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
+				msg->features |= I2C_MSG_DONE_FLAG;
+				rc = 0;
 			} else {
 				rc = 1;
 			}
 		} else {
-			if((i2c_msg_features(msg) & I2C_MSG_TRANSMIT_MSG_MASK) != 0) {
-				i2c_st_index = *index;
-			} else {
-				i2c_sr_index = *index;
-			}
-			/* slave msg */
-			adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
-			if((rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO)) < 0) {
-				rc = -1;
-				i2c_sr_index = -1;
-				i2c_st_index = -1;
-			}
-			*index = last_msg_index+1;
+			rc = 1;
 		}
+	} else {
+		/* slave msg */
+		adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
+		BermudaExitCritical();
+		if((rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_TMO)) < 0) {
+			rc = -1;
+		}
+		*index = last_msg_index+1;
 	}
 	
 	return rc;
@@ -494,6 +501,7 @@ static void atmega_i2c_update(struct i2c_adapter *adapter, long diff)
 		}
 		struct i2c_message *msg;
 		i2c_features_t features;
+		BermudaEnterCritical();
 		for(; index < i2c_vector_length(adapter); index++) {
 			msg = i2c_vector_get(adapter, index);
 			features = i2c_msg_features(msg);
@@ -508,6 +516,12 @@ static void atmega_i2c_update(struct i2c_adapter *adapter, long diff)
 				}
 			}
 		}
+		BermudaExitCritical();
+	} else {
+		BermudaEnterCritical();
+		i2c_sr_index = -1;
+		i2c_st_index = -1;
+		BermudaExitCritical();
 	}
 }
 
@@ -545,6 +559,7 @@ static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter, size_t index)
 				i2c_sr_index = index;
 			}
 			dev->ctrl(dev, I2C_LISTEN, NULL);
+			adapter->busy = FALSE;
 		} else {
 			event_signal_from_isr(event(adapter->slave_queue));
 			dev->ctrl(dev, I2C_NACK, NULL);
@@ -758,8 +773,8 @@ SIGNAL(TWI_STC_vect)
 			} else {
 				if(i2c_sr_index != -1) {
 					atmega_i2c_slave_buff_end(adapter, i2c_sr_index);
-					i2c_sr_index = -1;
 				} else {
+					adapter->busy = FALSE;
 					dev->ctrl(dev, I2C_NACK, NULL);
 					event_signal_from_isr(event(adapter->slave_queue));
 				}
@@ -793,6 +808,7 @@ SIGNAL(TWI_STC_vect)
 		case I2C_ST_DATA_NACK:
 		case I2C_ST_LAST_DATA_ACK:
 			if(i2c_st_index == -1) {
+				adapter->busy = FALSE;
 				if(i2c_first_master_msg(adapter, (void*)&master_msg_index)) {
 					dev->ctrl(dev, I2C_START | I2C_NACK, NULL);
 				} else {
@@ -801,8 +817,8 @@ SIGNAL(TWI_STC_vect)
 				event_signal_from_isr(event(adapter->slave_queue));
 				break;
 			}
+			
 			atmega_i2c_slave_buff_end(adapter, i2c_st_index);
-			i2c_st_index = -1;
 			break;
 			
 		default:

@@ -163,11 +163,11 @@ struct i2c_adapter {
 	struct device *dev; //!< Adapter device.
 	
 	i2c_features_t features; //!< Adapter features.
-	bool busy; //!< Defines wether the interface is busy or not.
+	volatile bool busy; //!< Defines wether the interface is busy or not.
 	/**
 	 * \brief Adapter error field.
 	 */
-	uint8_t error;
+	volatile uint8_t error;
 	
 	/**
 	 * \var msg_vector

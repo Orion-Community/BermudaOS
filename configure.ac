@@ -138,6 +138,15 @@ if test "x$MAIN_STACK" = "x"; then
 MAIN_STACK=128
 fi
 
+#i2c tmo
+if test "x$I2C_MASTER_TMO" = "x"; then
+I2C_MASTER_TMO=500
+fi
+
+if test "x$I2C_SLAVE_TMO" = "x"; then
+I2C_SLAVE_TMO=500
+fi
+
 # autoheader defines
 if test "x$iic" = "xyes"; then
 AC_DEFINE([__I2C__], [1], [Defines wether I2C is enabled])

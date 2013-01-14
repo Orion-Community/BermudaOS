@@ -10,6 +10,8 @@ configmake.h:
 	  echo '#define NETIF_STACK_SIZ $(NETIF_STACK_SIZE)'; \
 	  echo '#define RX_QUEUE_LEN $(RX_QU_LENGTH)'; \
 	  echo '#define TX_QUEUE_LEN $(TX_QU_LENGTH)'; \
+	  echo '#define I2C_MASTER_TMO $(I2C_MASTER_TMO)'; \
+	  echo '#define I2C_SLAVE_TMO $(I2C_SLAVE_TMO)'; \
 	} | sed '/""/d' > $@
 
 CLEANFILES=configmake.h

@@ -30,6 +30,11 @@
 PUBLIC int close(int fd)
 {
 	int rc = 0;
+	
+	if(!__iob[fd]) {
+		return -1;
+	}
+	
 	if(__iob[fd]->close != NULL) {
 		rc = __iob[fd]->close(__iob[fd]);
 	}

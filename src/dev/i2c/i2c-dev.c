@@ -111,13 +111,14 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 		goto out;
 	}
 	
-	if(BermudaEventWait(event(&(shinfo->mutex)), I2C_TMO) != 0) {
+	if(BermudaEventWait(event(&(shinfo->mutex)), 0) != 0) {
 		goto out;
 	}
 	
 	socket = BermudaHeapAlloc(sizeof(*socket));
 	if(!socket) {
 		rc = -1;
+		BermudaEventSignal(event(&(shinfo->mutex)));
 		goto out;
 	}
 	
@@ -265,7 +266,7 @@ PUBLIC int i2cdev_close(FILE *stream)
 	i2c_client_set_features(client, features);
 	info->socket = NULL;
 	
-	BermudaEventSignal(event(&info->mutex));
+	BermudaEventSignal(event(&(info->mutex)));
 	return 0;
 }
 

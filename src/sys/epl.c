@@ -40,7 +40,7 @@
 #include <sys/epl.h>
 #include <sys/events/event.h>
 
-#define EPL_LOCK_WAIT 500
+#define EPL_LOCK_WAIT 0
 
 /**
  * \brief Test weather the list is locked or not.
@@ -64,6 +64,7 @@ PUBLIC int epl_test_lock(struct ep_list *list)
  */
 PUBLIC int epl_lock(struct ep_list *list)
 {
+// 	return 0;
 	return BermudaEventWait((volatile THREAD**)&list->mutex, EPL_LOCK_WAIT);
 }
 
@@ -74,6 +75,7 @@ PUBLIC int epl_lock(struct ep_list *list)
  */
 PUBLIC int epl_unlock(struct ep_list *list)
 {
+// 	return 0;
 	return BermudaEventSignalRaw((THREAD*volatile*)&list->mutex);
 }
 

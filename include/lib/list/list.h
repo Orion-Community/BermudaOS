@@ -40,6 +40,21 @@ struct list
 };
 
 /**
+ * \brief Type definition of the linked list structure
+ */
+struct linkedlist;
+
+/**
+ * \typedef linkedlist_t
+ * \brief Linkedlist typedef.
+ */
+typedef struct linkedlist
+{
+	struct linkedlist *next; //!< Next pointer.
+	void *data; //!< List data.
+} linkedlist_t;
+
+/**
  * \def foreach_safe
  * \brief Linked list loop construction.
  * 

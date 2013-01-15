@@ -31,6 +31,9 @@
 #define foreach(list, c) \
                                 for(c = (list); c; c = (c)->next)
 
+#define iforeach(__list, __c, __i) for(__i = 0, __c = (__list); (__c) != NULL; __c = (__c)->next, \
+																				(__i)++)
+
 /**
  * \brief Linked list prototype.
  */

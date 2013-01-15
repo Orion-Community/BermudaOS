@@ -19,6 +19,46 @@
 #include <stdlib.h>
 
 /**
+ * \brief Set the data of a given node.
+ * \param node Node to set the data for.
+ * \param data Data to set.
+ */
+PUBLIC int linkedlist_set_data(struct linkedlist *node, void *data)
+{
+	if(node) {
+		node->data = data;
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+/**
+ * \brief Attatch data to a node.
+ * \param head Head of the linkedlist.
+ * \param data Data to attach.
+ * \param index Index in \p head to attach \p data to.
+ * \retval 0 data is successfully attach to the node at \p index.
+ * \retval -1 An error occurred while attaching \p data to the node at \p index.
+ * 
+ * \p data will be attached to the node located at \p index.
+ */
+PUBLIC int linkedlist_set_data_at(struct linkedlist *head, void *data, size_t index)
+{
+	size_t i;
+	struct linkedlist *carriage;
+	
+	iforeach(head, carriage, i) {
+		if(i == index) {
+			carriage = data;
+			return 0;
+		}
+	}
+	
+	return -1;
+}
+
+/**
  * \brief Locate the last entry in a linked list.
  * \param vp Pointer to the linked list.
  * \note The list::next member <b>MUST</b> be the first member in the structure.

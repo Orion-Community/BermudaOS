@@ -19,8 +19,19 @@
 #ifndef __LINKED_LIST_H
 #define __LINKED_LIST_H
 
-#include <bermuda.h>
+#include <stdlib.h>
+#include <lib/list/list.h>
 
+/**
+ * \brief Type defintion of the insert locations.
+ */
+typedef enum
+{
+	LINKEDLIST_HEAD, //!< Defines insertion at the start.
+	LINKEDLIST_TAIL, //!< Defines insertion at the end.
+} linkedlist_location_t;
+
+#ifdef __cplusplus
 template <class T>
 class LinkedListNode
 {
@@ -45,5 +56,14 @@ public:
 private:
         LinkedListNode<T> *list;
 };
+#else
+extern struct linkedlist *linkedlist_alloc();
+extern void linkedlist_init(struct linkedlist *list, void *data);
+extern int linkedlist_set_data(struct linkedlist *node, void *data);
+extern int linkedlist_set_data_at(struct linkedlist *head, void *data, size_t index);
+extern int linkedlist_add_node(struct linkedlist *head, void *data, int location);
+extern int linkedlist_delete_node_at(struct linkedlist *head, size_t index);
+extern int linkedlist_delete_node(struct linkedlist *head, struct linkedlist *node);
+#endif
 
 #endif

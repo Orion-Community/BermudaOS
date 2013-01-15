@@ -18,6 +18,39 @@
 
 #include <stdlib.h>
 
+#include <lib/list/list.h>
+#include <lib/list/linkedlist.h>
+
+/**
+ * \brief Initialize a linked list.
+ * \param list Linked list to initialize.
+ * \param data First data pointer.
+ */
+PUBLIC void linkedlist_init(struct linkedlist *list, void *data)
+{
+	if(list) {
+		list->data = data;
+		list->next = NULL;
+	}
+}
+
+/**
+ * \brief Allocate a new linked list.
+ * \return The newly created linked list.
+ * \retval NULL if no memory is available.
+ * \see linkedlist_init
+ */
+PUBLIC struct linkedlist *linkedlist_alloc()
+{
+	struct linkedlist *list = malloc(sizeof(*list));
+	
+	if(list) {
+		linkedlist_init(list, NULL);
+	}
+	
+	return list;
+}
+
 /**
  * \brief Set the data of a given node.
  * \param node Node to set the data for.

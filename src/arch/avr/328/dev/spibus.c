@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <bermuda.h>
+#include <stdlib.h>
 
 #include <fs/vfile.h>
 
@@ -121,7 +121,7 @@ PUBLIC int BermudaSPI0HardwareInit()
 	SPI_PORT |= SPI_SS;
 
 #ifdef __EVENTS__
-	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE | SPI_IRQ_ENABLE;
+	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE;
 #else
 	*(hwio->spcr) |= SPI_ENABLE | SPI_MASTER_ENABLE;
 #endif
@@ -182,48 +182,17 @@ PRIVATE WEAK void BermudaHardwareSpiDeselect(SPIBUS *bus)
 PRIVATE WEAK int BermudaHardwareSpiTransfer(SPIBUS* bus, const uint8_t *tx, uint8_t *rx,
 	uptr len, unsigned int tmo)
 {
-#ifndef __EVENTS__
 	uptr idx = 0;
-#endif
-	
 	HWSPI *io = bus->io;
 	int rc = 0;
-#ifdef __EVENTS__
-	if(BermudaEventWait((volatile THREAD**)bus->mutex, tmo) == -1) {
-		rc = -1;
-		goto out;
-	}
-#elif __THREADS__
-	BermudaMutexEnter(&(bus->mutex));
-#endif
 	
-	
-#ifdef __EVENTS__
-	bus->master_tx = tx;
-	bus->master_rx = rx;
-	bus->master_len = len;
-	bus->master_index = 1; // first byte is sent below
-	
-	*(io->spdr) = tx[0];
-	if((rc = BermudaEventWaitNext((volatile THREAD**)bus->master_queue, tmo)) == -1) {
-		goto free;
-	}
-#else
+
 	for(; idx < len; idx++) {
 		*(io->spdr) = tx[idx];
 		while(!(*(io->spsr) & BIT(SPIF)));
+		*(io->spsr);
 		rx[idx] = *(io->spdr);
-		rc += 1;
 	}
-#endif
-
-#ifdef __EVENTS__
-free:
-	BermudaEventSignal((volatile THREAD**)bus->mutex);
-	out:
-#elif __THREADS__
-	BermudaMutexRelease(&(bus->mutex));
-#endif
 
 	return rc;
 }

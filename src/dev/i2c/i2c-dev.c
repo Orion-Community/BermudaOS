@@ -79,6 +79,9 @@ for(;;) {
  * 
  * \note Behaviour for clients acting as a master ánd slave at the same time is undefined. Altough
  *       it is possible to do master and slave transactions 'simutaniously' using seperate clients.
+ * \note When setting the slave time-out to, for example, 500ms there should not be a master transaction
+ *       every 500ms. Either of those waiting times should be slowed down or sped up (instead, a
+ *       BermudaThreadSleep(10) can also be inserted).
  * @{
  */
 
@@ -108,16 +111,17 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 	int rc = -1;
 	
 	if(client == NULL) {
-		return -1;
+		goto out;
 	}
 	
-	if(BermudaEventWait(event(&(shinfo->mutex)), I2C_TMO) != 0) {
+	if(BermudaEventWait(event(&(shinfo->mutex)), 0) != 0) {
 		goto out;
 	}
 	
 	socket = BermudaHeapAlloc(sizeof(*socket));
 	if(!socket) {
 		rc = -1;
+		BermudaEventSignal(event(&(shinfo->mutex)));
 		goto out;
 	}
 	
@@ -265,7 +269,7 @@ PUBLIC int i2cdev_close(FILE *stream)
 	i2c_client_set_features(client, features);
 	info->socket = NULL;
 	
-	BermudaEventSignal(event(&info->mutex));
+	BermudaEventSignal(event(&(info->mutex)));
 	return 0;
 }
 

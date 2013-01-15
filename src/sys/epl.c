@@ -64,8 +64,8 @@ PUBLIC int epl_test_lock(struct ep_list *list)
  */
 PUBLIC int epl_lock(struct ep_list *list)
 {
-// 	return 0;
-	return BermudaEventWait((volatile THREAD**)&list->mutex, EPL_LOCK_WAIT);
+	return 0;
+// 	return BermudaEventWait((volatile THREAD**)&list->mutex, EPL_LOCK_WAIT);
 }
 
 /**
@@ -75,8 +75,8 @@ PUBLIC int epl_lock(struct ep_list *list)
  */
 PUBLIC int epl_unlock(struct ep_list *list)
 {
-// 	return 0;
-	return BermudaEventSignalRaw((THREAD*volatile*)&list->mutex);
+	return 0;
+// 	return BermudaEventSignalRaw((THREAD*volatile*)&list->mutex);
 }
 
 /**

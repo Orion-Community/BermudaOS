@@ -219,16 +219,17 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_client *client, bool maste
  */
 static inline void i2c_slave_tmo(struct i2c_client *client)
 {
-	size_t index = 0;
+	size_t index = 0, length = i2c_vector_length(client->adapter);
 	struct i2c_message *msg;
 	
 	if(i2c_first_slave_msg(client->adapter, &index)) {
-		for(; index < i2c_vector_length(client->adapter); index++) {
+		for(; index < length; index++) {
 			msg = i2c_vector_get(client->adapter, index);
 			msg->features |= I2C_MSG_DONE_FLAG;
 		}
+		i2c_cleanup_adapter_msgs(client, FALSE);
 	}
-	i2c_cleanup_adapter_msgs(client, FALSE);
+	
 }
 
 /**
@@ -269,7 +270,12 @@ static inline void i2c_master_tmo(struct i2c_client *client)
  */
 static int i2c_start_xfer(struct i2c_client *client)
 {
+	FILE *stream = i2c_shinfo(client)->socket;
+	
 	if(client) {
+		if((stream->flags & I2C_MASTER) == 0) {
+			i2c_slave_tmo(client);
+		}
 		return __i2c_start_xfer(client);
 	}
 	return -1;
@@ -519,7 +525,7 @@ static void i2c_update(struct i2c_client *client, bool master)
 		s_diff *= -1;
 		adapter->update(adapter, s_diff);
 	} else {
-		i2c_slave_tmo(client);
+		i2c_cleanup_adapter_msgs(client, FALSE);
 	}
 }
 

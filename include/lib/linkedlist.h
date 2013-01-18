@@ -61,9 +61,10 @@ extern struct linkedlist *linkedlist_alloc();
 extern void linkedlist_init(struct linkedlist *list, void *data);
 extern int linkedlist_set_data(struct linkedlist *node, void *data);
 extern int linkedlist_set_data_at(struct linkedlist *head, void *data, size_t index);
-extern int linkedlist_add_node(struct linkedlist *head, void *data, int location);
-extern int linkedlist_delete_node_at(struct linkedlist *head, size_t index);
-extern int linkedlist_delete_node(struct linkedlist *head, struct linkedlist *node);
+extern int linkedlist_create_node(struct linkedlist **headpp, void *data, int location);
+extern int linkedlist_add_node(struct linkedlist **headpp, struct linkedlist *node, int location);
+extern int linkedlist_delete_node_at(struct linkedlist **headpp, size_t index);
+extern int linkedlist_delete_node(struct linkedlist **headpp, struct linkedlist *node);
 #endif
 
 #endif

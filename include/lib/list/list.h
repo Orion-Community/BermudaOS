@@ -64,9 +64,10 @@ typedef struct linkedlist
  * Walk trough the linked list in a safe way. The extra temporary variable
  * protects against the removal of items.
  */
-#define foreach_safe(list, c, tmp) \
-                                for(c = (list), tmp = (list)->next; c != NULL && \
-                                c != tmp; c = (tmp), tmp = (c)->next)
+#define foreach_safe(__list, __c, __tmp) \
+                                for(__c = (__list), __tmp = (__list)->next; __c != NULL && \
+                                __c != __tmp; __c = (__tmp), __tmp = (__c)->next)
+                                
                                 
 #define ForEachpp(lpp, lp) \
                         for(; lp != NULL; lp = (lp)->next, lpp = &((lp)->next))

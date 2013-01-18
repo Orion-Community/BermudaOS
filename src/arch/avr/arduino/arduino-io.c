@@ -71,10 +71,7 @@ void BermudaDigitalPinWrite(unsigned char pin, unsigned char value)
 
         if(PIN_NOT_AVAILABLE == port)
                 return;
-
-#ifdef __THREADS__
-        BermudaThreadEnterIO(BermudaCurrentThread);
-#endif
+		
         if(value == INPUT)
         {
                 *out &= ~mask;
@@ -83,9 +80,6 @@ void BermudaDigitalPinWrite(unsigned char pin, unsigned char value)
         {
                 *out |= mask;
         }
-#ifdef __THREADS__
-        BermudaThreadExitIO(BermudaCurrentThread);
-#endif
 }
 
 unsigned char BermudaDigitalPinRead(unsigned char pin)
@@ -98,16 +92,11 @@ unsigned char BermudaDigitalPinRead(unsigned char pin)
         if(PIN_NOT_AVAILABLE == port)
                 return LOW;
 
-#ifdef __THREADS__
-        BermudaThreadEnterIO(BermudaCurrentThread);
-#endif
         if((*in & bit) != 0)
                 ret = HIGH;
         else
                 ret = LOW;
-#ifdef __THREADS__
-        BermudaThreadExitIO(BermudaCurrentThread);
-#endif
+
         return ret;
 }
 

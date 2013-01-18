@@ -172,6 +172,7 @@ PUBLIC void BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t)
 	if(tqp == SIGNALED)
 	{
 		tqp = 0;
+		t->ec++;
 	}
 	else if(tqp)
 	{
@@ -188,9 +189,11 @@ PUBLIC void BermudaThreadPrioQueueAdd(THREAD * volatile *tqpp, THREAD *t)
 	t->next = tqp; // put t before tqp
 	*tqpp = t; // same as prev->next = t
 	
-	if(t->next && t->next->ec) {
-		t->ec += t->next->ec;
-		t->next->ec = 0;
+	if(t->next) {
+		if(t->next->ec) {
+			t->ec += t->next->ec;
+			t->next->ec = 0;
+		}
 	}
 	
 	BermudaExitCritical();

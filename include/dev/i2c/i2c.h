@@ -30,6 +30,7 @@
 #include <lib/binary.h>
 #include <dev/dev.h>
 #include <sys/epl.h>
+#include <lib/linkedlist.h>
 
 struct i2c_adapter; // forward declaration
 struct i2c_client;
@@ -111,7 +112,7 @@ struct i2c_message
  */
 struct i2c_shared_info
 {
-	struct ep_list *list; //!< EPL list of messages.
+	struct linkedlist *msgs; //!< Linked list of buffered messages.
 	
 	struct i2c_adapter *adapter; //!< The I2C adapter.
 	FILE *socket; //!< I/O socket.

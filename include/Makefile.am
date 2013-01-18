@@ -4,7 +4,7 @@ DEV_HEADER_FILES=dev/adc.h dev/dev.h dev/error.h dev/i2c.h dev/i2c-core.h dev/i2
 
 FS_HEADER_FILES=fs/vfile.h fs/vfs.h
 
-LIB_HEADER_FILES=lib/24c02.h lib/binary.h lib/spiram.h lib/string.h lib/list/linkedlist.h lib/list/list.h lib/list/rcu.h lib/list/xorlist.h lib/list/xorlist_error.h
+LIB_HEADER_FILES=lib/24c02.h lib/binary.h lib/spiram.h lib/string.h lib/linkedlist.h lib/list/list.h lib/list/rcu.h lib/list/xorlist.h lib/list/xorlist_error.h
 
 NET_HEADER_FILES=net/netbuff.h net/netdev.h net/tokenbucket.h net/core/dev.h net/core/vlan.h
 

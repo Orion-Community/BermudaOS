@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include <lib/list/list.h>
-#include <lib/list/linkedlist.h>
+#include <lib/linkedlist.h>
 
 /**
  * \brief Initialize a linked list.
@@ -89,6 +89,114 @@ PUBLIC int linkedlist_set_data_at(struct linkedlist *head, void *data, size_t in
 	}
 	
 	return -1;
+}
+
+/**
+ * \brief Add a node the the given linked list.
+ * \param headpp Linked list to add to.
+ * \param data Data to attatch to the new node.
+ * \param location Location to insert the new node.
+ * \see linkedlist_location_t
+ * \note A new linkedlist will be allocated.
+ * \retval 0 node has successfully been added.
+ * \retval -1 Error occurred while trying to add the node.
+ */
+PUBLIC int linkedlist_create_node(struct linkedlist **headpp, void *data, int location)
+{
+	struct linkedlist *node = malloc(sizeof(*node));
+	
+	if(!node) {
+		return -1;
+	}
+	
+	node->data = data;
+	return linkedlist_add_node(headpp, node, location);
+}
+
+/**
+ * \brief Add a new node to the a linked list.
+ * \param node Node to add.
+ * \param location Location to add the node.
+ * \see linkedlist_location_t
+ * \note A new linkedlist will be allocated.
+ * \retval 0 node has successfully been added.
+ * \retval -1 Error occurred while trying to add the node.
+ */
+PUBLIC int linkedlist_add_node(struct linkedlist **headpp, struct linkedlist *node, int location)
+{
+	struct linkedlist *listp;
+	int rc;
+	listp = *headpp;
+	
+	switch(location) {
+		case LINKEDLIST_HEAD:
+			node->next = listp;
+			rc = 0;
+			break;
+			
+		case LINKEDLIST_TAIL:
+			while(listp) {
+				headpp = &listp->next;
+				listp = listp->next;
+			}
+			
+			node->next = listp;
+			*headpp = node;
+			rc = 0;
+			break;
+			
+		default:
+			rc = -1;
+			break;
+	}
+	
+	return rc;
+}
+
+/**
+ * \brief Delete a node at a given index.
+ * \param headpp List to delete from.
+ * \param index Index to delete at.
+ * \retval 0 deletion was successful.
+ * \retval -1 deletion failed.
+ */
+PUBLIC int linkedlist_delete_node_at(struct linkedlist **headpp, size_t index)
+{
+	size_t i = 0;
+	int rc = -1;
+	struct linkedlist *listp;
+	
+	listp = *headpp;
+	
+	foreach(listp, listp) {
+		if(index == i) {
+			*headpp = listp->next;
+			listp->next = NULL;
+			rc = 0;
+			break;
+		}
+	}
+	
+	return rc;
+}
+
+PUBLIC int linkedlist_delete_node(struct linkedlist **headpp, struct linkedlist *node)
+{
+	int rc = 0;
+	struct linkedlist *listp;
+	
+	listp = *headpp;
+	
+	foreach(listp, listp) {
+		if(listp == node) {
+			*headpp = node->next;
+			node->next = NULL;
+			rc = -1;
+			break;
+		}
+	}
+	
+	return rc;
 }
 
 /**

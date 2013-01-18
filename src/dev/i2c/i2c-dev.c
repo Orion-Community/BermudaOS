@@ -242,7 +242,7 @@ PUBLIC int i2cdev_flush(FILE *stream)
 	struct i2c_client *client = stream->data;
 	struct i2c_shared_info *info = i2c_shinfo(client);
 	
-	if(epl_entries(info->list)) {
+	if(info->msgs) {
 		return i2c_flush_client(client);
 	} else {
 		return -1;
@@ -259,7 +259,7 @@ PUBLIC int i2cdev_close(FILE *stream)
 	struct i2c_shared_info *info = i2c_shinfo(client);
 	i2c_features_t features;
 	
-	if(epl_entries(info->list)) {
+	if(info->msgs) {
 		i2c_cleanup_client_msgs(client);
 	}
 	
@@ -322,7 +322,7 @@ PUBLIC void i2cdev_error(int fd)
 	struct i2c_client *client = stream->data;
 	struct i2c_shared_info *info = i2c_shinfo(client);
 	
-	if(epl_entries(info->list)) {
+	if(info->msgs) {
 		i2c_cleanup_client_msgs(client);
 	}
 }

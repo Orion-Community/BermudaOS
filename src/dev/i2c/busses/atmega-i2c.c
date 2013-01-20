@@ -99,9 +99,21 @@ struct i2c_adapter *atmega_i2c_busses[ATMEGA_BUSSES];
  */
 static volatile size_t buffer_index = 0;
 
+/**
+ * \brief Master message which is currently configured for transfer.
+ */
 static volatile struct i2c_message *master_msg = NULL;
+/**
+ * \brief Master message which is sent/received last by the controller.
+ */
 static volatile struct i2c_message *last_master_msg = NULL;
+/**
+ * \brief Slave message which is currently configured for transfer.
+ */
 static volatile struct i2c_message *slave_msg = NULL;
+/**
+ * \brief Last used slave message.
+ */
 static volatile struct i2c_message *last_slave_msg = NULL;
 
 /**
@@ -342,6 +354,14 @@ static int i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool ma
 	return rc;
 }
 
+/**
+ * \brief Initialize a master transfer.
+ * \param adapter Bus adapter.
+ * \param Desired frequency.
+ *
+ * This function will set call atmega_i2c_update to set master_msg and slave_msg (if the bus
+ * is not busy yet).
+ */
 static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t freq)
 {
 	int rc = -1;
@@ -354,7 +374,7 @@ static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t freq)
 	
 	if(!adapter->busy) {
 		if((TWSR & I2C_NOINFO) == I2C_NOINFO) {
-			atmega_i2c_update(adapter, 0);
+			atmega_i2c_update(adapter, 0); /* will be called by the ISR if the bus is busy */
 			if(slave_msg) {
 				adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
 			} else {
@@ -363,17 +383,22 @@ static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t freq)
 		}
 		
 	}
-	rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_MASTER_TMO);
+	rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_MASTER_TMO); /* wait for completion */
 	return rc;
 }
 
+/**
+ * \brief Setup the slave buffers.
+ * \param adapter Bus adapter.
+ * \param index Index of the first slave message.
+ */
 static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 {
 	int rc = 0;
 	
 	if(!adapter->busy) {
 		if((TWSR & I2C_NOINFO) == I2C_NOINFO) {
-			atmega_i2c_update(adapter, 0);
+			atmega_i2c_update(adapter, 0); /* Will be called by the ISR if the bus is busy. */
 			if(master_msg) {
 				adapter->dev->ctrl(adapter->dev, I2C_START | I2C_ACK, NULL);
 			} else {
@@ -398,6 +423,15 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 	return rc;
 }
 
+/**
+ * \brief Resume transmission after a call back.
+ * \param adapter Bus adapter.
+ * \param index Pointer to the index of the inserted message.
+ * \see i2c_adapter::resume
+ * 
+ * In case of master message, master_msg will be set to the message located at \code *index \endcode
+ * If the message at \p *index is a slave message, slave_msg will be set to \p *index.
+ */
 static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 {
 	struct i2c_message *msg;

@@ -193,7 +193,7 @@ struct i2c_adapter {
 	/**
 	 * \brief Transfer hook implemented by the bus driver.
 	 * \param adapter The bus adapter.
-	 * \param index On return \p index must point to \verbatim last_index+1 \endverbatim
+	 * \param index On return \p index must point to the last index transfered.
 	 * \param freq The frequency to operate on.
 	 * \return The current message index.
 	 * 
@@ -204,7 +204,7 @@ struct i2c_adapter {
 	/**
 	 * \brief Resume transmission after a call back.
 	 * \param adapter Adapter to resume.
-	 * \param index On return \p index must point to \verbatim last_index+1 \endverbatim
+	 * \param index On return \p index must point to the last index transfered.
 	 * \note The message which has been set by the call back must be inserted IN THE FRONT of the
 	 *       message vector.
 	 * \return The current message index.

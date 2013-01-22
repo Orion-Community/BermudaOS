@@ -72,7 +72,7 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg);
 /* transmission funcs */
 static int i2c_start_xfer(struct i2c_client *client);
 static inline int __i2c_start_xfer(struct i2c_client *client);
-static void i2c_update(struct i2c_client *client, bool master);
+static size_t i2c_update(struct i2c_client *client, bool master);
 static inline void i2c_master_tmo(struct i2c_client *client);
 static inline void i2c_slave_tmo(struct i2c_client *client);
 
@@ -509,11 +509,12 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
  * \brief Update the I2C adapter after a transfer.
  * \param client I2C client, whose adapter needs an update.
  * \see i2c_adapter::update __i2c_start_xfer
+ * \return Length diff.
  * 
  * The I2C vector will be updated and all redudant messages will be deleted. The update function
  * of the bus will also be called.
  */
-static void i2c_update(struct i2c_client *client, bool master)
+static size_t i2c_update(struct i2c_client *client, bool master)
 {
 	struct i2c_adapter *adapter = client->adapter;
 	size_t diff = i2c_vector_length(adapter);
@@ -525,8 +526,10 @@ static void i2c_update(struct i2c_client *client, bool master)
 		s_diff = (int32_t)diff;
 		s_diff *= -1;
 		adapter->update(adapter, s_diff);
+		return diff;
 	} else {
 		i2c_cleanup_adapter_msgs(client, FALSE);
+		return 0;
 	}
 }
 

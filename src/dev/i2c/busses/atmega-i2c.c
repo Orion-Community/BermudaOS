@@ -48,7 +48,6 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index);
 static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t);
 static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index);
 static void atmega_i2c_update(struct i2c_adapter *adapter, long diff);
-static void atmega_i2c_update_hook(struct i2c_adapter *adapter, long diff);
 static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter);
 
 #ifdef I2C_DBG
@@ -149,7 +148,7 @@ PUBLIC void atmega_i2c_c0_hw_init(uint8_t sla, struct i2c_adapter *adapter)
 	adapter->features = I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT;
 	adapter->xfer = &i2c_init_transfer;
 	adapter->resume = &i2c_resume_transfer;
-	adapter->update = &atmega_i2c_update_hook;
+	adapter->update = &atmega_i2c_update;
 	adapter->busy = FALSE;
 	adapter->error = FALSE;
 
@@ -500,9 +499,6 @@ static void atmega_i2c_update(struct i2c_adapter *adapter, long diff)
 	}
 	BermudaExitCritical();
 }
-
-static void atmega_i2c_update_hook(struct i2c_adapter *adapter, long diff)
-{}
 
 static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter)
 {

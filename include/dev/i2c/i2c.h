@@ -193,6 +193,7 @@ struct i2c_adapter {
 	/**
 	 * \brief Transfer hook implemented by the bus driver.
 	 * \param adapter The bus adapter.
+	 * \param index On return \p index must point to \verbatim last_index+1 \endverbatim
 	 * \param freq The frequency to operate on.
 	 * \return The current message index.
 	 * 
@@ -203,6 +204,7 @@ struct i2c_adapter {
 	/**
 	 * \brief Resume transmission after a call back.
 	 * \param adapter Adapter to resume.
+	 * \param index On return \p index must point to \verbatim last_index+1 \endverbatim
 	 * \note The message which has been set by the call back must be inserted IN THE FRONT of the
 	 *       message vector.
 	 * \return The current message index.
@@ -213,6 +215,9 @@ struct i2c_adapter {
 	 * \brief Update the driver message index.
 	 * \param diff The index diff.
 	 * \note The driver is required to implement this function pointer.
+	 * 
+	 * This pointer is called when a master transfer is done. There is no point calling when after
+	 * a slave transmission, since the deletion of slave buffers doesn't affect the array order.
 	 */
 	void (*update)(struct i2c_adapter *adapter, long diff);
 };

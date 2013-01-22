@@ -434,7 +434,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 		if(!rc) {
 			do {
 				bus_features = i2c_adapter_features(adapter);
-				msg = i2c_vector_get(adapter, index-1);
+				msg = i2c_vector_get(adapter, index);
 				if(i2c_msg_features(msg) & I2C_MSG_CALL_BACK_FLAG) {
 					newmsg = malloc(sizeof(*newmsg));
 					if(!newmsg) {
@@ -459,6 +459,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 						}
 						msg->features |= I2C_MSG_DONE_FLAG;
 						i2c_msg_set_features(newmsg, msg_features);
+						index++;
 						rc = i2c_vector_insert_at(adapter, newmsg, index);
 						if(rc) {
 							if(i2c_vector_error(adapter, rc) == 0) {

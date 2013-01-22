@@ -335,7 +335,7 @@ static int i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool ma
 	if(master) {
 		rc = i2c_master_transfer(adapter, freq);
 		BermudaEnterCritical();
-		*index = i2c_vector_locate(adapter, (void*)last_master_msg)+1;
+		*index = i2c_vector_locate(adapter, (void*)last_master_msg);
 		msg = (struct i2c_message*)last_master_msg;
 		BermudaExitCritical();
 		if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
@@ -418,7 +418,7 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 		}
 	}
 	
-	*index = i2c_vector_locate(adapter, (void*)last_slave_msg)+1;
+	*index = i2c_vector_locate(adapter, (void*)last_slave_msg);
 	
 	return rc;
 }
@@ -445,7 +445,7 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 		if((rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_MASTER_TMO)) < 0) {
 			adapter->error = TRUE;
 		}
-		*index = i2c_vector_locate(adapter, (void*)last_master_msg)+1;
+		*index = i2c_vector_locate(adapter, (void*)last_master_msg);
 		msg = (struct i2c_message*)last_master_msg;
 		if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
 			if(rc != 0) {
@@ -471,7 +471,7 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 				}
 			}
 		}
-		*index = i2c_vector_locate(adapter, (void*)last_slave_msg)+1;
+		*index = i2c_vector_locate(adapter, (void*)last_slave_msg);
 	}
 	
 	return rc;

@@ -122,7 +122,7 @@ static int i2c_lock_adapter(struct i2c_adapter *adapter, struct i2c_shared_info 
 	FILE *stream = info->socket;
 	
 	if((stream->flags & I2C_MASTER) != 0) {
-		return adapter->dev->alloc(adapter->dev, 0);
+		return adapter->dev->alloc(adapter->dev, I2C_MASTER_TMO);
 	} else {
 		return 0;
 	}

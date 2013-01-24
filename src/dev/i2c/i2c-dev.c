@@ -114,7 +114,7 @@ PUBLIC int i2cdev_socket(struct i2c_client *client, uint16_t flags)
 		goto out;
 	}
 	
-	if(BermudaEventWait(event(&(shinfo->mutex)), 0) != 0) {
+	if(BermudaEventWait(event(&(shinfo->mutex)), I2C_MASTER_TMO) != 0) {
 		goto out;
 	}
 	

@@ -8,6 +8,7 @@ endif
 
 if SPI
 OPT_SCRS+= spibus.c
+MAYBE_SPI=spi
 endif
 
 if USART
@@ -21,7 +22,7 @@ PWM_LIB=pwm/libpwm.la
 endif
 
 
-SUBDIRS=$(MAYBE_IIC) $(MAYBYE_PWM) $(MAYBE_USART)
+SUBDIRS=$(MAYBE_IIC) $(MAYBYE_PWM) $(MAYBE_USART) $(MAYBE_SPI)
 
 bermudaosdir=@libdir@/bermudaos
 bermudaos_LTLIBRARIES=libdev.la

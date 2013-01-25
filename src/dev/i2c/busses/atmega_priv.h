@@ -225,61 +225,6 @@
 
 #define I2C_BUS_ERROR 0x0 //!< Generic bus error.
 
-/**
- * \def TWBR
- * \brief TW bit rate register.
- * \see BermudaTwiCalcTWBR
- * 
- * Set the bit rate. Usually calculated using BermudaTwiCalcTWBR.
- */
-#define TWBR  MEM_IO8(0xB8)
-
-/**
- * \def TWCR
- * \brief TW control register.
- * \note Most operations on TWCR are done using BermudaTwIoctl.
- * \see BermudaTwIoctl
- * 
- * Controls the Two Wire Interface.
- */
-#define TWCR  MEM_IO8(0xBC)
-
-/**
- * \def TWSR
- * \brief TW status register.
- * \note Most operations on TWSR are done using BermudaTwIoctl.
- * \see BermudaTwIoctl
- */
-#define TWSR  MEM_IO8(0xB9)
-
-/**
- * \def TWDR
- * \brief TW data register.
- * \note All operations on TWDR are done using BermudaTwIoctl.
- * \see BermudaTwIoctl
- * 
- * Shift register to receive and transmit data.
- */
-#define TWDR  MEM_IO8(0xBB)
-
-/**
- * \def TWAR
- * \brief TW SLA register.
- * \note Most operations on TWDR are done using BermudaTwIoctl.
- * \see BermudaTwIoctl
- * 
- * Shift register to receive and transmit data.
- */
-#define TWAR  MEM_IO8(0xBA)
-
-/**
- * \def TWAMR
- * \brief TW SLA mask register
- * 
- * Masks bits in the TWAR.
- */
-#define TWAMR MEM_IO8(0xBD)
-
 /*
  * Prescalers
  */

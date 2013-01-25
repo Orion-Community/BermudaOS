@@ -23,6 +23,7 @@
 
 #include <bermuda.h>
 #include <arch/avr/io.h>
+#include <arch/avr/328/twi.h>
 
 #ifdef __cplusplus
 extern "C" {

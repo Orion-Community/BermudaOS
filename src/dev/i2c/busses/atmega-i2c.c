@@ -500,6 +500,13 @@ static void atmega_i2c_update(struct i2c_adapter *adapter, long diff)
 	BermudaExitCritical();
 }
 
+/**
+ * \brief End of a slave transmission.
+ * \param adapter The bus adapter doing the transmission.
+ * \note Called from the ISR.
+ * 
+ * Finishes the slave transmission.
+ */
 static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter)
 {
 	struct device *dev = adapter->dev;

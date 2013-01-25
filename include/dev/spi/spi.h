@@ -26,11 +26,27 @@
 #include <dev/error.h>
 
 /**
+ * \brief Type definition of the SPI features (flags).
+ */
+typedef uint8_t spi_features_t;
+
+/**
+ * \brief SPI master feature.
+ */
+#define SPI_MASTER 0x200
+/**
+ * \brief SPI slave feature.
+ */
+#define SPI_SLAVE  0x400
+
+
+/**
  * \brief SPI bus adapter.
  */
 struct spi_adapter
 {
 	struct device *dev; //!< I/O device.
+	spi_features_t features;
 	
 	volatile void *tx; //!< Transmit buffer.
 	volatile void *rx; //!< Receive buffer.

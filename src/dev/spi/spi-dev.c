@@ -30,5 +30,21 @@
  */
 PUBLIC int spidev_socket(struct spi_client *client, uint16_t flags)
 {
+	int rc;
+	FILE *stream = malloc(sizeof(*stream));
+	
+	if(!stream) {
+		return -1;
+	}
+	
+	rc = iob_add(stream);
+	if(rc < 0) {
+		free(stream);
+		return -1;
+	}
+	
+	stream->flags = flags;
+	stream->data = client;
+	
 	return -1;
 }

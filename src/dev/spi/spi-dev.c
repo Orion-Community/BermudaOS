@@ -46,5 +46,40 @@ PUBLIC int spidev_socket(struct spi_client *client, uint16_t flags)
 	stream->flags = flags;
 	stream->data = client;
 	
+	return rc;
+}
+
+/**
+ * \brief Close the SPI stream.
+ * \param stream Stream to close.
+ * \see close
+ * 
+ * Do not call directly, use close instead.
+ */
+PUBLIC int spidev_close(FILE *stream)
+{
+	struct spi_client *client;
+	int rc;
+	
+	client = (struct spi_client*)stream->data;
+	if(stream) {
+		free(stream);
+		rc = -DEV_OK;
+	} else {
+		rc = -DEV_NULL;
+	}
+}
+
+/**
+ * \brief Set the transfer buffer for the upcoming SPI transmission.
+ * \param stream I/O stream.
+ * \param tx Transmit buffer.
+ * \param size Length op \p tx.
+ * \see write
+ * 
+ * Do not call directly, use write instead.
+ */
+PUBLIC int spidev_write(FILE *stream, const void *tx, size_t size)
+{
 	return -1;
 }

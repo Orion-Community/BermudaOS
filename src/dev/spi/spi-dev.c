@@ -46,5 +46,5 @@ PUBLIC int spidev_socket(struct spi_client *client, uint16_t flags)
 	stream->flags = flags;
 	stream->data = client;
 	
-	return -1;
+	return rc;
 }

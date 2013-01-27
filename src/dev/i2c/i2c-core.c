@@ -451,15 +451,12 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 							newmsg->addr |= I2C_READ_BIT;
 						}
 						msg_features &= ~I2C_MSG_DONE_MASK;
-						msg_features &= ~(I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_MASK);
-						msg_features |= i2c_msg_features(msg) & 
-										(I2C_MSG_MASTER_MSG_MASK | I2C_MSG_SLAVE_MSG_MASK);
+						msg->features |= I2C_MSG_DONE_FLAG;
+						i2c_msg_set_features(newmsg, msg_features);
 						if(rc) {
 							newmsg->buff = NULL;
 							newmsg->length = 0;
 						}
-						msg->features |= I2C_MSG_DONE_FLAG;
-						i2c_msg_set_features(newmsg, msg_features);
 						index++;
 						rc = i2c_vector_insert_at(adapter, newmsg, index);
 						if(rc) {

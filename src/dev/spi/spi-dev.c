@@ -68,6 +68,8 @@ PUBLIC int spidev_close(FILE *stream)
 	} else {
 		rc = -DEV_NULL;
 	}
+	
+	return rc;
 }
 
 /**

@@ -21,6 +21,7 @@
 
 #include <dev/dev.h>
 #include <dev/spi.h>
+#include <dev/spi-core.h>
 #include <dev/error.h>
 
 /**
@@ -88,7 +89,7 @@ PUBLIC int spidev_write(FILE *stream, const void *tx, size_t size)
 	if(!size) {
 		rc = -DEV_NULL;
 	} else {
-		// 		spi_set_buff(client, tx, size, SPI_TX);
+		spi_set_buff(client, (void*)tx, size, SPI_TX);
 		rc = -DEV_OK;
 	}
 	return rc;
@@ -109,7 +110,7 @@ PUBLIC int spidev_read(FILE *stream, void *rx, size_t size)
 	if(!size) {
 		rc = -DEV_NULL;
 	} else {
-		// 		spi_set_buff(client, rx, size, SPI_RX);
+		spi_set_buff(client, rx, size, SPI_RX);
 		rc = -DEV_OK;
 	}
 	

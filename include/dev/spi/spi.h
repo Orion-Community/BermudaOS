@@ -39,6 +39,12 @@ typedef uint8_t spi_features_t;
  */
 #define SPI_SLAVE  0x400
 
+typedef enum
+{
+	SPI_TX,
+	SPI_RX,
+} spi_transmission_type_t;
+
 
 /**
  * \brief SPI bus adapter.

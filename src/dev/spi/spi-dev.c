@@ -77,10 +77,41 @@ PUBLIC int spidev_close(FILE *stream)
  * \param tx Transmit buffer.
  * \param size Length op \p tx.
  * \see write
- * 
+ *
  * Do not call directly, use write instead.
  */
 PUBLIC int spidev_write(FILE *stream, const void *tx, size_t size)
 {
-	return -1;
+	int rc;
+	struct spi_client *client = stream->data;
+	
+	if(!size) {
+		rc = -DEV_NULL;
+	} else {
+		// 		spi_set_buff(client, tx, size, SPI_TX);
+		rc = -DEV_OK;
+	}
+	return rc;
+}
+
+/**
+ * \brief Setup the read buffer for an upcoming SPI transmission.
+ * \param stream I/O stream.
+ * \param rx Read buffer.
+ * \param size Length of \p rx.
+ * \see read
+ */
+PUBLIC int spidev_read(FILE *stream, void *rx, size_t size)
+{
+	int rc;
+	struct spi_client *client = stream->data;
+	
+	if(!size) {
+		rc = -DEV_NULL;
+	} else {
+		// 		spi_set_buff(client, rx, size, SPI_RX);
+		rc = -DEV_OK;
+	}
+	
+	return rc;
 }

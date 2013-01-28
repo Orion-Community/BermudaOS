@@ -72,6 +72,9 @@ struct spi_client
 
 __DECL
 extern int spidev_socket(struct spi_client *client, uint16_t flags);
+extern int spidev_write(FILE *stream, const void *tx, size_t size);
+extern int spidev_read(FILE *stream, void *rx, size_t size);
+extern int spidev_close(FILE *stream);
 __DECL_END
 
 #endif

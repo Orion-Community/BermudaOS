@@ -432,7 +432,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 		
 		index = (index != 0) ? index-1 : index;
 		rc = adapter->xfer(adapter, client->freq, master, &index);
-		if(!rc) {
+		if(!rc && index != -1) {
 			do {
 				bus_features = i2c_adapter_features(adapter);
 				msg = i2c_vector_get(adapter, index);
@@ -480,10 +480,13 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 				}
 				
 				loop_continue:
-				index -= (index > 0) ? i2c_cleanup_adapter(adapter, master) : 0;
+				index -= (index > 0) ? i2c_update(client, master) : 0;
 				length = i2c_vector_length(adapter);
 				if(index < length && rc == 0) {
 					rc = adapter->resume(adapter, &index);
+					if(index == -1) {
+						break;
+					}
 				}
 			} while(index < length && rc == 0);
 		}

@@ -143,6 +143,10 @@ PUBLIC size_t i2c_vector_locate(struct i2c_adapter *adapter, struct i2c_message 
 	struct i2c_msg_vector *vector = &adapter->msg_vector;
 	size_t ret;
 	
+	if(!id) {
+		return -1;
+	}
+	
 	for(ret = 0; ret < vector->length; ret++) {
 		if(vector->data[ret] == id) {
 			return ret;

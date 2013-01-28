@@ -174,7 +174,11 @@ extern int i2cdbg_test_queue_processor(struct i2c_client *client);
  */
 static inline struct i2c_shared_info *i2c_shinfo(struct i2c_client *client)
 {
-	return client->sh_info;
+	if(client) {
+		return client->sh_info;
+	} else {
+		return NULL;
+	}
 }
 
 /**
@@ -218,7 +222,9 @@ static inline void i2c_set_error(struct i2c_client *client)
  */
 static inline void i2c_msg_set_features(struct i2c_message *msg, i2c_features_t features)
 {
-	msg->features = features;
+	if(msg) {
+		msg->features = features;
+	}
 }
 
 /**
@@ -228,7 +234,11 @@ static inline void i2c_msg_set_features(struct i2c_message *msg, i2c_features_t 
  */
 static inline i2c_features_t i2c_msg_features(struct i2c_message *msg)
 {
-	return msg->features;
+	if(msg) {
+		return msg->features;
+	} else {
+		return 0;
+	}
 }
 
 /**
@@ -239,7 +249,11 @@ static inline i2c_features_t i2c_msg_features(struct i2c_message *msg)
  */
 static inline void i2c_client_set_features(struct i2c_client *client, i2c_features_t features)
 {
-	i2c_shinfo(client)->features = features;
+	struct i2c_shared_info *info = i2c_shinfo(client);
+	
+	if(info) {
+		info->features = features;
+	}
 }
 
 /**

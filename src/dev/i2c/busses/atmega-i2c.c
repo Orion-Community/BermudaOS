@@ -26,6 +26,7 @@
 #include <dev/i2c-reg.h>
 #include <dev/i2c-core.h>
 #include <dev/i2c-msg.h>
+#include <dev/error.h>
 #include <dev/i2c/busses/atmega.h>
 
 #include <sys/thread.h>
@@ -48,6 +49,7 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index);
 static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t);
 static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index);
 static void atmega_i2c_update(struct i2c_adapter *adapter, long diff);
+static void atmega_i2c_update_from_isr(struct i2c_adapter *adapter);
 static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter);
 
 #ifdef I2C_DBG
@@ -383,6 +385,10 @@ static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t freq)
 		
 	}
 	rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_MASTER_TMO); /* wait for completion */
+	
+	if(!last_master_msg) {
+		rc = -1;
+	}
 	return rc;
 }
 
@@ -409,6 +415,7 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 	if(BermudaEventWaitNext(event(adapter->slave_queue), I2C_SLAVE_TMO) == -1) {
 		rc = -1;
 		if(slave_msg) {
+			last_slave_msg = slave_msg;
 			slave_msg->features |= I2C_MSG_DONE_FLAG;
 			if((i2c_msg_features((void*)slave_msg) & I2C_MSG_CALL_BACK_MASK) != 0) {
 				adapter->busy = FALSE;
@@ -417,7 +424,11 @@ static int atmega_i2c_slave_listen(struct i2c_adapter *adapter, size_t *index)
 		}
 	}
 	
-	*index = i2c_vector_locate(adapter, (void*)last_slave_msg);
+	if(last_slave_msg) {
+		*index = i2c_vector_locate(adapter, (void*)last_slave_msg);
+	} else {
+		rc = -DEV_NULL;
+	}
 	
 	return rc;
 }
@@ -442,18 +453,25 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 		master_msg = msg;
 		adapter->dev->ctrl(adapter->dev, I2C_START | I2C_NACK, NULL);
 		if((rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_MASTER_TMO)) < 0) {
+			if(master_msg) {
+				last_master_msg = master_msg;
+			}
 			adapter->error = TRUE;
 		}
 		*index = i2c_vector_locate(adapter, (void*)last_master_msg);
-		msg = (struct i2c_message*)last_master_msg;
-		if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
-			if(rc != 0) {
-				adapter->busy = FALSE;
-				adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
-				msg->features |= I2C_MSG_DONE_FLAG;
+		if(last_master_msg) {
+			msg = (struct i2c_message*)last_master_msg;
+			if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
+				if(rc != 0) {
+					adapter->busy = FALSE;
+					adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
+					msg->features |= I2C_MSG_DONE_FLAG;
+				}
+			} else {
+				rc = 1;
 			}
 		} else {
-			rc = 1;
+			rc = -DEV_NULL;
 		}
 	} else {
 		/* slave msg */
@@ -461,6 +479,9 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 		adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
 		if((rc = BermudaEventWaitNext(event(adapter->slave_queue), I2C_SLAVE_TMO)) < 0) {
 			rc = -1;
+			if(slave_msg) {
+				last_slave_msg = slave_msg;
+			}
 			msg = (struct i2c_message*)last_slave_msg;
 			if(msg) {
 				msg->features |= I2C_MSG_DONE_FLAG;
@@ -469,6 +490,9 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 					adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
 				}
 			}
+		}
+		if(!last_slave_msg) {
+			rc = -1;
 		}
 		*index = i2c_vector_locate(adapter, (void*)last_slave_msg);
 	}
@@ -484,6 +508,10 @@ static int i2c_resume_transfer(struct i2c_adapter *adapter, size_t *index)
 static void atmega_i2c_update(struct i2c_adapter *adapter, long diff)
 {
 	size_t index = 0;
+	
+	if(adapter->busy) {
+		return;
+	}
 	
 	BermudaEnterCritical();
 	if(i2c_first_master_msg(adapter, &index)) {
@@ -501,6 +529,28 @@ static void atmega_i2c_update(struct i2c_adapter *adapter, long diff)
 }
 
 /**
+ * \brief Update the ATmega I2C buffers from ISR context.
+ * \param adapter I2C bus adapter.
+ * \warning This function should only be called from an ISR context.
+ */
+static void atmega_i2c_update_from_isr(struct i2c_adapter *adapter)
+{
+	size_t index = 0;
+	
+	if(i2c_first_master_msg(adapter, &index)) {
+		master_msg = i2c_vector_get(adapter, index);
+	} else {
+		master_msg = NULL;
+	}
+	
+	if(i2c_first_slave_msg(adapter, &index)) {
+		slave_msg = i2c_vector_get(adapter, index);
+	} else {
+		slave_msg = NULL;
+	}
+}
+
+/**
  * \brief End of a slave transmission.
  * \param adapter The bus adapter doing the transmission.
  * \note Called from the ISR.
@@ -514,16 +564,19 @@ static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter)
 	
 	if(!slave_msg) {
 		adapter->busy = FALSE;
-		atmega_i2c_update(adapter, 0);
+		last_slave_msg = NULL;
+		atmega_i2c_update_from_isr(adapter);
 		if(master_msg) {
 			dev->ctrl(dev, I2C_START | I2C_NACK, NULL);
 		} else {
 			dev->ctrl(dev, I2C_NACK, NULL);
 		}
 		event_signal_from_isr(event(adapter->slave_queue));
+		return;
+	} else {
+		features = i2c_msg_features((void*)slave_msg);
 	}
 	
-	features = i2c_msg_features((void*)slave_msg);
 	last_slave_msg = slave_msg;
 	
 	if((features & I2C_MSG_CALL_BACK_MASK) != 0) {
@@ -532,8 +585,8 @@ static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter)
 		adapter->error = 0;
 	} else {
 		features |= I2C_MSG_DONE_FLAG;
-		slave_msg->features = features;
-		atmega_i2c_update(adapter, 0);
+		i2c_msg_set_features((void*)slave_msg, features);
+		atmega_i2c_update_from_isr(adapter);
 		if(slave_msg) {
 			dev->ctrl(dev, I2C_LISTEN, NULL);
 		} else if(master_msg) {
@@ -586,22 +639,26 @@ SIGNAL(TWI_STC_vect)
 			
 		case I2C_MT_SLA_ACK:
 		case I2C_MT_DATA_ACK:
-			if(buffer_index < master_msg->length) {
-				TWDR = master_msg->buff[buffer_index];
-				buffer_index++;
-				dev->ctrl(dev, I2C_ACK, NULL);
-				break;
+			if(master_msg) {
+				if(buffer_index < master_msg->length) {
+					TWDR = master_msg->buff[buffer_index];
+					buffer_index++;
+					dev->ctrl(dev, I2C_ACK, NULL);
+					break;
+				}
+				
+				last_master_msg = master_msg;
+				if((master_msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
+					event_signal_from_isr(event(adapter->master_queue));
+					dev->ctrl(dev, I2C_BLOCK, NULL);
+					break;
+				}
+				
+				master_msg->features |= I2C_MSG_DONE_FLAG;
 			}
 			
 			last_master_msg = master_msg;
-			if((master_msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
-				event_signal_from_isr(event(adapter->master_queue));
-				dev->ctrl(dev, I2C_BLOCK, NULL);
-				break;
-			}
-			
-			master_msg->features |= I2C_MSG_DONE_FLAG;
-			atmega_i2c_update(adapter, 0);
+			atmega_i2c_update_from_isr(adapter);
 			
 			if(master_msg) {
 				dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
@@ -621,10 +678,14 @@ SIGNAL(TWI_STC_vect)
 		case I2C_MT_SLA_NACK:
 		case I2C_MT_DATA_NACK:
 		case I2C_MR_SLA_NACK:
-			master_msg->features |= I2C_MSG_DONE_FLAG;
+			if(master_msg) {
+				master_msg->features |= I2C_MSG_DONE_FLAG;
+			}
+			
 			last_master_msg = master_msg;
-			atmega_i2c_update(adapter, 0);
 			adapter->busy = FALSE;
+			
+			atmega_i2c_update_from_isr(adapter);
 			event_signal_from_isr(event(adapter->master_queue));
 			
 			if(slave_msg) {
@@ -643,35 +704,45 @@ SIGNAL(TWI_STC_vect)
 		 * Master receiver.
 		 */
 		case I2C_MR_DATA_ACK:
-			if(buffer_index < master_msg->length) {
-				master_msg->buff[buffer_index] = TWDR;
-				buffer_index++;
-			} else {
-				dev->ctrl(dev, I2C_NACK, NULL);
-				break;
+			if(master_msg) {
+				if(buffer_index < master_msg->length) {
+					master_msg->buff[buffer_index] = TWDR;
+					buffer_index++;
+				} else {
+					dev->ctrl(dev, I2C_NACK, NULL);
+					break;
+				}
 			}
+			
 		case I2C_MR_SLA_ACK:
-			if((buffer_index+1) < master_msg->length) {
-				dev->ctrl(dev, I2C_ACK, NULL);
+			if(master_msg) {
+				if((buffer_index+1) < master_msg->length) {
+					dev->ctrl(dev, I2C_ACK, NULL);
+				} else {
+					dev->ctrl(dev, I2C_NACK, NULL);
+				}
 			} else {
 				dev->ctrl(dev, I2C_NACK, NULL);
 			}
 			break;
 			
 		case I2C_MR_DATA_NACK:
-			if(buffer_index < master_msg->length) {
-				master_msg->buff[buffer_index] = TWDR;
+			if(master_msg) {
+				if(buffer_index < master_msg->length) {
+					master_msg->buff[buffer_index] = TWDR;
+				}
+				
+				last_master_msg = master_msg;
+				if((master_msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
+					event_signal_from_isr(event(adapter->master_queue));
+					dev->ctrl(dev, I2C_BLOCK, NULL);
+					break;
+				}
+				master_msg->features |= I2C_MSG_DONE_FLAG;
 			}
 			
 			last_master_msg = master_msg;
-			if((master_msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
-				event_signal_from_isr(event(adapter->master_queue));
-				dev->ctrl(dev, I2C_BLOCK, NULL);
-				break;
-			}
-			
-			master_msg->features |= I2C_MSG_DONE_FLAG;
-			atmega_i2c_update(adapter, 0);
+			atmega_i2c_update_from_isr(adapter);
 			if(master_msg) {
 				dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
 				break;
@@ -725,16 +796,15 @@ SIGNAL(TWI_STC_vect)
 			
 		case I2C_SR_SLAW_DATA_NACK:
 		case I2C_SR_GC_DATA_NACK:
-			if(master_msg) {
-				dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
-			} else {
-				dev->ctrl(dev, I2C_NACK, NULL);
-			}
+			dev->ctrl(dev, I2C_NACK, NULL);
 			break;
 			
 		case I2C_SR_STOP:
 			if(*(adapter->slave_queue) == NULL || *(adapter->slave_queue) == SIGNALED) {
-				atmega_i2c_update(adapter, 0);
+				if(slave_msg) {
+					slave_msg->features &= ~I2C_MSG_CALL_BACK_MASK;
+				}
+				atmega_i2c_update_from_isr(adapter);
 				if(master_msg) {
 					dev->ctrl(dev, I2C_START | I2C_NACK, NULL);
 				} else {
@@ -781,6 +851,8 @@ SIGNAL(TWI_STC_vect)
 			
 		default:
 			dev->ctrl(dev, I2C_STOP | I2C_NACK, NULL);
+			last_master_msg = NULL;
+			last_slave_msg = NULL;
 			event_signal_from_isr(event(adapter->slave_queue));
 			event_signal_from_isr(event(adapter->master_queue));
 			adapter->busy = FALSE;

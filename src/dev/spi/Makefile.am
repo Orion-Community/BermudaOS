@@ -6,4 +6,4 @@ BUS+=busses/atmega-spi.c
 endif
 
 noinst_LTLIBRARIES=libi2c.la
-libi2c_la_SOURCES=spi-dev.c $(BUS)
+libi2c_la_SOURCES=spi-dev.c spi-core.c $(BUS)

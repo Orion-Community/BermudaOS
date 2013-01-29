@@ -28,6 +28,8 @@
 __DECL
 extern int spi_set_buff(struct spi_client *client, void *buff, size_t size,
 						spi_transmission_type_t trans_type);
+extern int spi_flush_client(struct spi_client *client);
+extern void spi_init_adapter(struct spi_adapter *adapter, char *name);
 __DECL_END
 
 #endif

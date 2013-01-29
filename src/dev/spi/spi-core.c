@@ -24,6 +24,18 @@
 #include <dev/spi.h>
 #include <dev/spi-core.h>
 
+PUBLIC void spi_init_adapter(struct spi_adapter *adapter, char *name)
+{
+	struct device *dev = malloc(sizeof(*dev));
+	
+	dev->name = name;
+	BermudaDeviceRegister(dev, adapter);
+	
+	adapter->busy = FALSE;
+	adapter->features = 0;
+	adapter->error = 0;
+}
+
 /**
  * \brief Set the a transmission buff.
  * \param client Client requesting the transmission.
@@ -34,6 +46,30 @@
  */
 PUBLIC int spi_set_buff(struct spi_client *client, void *buff, size_t size,
 				 spi_transmission_type_t trans_type)
+{
+	struct spi_adapter *adapter = client->adapter;
+	int rc = -DEV_OK;
+	
+	switch(trans_type) {
+		case SPI_TX:
+			adapter->tx = buff;
+			adapter->tx_size = size;
+			break;
+			
+		case SPI_RX:
+			adapter->rx = buff;
+			adapter->rx_size = size;
+			break;
+			
+		default:
+			rc = -DEV_ERROR;
+			break;
+	}
+	
+	return rc;
+}
+
+PUBLIC int spi_flush_client(struct spi_client *client)
 {
 	return -1;
 }

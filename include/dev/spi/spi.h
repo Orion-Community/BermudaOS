@@ -52,10 +52,14 @@ typedef enum
 struct spi_adapter
 {
 	struct device *dev; //!< I/O device.
-	spi_features_t features;
+	bool busy; //!< Busy flag.
+	uint8_t error; //!< Bus error field.
+	spi_features_t features; //!< Bus features.
 	
 	volatile void *tx; //!< Transmit buffer.
 	volatile void *rx; //!< Receive buffer.
+	size_t tx_size, //!< Length of spi_adapter::tx.
+		   rx_size; //!< Length of spi_adapter::rx.
 } __attribute__((packed));
 
 /**

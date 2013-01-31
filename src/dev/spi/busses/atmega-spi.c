@@ -28,6 +28,28 @@
 
 /* static functions */
 static void atmega_spi_calc_freq(uint32_t hz);
+static int atmega_spi_transfer(struct spi_adapter *adapter, struct spi_shared_info *info);
+
+struct spi_adapter *atmega_spi_adapter;
+
+#define SPI_DEV_NAME "ATMEGA_SPI"
+
+PUBLIC void atmega_spi_init()
+{
+	atmega_spi_adapter = malloc(sizeof(*atmega_spi_adapter));
+	
+	atmega_spi_adapter->features = SPI_MASTER_SUPPORT;
+	spi_init_adapter(atmega_spi_adapter, SPI_DEV_NAME);
+	atmega_spi_adapter->xfer = &atmega_spi_transfer;
+	
+	/* Setup port configuration */
+	SPI_DDR |= (SPI_SCK | SPI_MOSI | SPI_SS);
+	SPI_PORT &= ~(SPI_SCK | SPI_MOSI);
+	SPI_PORT |= SPI_SS;
+	
+	/* Enable SPI */
+	SPCR |= SPI_ENABLE | SPI_MASTER_ENABLE;
+}
 
 static void atmega_spi_calc_freq(uint32_t hz)
 {
@@ -49,9 +71,9 @@ static int atmega_spi_transfer(struct spi_adapter *adapter, struct spi_shared_in
 	*(info->cs) &= ~info->cspin;
 	
 	for(idx = 0; idx < adapter->length; idx++) {
-		SPDR = adapter->tx[idx];
+		SPDR = adapter->buff[idx];
 		while(!(SPSR & BIT(SPIF)));
-		adapter->rx[idx] = SPDR;
+		adapter->buff[idx] = SPDR;
 	}
 	
 	*(info->cs) |= info->cspin;

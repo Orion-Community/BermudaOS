@@ -5,5 +5,5 @@ if ATMEGA
 BUS+=busses/atmega-spi.c
 endif
 
-noinst_LTLIBRARIES=libi2c.la
-libi2c_la_SOURCES=spi-dev.c spi-core.c $(BUS)
+noinst_LTLIBRARIES=libspi.la
+libspi_la_SOURCES=spi-dev.c spi-core.c $(BUS)

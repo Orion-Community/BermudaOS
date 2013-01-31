@@ -26,9 +26,11 @@
 #include <dev/spi.h>
 
 __DECL
-extern int spi_set_buff(struct spi_client *client, void *buff, size_t size,
-						spi_transmission_type_t trans_type);
+extern int spi_set_buff(struct spi_client *client, void *buff, size_t size);
 extern int spi_flush_client(struct spi_client *client);
+extern void spi_init_adapter(struct spi_adapter *adapter, char *name);
+extern struct spi_client *spi_alloc_client(struct spi_adapter *adapter, reg8_t reg, uint8_t cs,
+										   uint32_t freq);
 extern void spi_init_adapter(struct spi_adapter *adapter, char *name);
 
 /**

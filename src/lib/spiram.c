@@ -17,42 +17,33 @@
  */
 
 /** \file src/lib/spiram.c 23KXXX library. */
-#include <bermuda.h>
-#include <dev/spibus.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-#include <arch/io.h>
+#include <dev/dev.h>
+#include <dev/spi.h>
+#include <dev/spi-core.h>
 
 #include <lib/spiram.h>
 #include <sys/thread.h>
 
 /**
- * \var ram_select
- * \brief Currently select chip pin.
+ * \brief SPIRAM SPI adapter.
  */
-static unsigned char ram_select = 0;
+static struct spi_client *client;
 
-static SPIBUS *ram_bus = NULL;
+#if 0
+static void BermudaSpiRamSetMode(spiram_t mode);
+#endif
 
 /**
  * \brief Initialise the SPI ram.
- * \todo Add support for multiple SPI RAM chips.
  * 
  * Initialise the SPI communication to the SPI SRAM chip.
  */
-PUBLIC void BermudaSpiRamInit(SPIBUS *bus, unsigned char cs)
+PUBLIC void spiram_init(struct spi_adapter *adapter, reg8_t port, uint8_t cs)
 {
-	ram_select = cs;
-	ram_bus = bus;
-}
-
-/**
- * \brief Change the chip select.
- * \param pin New chip select pin.
- * \warning Waits in a potential forever loop until the device is unlocked.
- */
-PUBLIC void BermudaSpiRamSetChipSelect(uint8_t pin)
-{
-	ram_select = pin;
+	client = spi_alloc_client(adapter, port, cs, SPI_1MHZ);
 }
 
 /**
@@ -63,17 +54,21 @@ PUBLIC void BermudaSpiRamSetChipSelect(uint8_t pin)
  * 
  * Writes a given byte to the given address on the SPI chip.
  */
-PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
+PUBLIC int spiram_write_byte(const uint16_t address, uint8_t byte)
 {
+	int fd, rc = -1;
 	uint8_t write_seq[] = {
 		WRDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), byte,
 	};
 
-	while(BermudaSpiSetSelectPinSafe(ram_bus, ram_select) == -1);
+	fd = spidev_socket(client, _FDEV_SETUP_RW | SPI_MASTER);
+	if(fd >= 0) {
+		write(fd, (void*)write_seq, BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
+		rc = flush(fd);
+		close(fd);
+	}
 	
-	BermudaSpiRamSetMode(SPI_RAM_BYTE);
-	return BermudaSPIWrite(ram_bus, (const void*)write_seq, 
-						   BERMUDA_SPIRAM_WRITE_BYTE_SEQ_LEN);
+	return rc;
 }
 
 /**
@@ -83,57 +78,67 @@ PUBLIC int BermudaSpiRamWriteByte(const uint16_t address, unsigned char byte)
  * 
  * Reads a byte from the SPI chip from the given address.
  */
-PUBLIC uint8_t BermudaSpiRamReadByte(unsigned int address)
+PUBLIC uint8_t spiram_read_byte(unsigned int address)
 {
+	int fd;
 	uint8_t read_seq[] = {
 		RDDA, (uint8_t)((address >> 8) & 0xFF), (uint8_t)(address & 0xFF), 0xFF,
 	};
 
-	while(BermudaSpiSetSelectPinSafe(ram_bus, ram_select) == -1);
+	fd = spidev_socket(client, _FDEV_SETUP_RW | SPI_MASTER);
 	
-	BermudaSpiRamSetMode(SPI_RAM_BYTE);
-	BermudaSPIWrite(ram_bus, (const void*)read_seq, 
-					BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN);
+	if(fd >= 0) {
+		write(fd, (void*)read_seq, BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN);
+		flush(fd);
+		close(fd);
+	}
+	
 	return read_seq[3];
 }
 
+#if 0
 /**
  * \brief Change the SPI RAM mode.
  * \param mode New mode.
  * \note Currently only SPI_RAM_BYTE is supported.
  * \see spiram_t
  */
-PUBLIC void BermudaSpiRamSetMode(spiram_t mode)
+static void BermudaSpiRamSetMode(spiram_t mode)
 {
 	unsigned char buff[2];
-        if(mode <= SPI_RAM_BUF)
-        {
-                unsigned char status = HOLD;
-                
-                switch(mode)
-                {
-                        case SPI_RAM_BYTE:
-                                break;
-                                
-                        case SPI_RAM_PAGE:
-                                status |= 0x80;
-                                break;
-                                
-                        case SPI_RAM_BUF:
-                                status |= 0x40;
-                                break;
+	int fd;
+	if(mode <= SPI_RAM_BUF)
+	{
+		unsigned char status = HOLD;
+			
+		switch(mode)
+		{
+			case SPI_RAM_BYTE:
+				break;
+					
+			case SPI_RAM_PAGE:
+				status |= 0x80;
+				break;
+					
+			case SPI_RAM_BUF:
+				status |= 0x40;
+				break;
 
-                        default:
-                                status = 0;
-                                break;
-                }
-                
-				buff[0] = WRSR; buff[1] = status;
-
-				while(BermudaSpiSetSelectPinSafe(ram_bus, ram_select) == -1) {
-					BermudaThreadYield();
-				}
-                BermudaSPIWrite(ram_bus, buff, 2);
-        }
+			default:
+				status = 0;
+				break;
+		}
+			
+		buff[0] = WRSR; buff[1] = status;
+		fd = spidev_socket(client, _FDEV_SETUP_RW | SPI_MASTER);
+			
+		if(fd >= 0) {
+			write(fd, buff, 2);
+			read(fd, buff, 2);
+			flush(fd);
+			close(fd);
+		}
+	}
 }
+#endif
 

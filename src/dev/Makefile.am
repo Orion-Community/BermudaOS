@@ -9,6 +9,7 @@ endif
 if SPI
 OPT_SCRS+= spibus.c
 MAYBE_SPI=spi
+SPI_LIB=spi/libspi.la
 endif
 
 if USART
@@ -27,5 +28,5 @@ SUBDIRS=$(MAYBE_IIC) $(MAYBYE_PWM) $(MAYBE_USART) $(MAYBE_SPI)
 bermudaosdir=@libdir@/bermudaos
 bermudaos_LTLIBRARIES=libdev.la
 libdev_la_SOURCES=devreg.c $(OPT_SCRS)
-libdev_la_LIBADD=$(IIC_LIB) $(PWM_LIB) $(USART_LIB)
+libdev_la_LIBADD=$(IIC_LIB) $(SPI_LIB) $(PWM_LIB) $(USART_LIB)
 include ../../Makefile.flags

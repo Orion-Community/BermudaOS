@@ -26,6 +26,16 @@
 #include <dev/error.h>
 
 /**
+ * \brief Field in spi_adapter::features.
+ */
+#define SPI_MASTER_SUPPORT B1
+
+/**
+ * \brief Field in spi_adapter::features.
+ */
+#define SPI_SLAVE_SUPPORT B10
+
+/**
  * \brief Type definition of the SPI features (flags).
  */
 typedef uint8_t spi_features_t;
@@ -39,11 +49,10 @@ typedef uint8_t spi_features_t;
  */
 #define SPI_SLAVE  0x400
 
-typedef enum
-{
-	SPI_TX,
-	SPI_RX,
-} spi_transmission_type_t;
+/**
+ * \brief 1MHz SPI transfer.
+ */
+#define SPI_1MHZ 1000000
 
 /**
  * \brief Shared info structure
@@ -66,8 +75,7 @@ struct spi_adapter
 	spi_features_t features; //!< Bus features.
 	int (*xfer)(struct spi_adapter*, struct spi_shared_info*);
 	
-	volatile uint8_t *tx; //!< Transmit buffer.
-	volatile uint8_t *rx; //!< Receive buffer.
+	volatile uint8_t *buff; //!< I/O buffer.
 	size_t length; //!< Length of TX and RX.
 } __attribute__((packed));
 
@@ -83,8 +91,7 @@ struct spi_client
 	uint32_t freq; //!< Operation frequency.
 	
 	FILE *stream; //!< I/O file.
-	uint8_t *tx, //!< Tx buffer.
-		 *rx; //!< Rx buffer.
+	uint8_t *buff; //!< I/O buffer.
 	size_t length; //!< Length of tx and rx.
 } __attribute__((packed));
 
@@ -94,6 +101,10 @@ extern int spidev_write(FILE *stream, const void *tx, size_t size);
 extern int spidev_read(FILE *stream, void *rx, size_t size);
 extern int spidev_close(FILE *stream);
 extern int spidev_flush(FILE *stream);
+
+/* found in spi-core.c */
+struct spi_client *spi_alloc_client(struct spi_adapter *adapter, reg8_t reg, uint8_t cs,
+										   uint32_t freq);
 __DECL_END
 
 #endif

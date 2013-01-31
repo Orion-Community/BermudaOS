@@ -51,28 +51,12 @@ PUBLIC void spi_init_adapter(struct spi_adapter *adapter, char *name)
  * \param trans_type Set to SPI_TX when \p buff is a transmit buffer. When buff is a receive buffer
  *                   \p trans_type should be set to SPI_RX.
  */
-PUBLIC int spi_set_buff(struct spi_client *client, void *buff, size_t size,
-				 spi_transmission_type_t trans_type)
+PUBLIC int spi_set_buff(struct spi_client *client, void *buff, size_t size)
 {
 	int rc = -DEV_OK;
 	
-	if(client->length < size) {
-		client->length = size;
-	}
-	
-	switch(trans_type) {
-		case SPI_TX:
-			client->tx = buff;
-			break;
-			
-		case SPI_RX:
-			client->rx = buff;
-			break;
-			
-		default:
-			rc = -DEV_ERROR;
-			break;
-	}
+	client->buff = buff;
+	client->length = size;
 	
 	return rc;
 }
@@ -90,8 +74,7 @@ PUBLIC int spi_flush_client(struct spi_client *client)
 	
 	int rc;
 	if((rc = spi_lock_adapter(adapter, spi_client_is_master(client)) ) == 0) {
-		adapter->tx = client->tx;
-		adapter->rx = client->rx;
+		adapter->buff = client->buff;
 		adapter->length = client->length;
 		info.cs = client->cs;
 		info.freq = client->freq;
@@ -148,4 +131,25 @@ static inline int spi_unlock_adapter(struct spi_adapter *adapter, bool master)
 	}
 	
 	return rc;
+}
+
+/**
+ * \brief Allocate a new client.
+ * \param reg I/O register which contains the chip select pin.
+ * \param cs Chip select pin.
+ */
+PUBLIC struct spi_client *spi_alloc_client(struct spi_adapter *adapter, reg8_t reg, uint8_t cs,
+										   uint32_t freq)
+{
+	struct spi_client *client = NULL;
+	
+	if(reg != NULL && adapter != NULL) {
+		client = malloc(sizeof(*client));
+		client->cs = reg;
+		client->cspin = cs;
+		client->adapter = adapter;
+		client->freq = freq;
+	}
+	
+	return client;
 }

@@ -25,4 +25,16 @@
 #include <dev/dev.h>
 #include <dev/spi.h>
 
+/**
+ * \brief ATmega SPI adapter.
+ */
+extern struct spi_adapter *atmega_spi_adapter;
+
+/**
+ * \brief ATmega SPI adapter.
+ */
+#define ATMEGA_SPI atmega_spi_adapter;
+
+extern void atmega_spi_init();
+
 #endif

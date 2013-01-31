@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - ATmega SPI driver
+ *  BermudaOS - ATmega TWI registers
  *  Copyright (C) 2012   Michel Megens <dev@michelmegens.net>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -74,4 +74,37 @@
  */
 #define TWAMR MEM_IO8(0xBD)
 
+/**
+ * \def I2C_PRES_1
+ * \brief Prescaler of 1. 
+ * 
+ * This value has no effect on the prescaler value.
+ */
+#define I2C_PRES_1 B0
+
+/**
+ * \def I2C_PRES_4
+ * \brief Prescaler value 4.
+ */
+#define I2C_PRES_4 B1
+
+/**
+ * \def I2C_PRES_16
+ * \brief Prescaler value 16
+ */
+#define I2C_PRES_16 B10
+
+/**
+ * \def I2C_PRES_64
+ * \brief Prescaler value 64
+ */
+#define I2C_PRES_64 B11
+
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+#define I2C_FRQ(x, n) \
+	(F_CPU/(16+(2*x*n)))
+	
+#define I2C_CALC_TWBR(__freq, __pres) \
+(F_CPU - (16*__freq)) / (2*__pres*__freq)
+#endif
 #endif

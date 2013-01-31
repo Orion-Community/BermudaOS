@@ -30,6 +30,19 @@ extern int spi_set_buff(struct spi_client *client, void *buff, size_t size,
 						spi_transmission_type_t trans_type);
 extern int spi_flush_client(struct spi_client *client);
 extern void spi_init_adapter(struct spi_adapter *adapter, char *name);
+
+/**
+ * \brief Check wether the client is master or slave.
+ * \param client spi_client to check.
+ * \retval true when the client is master.
+ * \retval false when the client is slave.
+ */
+static inline bool spi_client_is_master(struct spi_client *client)
+{
+	FILE *stream = client->stream;
+	
+	return ((stream->flags & SPI_MASTER) != 0);
+}
 __DECL_END
 
 #endif

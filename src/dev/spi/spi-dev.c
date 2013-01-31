@@ -120,3 +120,14 @@ PUBLIC int spidev_read(FILE *stream, void *rx, size_t size)
 	
 	return rc;
 }
+
+/**
+ * \brief Flush the buffers to the adapter.
+ * \param stream I/O stream.
+ */
+PUBLIC int spidev_flush(FILE *stream)
+{
+	struct spi_client *client = stream->data;
+	
+	return spi_flush_client(client);
+}

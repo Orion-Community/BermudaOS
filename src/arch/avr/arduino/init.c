@@ -27,8 +27,10 @@
 #include <dev/dev.h>
 #include <dev/adc.h>
 #include <dev/i2c/i2c.h>
+#include <dev/spi/spi.h>
 #include <dev/usart/usart.h>
 #include <dev/i2c/busses/atmega.h>
+#include <dev/spi/busses/atmega-spi.h>
 #include <dev/usart/busses/atmega_usart.h>
 
 #include <sys/thread.h>
@@ -39,7 +41,6 @@
 #include <arch/avr/interrupts.h>
 #include <arch/avr/io.h>
 #include <arch/avr/arduino/io.h>
-#include <arch/avr/328/dev/spibus.h>
 #include <arch/avr/timer.h>
 #include <arch/avr/stack.h>
 
@@ -78,7 +79,7 @@ PUBLIC int BermudaInit(void)
 	BermudaAdc0Init();
 #endif
 #ifdef __SPI__
-	BermudaSPI0HardwareInit();
+	atmega_spi_init();
 #endif
 
 #ifdef __TWI__

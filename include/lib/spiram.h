@@ -20,9 +20,8 @@
 
 #ifndef __SPIRAM_H
 
-#include <bermuda.h>
-#include <dev/spibus.h>
-#include <arch/spi.h>
+#include <stdlib.h>
+#include <dev/spi.h>
 
 /* SPI RAM opcodes */
 /**
@@ -83,11 +82,10 @@ typedef enum
 } spiram_t;
 
 __DECL
-extern void BermudaSpiRamInit(SPIBUS *bus, unsigned char cs);
-extern void BermudaSpiRamSetChipSelect(uint8_t pin);
-extern int BermudaSpiRamWriteByte(const unsigned int address, unsigned char byte);
-extern void BermudaSpiRamSetMode(spiram_t mode);
-extern uint8_t BermudaSpiRamReadByte(unsigned int address);
+
+extern void spiram_init(struct spi_adapter *adapter, reg8_t port, uint8_t cs);
+extern int spiram_write_byte(const unsigned int address, unsigned char byte);
+extern uint8_t spiram_read_byte(unsigned int address);
 __DECL_END
 
 #endif /* __SPIRAM_H */

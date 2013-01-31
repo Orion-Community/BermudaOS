@@ -46,6 +46,10 @@ PUBLIC int spidev_socket(struct spi_client *client, uint16_t flags)
 	
 	stream->flags = flags;
 	stream->data = client;
+	stream->write = &spidev_write;
+	stream->read = &spidev_read;
+	stream->close = &spidev_close;
+	stream->flush = &spidev_flush;
 	
 	return rc;
 }
@@ -90,7 +94,7 @@ PUBLIC int spidev_write(FILE *stream, const void *tx, size_t size)
 	if(!size) {
 		rc = -DEV_NULL;
 	} else {
-		spi_set_buff(client, (void*)tx, size, SPI_TX);
+		spi_set_buff(client, (void*)tx, size);
 		rc = -DEV_OK;
 	}
 	return rc;
@@ -111,7 +115,7 @@ PUBLIC int spidev_read(FILE *stream, void *rx, size_t size)
 	if(!size) {
 		rc = -DEV_NULL;
 	} else {
-		spi_set_buff(client, rx, size, SPI_RX);
+		spi_set_buff(client, rx, size);
 		rc = -DEV_OK;
 	}
 	

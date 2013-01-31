@@ -45,6 +45,15 @@ typedef enum
 	SPI_RX,
 } spi_transmission_type_t;
 
+/**
+ * \brief Shared info structure
+ */
+struct spi_shared_info
+{
+	reg8_t cs; //!< Chip select register.
+	uint8_t cspin; //! Chip select pin.
+	uint32_t freq; //!< Operation frequency.
+} __attribute__((packed));
 
 /**
  * \brief SPI bus adapter.
@@ -55,11 +64,11 @@ struct spi_adapter
 	bool busy; //!< Busy flag.
 	uint8_t error; //!< Bus error field.
 	spi_features_t features; //!< Bus features.
+	int (*xfer)(struct spi_adapter*, struct spi_shared_info*);
 	
-	volatile void *tx; //!< Transmit buffer.
-	volatile void *rx; //!< Receive buffer.
-	size_t tx_size, //!< Length of spi_adapter::tx.
-		   rx_size; //!< Length of spi_adapter::rx.
+	volatile uint8_t *tx; //!< Transmit buffer.
+	volatile uint8_t *rx; //!< Receive buffer.
+	size_t length; //!< Length of TX and RX.
 } __attribute__((packed));
 
 /**
@@ -68,14 +77,23 @@ struct spi_adapter
 struct spi_client
 {
 	struct spi_adapter *adapter; //!< Bus adapter.
+	
 	reg8_t cs; //!< Chip select register.
 	uint8_t cspin; //! Chip select pin.
 	uint32_t freq; //!< Operation frequency.
+	
 	FILE *stream; //!< I/O file.
+	uint8_t *tx, //!< Tx buffer.
+		 *rx; //!< Rx buffer.
+	size_t length; //!< Length of tx and rx.
 } __attribute__((packed));
 
 __DECL
 extern int spidev_socket(struct spi_client *client, uint16_t flags);
+extern int spidev_write(FILE *stream, const void *tx, size_t size);
+extern int spidev_read(FILE *stream, void *rx, size_t size);
+extern int spidev_close(FILE *stream);
+extern int spidev_flush(FILE *stream);
 __DECL_END
 
 #endif

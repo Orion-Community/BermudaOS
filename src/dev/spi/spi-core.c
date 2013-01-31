@@ -24,6 +24,13 @@
 #include <dev/spi.h>
 #include <dev/spi-core.h>
 
+/* static functions */
+static inline int spi_unlock_adapter(struct spi_adapter *adapter, bool master);
+static inline int spi_lock_adapter(struct spi_adapter *adapter, bool master);
+
+/**
+ * \brief Initialize a spi_adapter structure.
+ */
 PUBLIC void spi_init_adapter(struct spi_adapter *adapter, char *name)
 {
 	struct device *dev = malloc(sizeof(*dev));
@@ -47,18 +54,19 @@ PUBLIC void spi_init_adapter(struct spi_adapter *adapter, char *name)
 PUBLIC int spi_set_buff(struct spi_client *client, void *buff, size_t size,
 				 spi_transmission_type_t trans_type)
 {
-	struct spi_adapter *adapter = client->adapter;
 	int rc = -DEV_OK;
+	
+	if(client->length < size) {
+		client->length = size;
+	}
 	
 	switch(trans_type) {
 		case SPI_TX:
-			adapter->tx = buff;
-			adapter->tx_size = size;
+			client->tx = buff;
 			break;
 			
 		case SPI_RX:
-			adapter->rx = buff;
-			adapter->rx_size = size;
+			client->rx = buff;
 			break;
 			
 		default:
@@ -69,7 +77,75 @@ PUBLIC int spi_set_buff(struct spi_client *client, void *buff, size_t size,
 	return rc;
 }
 
+/**
+ * \brief Flush the client to the bus.
+ * \param client Client to flush.
+ * \retval 0 on success.
+ * \return Error code. Non zero if an error has occurred.
+ */
 PUBLIC int spi_flush_client(struct spi_client *client)
 {
-	return -1;
+	struct spi_adapter *adapter = client->adapter;
+	struct spi_shared_info info;
+	
+	int rc;
+	if((rc = spi_lock_adapter(adapter, spi_client_is_master(client)) ) == 0) {
+		adapter->tx = client->tx;
+		adapter->rx = client->rx;
+		adapter->length = client->length;
+		info.cs = client->cs;
+		info.freq = client->freq;
+		info.cspin = client->cspin;
+		
+		rc = adapter->xfer(adapter, &info);
+		adapter->length = 0;
+		spi_unlock_adapter(adapter, spi_client_is_master(client));
+	}
+	return rc;
+}
+
+/**
+ * \brief Lock the adapter.
+ * \param adapter SPI bus adapter.
+ * \param master Set to true for master transfers, false for slave transmissions.
+ * \retval 0 on success.
+ * \retval -1 on failure.
+ * 
+ * The adapter will only be blocked if a master transfer is done.
+ */
+static inline int spi_lock_adapter(struct spi_adapter *adapter, bool master)
+{
+	struct device *dev = adapter->dev;
+	int rc;
+	
+	if(master) {
+		rc = dev->alloc(dev, 500);
+	} else {
+		rc = 0;
+	}
+	
+	return rc;
+}
+
+/**
+ * \brief Unlock the adpater.
+ * \param adapter SPI bus adapter.
+ * \param master Set to true for master transfers, false for slave transmissions.
+ * \retval 0 on success.
+ * \retval -1 on failure.
+ * 
+ * Unlock the bus adapter.
+ */
+static inline int spi_unlock_adapter(struct spi_adapter *adapter, bool master)
+{
+	struct device *dev = adapter->dev;
+	int rc;
+	
+	if(master) {
+		rc = dev->release(dev);
+	} else {
+		rc = 0;
+	}
+	
+	return rc;
 }

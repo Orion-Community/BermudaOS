@@ -13,10 +13,6 @@ if ENABLE_UNO
 MAYBE_ARD=arduino
 endif
 
-if SPI
-OPT_SCRS+= spif.c
-endif
-
 if ADC
 OPT_SCRS+= adc.c
 endif

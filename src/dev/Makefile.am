@@ -7,7 +7,6 @@ IIC_LIB=i2c/libi2c.la
 endif
 
 if SPI
-OPT_SCRS+= spibus.c
 MAYBE_SPI=spi
 SPI_LIB=spi/libspi.la
 endif

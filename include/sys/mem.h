@@ -64,7 +64,7 @@ struct heap_node
          * 
          * This describes the size of the node.
          */
-        unsigned short size;
+        size_t size;
 } __PACK__;
 typedef struct heap_node HEAPNODE;
 

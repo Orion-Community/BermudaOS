@@ -72,9 +72,9 @@ static size_t i2c_cleanup_adapter(struct i2c_adapter *adapter, bool master);
 
 /* transmission funcs */
 static int i2c_start_xfer(struct i2c_client *client);
-static inline int __i2c_start_xfer(struct i2c_client *client);
-static size_t i2c_update(struct i2c_client *client, bool master);
-static inline void i2c_master_tmo(struct i2c_client *client);
+static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_shared_info *info);
+static size_t i2c_update(struct i2c_adapter *client, bool master);
+static inline void i2c_master_tmo(struct i2c_adapter *adapter);
 static inline void i2c_slave_tmo(struct i2c_client *client);
 
 
@@ -235,32 +235,32 @@ static inline void i2c_slave_tmo(struct i2c_client *client)
 
 /**
  * \brief Master message time-out.
- * \param client Master client.
+ * \param adapter Bus adapter.
  * 
  * A new master transmission has been initiated. This function is responsible for deleting
  * all old master messages.
  */
-static inline void i2c_master_tmo(struct i2c_client *client)
+static inline void i2c_master_tmo(struct i2c_adapter *adapter)
 {
 	size_t index = 0;
 	struct i2c_message *msg;
-	size_t diff = i2c_vector_length(client->adapter);
+	size_t diff = i2c_vector_length(adapter);
 	int32_t s_diff;
 	
-	if(i2c_first_master_msg(client->adapter, &index)) {
-		for(; index < i2c_vector_length(client->adapter); index++) {
-			msg = i2c_vector_get(client->adapter, index);
+	if(i2c_first_master_msg(adapter, &index)) {
+		for(; index < i2c_vector_length(adapter); index++) {
+			msg = i2c_vector_get(adapter, index);
 			if((i2c_msg_features(msg) & I2C_MSG_SLAVE_MSG_MASK) != 0) {
 				break;
 			}
 			msg->features |= I2C_MSG_DONE_FLAG;
 		}
 	}
-	i2c_cleanup_adapter_msgs(client->adapter, TRUE);
-	diff -= i2c_vector_length(client->adapter);
+	i2c_cleanup_adapter_msgs(adapter, TRUE);
+	diff -= i2c_vector_length(adapter);
 	s_diff = (int32_t)diff;
 	s_diff *= -1;
-	client->adapter->update(client->adapter, s_diff);
+	adapter->update(adapter, s_diff);
 }
 
 /**
@@ -277,7 +277,7 @@ static int i2c_start_xfer(struct i2c_client *client)
 		if((stream->flags & I2C_MASTER) == 0) {
 			i2c_slave_tmo(client);
 		}
-		return __i2c_start_xfer(client);
+		return __i2c_start_xfer(client->adapter, i2c_shinfo(client));
 	}
 	return -1;
 }
@@ -335,7 +335,8 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg)
 
 /**
  * \brief Initialize the transfer of a chain of messages.
- * \param client Client which has initialized the transfer.
+ * \param adapter Bus adapter handling the traffic.
+ * \param info Shared info from the client.
  * \return An error code.
  * \retval DEV_OK Transfer was succesfull.
  * \retval -DEV_INTERNAL At least one transmission failed.
@@ -364,28 +365,24 @@ static int i2c_add_entry(struct i2c_client *client, struct i2c_message *msg)
  * 
  * \see I2C_MSG_CHECK
  */
-static inline int __i2c_start_xfer(struct i2c_client *client)
+static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_shared_info *sh_info)
 {
 	auto bool i2c_check_msg(register i2c_features_t msg, register i2c_features_t bus);
-	struct i2c_adapter *adapter;
 	struct i2c_message *msg, *newmsg;
 	struct linkedlist *node, *n_node;
-	struct i2c_shared_info *sh_info;
 	i2c_features_t msg_features, bus_features;
 	FILE *stream;
 	size_t index, length;
 	int rc = -DEV_INTERNAL;
 	bool master;
 	
-	sh_info = i2c_shinfo(client);
-	adapter = client->adapter;
-	stream = i2c_shinfo(client)->socket;
+	stream = sh_info->socket;
 	master = (stream->flags & I2C_MASTER) ? TRUE : FALSE;
 		
 	if(i2c_lock_adapter(adapter, sh_info) == 0) {
 		
 		if(master) {
-			i2c_master_tmo(client);
+			i2c_master_tmo(adapter);
 		}
 		bus_features = i2c_adapter_features(adapter) & (I2C_MASTER_SUPPORT | 
 														I2C_SLAVE_SUPPORT);
@@ -410,7 +407,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 						rc = i2c_vector_add(adapter, msg, master);
 						continue;
 					}
-					i2c_set_error(client);
+					i2c_set_error(sh_info);
 					free(msg);
 					rc = -DEV_INTERNAL;
 					break;
@@ -418,7 +415,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 			} else {
 				logmsg_P(I2C_CORE_LOG, PSTR("Msg (0x%p) not compliant with adapter (0x%p).\n"), 
 							msg, adapter);
-				i2c_set_error(client);
+				i2c_set_error(sh_info);
 				linkedlist_delete_node(&sh_info->msgs, node);
 				free(msg);
 				free(node);
@@ -431,7 +428,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 		}
 		
 		index = (index != 0) ? index-1 : index;
-		rc = adapter->xfer(adapter, client->freq, master, &index);
+		rc = adapter->xfer(adapter, sh_info->freq, master, &index);
 		if(!rc && index != -1) {
 			do {
 				bus_features = i2c_adapter_features(adapter);
@@ -442,7 +439,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 						rc = -DEV_NULL;
 						break;
 					}
-					rc = sh_info->shared_callback(client, msg, newmsg);
+					rc = sh_info->shared_callback(sh_info, msg, newmsg);
 					msg_features = i2c_msg_features(newmsg);
 					bus_features &= I2C_MASTER_SUPPORT | I2C_SLAVE_SUPPORT;
 					if(i2c_check_msg(msg_features, bus_features)) {
@@ -464,7 +461,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 								rc = i2c_vector_insert_at(adapter, newmsg, index);
 								goto loop_continue;
 							}
-							i2c_set_error(client);
+							i2c_set_error(sh_info);
 							free(newmsg);
 							rc = -DEV_INTERNAL;
 							break;
@@ -472,7 +469,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 					} else {
 						logmsg_P(I2C_CORE_LOG, PSTR("Msg (0x%p) not compliant with adapter "
 													"(0x%p).\n"), newmsg, adapter);
-						i2c_set_error(client);
+						i2c_set_error(sh_info);
 						free(newmsg);
 						rc = -DEV_INTERNAL;
 						break;
@@ -480,7 +477,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 				}
 				
 				loop_continue:
-				index -= (index > 0) ? i2c_update(client, master) : 0;
+				index -= (index > 0) ? i2c_update(adapter, master) : 0;
 				length = i2c_vector_length(adapter);
 				if(index < length && rc == 0) {
 					rc = adapter->resume(adapter, &index);
@@ -490,7 +487,7 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 				}
 			} while(index < length && rc == 0);
 		}
-		i2c_update(client, master);
+		i2c_update(adapter, master);
 		i2c_release_adapter(adapter, sh_info);
 	}
 
@@ -509,16 +506,15 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 
 /**
  * \brief Update the I2C adapter after a transfer.
- * \param client I2C client, whose adapter needs an update.
+ * \param adapter I2C bus adapter.
  * \see i2c_adapter::update __i2c_start_xfer
  * \return Length diff.
  * 
  * The I2C vector will be updated and all redudant messages will be deleted. The update function
  * of the bus will also be called.
  */
-static size_t i2c_update(struct i2c_client *client, bool master)
+static size_t i2c_update(struct i2c_adapter *adapter, bool master)
 {
-	struct i2c_adapter *adapter = client->adapter;
 	int32_t s_diff;
 	size_t diff;
 	
@@ -618,8 +614,8 @@ static void __i2c_init_client(struct i2c_client *client, uint16_t sla, uint32_t 
 	struct i2c_shared_info *shinfo = i2c_shinfo(client);
 	
 	client->sla = sla;
-	client->freq = hz;
 	
+	shinfo->freq = hz;
 	shinfo->msgs = NULL;
 	shinfo->features = 0;
 	shinfo->mutex = SIGNALED;

@@ -205,12 +205,9 @@ static inline i2c_features_t i2c_adapter_features(struct i2c_adapter *adapter)
  * \brief Mask the client for queue a queue error.
  * \param client Client to mask.
  */
-static inline void i2c_set_error(struct i2c_client *client)
+static inline void i2c_set_error(struct i2c_shared_info *info)
 {
-	i2c_features_t features = i2c_client_features(client);
-	
-	features |= I2C_QUEUE_ERROR;
-	i2c_shinfo(client)->features = features;
+	info->features |= I2C_QUEUE_ERROR;
 }
 
 /**

@@ -117,6 +117,7 @@ struct i2c_shared_info
 	struct i2c_adapter *adapter; //!< The I2C adapter.
 	FILE *socket; //!< I/O socket.
 	char *transmission_layout; //!< I2C transmission layout.
+	uint32_t freq;
 	
 	/**
 	 * \brief Call back function which can be called after a buffer has been sent by the driver.
@@ -127,8 +128,8 @@ struct i2c_shared_info
 	 * This function pointer will be called when a transmission is done. The
 	 * application can then insert another message in the queue if that is nessecary.
 	 */
-	int (*shared_callback)(struct i2c_client *client, struct i2c_message *oldmsg, 
-						   struct i2c_message *msg);
+	int (*shared_callback)(struct i2c_shared_info *info, struct i2c_message *oldmsg, 
+						   struct i2c_message *newmsg);
 	
 	i2c_features_t features; //!< Feature option flags.
 	
@@ -150,7 +151,6 @@ struct i2c_shared_info
 struct i2c_client {
 	struct i2c_adapter *adapter; //!< The adapter where it belongs to.
 	uint16_t sla; //!< Slave address.
-	uint32_t freq; //!< Operating frequency in master mode.
 	
 	struct i2c_shared_info *sh_info; //!< Shared info.
 } __attribute__((packed));
@@ -241,12 +241,12 @@ extern void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapt
  * \param client i2c_client to set the call back for.
  * \param cb The call back function.
  */
-static inline void i2c_set_callback(struct i2c_client *client, int (*cb)(struct i2c_client *,
+static inline void i2c_set_callback(struct i2c_shared_info *sh_info, int (*cb)(struct i2c_shared_info *,
 																		 struct i2c_message *,
 																		 struct i2c_message *
 																		))
 {
-	i2c_shinfo(client)->shared_callback = cb;
+	sh_info->shared_callback = cb;
 }
 
 //@}

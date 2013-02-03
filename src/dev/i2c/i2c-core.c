@@ -75,7 +75,7 @@ static int i2c_start_xfer(struct i2c_client *client);
 static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_shared_info *info);
 static size_t i2c_update(struct i2c_adapter *client, bool master);
 static inline void i2c_master_tmo(struct i2c_adapter *adapter);
-static inline void i2c_slave_tmo(struct i2c_client *client);
+static inline void i2c_slave_tmo(struct i2c_adapter *adapter);
 
 
 /* concurrency functions */
@@ -214,21 +214,21 @@ static inline int i2c_cleanup_adapter_msgs(struct i2c_adapter *adapter, bool mas
 
 /**
  * \brief Slave message time-out.
- * \param client Slave client.
+ * \param adapter I2C bus adapter.
  * 
  * The slave received a time-out. This function deletes all slave buffers.
  */
-static inline void i2c_slave_tmo(struct i2c_client *client)
+static inline void i2c_slave_tmo(struct i2c_adapter *adapter)
 {
-	size_t index = 0, length = i2c_vector_length(client->adapter);
+	size_t index = 0, length = i2c_vector_length(adapter);
 	struct i2c_message *msg;
 	
-	if(i2c_first_slave_msg(client->adapter, &index)) {
+	if(i2c_first_slave_msg(adapter, &index)) {
 		for(; index < length; index++) {
-			msg = i2c_vector_get(client->adapter, index);
+			msg = i2c_vector_get(adapter, index);
 			msg->features |= I2C_MSG_DONE_FLAG;
 		}
-		i2c_cleanup_adapter_msgs(client->adapter, FALSE);
+		i2c_cleanup_adapter_msgs(adapter, FALSE);
 	}
 	
 }
@@ -275,7 +275,7 @@ static int i2c_start_xfer(struct i2c_client *client)
 	
 	if(client) {
 		if((stream->flags & I2C_MASTER) == 0) {
-			i2c_slave_tmo(client);
+			i2c_slave_tmo(client->adapter);
 		}
 		return __i2c_start_xfer(client->adapter, i2c_shinfo(client));
 	}

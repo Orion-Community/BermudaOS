@@ -381,12 +381,13 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 		
 	if(i2c_lock_adapter(adapter, sh_info) == 0) {
 		
-		if(master) {
+		if(master && !adapter->busy) {
 			i2c_master_tmo(adapter);
 		}
 		bus_features = i2c_adapter_features(adapter) & (I2C_MASTER_SUPPORT | 
 														I2C_SLAVE_SUPPORT);
 		index = i2c_vector_length(adapter);
+		enter_crit();
 		foreach_safe(sh_info->msgs, node, n_node) {
 			msg = (struct i2c_message*)node->data;
 			msg_features = i2c_msg_features(msg);
@@ -412,6 +413,9 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 					rc = -DEV_INTERNAL;
 					break;
 				}
+				if(!adapter->busy) {
+					(master) ? adapter->update(adapter, 1) : adapter->update(adapter, 0);
+				}
 			} else {
 				logmsg_P(I2C_CORE_LOG, PSTR("Msg (0x%p) not compliant with adapter (0x%p).\n"), 
 							msg, adapter);
@@ -422,6 +426,7 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 				rc = -DEV_INTERNAL;
 			}
 		}
+		enter_crit();
 		
 		if(rc < 0) {
 			goto err;

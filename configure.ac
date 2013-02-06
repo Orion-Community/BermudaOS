@@ -233,6 +233,7 @@ AC_CONFIG_FILES([Makefile
                  src/dev/pwm/Makefile
                  src/dev/usart/Makefile
                  src/lib/Makefile
+                 src/lib/rtc/Makefile
                  src/lib/c/Makefile
                  src/lib/c/stdlib/Makefile
                  src/lib/c/stdio/Makefile

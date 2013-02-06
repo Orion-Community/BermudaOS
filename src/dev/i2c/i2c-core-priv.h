@@ -41,8 +41,8 @@
  */
 #define I2C_MSG_MASTER_CHECK(__msg, __bus) \
 ( \
-(((neg(__msg) & I2C_MSG_MASTER_MSG_MASK) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & \
-(__bus & I2C_MASTER_SUPPORT)) \
+(((__msg & I2C_MSG_MASTER_MSG_MASK) >> I2C_MSG_MASTER_MSG_FLAG_SHIFT) & \
+((__bus & I2C_MASTER_SUPPORT) >> I2C_MASTER_SUPPORT_SHIFT)) \
 )
 
 /**

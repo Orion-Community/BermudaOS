@@ -1,4 +1,4 @@
-SUBDIRS=c
+SUBDIRS=c rtc
 
 bermudaosdir=@libdir@/bermudaos
 bermudaos_LTLIBRARIES=lib24c02.la libspiram.la libxorlist.la liblist.la

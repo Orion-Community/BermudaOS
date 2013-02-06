@@ -56,6 +56,9 @@
 #include <sys/thread.h>
 #include <sys/epl.h>
 
+#include <arch/twi.h>
+#include <arch/io.h>
+
 #include "i2c-core-priv.h"
 
 #ifndef __THREADS__
@@ -76,6 +79,7 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 static size_t i2c_update(struct i2c_adapter *client, bool master);
 static inline void i2c_master_tmo(struct i2c_adapter *adapter);
 static inline void i2c_slave_tmo(struct i2c_adapter *adapter);
+static void i2c_update_tmo(struct i2c_adapter *adapter, bool master);
 
 
 /* concurrency functions */
@@ -380,14 +384,12 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 	master = (stream->flags & I2C_MASTER) ? TRUE : FALSE;
 		
 	if(i2c_lock_adapter(adapter, sh_info) == 0) {
-		
 		if(master && !adapter->busy) {
 			i2c_master_tmo(adapter);
 		}
 		bus_features = i2c_adapter_features(adapter) & (I2C_MASTER_SUPPORT | 
 														I2C_SLAVE_SUPPORT);
 		index = i2c_vector_length(adapter);
-		enter_crit();
 		foreach_safe(sh_info->msgs, node, n_node) {
 			msg = (struct i2c_message*)node->data;
 			msg_features = i2c_msg_features(msg);
@@ -401,20 +403,21 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 					msg->addr |= I2C_READ_BIT;
 				}
 				i2c_msg_set_features(msg, msg_features);
+// 				i2c_disable_irq();
 				rc = i2c_vector_add(adapter, msg, master);
+// 				i2c_restore_irq();
 				free(node);
 				if(rc) {
 					if(i2c_vector_error(adapter, rc) == 0) {
+// 						i2c_disable_irq();
 						rc = i2c_vector_add(adapter, msg, master);
+// 						i2c_restore_irq();
 						continue;
 					}
 					i2c_set_error(sh_info);
 					free(msg);
 					rc = -DEV_INTERNAL;
 					break;
-				}
-				if(!adapter->busy) {
-					(master) ? adapter->update(adapter, 1) : adapter->update(adapter, 0);
 				}
 			} else {
 				logmsg_P(I2C_CORE_LOG, PSTR("Msg (0x%p) not compliant with adapter (0x%p).\n"), 
@@ -425,15 +428,17 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 				free(node);
 				rc = -DEV_INTERNAL;
 			}
+// 			if(!adapter->busy) {
+// 				(master) ? adapter->update(adapter, 1) : adapter->update(adapter, 0);
+// 			}
 		}
-		enter_crit();
-		
 		if(rc < 0) {
 			goto err;
+		} else {
+			index = (index != 0) ? index-1 : index;
+			rc = adapter->xfer(adapter, sh_info->freq, master, &index);
 		}
 		
-		index = (index != 0) ? index-1 : index;
-		rc = adapter->xfer(adapter, sh_info->freq, master, &index);
 		if(!rc && index != -1) {
 			do {
 				bus_features = i2c_adapter_features(adapter);
@@ -534,6 +539,28 @@ static size_t i2c_update(struct i2c_adapter *adapter, bool master)
 	}
 	
 	return diff;
+}
+
+static void i2c_update_tmo(struct i2c_adapter *adapter, bool master)
+{
+	size_t diff = i2c_vector_length(adapter);
+	int32_t s_diff;
+	
+	if(master) {
+		i2c_master_tmo(adapter);
+	} else {
+		i2c_slave_tmo(adapter);
+	}
+	
+	diff -= i2c_vector_length(adapter);
+	s_diff = (int32_t)diff;
+	s_diff *= -1;
+	
+	if(master) {
+		adapter->update(adapter, s_diff);
+	} else {
+		adapter->update(adapter, 0);
+	}
 }
 
 static size_t i2c_cleanup_adapter(struct i2c_adapter *adapter, bool master)

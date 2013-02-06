@@ -24,8 +24,6 @@
 #include <bermuda.h>
 
 #include <arch/avr/io.h>
-#include <arch/avr/328/twi.h>
-#include <arch/avr/328/spi.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,4 +89,7 @@ extern inline void BermudaSafeCli(unsigned char *ints);
 #ifdef __cplusplus
 }
 #endif
+
+#include <arch/avr/328/twi.h>
+#include <arch/avr/328/spi.h>
 #endif /* __IO328_H */

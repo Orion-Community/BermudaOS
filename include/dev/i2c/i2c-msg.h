@@ -78,7 +78,7 @@ static inline size_t i2c_vector_length(struct i2c_adapter *adapter)
  */
 static inline bool i2c_msg_is_master(struct i2c_message *msg)
 {
-	return ((neg(i2c_msg_features(msg)) & I2C_MSG_MASTER_MSG_MASK) != 0);
+	return ((i2c_msg_features(msg) & I2C_MSG_MASTER_MSG_MASK) != 0);
 }
 
 /**

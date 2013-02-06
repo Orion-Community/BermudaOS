@@ -22,6 +22,7 @@
 #define __PORT_IO_H
 
 #include <arch/avr/pgm.h>
+#include <arch/avr/328/twi.h>
 
 extern unsigned long BermudaTimerGetSysTick();
 
@@ -180,6 +181,26 @@ static inline void outb(volatile unsigned char *io, unsigned char data)
 static inline void inb(volatile unsigned char *io, unsigned char *data)
 {
 	*data = *io;
+}
+
+#define i2c_disable_irq() \
+{ \
+	uint8_t intbit = TWCR & BIT(TWIE); \
+	__asm__ __volatile__("push %0 \n\t" \
+						: \
+						: "r"(intbit) \
+						:); \
+	TWCR &= ~BIT(TWIE); \
+}
+                     
+#define i2c_restore_irq() \
+{ \
+	uint8_t intbit; \
+	__asm__ __volatile__("pop %0 \n\t" \
+						: "=r"(intbit)\
+						: \
+						:); \
+	TWCR |= intbit; \
 }
 
 /**

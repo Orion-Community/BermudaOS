@@ -100,6 +100,23 @@
  */
 #define I2C_PRES_64 B11
 
+/* control reg */
+#define TWINT	7 //!< TWI IRQ flag.
+#define TWEA	6 //!< TWI enable ACK flag.
+#define TWSTA	5 //!< TWI start flag.
+#define TWSTO	4 //!< TWI stop flag.
+#define TWWC	3 //!< TWI collision flag.
+#define TWEN	2 //!< TWI enable flag.
+#define TWIE	0 //!< TWI IRQ enable flag.
+
+/* status reg */
+#define TWPS1	1
+#define TWPS0	0
+#define I2C_NOINFO 0xF8
+
+/* addr reg */
+#define TWGCE 	0
+
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 #define I2C_FRQ(x, n) \
 	(F_CPU/(16+(2*x*n)))

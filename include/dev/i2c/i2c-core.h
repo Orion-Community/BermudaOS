@@ -38,11 +38,11 @@
  * \brief Master message flag.
  * \see I2C_MSG_SLAVE_MSG_FLAG_SHIFT I2C_MSG_MASTER_MSG_MASK
  */
-#define I2C_MSG_MASTER_MSG_FLAG_SHIFT I2C_MSG_SLAVE_MSG_FLAG_SHIFT //!< I2C master message shift.
-#define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 2 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
-#define I2C_MSG_SENT_STOP_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
-#define I2C_MSG_SENT_REP_START_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
-#define I2C_MSG_DONE_FLAG_SHIFT 5 //!< Shift value of I2C_MSG_DONE_FLAG.
+#define I2C_MSG_MASTER_MSG_FLAG_SHIFT 2 //!< I2C master message shift.
+#define I2C_MSG_TRANSMIT_MSG_FLAG_SHIFT 3 //!< Shift value of I2C_MSG_TRANSMIT_MSG_FLAG
+#define I2C_MSG_SENT_STOP_FLAG_SHIFT 4 //!< Shift value of I2C_MSG_SENT_STOP_FLAG
+#define I2C_MSG_SENT_REP_START_FLAG_SHIFT 5 //!< Shift value of I2C_MSG_SENT_REP_START_FLAG
+#define I2C_MSG_DONE_FLAG_SHIFT 6 //!< Shift value of I2C_MSG_DONE_FLAG.
 
 /**
  * \brief Defines that the application should be called after transmission.
@@ -57,7 +57,7 @@
  * \brief Master message flag.
  * \see I2C_MSG_SLAVE_MSG_FLAG
  */
-#define I2C_MSG_MASTER_MSG_FLAG 0
+#define I2C_MSG_MASTER_MSG_FLAG BIT(I2C_MSG_MASTER_MSG_FLAG_SHIFT)
 
 /**
  * \brief Defines the message holds a transmit buffer, not a receive buffer.

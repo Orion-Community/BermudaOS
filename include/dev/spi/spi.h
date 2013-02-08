@@ -43,16 +43,16 @@ typedef uint8_t spi_features_t;
 /**
  * \brief SPI master feature.
  */
-#define SPI_MASTER 0x200
+#define SPI_MASTER 0x100
 /**
  * \brief SPI slave feature.
  */
-#define SPI_SLAVE  0x400
+#define SPI_SLAVE  0x200
 
 /**
  * \brief 1MHz SPI transfer.
  */
-#define SPI_1MHZ 1000000
+#define SPI_1MHZ 10000000
 
 /**
  * \brief Shared info structure

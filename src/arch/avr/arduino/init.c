@@ -87,8 +87,8 @@ PUBLIC int BermudaInit(void)
 // 	atmega_i2c_c0_hw_init(0x20, &i2c_adapter);
 #endif
 
-	STACK_L = (MEM-128) & 0xFF;
-	STACK_H = ((MEM-128) >> 8) & 0xFF;
+// 	STACK_L = (MEM-128) & 0xFF;
+// 	STACK_H = ((MEM-128) >> 8) & 0xFF;
 	sei();
 	BermudaTimerInit();
 

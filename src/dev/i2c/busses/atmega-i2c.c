@@ -333,18 +333,20 @@ static int i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool ma
 	adapter->error = FALSE;
 	if(master) {
 		rc = i2c_master_transfer(adapter, freq);
-		BermudaEnterCritical();
 		*index = i2c_vector_locate(adapter, (void*)last_master_msg);
 		msg = (struct i2c_message*)last_master_msg;
-		BermudaExitCritical();
-		if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
-			if(rc != 0) {
-				adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
-				msg->features |= I2C_MSG_DONE_FLAG;
-				adapter->busy = FALSE;
+		if(msg) {
+			if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
+				if(rc != 0) {
+					adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
+					msg->features |= I2C_MSG_DONE_FLAG;
+					adapter->busy = FALSE;
+				}
+			} else {
+				rc = 1;
 			}
 		} else {
-			rc = 1;
+			rc = -1;
 		}
 	} else {
 		/* slave msg */
@@ -537,7 +539,7 @@ static void atmega_i2c_slave_buff_end(struct i2c_adapter *adapter)
 		if(slave_msg) {
 			dev->ctrl(dev, I2C_LISTEN, NULL);
 		} else if(master_msg) {
-			dev->ctrl(dev, I2C_START | I2C_ACK, NULL);
+			dev->ctrl(dev, I2C_START | I2C_NACK, NULL);
 			event_signal_from_isr(event(adapter->slave_queue));
 			adapter->busy = FALSE;
 		} else {
@@ -635,8 +637,8 @@ SIGNAL(TWI_STC_vect)
 			break;
 
 		case I2C_MASTER_ARB_LOST:
+			TWCR = twcr | BIT(TWSTA);
 			adapter->busy = FALSE;
-			TWCR = BIT(TWINT) | BIT(TWEN) | BIT(TWIE) | (twcr & BIT(TWEA)) | BIT(TWSTA);
 			break;
 			
 		/*
@@ -734,15 +736,17 @@ SIGNAL(TWI_STC_vect)
 			
 		case I2C_SR_STOP:
 			if(*(adapter->slave_queue) == NULL || *(adapter->slave_queue) == SIGNALED) {
-				atmega_i2c_update(adapter, 0);
+				if(slave_msg) {
+					slave_msg->features &= ~I2C_MSG_CALL_BACK_MASK;
+					slave_msg->features |= I2C_MSG_DONE_FLAG;
+				}
+				atmega_i2c_update_from_isr(adapter);
 				if(master_msg) {
 					dev->ctrl(dev, I2C_START | I2C_NACK, NULL);
 				} else {
 					dev->ctrl(dev, I2C_NACK, NULL);
 				}
-				if(slave_msg) {
-					slave_msg->features |= I2C_MSG_DONE_FLAG;
-				}
+				
 				last_slave_msg = NULL;
 				adapter->busy = FALSE;
 				adapter->error = FALSE;

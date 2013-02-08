@@ -186,15 +186,15 @@ static inline void inb(volatile unsigned char *io, unsigned char *data)
 #define i2c_disable_irq() \
 { \
 if(master) { \
-	if(adapter->busy) { \
+	if(!adapter->busy) { /* not usefull when the adapter is not busy */ \
 		__asm__ __volatile__("push __zero_reg__"); \
 	} else { \
 		__asm__ __volatile__("ld r16, %a0"			"\n\t" \
 							"push r16"				"\n\t" \
-							"andi r16, 0xFA"		"\n\t" /* r16 &= ~(BIT(TWIE) | BIT(TWINT)) */ \
+							"andi r16, 0x7E"		"\n\t" /* r16 &= ~(BIT(TWIE) | BIT(TWEN)) */ \
 							"st %a0, r16"			"\n\t" \
 							"pop r16"				"\n\t" \
-							"andi r16, 0x5"		"\n\t" \
+							"andi r16, 0x1"		"\n\t" \
 							"push r16"				"\n\t" \
 							: \
 							: "e"(&TWCR) \
@@ -211,6 +211,7 @@ if(master) { \
 						 "brbs 1, L_%="			"\n\t" \
 						 "ld r16, %a0"			"\n\t" \
 						 "or r16, r17"			"\n\t" \
+						 "andi r16, ~(1<<7)"	"\n\t" \
 						 "st %a0, r16"			"\n\t" \
 						 "L_%=:"				"\n\t" \
 						 : \

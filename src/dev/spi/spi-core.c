@@ -38,6 +38,7 @@ PUBLIC void spi_init_adapter(struct spi_adapter *adapter, char *name)
 	dev->name = name;
 	BermudaDeviceRegister(dev, adapter);
 	
+	adapter->dev = dev;
 	adapter->busy = FALSE;
 	adapter->features = 0;
 	adapter->error = 0;
@@ -81,7 +82,6 @@ PUBLIC int spi_flush_client(struct spi_client *client)
 		info.cspin = client->cspin;
 		
 		rc = adapter->xfer(adapter, &info);
-		adapter->length = 0;
 		spi_unlock_adapter(adapter, spi_client_is_master(client));
 	}
 	return rc;
@@ -141,10 +141,9 @@ static inline int spi_unlock_adapter(struct spi_adapter *adapter, bool master)
 PUBLIC struct spi_client *spi_alloc_client(struct spi_adapter *adapter, reg8_t reg, uint8_t cs,
 										   uint32_t freq)
 {
-	struct spi_client *client = NULL;
+	struct spi_client *client = malloc(sizeof(*client));
 	
-	if(reg != NULL && adapter != NULL) {
-		client = malloc(sizeof(*client));
+	if(client != NULL) {
 		client->cs = reg;
 		client->cspin = cs;
 		client->adapter = adapter;

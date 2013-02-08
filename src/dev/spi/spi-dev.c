@@ -44,6 +44,7 @@ PUBLIC int spidev_socket(struct spi_client *client, uint16_t flags)
 		return -1;
 	}
 	
+	client->stream = stream;
 	stream->flags = flags;
 	stream->data = client;
 	stream->write = &spidev_write;
@@ -67,6 +68,8 @@ PUBLIC int spidev_close(FILE *stream)
 	int rc;
 	
 	client = (struct spi_client*)stream->data;
+	client->stream = NULL;
+
 	if(stream) {
 		free(stream);
 		rc = -DEV_OK;

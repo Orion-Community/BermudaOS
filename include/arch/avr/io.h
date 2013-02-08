@@ -22,6 +22,7 @@
 #define __PORT_IO_H
 
 #include <arch/avr/pgm.h>
+#include <arch/avr/328/twi.h>
 
 extern unsigned long BermudaTimerGetSysTick();
 
@@ -181,6 +182,44 @@ static inline void inb(volatile unsigned char *io, unsigned char *data)
 {
 	*data = *io;
 }
+
+#define i2c_disable_irq() \
+{ \
+if(master) { \
+	if(adapter->busy) { \
+		__asm__ __volatile__("push __zero_reg__"); \
+	} else { \
+		__asm__ __volatile__("ld r16, %a0"			"\n\t" \
+							"push r16"				"\n\t" \
+							"andi r16, 0xFA"		"\n\t" /* r16 &= ~(BIT(TWIE) | BIT(TWINT)) */ \
+							"st %a0, r16"			"\n\t" \
+							"pop r16"				"\n\t" \
+							"andi r16, 0x5"		"\n\t" \
+							"push r16"				"\n\t" \
+							: \
+							: "e"(&TWCR) \
+							: "r16"); \
+	} \
+} \
+}
+                     
+#define i2c_restore_irq() \
+{ \
+if(master) { \
+	__asm__ __volatile__("pop r17"				"\n\t" \
+						 "and r17, r17"			"\n\t" \
+						 "brbs 1, L_%="			"\n\t" \
+						 "ld r16, %a0"			"\n\t" \
+						 "or r16, r17"			"\n\t" \
+						 "st %a0, r16"			"\n\t" \
+						 "L_%=:"				"\n\t" \
+						 : \
+						 : "e"(&TWCR) \
+						 : "r16", "r17"); \
+} \
+}
+
+#define nop() __asm__ __volatile__("mov __tmp_reg__, __tmp_reg__ \n\t")
 
 /**
  * \brief Setup the standard streams.

@@ -79,7 +79,6 @@ static inline int __i2c_start_xfer(struct i2c_adapter *adapter, struct i2c_share
 static size_t i2c_update(struct i2c_adapter *client, bool master);
 static inline void i2c_master_tmo(struct i2c_adapter *adapter);
 static inline void i2c_slave_tmo(struct i2c_adapter *adapter);
-static void i2c_update_tmo(struct i2c_adapter *adapter, bool master);
 
 
 /* concurrency functions */
@@ -536,28 +535,6 @@ static size_t i2c_update(struct i2c_adapter *adapter, bool master)
 	}
 	
 	return diff;
-}
-
-static void i2c_update_tmo(struct i2c_adapter *adapter, bool master)
-{
-	size_t diff = i2c_vector_length(adapter);
-	int32_t s_diff;
-	
-	if(master) {
-		i2c_master_tmo(adapter);
-	} else {
-		i2c_slave_tmo(adapter);
-	}
-	
-	diff -= i2c_vector_length(adapter);
-	s_diff = (int32_t)diff;
-	s_diff *= -1;
-	
-	if(master) {
-		adapter->update(adapter, s_diff);
-	} else {
-		adapter->update(adapter, 0);
-	}
 }
 
 static size_t i2c_cleanup_adapter(struct i2c_adapter *adapter, bool master)

@@ -403,15 +403,15 @@ static inline int __i2c_start_xfer(struct i2c_client *client)
 					msg->addr |= I2C_READ_BIT;
 				}
 				i2c_msg_set_features(msg, msg_features);
-				i2c_disable_irq();
+// 				i2c_disable_irq();
 				rc = i2c_vector_add(adapter, msg, master);
-				i2c_restore_irq();
+// 				i2c_restore_irq();
 				free(node);
 				if(rc) {
 					if(i2c_vector_error(adapter, rc) == 0) {
-						i2c_disable_irq();
+// 						i2c_disable_irq();
 						rc = i2c_vector_add(adapter, msg, master);
-						i2c_restore_irq();
+// 						i2c_restore_irq();
 						continue;
 					}
 					i2c_set_error(client);

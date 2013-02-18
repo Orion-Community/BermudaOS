@@ -241,12 +241,12 @@ extern void i2c_init_client(struct i2c_client *client, struct i2c_adapter *adapt
  * \param client i2c_client to set the call back for.
  * \param cb The call back function.
  */
-static inline void i2c_set_callback(struct i2c_shared_info *sh_info, int (*cb)(struct i2c_shared_info *,
+static inline void i2c_set_callback(struct i2c_client *client, int (*cb)(struct i2c_shared_info *,
 																		 struct i2c_message *,
 																		 struct i2c_message *
 																		))
 {
-	sh_info->shared_callback = cb;
+	i2c_shinfo(client)->shared_callback = cb;
 }
 
 //@}

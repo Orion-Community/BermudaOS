@@ -333,18 +333,20 @@ static int i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool ma
 	adapter->error = FALSE;
 	if(master) {
 		rc = i2c_master_transfer(adapter, freq);
-		BermudaEnterCritical();
-		*index = i2c_vector_locate(adapter, (void*)last_master_msg);
-		msg = (struct i2c_message*)last_master_msg;
-		BermudaExitCritical();
-		if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
-			if(rc != 0) {
-				adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
-				msg->features |= I2C_MSG_DONE_FLAG;
-				adapter->busy = FALSE;
+		if(rc == 0) {
+			BermudaEnterCritical();
+			*index = i2c_vector_locate(adapter, (void*)last_master_msg);
+			msg = (struct i2c_message*)last_master_msg;
+			BermudaExitCritical();
+			if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
+				if(rc != 0) {
+					adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);
+					msg->features |= I2C_MSG_DONE_FLAG;
+					adapter->busy = FALSE;
+				}
+			} else {
+				rc = 1;
 			}
-		} else {
-			rc = 1;
 		}
 	} else {
 		/* slave msg */
@@ -383,6 +385,10 @@ static int i2c_master_transfer(struct i2c_adapter *adapter, uint32_t freq)
 		
 	}
 	rc = BermudaEventWaitNext(event(adapter->master_queue), I2C_MASTER_TMO); /* wait for completion */
+	
+	if(!last_master_msg) {
+		rc = -1;
+	}
 	return rc;
 }
 

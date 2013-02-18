@@ -336,8 +336,10 @@ static int i2c_init_transfer(struct i2c_adapter *adapter, uint32_t freq, bool ma
 	if(master) {
 		rc = i2c_master_transfer(adapter, freq);
 		if(rc == 0) {
+			BermudaEnterCritical();
 			*index = i2c_vector_locate(adapter, (void*)last_master_msg);
 			msg = (struct i2c_message*)last_master_msg;
+			BermudaExitCritical();
 			if((msg->features & I2C_MSG_CALL_BACK_MASK) != 0) {
 				if(rc != 0) {
 					adapter->dev->ctrl(adapter->dev, I2C_RELEASE | I2C_ACK, NULL);

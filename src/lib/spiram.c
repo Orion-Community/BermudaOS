@@ -88,7 +88,7 @@ PUBLIC uint8_t spiram_read_byte(unsigned int address)
 	fd = spidev_socket(client, _FDEV_SETUP_RW | SPI_MASTER);
 	
 	if(fd >= 0) {
-		write(fd, (void*)read_seq, BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN);
+		read(fd, (void*)read_seq, BERMUDA_SPIRAM_READ_BYTE_SEQ_LEN);
 		flush(fd);
 		close(fd);
 	}

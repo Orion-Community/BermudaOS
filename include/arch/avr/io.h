@@ -185,23 +185,42 @@ static inline void inb(volatile unsigned char *io, unsigned char *data)
 
 #define i2c_disable_irq() \
 { \
-	uint8_t intbit = TWCR & BIT(TWIE); \
-	__asm__ __volatile__("push %0 \n\t" \
-						: \
-						: "r"(intbit) \
-						:); \
-	TWCR &= ~BIT(TWIE); \
+if(master) { \
+	if(!adapter->busy) { /* not usefull when the adapter is not busy */ \
+		__asm__ __volatile__("push __zero_reg__"); \
+	} else { \
+		__asm__ __volatile__("ld r16, %a0"			"\n\t" \
+							"push r16"				"\n\t" \
+							"andi r16, 0x7E"		"\n\t" /* r16 &= ~(BIT(TWIE) | BIT(TWEN)) */ \
+							"st %a0, r16"			"\n\t" \
+							"pop r16"				"\n\t" \
+							"andi r16, 0x1"		"\n\t" \
+							"push r16"				"\n\t" \
+							: \
+							: "e"(&TWCR) \
+							: "r16"); \
+	} \
+} \
 }
                      
 #define i2c_restore_irq() \
 { \
-	uint8_t intbit; \
-	__asm__ __volatile__("pop %0 \n\t" \
-						: "=r"(intbit)\
-						: \
-						:); \
-	TWCR |= intbit; \
+if(master) { \
+	__asm__ __volatile__("pop r17"				"\n\t" \
+						 "and r17, r17"			"\n\t" \
+						 "brbs 1, L_%="			"\n\t" \
+						 "ld r16, %a0"			"\n\t" \
+						 "or r16, r17"			"\n\t" \
+						 "andi r16, ~(1<<7)"	"\n\t" \
+						 "st %a0, r16"			"\n\t" \
+						 "L_%=:"				"\n\t" \
+						 : \
+						 : "e"(&TWCR) \
+						 : "r16", "r17"); \
+} \
 }
+
+#define nop() __asm__ __volatile__("mov __tmp_reg__, __tmp_reg__ \n\t")
 
 /**
  * \brief Setup the standard streams.

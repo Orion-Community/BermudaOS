@@ -31,6 +31,7 @@ static void atmega_spi_calc_freq(uint32_t hz);
 static int atmega_spi_transfer(struct spi_adapter *adapter, struct spi_shared_info *info);
 
 struct spi_adapter *atmega_spi_adapter;
+static volatile void *atmega_spi_dev_mutex = SIGNALED;
 
 #define SPI_DEV_NAME "ATMEGA_SPI"
 
@@ -41,6 +42,10 @@ PUBLIC void atmega_spi_init()
 	atmega_spi_adapter->features = SPI_MASTER_SUPPORT;
 	spi_init_adapter(atmega_spi_adapter, SPI_DEV_NAME);
 	atmega_spi_adapter->xfer = &atmega_spi_transfer;
+	
+#ifdef __THREADS__
+	atmega_spi_adapter->dev->mutex = &atmega_spi_dev_mutex;
+#endif
 	
 	/* Setup port configuration */
 	SPI_DDR |= (SPI_SCK | SPI_MOSI | SPI_SS);

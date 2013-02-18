@@ -225,6 +225,22 @@
 
 #define I2C_BUS_ERROR 0x0 //!< Generic bus error.
 
+/* control reg */
+#define TWINT	7
+#define TWEA	6
+#define TWSTA	5
+#define TWSTO	4
+#define TWWC	3
+#define TWEN	2
+#define TWIE	0
+
+/* status reg */
+#define TWPS1	1
+#define TWPS0	0
+#define I2C_NOINFO 0xF8
+
+/* addr reg */
+#define TWGCE 	0
 
 /* ---------------------- */
 

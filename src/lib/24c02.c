@@ -59,6 +59,7 @@ PUBLIC int Bermuda24c02WriteByte(unsigned char addr, unsigned char data)
 	rc = flush(fd);
 	close(fd);
 
+	BermudaThreadSleep(10);
 	return rc;
 }
 

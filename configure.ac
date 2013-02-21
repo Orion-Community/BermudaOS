@@ -227,6 +227,7 @@ AC_CONFIG_FILES([Makefile
                  src/arch/avr/Makefile
                  src/arch/avr/arduino/Makefile
                  src/arch/avr/328/Makefile
+                 src/kernel/Makefile
                  src/dev/Makefile
                  src/dev/i2c/Makefile
                  src/dev/spi/Makefile

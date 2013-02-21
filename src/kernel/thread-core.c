@@ -22,3 +22,19 @@
 #include <kernel/thread.h>
 #include <kernel/stack.h>
 #include <kernel/ostimer.h>
+
+/**
+ * \brief Currently running threads.
+ * 
+ * Each CPU core has its own running thread.
+ */
+static struct thread *current_thread[CPU_CORES];
+
+/**
+ * \brief The idle thread definition.
+ */
+static struct thread idle_thread;
+/**
+ * \brief The main thread definition.
+ */
+static struct thread main_thread;

@@ -1,0 +1,76 @@
+digraph Threads {
+	fontname = "Bitstream Vera Sans"
+	fontsize = 8
+
+	node [
+		fontname = "Bitstream Vera Sans"
+		fontsize = 8
+		shape = "record"
+	]
+
+	edge [
+		fontname = "Bitstream Vera Sans"
+		fontsize = 8
+	]
+
+	subgraph clusterKernelImpl {
+		label = "Package kernel.impl"
+		
+		thread_tree_head [
+			label = "{struct thread_tree_head||+ left : struct thread*" +
+			"\l+ right : struct thread*" +
+			"\l}"
+		]
+
+		thread [
+			label = "{struct thread|+ handle(data : void*) : void\l"+
+			"|+ cpu_time : uint64_t" + 
+			"\l+ left : struct thread*" + 
+			"\l+ right : struct thread*" + 
+			"\l+ next : struct thread*" +
+			"\l+ queue : struct thread*volatile*" +
+			"\l+ name : char*" +
+			"\l+ id : uint64_t" +
+			"\l+ event : struct event*" +
+			"\l+ stack : struct stack*"+
+			"\l+ ec : uint8_t" +
+			"\l+ sleep_time : uint16_t" +
+			"\l+ arg : void*" +
+			"\l+ sleeping : uint1_t" +
+			"\l+ running : uintt_t" +
+			"\l+ ready : uint1_t" +
+			"\l+ killed : uint1_t" +
+			"\l+ signaled : uint1_t" +
+			"\l}"
+		]
+
+		_stack [
+			label = "{struct stack||+ sp : void*\l+ stack : void*\l}"
+		]
+		
+		event [
+			label = "{struct event|+ event_handle(arg : void*)" + 
+			"|+ next : struct event*" +
+			"\l+ timer : struct _vtimer*" +
+			"\l}"
+		]
+			
+	}
+	
+	edge [
+		arrowhead = "none"
+		headlabel = "1"
+		taillabel = "1"
+	];
+	
+	thread -> _stack;
+	thread -> event
+	
+	edge [
+		arrowhead = "none"
+		headlabel = "1"
+		taillabel = "2"
+	];
+	
+	thread_tree_head -> thread
+}

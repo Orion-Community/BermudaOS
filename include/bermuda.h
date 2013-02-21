@@ -180,5 +180,6 @@ extern int BermudaInit();
 
 #include <sys/mem.h>
 #include <lib/list/list.h>
+#include <lib/binary.h>
 
 #endif

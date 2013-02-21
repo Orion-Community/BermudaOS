@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Stack header
+ *  BermudaOS - Event header
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __STACK_H_
-#define __STACK_H_
+#ifndef __EVENT_H_
+#define __EVENT_H_
 
 #include <stdlib.h>
 
-struct stack
-{
-	uint8_t *stack;
-	uint8_t *sp;
-	size_t size;
-};
+/**
+ * \brief Event handle type.
+ */
+typedef void (*event_handle_t)(void *arg);
 
-struct thread;
-extern int stack_init(struct thread *thread, size_t stack_size, void *sp);
+struct event
+{
+	struct event *next;
+	
+	struct _vtimer *timer;
+	event_handle_t handle;
+} __attribute__((packed));
 
 #endif

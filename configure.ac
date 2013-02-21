@@ -148,6 +148,8 @@ I2C_SLAVE_TMO=500
 fi
 
 # autoheader defines
+AC_DEFINE(CPU_CORES, [1], [Number of available CPU cores])
+
 if test "x$iic" = "xyes"; then
 AC_DEFINE([__I2C__], [1], [Defines wether I2C is enabled])
 AC_DEFINE([__TWI__], [1], [Defines wether I2C is enabled])

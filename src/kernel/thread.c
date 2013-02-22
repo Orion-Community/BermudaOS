@@ -32,13 +32,13 @@ void *stack;
 uint8_t prio;
 {
 	struct thread *t = malloc(sizeof(*t));
+	memset(t, 0, sizeof(*t));
 	
 	t->name = name;
 	t->handle = handle;
 	t->arg = arg;
 	t->priority = prio;
+	thread_add_new(t, stack, stack_size);
 	
-	stack_init(t, stack_size, stack);
-	thread_run_queue_add(t);
 	return t;
 }

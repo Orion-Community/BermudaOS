@@ -68,5 +68,5 @@ struct thread
 	uint8_t signaled : 1; //!< This thread received an event signal.
 } __attribute__((packed));
 
-extern int thread_run_queue_add(struct thread *t);
+extern int thread_add_new(struct thread *t, void *stack, size_t stack_size);
 #endif

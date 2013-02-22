@@ -41,6 +41,15 @@
 typedef void (*thread_handle_t)(void *param);
 
 /**
+ * \brief Defines the color a node can be.
+ */
+typedef enum
+{
+	NODE_BLACK, //!< Black nodes are flagged with \p NODE_BLACK.
+	NODE_RED, //!< Red nodes are flagged with \p NODE_RED.
+} thread_tree_color_t;
+
+/**
  * \brief Thread structure.
  * 
  * This structure defines the current state of a thread.
@@ -53,6 +62,7 @@ struct thread
 	struct thread *next; //!< Next queue pointer.
 	struct thread *volatile*queue; //!< Pointer pointer to the current queue.
 	uint64_t cpu_time; //!< Amount of time (in ms) this thread has been using the CPU.
+	tree_color_t color; //!< Node color. \see tree_color_t
 	
 	char *name; //!< Unique thread name.
 	uint64_t id; //!< Unique thread identifier.

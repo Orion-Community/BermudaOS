@@ -15,10 +15,16 @@ digraph Threads {
 
 	subgraph clusterKernelImpl {
 		label = "Package kernel.impl"
-
+		
+		node_color [
+			label = "{enum thread_tree_color_t||+ NODE_BLACK" +
+			"\l+ NODE_RED" +
+			"\l}"
+		]
 		thread [
 			label = "{struct thread|+ handle(data : void*) : void\l"+
 			"|+ cpu_time : uint64_t" + 
+			"\l+ node_color : enum thread_tree_color_t" +
 			"\l+ left : struct thread*" + 
 			"\l+ right : struct thread*" + 
 			"\l+ next : struct thread*" +
@@ -62,4 +68,5 @@ digraph Threads {
 	
 	thread -> _stack;
 	thread -> event;
+	thread -> node_color;
 }

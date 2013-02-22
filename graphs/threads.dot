@@ -15,12 +15,6 @@ digraph Threads {
 
 	subgraph clusterKernelImpl {
 		label = "Package kernel.impl"
-		
-		thread_tree_head [
-			label = "{struct thread_tree_head||+ left : struct thread*" +
-			"\l+ right : struct thread*" +
-			"\l}"
-		]
 
 		thread [
 			label = "{struct thread|+ handle(data : void*) : void\l"+
@@ -28,14 +22,14 @@ digraph Threads {
 			"\l+ left : struct thread*" + 
 			"\l+ right : struct thread*" + 
 			"\l+ next : struct thread*" +
-			"\l+ queue : struct thread*volatile*" +
+			"\l+ queue : struct thread*volatile*\l" +
 			"\l+ name : char*" +
-			"\l+ id : uint64_t" +
+			"\l+ id : uint64_t\l" +
 			"\l+ event : struct event*" +
 			"\l+ stack : struct stack*"+
 			"\l+ ec : uint8_t" +
 			"\l+ sleep_time : uint16_t" +
-			"\l+ arg : void*" +
+			"\l+ arg : void*\l" +
 			"\l+ sleeping : uint1_t" +
 			"\l+ running : uintt_t" +
 			"\l+ ready : uint1_t" +
@@ -45,7 +39,10 @@ digraph Threads {
 		]
 
 		_stack [
-			label = "{struct stack||+ sp : void*\l+ stack : void*\l}"
+			label = "{struct stack||+ sp : void*" +
+			"\l+ stack : void*" +
+			"\l+ size : size_t" +
+			"\l}"
 		]
 		
 		event [
@@ -64,13 +61,5 @@ digraph Threads {
 	];
 	
 	thread -> _stack;
-	thread -> event
-	
-	edge [
-		arrowhead = "none"
-		headlabel = "1"
-		taillabel = "2"
-	];
-	
-	thread_tree_head -> thread
+	thread -> event;
 }

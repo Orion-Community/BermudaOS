@@ -34,6 +34,11 @@
 static struct thread *current_thread[CPU_CORES];
 
 /**
+ * \brief Run queue tree head.
+ */
+static struct thread *thread_run_queue_head;
+
+/**
  * \brief The idle thread definition.
  */
 static struct thread idle_thread;
@@ -42,6 +47,9 @@ static struct thread idle_thread;
  */
 static struct thread main_thread;
 
+/**
+ * \brief Thread id counter.
+ */
 static uint64_t thread_id_counter = 0;
 
 /**
@@ -53,6 +61,19 @@ static inline uint64_t thread_generate_thread_id()
 	
 	thread_id_counter += 1;
 	return i;
+}
+
+/**
+ * \brief Initialize the scheduler (thread core).
+ * \param mstack Pointer to the main thread stack.
+ * \param mstack_size Size of the main thread stack.
+ * \note If \p mstack is zero the top of the RAM will be used as stack for the main thread.
+ * \return Error code.
+ * \retval 0 on success.
+ */
+PUBLIC int thread_core_init(void *mstack, size_t mstack_size)
+{
+	return -1;
 }
 
 /**
@@ -75,4 +96,20 @@ PUBLIC int thread_add_new(struct thread *t, void *stack, size_t stack_size)
 	t->id = thread_generate_thread_id();
 	
 	return rc;
+}
+
+/**
+ * \brief Add a new node to a thread tree.
+ * \param node The tree head.
+ * \param newnode Node to add.
+ */
+PUBLIC int thread_tree_add(struct thread *node, struct thread *newnode)
+{
+	if(!node || !newnode) {
+		return -E_NULL;
+	}
+	
+	
+	
+	return -DEV_OK;
 }

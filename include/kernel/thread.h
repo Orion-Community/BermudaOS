@@ -34,6 +34,10 @@
 #define THREAD_READY_MASK BIT(THREAD_READY_SHIFT)
 #define THREAD_KILLED_MASK BIT(THREAD_KILLED_SHIFT)
 
+/**
+ * \brief Thread handle type definition.
+ * \param param Thread parameter.
+ */
 typedef void (*thread_handle_t)(void *param);
 
 /**
@@ -45,6 +49,7 @@ struct thread
 {
 	struct thread *left; //!< Left pointer in the red black tree.
 	struct thread *right; //!< Right pointer in the red black tree.
+	struct thread *middle; //!< Threads having received the same amount of CPU.
 	struct thread *next; //!< Next queue pointer.
 	struct thread *volatile*queue; //!< Pointer pointer to the current queue.
 	uint64_t cpu_time; //!< Amount of time (in ms) this thread has been using the CPU.
@@ -69,4 +74,5 @@ struct thread
 } __attribute__((packed));
 
 extern int thread_add_new(struct thread *t, void *stack, size_t stack_size);
+extern int thread_core_init(void *mstack, size_t mstack_size);
 #endif

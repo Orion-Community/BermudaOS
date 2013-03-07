@@ -16,6 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file src/kernel/thread-core.c Thread core module.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -36,7 +40,7 @@ static struct thread *current_thread[CPU_CORES];
 /**
  * \brief Run queue tree head.
  */
-static struct thread *thread_run_queue_head;
+static struct thread_root thread_ready_tree;
 
 /**
  * \brief The idle thread definition.
@@ -55,7 +59,7 @@ static uint64_t thread_id_counter = 0;
 /* support */
 static void thread_rotate_swap_parent(struct thread_root *root, struct thread *parent, 
 									struct thread *current);
-static struct thread *__thread_search(struct thread *tree, int key);
+static struct thread *__thread_search(struct thread *tree, uint64_t key);
 static struct thread *thread_find_successor(struct thread *tree);
 static struct thread *thread_find_predecessor(struct thread *tree);
 static void thread_replace_node(struct thread_root *root, struct thread *orig, 
@@ -111,19 +115,22 @@ PUBLIC int thread_core_init(void *mstack, size_t mstack_size)
  */
 PUBLIC int thread_add_new(struct thread *t, void *stack, size_t stack_size)
 {
-	int rc = -DEV_OK;
-	
 	if(stack == NULL) {
 		stack = malloc(stack_size);
 		return -DEV_NULL;
 	}
 	
-	rc = stack_init(t, stack_size, stack);
+	stack_init(t, stack_size, stack);
 	t->id = thread_generate_thread_id();
 	
-	return rc;
+	return thread_insert(&thread_ready_tree, t);
 }
 
+/**
+ * \brief Insert a thread in the given tree.
+ * \param root Tree root.
+ * \param node Thread to insert.
+ */
 PUBLIC int thread_insert(struct thread_root *root, struct thread *node)
 {
 	node->left = NULL;
@@ -132,16 +139,26 @@ PUBLIC int thread_insert(struct thread_root *root, struct thread *node)
 	node->color = THREAD_RED;
 	thread_validate_insertion(root, __thread_insert(root, node));
 	
-	return 0;
+	return -DEV_OK;
 }
 
-PUBLIC struct thread *thread_search(struct thread_root *root, int key)
+/**
+ * \brief Search for a thread.
+ * \param root Root of the tree to search in.
+ * \param key Key to search for (i.e. CPU time).
+ */
+PUBLIC struct thread *thread_search(struct thread_root *root, uint64_t key)
 {
 	return __thread_search(root->tree, key);
 }
 
 #if HAVE_RECURSION
-static struct thread *__thread_search(struct thread *tree, int key)
+/**
+ * \brief Actual search (recursive).
+ * \param tree Tree to search in.
+ * \param key The key to look for.
+ */
+static struct thread *__thread_search(struct thread *tree, uint64_t key)
 {
 	if(tree == NULL) {
 		return NULL;
@@ -159,7 +176,12 @@ static struct thread *__thread_search(struct thread *tree, int key)
 }
 #else
 
-static struct thread *__thread_search(struct thread *tree, int key)
+/**
+ * \brief Actual search (non-recursive).
+ * \param tree Tree to search in.
+ * \param key Key to look for.
+ */
+static struct thread *__thread_search(struct thread *tree, uint64_t key)
 {
 	for(;;) {
 		if(tree == NULL) {
@@ -178,6 +200,13 @@ static struct thread *__thread_search(struct thread *tree, int key)
 }
 #endif
 
+/**
+ * \brief Action insertion function.
+ * \param root Tree root to insert into.
+ * \param node Node to insert.
+ * 
+ * This funciton, which is called by thread_insert, does the actual insertion work.
+ */
 static struct thread *__thread_insert(struct thread_root *root, struct thread *node)
 {
 	struct thread *tree = root->tree;
@@ -210,6 +239,12 @@ static struct thread *__thread_insert(struct thread_root *root, struct thread *n
 	return node;
 }
 
+/**
+ * \brief Find the left-most node in the tree.
+ * \param tree Tree node to find most left node of.
+ * 
+ * The left-most node is the node with the lowest key value.
+ */
 static struct thread *thread_find_leftmost(struct thread *tree)
 {
 	if(!tree) {
@@ -224,6 +259,12 @@ static struct thread *thread_find_leftmost(struct thread *tree)
 	}
 }
 
+/**
+ * \brief Find the right-most node in the tree.
+ * \param tree Tree node to find most right node of.
+ * 
+ * The right-most node is the node with the lowest key value.
+ */
 static struct thread *thread_find_rightmost(struct thread *tree)
 {
 	if(!tree) {
@@ -238,6 +279,13 @@ static struct thread *thread_find_rightmost(struct thread *tree)
 	}
 }
 
+/**
+ * \brief Find the successor of the given node.
+ * \param tree Tree node to find the successor of.
+ * \retval NULL if \p tree does not have a successor.
+ * 
+ * The successor is the node with the next highest value.
+ */
 static struct thread *thread_find_successor(struct thread *tree)
 {
 	if(!tree) {
@@ -257,6 +305,13 @@ static struct thread *thread_find_successor(struct thread *tree)
 	return thread_find_leftmost(tree->right);
 }
 
+/**
+ * \brief Find the predecessor of a given node.
+ * \param tree Node to whose predecessor is wanted.
+ * \retval NULL if \p tree does not have a predecessor.
+ * 
+ * The predecessor is the node with the next lowest value.
+ */
 static struct thread *thread_find_predecessor(struct thread *tree)
 {
 	if(!tree) {
@@ -275,6 +330,13 @@ static struct thread *thread_find_predecessor(struct thread *tree)
 	return thread_find_rightmost(tree->left);
 }
 
+/**
+ * \brief Rotate the tree to the left.
+ * \param root Root of the tree.
+ * \param tree Node to rotate around.
+ * 
+ * Rotate the tree counter clockwise around \p tree.
+ */
 static struct thread *thread_rotate_left(struct thread_root *root, struct thread *tree)
 {
 	struct thread *right = tree->right, *parent = thread_parent(tree);
@@ -304,6 +366,13 @@ static struct thread *thread_rotate_left(struct thread_root *root, struct thread
 	return right;
 }
 
+/**
+ * \brief Rotate the tree to the right.
+ * \param root Root of the tree.
+ * \param tree Node to rotate around.
+ * 
+ * Rotate the tree clockwise around \p tree.
+ */
 static struct thread *thread_rotate_right(struct thread_root *root, struct thread *tree)
 {
 	struct thread *left = tree->left, *parent = thread_parent(tree);
@@ -330,6 +399,13 @@ static struct thread *thread_rotate_right(struct thread_root *root, struct threa
 	return left;
 }
 
+/**
+ * \brief Validate the tree after an insertion.
+ * \param root Root of the tree.
+ * \param current Node which was inserted.
+ * 
+ * This function is called by thread_insert to fix any red-black tree violations.
+ */
 static void thread_validate_insertion(struct thread_root *root, struct thread *current)
 {
 	struct thread *x;
@@ -373,6 +449,14 @@ static void thread_validate_insertion(struct thread_root *root, struct thread *c
 	root->tree->color = THREAD_BLACK;
 }
 
+/**
+ * \brief Rotate the tree in the direction that swaps the current node with its parent.
+ * \param root Tree root.
+ * \param parent Parent of \p current.
+ * \param current Node to swap with \p parent.
+ * 
+ * When this function returns \p current and \p parent are swapped.
+ */
 static void thread_rotate_swap_parent(struct thread_root *root, struct thread *parent, 
 									struct thread *current)
 {
@@ -389,6 +473,12 @@ static void thread_rotate_swap_parent(struct thread_root *root, struct thread *p
 	current->color = tmp;
 }
 
+/**
+ * \brief Delete a node from the thread tree.
+ * \param root Tree root.
+ * \param node Node to delete.
+ * \return Error code.
+ */
 PUBLIC int thread_delete_node(struct thread_root *root, struct thread *node)
 {
 	int rc = __thread_delete_node(root, node);
@@ -398,6 +488,9 @@ PUBLIC int thread_delete_node(struct thread_root *root, struct thread *node)
 	return rc;
 }
 
+/**
+ * \brief Deletion case enumerator.
+ */
 typedef enum
 {
 	TREE_DELETION_TERMINATE = 0,
@@ -406,6 +499,9 @@ typedef enum
 	TREE_DELETION_CASE2, //!< Current is black and has no children.
 } thread_deletion_case_t;
 
+/**
+ * \brief Sub deletion case enumerator.
+ */
 typedef enum
 {
 	TREE_SUB_DELETION_TERMINATE = 0,
@@ -431,10 +527,15 @@ typedef enum
 	 * This step is reached through step 3 and this is the final rotation.
 	 */
 	TREE_SUB_DELETION_CASE4,
-	TREE_SUB_DELETION_CASE5,
-	TREE_SUB_DELETION_CASE6,
 } thread_deletion_subcase_t;
 
+/**
+ * \brief Actual deletion.
+ * \param root Tree root.
+ * \param node Node to delete.
+ * 
+ * This function is called by thread_delete_node.
+ */
 static int __thread_delete_node(struct thread_root *root, struct thread *node)
 {
 	struct thread *current = node, *parent, *replacement;
@@ -517,6 +618,13 @@ static int __thread_delete_node(struct thread_root *root, struct thread *node)
 	return rc;
 }
 
+/**
+ * \brief Sub deletion routine.
+ * \param root Tree root.
+ * \param current Currently selected node.
+ * 
+ * This function is called on the hard cases (i.e. \p current is black with at most one child).
+ */
 static void thread_sub_deletion(struct thread_root *root, struct thread *current)
 {
 	thread_deletion_subcase_t _case = TREE_SUB_DELETION_TERMINATE;
@@ -616,6 +724,12 @@ static void thread_sub_deletion(struct thread_root *root, struct thread *current
 	} while(_case);
 }
 
+/**
+ * \brief Find a replacement for a node.
+ * \param tree Node to find a replacer for.
+ * \return Either the successor or the predecessor if has neither (i.e. \p tree is the root), \p NULL
+ *         is returned.
+ */
 static struct thread *thread_find_replacement(struct thread *tree)
 {
 	struct thread *successor = thread_find_successor(tree);

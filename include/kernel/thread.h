@@ -89,6 +89,11 @@ struct thread
 } __attribute__((packed));
 
 __DECL
+/**
+ * \brief Return the parrent of a given node.
+ * \param node The parent of \p node is returned.
+ * \return thread::parent
+ */
 static inline struct thread *thread_parent(struct thread *node)
 {
 	if(node) {
@@ -98,6 +103,11 @@ static inline struct thread *thread_parent(struct thread *node)
 	}
 }
 
+/**
+ * \brief Return the grandparent of a given node.
+ * \param node A node whose grandparent is wanted.
+ * \return thread::parent::parent
+ */
 static inline struct thread *thread_grandparent(struct thread *node)
 {
 	struct thread *parent;
@@ -148,6 +158,12 @@ static inline struct thread *thread_node_far_nephew(struct thread *node)
 	return NULL;
 }
 
+/**
+ * \brief Check whether a node has its parent on its left side.
+ * \param current Node to check.
+ * \retval 1 if thread::parent is on the left side of current.
+ * \retval 0 in any other case.
+ */
 static inline int thread_parent_on_left(struct thread *current)
 {
 	if(current->parent != NULL && current->parent->right == current) {
@@ -159,11 +175,11 @@ static inline int thread_parent_on_left(struct thread *current)
 extern int thread_add_new(struct thread *t, void *stack, size_t stack_size);
 extern int thread_core_init(void *mstack, size_t mstack_size);
 extern int thread_insert(struct thread_root *root, struct thread *node);
-extern struct thread *thread_search(struct thread_root *root, int key);
+extern struct thread *thread_search(struct thread_root *root, uint64_t key);
 extern int thread_delete_node(struct thread_root *root, struct thread *node);
 #ifdef HAVE_SCHED_DBG
 extern void thread_dump(struct thread *tree, FILE *stream);
-extern void thread_add_node(struct thread_root *root, int key);
+extern void thread_add_node(struct thread_root *root, uint64_t key);
 extern void thread_cleanup(struct thread *root);
 #endif /* HAVE_SCHED_DBG */
 __DECL_END

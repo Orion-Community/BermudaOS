@@ -22,6 +22,9 @@
 #include <kernel/thread.h>
 #include <kernel/stack.h>
 
+#include <dev/dev.h>
+#include <dev/error.h>
+
 PUBLIC int stack_init(struct thread *t, size_t stack_size, void *sp)
 {
 	struct stack *stack = malloc(sizeof(*stack));

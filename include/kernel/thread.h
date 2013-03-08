@@ -28,11 +28,17 @@
 #define THREAD_RUNNING_SHIFT 1
 #define THREAD_READY_SHIFT 2
 #define THREAD_KILLED_SHIFT 3
+#define TRHEAD_SIGNALED_SHIFT 4
+#define THREAD_IRQSIGNALED_SHIFT 5
+#define THREAD_INTERRUPTIBLE_MASK 6
 
 #define THREAD_SLEEPING_MASK BIT(THREAD_SLEEPING_SHIFT)
 #define THREAD_RUNNING_MASK BIT(THREAD_RUNNING_SHIFT)
 #define THREAD_READY_MASK BIT(THREAD_READY_SHIFT)
 #define THREAD_KILLED_MASK BIT(THREAD_KILLED_SHIFT)
+#define THREAD_SIGNALED_MASK BIT(THREAD_SIGNALED_SHIFT)
+#define THREAD_IRQ_SIGNALED_SHIFT BIT(THREAD_IRQ_SIGNALED_SHIFT)
+#define TRHEAD_INTERRUPTIBLE_MASK BIT(THREAD_INTERRUPTIBLE_SHIFT)
 
 /**
  * \brief Thread handle type definition.
@@ -86,6 +92,7 @@ struct thread
 	uint8_t killed : 1; //!< If set to one, this thread is about to be killed.
 	uint8_t signaled : 1; //!< This thread received an event signal.
 	uint8_t irq_signaled : 1; //!< This thread received a signal from an IRQ handle.
+	uint8_t interruptible : 1; //!< When set to 1, this thread is preemtive.
 } __attribute__((packed));
 
 __DECL

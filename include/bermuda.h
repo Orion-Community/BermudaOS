@@ -30,6 +30,7 @@
 #include <config.h>
 #endif
 
+#include <stdint.h>
 #include <arch/types.h>
 
 #include <sys/out.h>
@@ -155,18 +156,6 @@
  * The function is treated as an inline function, even if no form of optimization is used.
  */
 #define __force_inline __attribute__((always_inline))
-
-/**
- * \typedef mutex_t
- * \brief Mutual exclusion type.
- */
-typedef volatile unsigned char mutex_t;
-
-typedef volatile unsigned char*   reg8_t;
-typedef volatile unsigned short*  reg16_t;
-typedef volatile uint32_t*        reg32_t;
-typedef unsigned char             bool;
-
 
 #ifdef __cplusplus
 extern "C" {

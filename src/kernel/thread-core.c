@@ -538,7 +538,7 @@ typedef enum
  */
 static int __thread_delete_node(struct thread_root *root, struct thread *node)
 {
-	struct thread *current = node, *parent, *replacement;
+	struct thread *current = node, *parent, *replacement = NULL;
 	int rc = 0;
 	char replace = 0;
 	thread_deletion_case_t _case = TREE_DELETION_TERMINATE;

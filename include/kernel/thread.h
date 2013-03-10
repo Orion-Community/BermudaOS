@@ -16,6 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \brief Thread header.
+ *
+ * System header used for scheduling related operations.
+ */
+
 #ifndef __THREAD_H_
 #define __THREAD_H_
 
@@ -24,21 +30,21 @@
 #include <kernel/event.h>
 #include <kernel/stack.h>
 
-#define THREAD_SLEEPING_SHIFT 0
-#define THREAD_RUNNING_SHIFT 1
-#define THREAD_READY_SHIFT 2
-#define THREAD_KILLED_SHIFT 3
-#define TRHEAD_SIGNALED_SHIFT 4
-#define THREAD_IRQSIGNALED_SHIFT 5
-#define THREAD_INTERRUPTIBLE_MASK 6
+#define THREAD_SLEEPING_SHIFT 0 //!< Sleeping bit shift.
+#define THREAD_RUNNING_SHIFT 1  //!< Running bit shift.
+#define THREAD_READY_SHIFT 2    //!< Ready bit shift.
+#define THREAD_KILLED_SHIFT 3   //!< Killed bit shift.
+#define TRHEAD_SIGNALED_SHIFT 4 //!< Signaled bit shift.
+#define THREAD_IRQSIGNALED_SHIFT 5 //!< IRQ signaled bit shift.
+#define THREAD_INTERRUPTIBLE_MASK 6 //!< Interruptible bit shift.
 
-#define THREAD_SLEEPING_MASK BIT(THREAD_SLEEPING_SHIFT)
-#define THREAD_RUNNING_MASK BIT(THREAD_RUNNING_SHIFT)
-#define THREAD_READY_MASK BIT(THREAD_READY_SHIFT)
-#define THREAD_KILLED_MASK BIT(THREAD_KILLED_SHIFT)
-#define THREAD_SIGNALED_MASK BIT(THREAD_SIGNALED_SHIFT)
-#define THREAD_IRQ_SIGNALED_SHIFT BIT(THREAD_IRQ_SIGNALED_SHIFT)
-#define TRHEAD_INTERRUPTIBLE_MASK BIT(THREAD_INTERRUPTIBLE_SHIFT)
+#define THREAD_SLEEPING_MASK BIT(THREAD_SLEEPING_SHIFT)           //!< Sleeping bit mask.
+#define THREAD_RUNNING_MASK BIT(THREAD_RUNNING_SHIFT)             //!< Running bit mask.
+#define THREAD_READY_MASK BIT(THREAD_READY_SHIFT)                 //!< Ready bit mask.
+#define THREAD_KILLED_MASK BIT(THREAD_KILLED_SHIFT)               //!< Killed bit mask.
+#define THREAD_SIGNALED_MASK BIT(THREAD_SIGNALED_SHIFT)           //!< Signaled bit mask.
+#define THREAD_IRQ_SIGNALED_SHIFT BIT(THREAD_IRQ_SIGNALED_SHIFT)  //!< IRQ signaled bit mask.
+#define TRHEAD_INTERRUPTIBLE_MASK BIT(THREAD_INTERRUPTIBLE_SHIFT) //!< Interruptible bit mask.
 
 /**
  * \brief Thread handle type definition.
@@ -46,12 +52,22 @@
  */
 typedef void (*thread_handle_t)(void *param);
 
+/**
+ * \brief Thread tree color.
+ *
+ * Color definition for the thread red-black tree.
+ */
 typedef enum 
 {
 	THREAD_RED,
 	THREAD_BLACK,
 } thread_color_t;
 
+/**
+ * \brief Thread root structure.
+ *
+ * Root structure of the thread red-black tree.
+ */
 struct thread_root
 {
 	struct thread *tree;

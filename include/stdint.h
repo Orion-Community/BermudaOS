@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Thread module
+ *  BermudaOS - StdInt header
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
+#ifndef __STDINT_H_
+#define __STDINT_H_
 
-#include <kernel/thread.h>
-#include <kernel/stack.h>
-#include <kernel/ostimer.h>
+#include <arch/types.h>
 
-PUBLIC struct thread *thread_create(name, handle, arg, stack_size, stack, prio)
-char *name;
-thread_handle_t handle;
-void *arg;
-size_t stack_size; 
-void *stack;
-uint8_t prio;
-{
-	struct thread *t = malloc(sizeof(*t));
-	memset(t, 0, sizeof(*t));
-	
-	t->name = name;
-	t->handle = handle;
-	t->arg = arg;
-	t->priority = prio;
-	thread_add_new(t, stack, stack_size);
-	
-	return t;
-}
+/**
+ * \typedef mutex_t
+ * \brief Mutual exclusion type.
+ */
+typedef volatile unsigned char mutex_t;
+
+typedef volatile unsigned char*   reg8_t; //!< 8-bit register type.
+typedef volatile unsigned short*  reg16_t; //!< 16-bit register type.
+typedef volatile uint32_t*        reg32_t; //!< 32-bit register type.
+typedef unsigned char             bool; //!< Boolean type definition.
+typedef uint64_t                  sys_tick_t; //!< System tick type definition.
+
+#endif /* __STDINT_H_ */
 

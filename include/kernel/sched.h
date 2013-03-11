@@ -1,5 +1,5 @@
 /*
- *  BermudaOS - Thread module
+ *  BermudaOS - Thread private header.
  *  Copyright (C) 2012   Michel Megens
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
+/**
+ * \file include/kernel/sched.h Scheduler header.
+ */
 
-#include <kernel/thread.h>
-#include <kernel/stack.h>
-#include <kernel/ostimer.h>
+#ifndef __SCHED_H
+#define __SCHED_H
 
-PUBLIC struct thread *thread_create(name, handle, arg, stack_size, stack, prio)
-char *name;
-thread_handle_t handle;
-void *arg;
-size_t stack_size; 
-void *stack;
-uint8_t prio;
-{
-	struct thread *t = malloc(sizeof(*t));
-	memset(t, 0, sizeof(*t));
-	
-	t->name = name;
-	t->handle = handle;
-	t->arg = arg;
-	t->priority = prio;
-	thread_add_new(t, stack, stack_size);
-	
-	return t;
-}
+#ifndef SYS_TICK_RATE
+/**
+ * \brief System tick rate.
+ *
+ * SYS_TICK_RATE defines the speed of the system tick in miliseconds
+ */
+#define SYS_TICK_RATE 1
+#endif /* SYS_TICK_RATE */
+
+#ifndef SCHED_TICK_RATE
+/**
+ * \brief SCHED_TICK_RATE defines the scheduler time slice in miliseconds.
+ */
+#define SCHED_TICK_RATE 1
+#endif /* SCHED_TICK_RATE */
+
+#endif /* __SCHED_H */
 

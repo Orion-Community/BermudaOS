@@ -21,6 +21,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include <kernel/thread.h>
@@ -79,7 +80,6 @@ static struct thread *__thread_insert(struct thread_root *root, struct thread *n
 static void thread_validate_insertion(struct thread_root *root, struct thread *node);
 
 /* deletion */
-
 static int __thread_delete_node(struct thread_root *tree, struct thread *node);
 static struct thread *thread_find_replacement(struct thread *tree);
 static void thread_sub_deletion(struct thread_root *root, struct thread *current);
@@ -131,6 +131,11 @@ PUBLIC int thread_add_new(struct thread *t, void *stack, size_t stack_size)
 	t->id = thread_generate_thread_id();
 	
 	return thread_insert(&thread_ready_tree, t);
+}
+
+static void thread_sched_tick()
+{
+	return; /* not yet implemented */
 }
 
 /**
@@ -545,7 +550,7 @@ typedef enum
  */
 static int __thread_delete_node(struct thread_root *root, struct thread *node)
 {
-	struct thread *current = node, *parent, *replacement;
+	struct thread *current = node, *parent, *replacement = NULL;
 	int rc = 0;
 	char replace = 0;
 	thread_deletion_case_t _case = TREE_DELETION_TERMINATE;

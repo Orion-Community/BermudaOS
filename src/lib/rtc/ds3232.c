@@ -23,12 +23,12 @@
 #include <lib/rtc.h>
 
 /* static vars */
-static struct i2c_client *rtc_client;
+//static struct i2c_client *rtc_client;
 
 /* static functions */
-static int ds3232_resync(tm_t *time);
-static int ds3232_get(tm_t *time);
-static int ds3232_set(tm_t *time);
+//static int ds3232_resync(tm_t *time);
+//static int ds3232_get(tm_t *time);
+//static int ds3232_set(tm_t *time);
 
 PUBLIC struct rtc *ds3232_init()
 {
@@ -36,6 +36,7 @@ PUBLIC struct rtc *ds3232_init()
 	return NULL;
 }
 
+/*
 static int ds3232_resync(tm_t *time)
 {
 	return -1;
@@ -50,3 +51,5 @@ static int ds3232_set(tm_t *time)
 {
 	return -1;
 }
+*/
+

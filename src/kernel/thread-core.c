@@ -126,7 +126,7 @@ PUBLIC int thread_add_new(struct thread *t, void *stack, size_t stack_size)
 	return thread_insert(&thread_ready_tree, t);
 }
 
-static thread_sched_tick()
+static void thread_sched_tick()
 {
 	return; /* not yet implemented */
 }

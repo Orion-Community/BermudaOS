@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include <kernel/thread.h>
+#include <kernel/sched.h>
 #include <kernel/stack.h>
 #include <kernel/ostimer.h>
 
@@ -133,9 +134,21 @@ PUBLIC int thread_add_new(struct thread *t, void *stack, size_t stack_size)
 	return thread_insert(&thread_ready_tree, t);
 }
 
-static void thread_sched_tick()
+sys_tick_t sched_tick = 0;
+PUBLIC void thread_sched_tick()
 {
-	return; /* not yet implemented */
+	static size_t tmp_sched_tick = 0;
+
+	if(SCHED_TICK_RATE == SYS_TICK_RATE) {
+		sched_tick += 1;
+	} else if(SCHED_TICK_RATE > SYS_TICK_RATE) {
+		tmp_sched_tick += 1;
+		if((tmp_sched_tick % SCHED_TICK_RATE) == 0) {
+			sched_tick += 1;
+			tmp_sched_tick = 0;
+		}
+	}
+	return; 
 }
 
 /**

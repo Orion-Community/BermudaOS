@@ -23,6 +23,12 @@
 #ifndef __SCHED_H
 #define __SCHED_H
 
+#include <stdlib.h>
+
+__DECL
+extern void thread_sched_tick();
+__DECL_END
+
 #ifndef SYS_TICK_RATE
 /**
  * \brief System tick rate.
@@ -39,5 +45,8 @@
 #define SCHED_TICK_RATE 1
 #endif /* SCHED_TICK_RATE */
 
+#if SCHED_TICK_RATE < SYS_TICK_RATE
+	#error "The scheduler time slice should be equal or slower than the system tick."
+#endif
 #endif /* __SCHED_H */
 

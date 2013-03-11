@@ -38,6 +38,13 @@
 static struct thread *current_thread[CPU_CORES];
 
 /**
+ * \brief Threads which are currently not runnable.
+ *
+ * This list contains all threads which are sleeping, waiting for an event, etc.
+ */
+static struct thread *waiting_queue;
+
+/**
  * \brief Run queue tree head.
  */
 static struct thread_root thread_ready_tree;

@@ -32,7 +32,7 @@ typedef struct mutex
 
 __DECL
 extern void mutex_enter(mutex_t *mutex);
-extern void mutex_leave(mutex_t *mutex);
+extern uint8_t mutex_leave(mutex_t *mutex);
 extern size_t mutex_interest(mutex_t *mutex);
 __DECL_END
 #endif

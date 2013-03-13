@@ -21,9 +21,18 @@
 
 #include <stdlib.h>
 
+/**
+ * \brief Mutex type definition.
+ */
 typedef struct mutex
 {
 	uint8_t lock; //!< Defines wether this mutex is locked or not.
 	size_t interest; //!< Amount of threads showing interest in this mutex.
-}
+} mutex_t;
+
+__DECL
+extern void mutex_enter(mutex_t *mutex);
+extern void mutex_leave(mutex_t *mutex);
+extern size_t mutex_interest(mutex_t *mutex);
+__DECL_END
 #endif

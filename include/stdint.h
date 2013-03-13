@@ -25,7 +25,7 @@
  * \typedef mutex_t
  * \brief Mutual exclusion type.
  */
-typedef volatile unsigned char mutex_t;
+//typedef volatile unsigned char mutex_t;
 
 typedef volatile unsigned char*   reg8_t; //!< 8-bit register type.
 typedef volatile unsigned short*  reg16_t; //!< 16-bit register type.

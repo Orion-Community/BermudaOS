@@ -86,7 +86,7 @@ static struct thread *thread_find_replacement(struct thread *tree);
 static void thread_sub_deletion(struct thread_root *root, struct thread *current);
 
 /* scheduling */
-static int thread_schedule();
+static int thread_schedule(int source);
 
 /* dbg */
 #ifdef HAVE_SCHED_DBG
@@ -156,15 +156,20 @@ PUBLIC void thread_sched_tick()
 
 /**
  * \brief Schedule a new thread.
+ * \param source Source of the thread switch. This can either be USER_REQ or TIMER_REQ.
  * \return Action code.
  * \retval -1 The idle thread has been scheduled.
  * \retval 0 No new thread has been scheduled.
  * \retval 1 A new thead has been scheduled.
  *
- * This function provides the functionality to switch between threads.
+ * This function provides the functionality to switch between threads. Whenever a user requests
+ * a thread switch it will always be fulfilled, even if the IdleThread has to be loaded. However,
+ * if the switch is requested by thread_sched_tick and there is no other thread available, the
+ * scheduler might decide not to switch.
  */
-static int thread_schedule()
+static int thread_schedule(int source)
 {
+	return -1; /* not yet implemented */
 }
 
 /**

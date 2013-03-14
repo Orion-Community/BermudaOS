@@ -64,6 +64,12 @@ typedef enum
 	THREAD_BLACK,
 } thread_color_t;
 
+typedef enum
+{
+	USER_REQ,
+	TIMER_REQ,
+} sched_source_t;
+
 /**
  * \brief Thread root structure.
  *

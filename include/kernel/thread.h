@@ -29,6 +29,7 @@
 
 #include <kernel/event.h>
 #include <kernel/stack.h>
+#include <kernel/mutex.h>
 
 #define THREAD_SLEEPING_SHIFT 0 //!< Sleeping bit shift.
 #define THREAD_RUNNING_SHIFT 1  //!< Running bit shift.
@@ -94,6 +95,7 @@ struct thread
 	uint64_t id; //!< Unique thread identifier.
 	
 	struct event *event; //!< Event attached to this thread.
+	mutex_t mutex; //!< Thead lock, to prevent tree/queue editing.
 	struct stack *stack; //!< Stack structure.
 	uint8_t ec; //!< Event counter.
 	uint16_t sleep_time; //!< Time to sleep left.

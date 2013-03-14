@@ -85,6 +85,9 @@ static int __thread_delete_node(struct thread_root *tree, struct thread *node);
 static struct thread *thread_find_replacement(struct thread *tree);
 static void thread_sub_deletion(struct thread_root *root, struct thread *current);
 
+/* scheduling */
+static int thread_schedule();
+
 /* dbg */
 #ifdef HAVE_SCHED_DBG
 static void thread_dump_node(struct thread *tree, FILE *stream);
@@ -149,6 +152,19 @@ PUBLIC void thread_sched_tick()
 		}
 	}
 	return; 
+}
+
+/**
+ * \brief Schedule a new thread.
+ * \return Action code.
+ * \retval -1 The idle thread has been scheduled.
+ * \retval 0 No new thread has been scheduled.
+ * \retval 1 A new thead has been scheduled.
+ *
+ * This function provides the functionality to switch between threads.
+ */
+static int thread_schedule()
+{
 }
 
 /**
